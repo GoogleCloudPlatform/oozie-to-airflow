@@ -18,7 +18,7 @@ import os
 import jinja2
 from airflow.utils.trigger_rule import TriggerRule
 
-from definintions import ROOT_DIR
+from definitions import ROOT_DIR
 from mappers.base_mapper import BaseMapper
 
 
@@ -49,7 +49,7 @@ class DecisionMapper(BaseMapper):
     """
 
     def __init__(self, oozie_node, task_id, trigger_rule=TriggerRule.ALL_DONE,
-        params={}):
+                 params={}):
         BaseMapper.__init__(self, oozie_node, task_id, trigger_rule)
         self.oozie_node = oozie_node
         self.task_id = task_id
