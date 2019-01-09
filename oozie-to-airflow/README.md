@@ -280,3 +280,19 @@ folder.
 Please keep in mind that as of the current version only a single EL variable
 or single EL function. Variable/function chaining is not currently supported.
 
+## Running Tests
+
+Currently, the test directory is set up in a such a way that the folders in `tests/` directory mirrors the structure of the `oozie-to-airflow` directory. For example, if we have `oozie-to-airflow/o2a_libs/helper_functions.py` the tests for that file would be in `tests/o2a_libs/test_helper_functions.py`.
+
+There are several ways to tests for the various different tests that you want to run.
+
+To run all the tests in a given directory call the below command:
+
+```
+python -m unittest discover /path/to/tests/directory/
+```
+
+To run all the tests in a given file call the below command:
+```
+python -m unittest /path/to/test/file.py
+```

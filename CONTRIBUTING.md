@@ -43,6 +43,39 @@ information on using pull requests.
 This project follows
 [Google's Open Source Community Guidelines](https://opensource.google.com/conduct/).
 
+## Development Workflow Setup (Composer/Dataproc)
+
+An easy way of testing changes to the oozie-to-airflow converter is by using  Cloud Composer and Dataproc. These services allow testing without much need for an on-prem setup.
+
+#### Setup
+1. Create a [Dataproc cluster with Oozie initialization actions.](https://github.com/GoogleCloudPlatform/dataproc-initialization-actions/tree/master/oozie#oozie)
+1. Run the `init.sh` shell script to install required python dependencies on the dev machine
+1. Install other required depedencies, for example, Airflow's `SparkSubmitOperator` requires `spark-submit` installed on the cluster.
+1. [Create a Cloud Composer Environment](https://cloud.google.com/composer/docs/how-to/managing/creating#creating_a_new_environment) with at least Airflow version 1.10 to test the Apache Airflow workflows. (Since Airflow 1.10 is in  Beta for Cloud Composer, you must [enable beta features in Cloud Console](https://cloud.google.com/composer/docs/concepts/beta-support#enable-beta))
+1. Set up all required [Airflow Connections](https://airflow.apache.org/howto/manage-connections.html). This is required for things like `SSHOperator`, and `SparkSubmitOperator`.
+1. _(Optional)_ Use [gcsfuse](https://github.com/GoogleCloudPlatform/gcsfuse) to link a local directory on the Dataproc cluster to the DAG folder in the [GCS bucket that Composer creates](https://cloud.google.com/composer/docs/concepts/cloud-storage).
+
+## Development Workflow Setup (Local)
+
+As opposed to being able to test on Google Cloud you can easily contribute to the project using just your local machine. The setup is very similar to the cloud setup.
+
+#### Setup
+1. Install [Apache Airflow](https://airflow.apache.org/start.html) and [Apache Oozie](https://oozie.apache.org/docs/4.3.1/DG_QuickStart.html) locally
+1. Run the `init.sh` shell script to install the required python dependencies
+1. Install other required depedencies, for example, Airflow's `SparkSubmitOperator` requires `spark-submit` installed on the cluster.
+1. Set up all required [Airflow Connections](https://airflow.apache.org/howto/manage-connections.html). This is required for things like `SSHOperator`, and `SparkSubmitOperator`.
+1. _(Optional)_ Use [gcsfuse](https://github.com/GoogleCloudPlatform/gcsfuse) to link a local directory to the DAG folder in the [GCS bucket that Composer creates](https://cloud.google.com/composer/docs/concepts/cloud-storage).
+
+## Testing Changes
+1. Make desired changes to the `oozie-to-airflow` application
+1. Run all unit tests to check for regressions (be sure to new write tests!)
+    1. `python3 -m unittest discover /path/to/tests/`
+1. Run desired Oozie XML on Dataproc's Oozie instance to make sure it is valid and can be executed successfully
+1. Use the converter on any applicable examples
+1. Move the output python file to the DAG folder in the GCS Bucket
+1. Check to see if working as expected on Cloud Composer
+1. Open a pull request with your change on our [GitHub](https://github.com/GoogleCloudPlatform/google-cloud).
+
 ## Adding Action Nodes
 
 Please keep in mind, we are targeting Apache Airflow 1.10 and Oozie 1.0.
