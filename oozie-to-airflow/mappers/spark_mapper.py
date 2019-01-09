@@ -17,7 +17,7 @@ from airflow.utils.trigger_rule import TriggerRule
 
 import xml.etree.ElementTree as ET
 
-from definintions import TPL_PATH
+from definitions import TPL_PATH
 from mappers.action_mapper import ActionMapper
 from utils import xml_utils, el_utils
 import jinja2
@@ -25,8 +25,7 @@ import jinja2
 
 class SparkMapper(ActionMapper):
     def __init__(self, oozie_node, task_id,
-        trigger_rule=TriggerRule.ALL_SUCCESS, params={},
-        template='spark.tpl'):
+                 trigger_rule=TriggerRule.ALL_SUCCESS, params={}, template='spark.tpl'):
         ActionMapper.__init__(self, oozie_node, task_id, trigger_rule)
         self.template = template
         self.params = params

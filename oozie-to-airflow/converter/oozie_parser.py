@@ -44,9 +44,10 @@ ACTION_MAP = {
 }
 
 
+# noinspection PyDefaultArgument
 class OozieParser(object):
     def __init__(self, oozie_wflow, params, action_mapper=ACTION_MAP,
-            control_map=CONTROL_MAP):
+                 control_map=CONTROL_MAP):
         self.workflow = oozie_wflow
         self.ACTION_MAP = action_mapper
         self.CONTROL_MAP = control_map
@@ -66,7 +67,7 @@ class OozieParser(object):
 
     def _parse_kill_node(self, kill_node):
         """
-        When a workflow node reaches the `kill` node, it finishes in an error
+        When a workflow node reaches the `kill` node, it finishes in an error.
         A workflow definition may have zero or more kill nodes.
         """
         map_class = self.CONTROL_MAP['kill']

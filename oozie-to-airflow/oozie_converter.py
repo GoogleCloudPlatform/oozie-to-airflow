@@ -23,7 +23,7 @@ import textwrap
 import logging
 
 from converter import oozie_parser
-from definintions import TPL_PATH
+from definitions import TPL_PATH
 from utils import el_utils
 
 INDENT = 4
@@ -68,7 +68,7 @@ def parse_args(args):
 
 
 def create_dag_file(operators, depends, relations, params, fn=None,
-    dag_name=None):
+                    dag_name=None):
     """
     Writes to a file the Apache Oozie parsed workflow in Airflow's DAG format.
 
