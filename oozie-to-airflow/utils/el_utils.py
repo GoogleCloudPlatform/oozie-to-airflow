@@ -153,8 +153,7 @@ def parse_els(properties_file, prop_dict={}):
     if properties_file:
         with open(properties_file, 'r') as prop_file:
             for line in prop_file.readlines():
-                if line.startswith('#') or line.startswith(
-                    ' ') or line.startswith('\n'):
+                if line.startswith('#') or line.startswith(' ') or line.startswith('\n'):
                     continue
                 else:
                     props = [x.strip() for x in line.split('=', 1)]

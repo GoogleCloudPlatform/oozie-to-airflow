@@ -17,7 +17,7 @@ from airflow.contrib.operators import ssh_operator
 from airflow.contrib.hooks import ssh_hook
 from airflow.utils.trigger_rule import TriggerRule
 
-from definintions import ROOT_DIR
+from definitions import ROOT_DIR
 from mappers.action_mapper import ActionMapper
 from utils import el_utils
 import jinja2
@@ -32,7 +32,7 @@ class SSHMapper(ActionMapper):
     """
 
     def __init__(self, oozie_node, task_id,
-        trigger_rule=TriggerRule.ALL_SUCCESS, params={}, template='ssh.tpl'):
+                 trigger_rule=TriggerRule.ALL_SUCCESS, params={}, template='ssh.tpl'):
         ActionMapper.__init__(self, oozie_node, task_id, trigger_rule)
 
         self.template = template

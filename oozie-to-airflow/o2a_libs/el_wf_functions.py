@@ -14,6 +14,7 @@
 
 # airflow DAG
 
+
 def wf_id():
     """
     It returns the workflow job ID for the current workflow job.

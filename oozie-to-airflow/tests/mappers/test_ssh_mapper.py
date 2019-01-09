@@ -48,7 +48,7 @@ class TestSSHMapper(unittest.TestCase):
         self.assertEqual(self.et.getroot(), mapper.oozie_node)
         self.assertEqual('user', mapper.user)
         self.assertEqual('apache.org', mapper.host)
-        self.assertEqual('ls -l -a', mapper.command)
+        self.assertEqual('\'ls -l -a\'', mapper.command)
 
     def test_create_mapper_jinja(self):
         # test jinja templating
@@ -65,7 +65,7 @@ class TestSSHMapper(unittest.TestCase):
         self.assertEqual(self.et.getroot(), mapper.oozie_node)
         self.assertEqual('user', mapper.user)
         self.assertEqual('apache.org', mapper.host)
-        self.assertEqual('ls -l -a', mapper.command)
+        self.assertEqual('\'ls -l -a\'', mapper.command)
 
     def test_convert_to_text(self):
         mapper = ssh_mapper.SSHMapper(oozie_node=self.et.getroot(),

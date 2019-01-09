@@ -171,7 +171,7 @@ You can run the program (minimally) by calling:
 
 You can also specify the job.properties file, user, and output file.
 
-`python oozie_convert.py -i <INPUT_FILE> -p <PROP_FILE> -u <USER> -o
+`python oozie_converter.py -i <INPUT_FILE> -p <PROP_FILE> -u <USER> -o
 <OUTPUT_FILE>`
 
 #### EL Functions

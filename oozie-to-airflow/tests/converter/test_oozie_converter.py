@@ -16,7 +16,7 @@ import unittest
 
 import oozie_converter
 from converter import parsed_node
-from definintions import TPL_PATH
+from definitions import TPL_PATH
 import jinja2
 from mappers import dummy_mapper
 
