@@ -155,6 +155,7 @@ A workflow definition may have zero or more kill nodes.
 * paramiko
 * sshtunnel
 * jinja2
+* parameterized (for unit tests)
 
 Additionally the shell script included in the directory, `init.sh`, can
 be ran to set up the dependencies and ready your machine to run the examples.
