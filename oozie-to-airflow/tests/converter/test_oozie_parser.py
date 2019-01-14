@@ -11,15 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import os
 import unittest
 from unittest import mock
 from xml.etree import ElementTree as ET
 
-from mappers import ssh_mapper
-from mappers import dummy_mapper
 from converter import oozie_parser
 from converter import parsed_node
+from definitions import ROOT_DIR
+from mappers import dummy_mapper
+from mappers import ssh_mapper
 
 
 class TestOozieParser(unittest.TestCase):
@@ -278,3 +279,13 @@ class TestOozieParser(unittest.TestCase):
         self.assertFalse(end.is_error)
         self.assertFalse(fail.is_ok)
         self.assertTrue(fail.is_error)
+
+    def test_parse_workflow(self):
+        filename = os.path.join(ROOT_DIR, 'examples/demo/workflow.xml')
+        self.parser.workflow = filename
+        self.parser.parse_workflow()
+        # Checking if names were changed to the Python syntax
+        self.assertIn('cleanup_node', self.parser.OPERATORS)
+        self.assertIn('fork_node', self.parser.OPERATORS)
+        self.assertIn('pig_node', self.parser.OPERATORS)
+        self.assertIn('fail', self.parser.OPERATORS)
