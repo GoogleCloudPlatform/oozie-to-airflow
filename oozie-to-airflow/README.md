@@ -157,14 +157,11 @@ A workflow definition may have zero or more kill nodes.
 * jinja2
 * parameterized (for unit tests)
 
-Additionally the shell script included in the directory, `init.sh`, can
+Additionally the setup script included in the directory, `setup.py`, can
 be ran to set up the dependencies and ready your machine to run the examples.
 
 ```bash
-# Allow init.sh to execute
-$ chmod +x init.sh
-# Execute init.sh
-$ ./init.sh
+python setup.py install
 ```
 
 You can run the program (minimally) by calling:
