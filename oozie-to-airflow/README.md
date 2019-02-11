@@ -175,6 +175,28 @@ You can also specify the job.properties file, user, and output file.
 `python oozie_converter.py -i <INPUT_FILE> -p <PROP_FILE> -u <USER> -o
 <OUTPUT_FILE>`
 
+#### Known Limitations
+
+The goal of this program is to mimic both the actions and control flow
+that is outlined by the Oozie workflow file. Unfortunately there are some
+limitations as of now that have not been worked around regarding the execution
+flow. The situation where the execution path might not execute correctly is when
+there are 4 nodes, A, B, C, D, with the following Oozie specified execution paths
+```
+A executes ok to C
+B executes error to C
+
+A executes error to D
+B executes ok to D
+```
+In this situation Airflow does not have enough fine grained node execution control.
+The converter should be able to handle this situation in the future, but it is not
+currently guaranteed to work.
+
+This is because if goes from A to C on ok, and B goes to C on error, C's trigger rule
+will have to be set to `DUMMY`, but this means that if A goes to error, and B goes to ok
+C will then execute incorrectly.
+
 #### EL Functions
 
 As of now, a very minimal set of [Oozie EL](https://oozie.apache.org/docs/4.0.1/WorkflowFunctionalSpec.html#a4.2_Expression_Language_Functions)
@@ -200,7 +222,7 @@ parsed by the Airflow workers and then available to all DAGs.
 
 ## Examples
 
-Examples can be found in the `examples/` directory.
+All examples can be found in the `examples/` directory.
 
 ### Demo Example
 
