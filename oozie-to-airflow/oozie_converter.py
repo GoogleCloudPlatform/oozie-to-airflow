@@ -49,7 +49,8 @@ def main():
     ops = parser.get_operators()
     parser.update_trigger_rules()
 
-    create_dag_file(ops, depens, relations, params, out_file_name)
+    create_dag_file(ops, depens, relations, params, out_file_name, start_days_ago=args.start,
+                    schedule_interval=args.interval)
 
 
 def parse_args(args):
@@ -64,11 +65,13 @@ def parse_args(args):
     parser.add_argument('-u', '--user',
                         help='The user to be used in place of all ${user.name},'
                              ' if empty, then user who ran the conversion is used')
+    parser.add_argument('-s', '--start', help='Desired DAG start as number of days ago')
+    parser.add_argument('-v', '--interval', help='Desired DAG schedule interval as number of days')
     return parser.parse_args(args)
 
 
 def create_dag_file(operators, depends, relations, params, fn=None,
-                    dag_name=None):
+                    dag_name=None, schedule_interval=None, start_days_ago=None):
     """
     Writes to a file the Apache Oozie parsed workflow in Airflow's DAG format.
 
@@ -81,18 +84,24 @@ def create_dag_file(operators, depends, relations, params, fn=None,
         contents of job.properties
     :param fn: Desired output file name.
     :param dag_name: Desired output DAG name.
+    :param schedule_interval: Desired DAG schedule interval, expressed as number of days
+    :param start_days_ago: Desired DAG start date, expressed as number of days ago from the present day
     """
     if not fn:
         fn = '/tmp/' + str(uuid.uuid4())
     if not dag_name:
         dag_name = str(uuid.uuid4())
+    if not start_days_ago:
+        start_days_ago = 1
+    if not schedule_interval:
+        schedule_interval = 1
 
     with open(fn, 'w') as f:
         logging.info("Saving to file: {}".format(fn))
 
         write_dependencies(f, depends)
         f.write('PARAMS = ' + json.dumps(params, indent=INDENT) + '\n\n')
-        write_dag_header(f, dag_name)
+        write_dag_header(f, dag_name, schedule_interval, start_days_ago)
 
         write_operators(f, operators)
         f.write('\n\n')
@@ -136,18 +145,21 @@ def write_dependencies(fp, depends):
     fp.write('\n\n')
 
 
-def write_dag_header(fp, dag_name, template='dag.tpl'):
+def write_dag_header(fp, dag_name, schedule_interval, start_days_ago, template='dag.tpl'):
     """
     Write the DAG header to the open file specified in the file pointer
     :param fp: Opened file to write to.
     :param dag_name: Desired name of DAG
+    :param schedule_interval: Desired DAG schedule interval, expressed as number of days
+    :param start_days_ago: Desired DAG start date, expressed as number of days ago from the present day
     :param template: Desired template to use when creating the DAG header.
     """
     template_loader = jinja2.FileSystemLoader(searchpath=TPL_PATH)
     template_env = jinja2.Environment(loader=template_loader)
 
     template = template_env.get_template(template)
-    fp.write(template.render(dag_name=dag_name))
+    fp.write(template.render(dag_name=dag_name, schedule_interval=schedule_interval,
+                             start_days_ago=start_days_ago))
     logging.info("Wrote DAG header.")
 
 
