@@ -1,0 +1,1 @@
+'{{ str }}'.format({{ els|join(', ') }})

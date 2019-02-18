@@ -11,13 +11,17 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-import re
 import logging
+import os
+import re
 
-from o2a_libs import el_basic_functions
+import jinja2
 
-FN_MATCH = re.compile(r'\$\{\s?(\w+)\(([\w\s,\'\"\-]*)\)\s?\}')
+from definitions import ROOT_DIR
+from o2a_libs import el_basic_functions, el_wf_functions
+
+FN_MATCH = re.compile(r'\$\{\s?([\w\:]+)\(([\w\s,\'\"\-]*)\)\s?\}')
+# Matches things like ${ var }
 VAR_MATCH = re.compile(r'\${([\w\.]+)}')
 
 EL_CONSTANTS = {
@@ -39,21 +43,19 @@ EL_FUNCTIONS = {
     'toJsonStr': el_basic_functions.to_json_str,
     'toPropertiesStr': None,
     'toConfigurationStr': None,
-}
-
-WF_EL_FUNCTIONS = {
-    'wf:id': None,
-    'wf:name': None,
-    'wf:appPath': None,
-    'wf:conf': None,
-    'wf:user': None,
-    'wf:group': None,
-    'wf:callback': None,
-    'wf:transition': None,
-    'wf:lastErrorNode': None,
-    'wf:errorCode': None,
-    'wf:errorMessage': None,
-    'wf:run': None,
+    # WF_EL_FUNCTIONS
+    'wf:id': el_wf_functions.wf_id,
+    'wf:name': el_wf_functions.wf_name,
+    'wf:appPath': el_wf_functions.wf_app_path,
+    'wf:conf': el_wf_functions.wf_conf,
+    'wf:user': el_wf_functions.wf_user,
+    'wf:group': el_wf_functions.wf_group,
+    'wf:callback': el_wf_functions.wf_callback,
+    'wf:transition': el_wf_functions.wf_transition,
+    'wf:lastErrorNode': el_wf_functions.wf_last_error_node,
+    'wf:errorCode': el_wf_functions.wf_error_code,
+    'wf:errorMessage': el_wf_functions.wf_error_message,
+    'wf:run': el_wf_functions.wf_run,
 }
 
 
@@ -86,6 +88,9 @@ def replace_el_with_var(el, params, quote=True):
 
 
 def parse_el_func(el, el_func_map=EL_FUNCTIONS):
+    METHOD_STR_IDX = 0
+    METHOD_PARAM_IDX = 1
+
     # Finds things like ${ function(arg1, arg2 } and returns
     # a list like ['function', 'arg1, arg2']
     fn_match = FN_MATCH.findall(el)
@@ -93,15 +98,19 @@ def parse_el_func(el, el_func_map=EL_FUNCTIONS):
     if not fn_match:
         return None
 
-    # fn_match is of the form [('concat', "'ls', '-l'")]
-    # for an el function like ${concat('ls', '-l')}
-    if fn_match[0][0] not in el_func_map:
-        raise KeyError('{} EL function not supported.'.format(fn_match[0][0]))
+    parsed_fns = []
+    for fn in fn_match:
+        # fn_match is of the form [('concat', "'ls', '-l'")]
+        # for an el function like ${concat('ls', '-l')}
+        if fn[METHOD_STR_IDX] not in el_func_map:
+            raise KeyError('{} EL function not supported.'.format(fn[METHOD_STR_IDX]))
 
-    mapped_func = el_func_map[fn_match[0][0]]
+        mapped_func = el_func_map[fn[METHOD_STR_IDX]]
 
-    func_name = mapped_func.__name__
-    return '{}({})'.format(func_name, fn_match[0][1])
+        func_name = mapped_func.__name__
+        parsed_fns.append('{}({})'.format(func_name, fn[METHOD_PARAM_IDX]))
+
+    return parsed_fns
 
 
 def convert_el_to_jinja(oozie_el, quote=True):
@@ -123,15 +132,23 @@ def convert_el_to_jinja(oozie_el, quote=True):
 
     jinjafied_el = oozie_el
 
-    if fn_match:
-        jinjafied_el = parse_el_func(oozie_el)
-        return jinjafied_el
-    elif var_match:
+    if var_match:
         for var in var_match:
             jinjafied_el = jinjafied_el.replace(
                 '${' + var + '}', '{{ params.' + var + ' }}')
+    if fn_match:
+        template_loader = jinja2.FileSystemLoader(
+            searchpath=os.path.join(ROOT_DIR, 'templates/'))
+        template_env = jinja2.Environment(loader=template_loader)
+        template = template_env.get_template('el.tpl')
 
-    return '\'' + jinjafied_el + '\'' if quote else jinjafied_el
+        subbed_str = re.sub(FN_MATCH, '{}', jinjafied_el)
+        # Convert to python o2a_libs functions
+        parsed_fns = parse_el_func(jinjafied_el, EL_FUNCTIONS)
+        return template.render(str=subbed_str, els=parsed_fns)
+
+    # This takes care of any escaping that must be done for python to understand
+    return repr(jinjafied_el) if quote else repr(jinjafied_el)[1:-1]
 
 
 def parse_els(properties_file, prop_dict={}):

@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import ast
 import unittest
 import unittest.mock
 from utils import el_utils
@@ -74,8 +74,8 @@ class TestELUtils(unittest.TestCase):
         el_func_map = {'concat': test_module}
         el_func1 = '${concat("as", "df")}'
         el_func2 = '${concat()}'
-        expected1 = 'test("as", "df")'
-        expected2 = 'test()'
+        expected1 = ['test("as", "df")']
+        expected2 = ['test()']
 
         self.assertEqual(expected1,
                          el_utils.parse_el_func(el_func1, el_func_map))
@@ -111,15 +111,17 @@ class TestELUtils(unittest.TestCase):
 
     def test_convert_el_to_jinja_func_no_quote(self):
         el = '${concat("ab", "de")}'
-        expected = 'concat("ab", "de")'
+        expected = '\'{}\'.format(concat("ab", "de"))'
         self.assertEqual(expected,
                          el_utils.convert_el_to_jinja(el, quote=False))
+        ast.parse(el_utils.convert_el_to_jinja(el, quote=False))
 
     def test_convert_el_to_jinja_func_quote(self):
         el = '${concat("ab", "de")}'
-        expected = 'concat("ab", "de")'
+        expected = '\'{}\'.format(concat("ab", "de"))'
         self.assertEqual(expected,
                          el_utils.convert_el_to_jinja(el, quote=True))
+        ast.parse(el_utils.convert_el_to_jinja(el, quote=True))
 
     def test_convert_el_to_jinja_no_change_no_quote(self):
         el = 'no_el_here'
