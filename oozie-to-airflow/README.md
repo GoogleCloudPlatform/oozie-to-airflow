@@ -268,6 +268,27 @@ to the SSH node requires editing of an Airflow Connection to specify the
 spark cluster is running. This can be found under **Admin >> Connections**
 or created from the command line (see above).
 
+### Email Example
+
+The email example requires the configuration of a SMTP server in the `airflow.cfg` file. [An example SMTP config](https://github.com/apache/airflow/blob/master/airflow/config_templates/default_airflow.cfg#L330-L341)
+is shown below. Apache Oozie [only allows sending files from an HDFS cluster](https://oozie.apache.org/docs/4.3.1/DG_EmailActionExtension.html),
+and that is mimicked in the conversion.
+
+```
+[smtp]
+smtp_host = smtp.gmail.com
+smtp_starttls = True
+smtp_ssl = False
+smtp_user = <EMAIL_ADDR>
+smtp_password = <PASSWORD>
+smtp_port = 587
+smtp_mail_from = <EMAIL_ADDR>
+```
+
+After configuration, the examples can be ran as:
+
+`python oozie_converter.py -i examples/email/workflow.xml -p examples/email/job.properties -o output.py`
+
 ### EL Example
 
 The Oozie Expression Language (EL) example can be run as:
