@@ -7,3 +7,4 @@ output.py
 # Python
 __pycache__
 *.pyc
+/oozie-to-airflow/oozie-to-airflow.iml
