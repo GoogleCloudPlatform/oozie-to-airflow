@@ -26,31 +26,31 @@ class TestOozieConverter(unittest.TestCase):
     def test_parse_args_input(self):
         FILE_NAME = '/tmp/does.not.exist'
         args = oozie_converter.parse_args(['-i', FILE_NAME])
-        self.assertEquals(args.input, FILE_NAME)
+        self.assertEqual(args.input, FILE_NAME)
 
     def test_parse_args_prop_file(self):
         FILE_NAME = '/tmp/does.not.exist'
         PROP_FILE_NAME = '/tmp/job.properties'
         args = oozie_converter.parse_args(['-i', FILE_NAME,
                                            '-p', PROP_FILE_NAME])
-        self.assertEquals(args.input, FILE_NAME)
-        self.assertEquals(args.properties, PROP_FILE_NAME)
+        self.assertEqual(args.input, FILE_NAME)
+        self.assertEqual(args.properties, PROP_FILE_NAME)
 
     def test_parse_args_output_file(self):
         FILE_NAME = '/tmp/does.not.exist'
         OUT_FILE_NAME = '/tmp/out.py'
         args = oozie_converter.parse_args(['-i', FILE_NAME,
                                            '-o', OUT_FILE_NAME])
-        self.assertEquals(args.input, FILE_NAME)
-        self.assertEquals(args.output, OUT_FILE_NAME)
+        self.assertEqual(args.input, FILE_NAME)
+        self.assertEqual(args.output, OUT_FILE_NAME)
 
     def test_parse_args_user(self):
         FILE_NAME = '/tmp/does.not.exist'
         USER = 'oozie_test'
         args = oozie_converter.parse_args(['-i', FILE_NAME,
                                            '-u', USER])
-        self.assertEquals(args.input, FILE_NAME)
-        self.assertEquals(args.user, USER)
+        self.assertEqual(args.input, FILE_NAME)
+        self.assertEqual(args.user, USER)
 
     def test_write_operators(self):
         node = parsed_node.ParsedNode(dummy_mapper.DummyMapper(None, 'task1'))
@@ -87,13 +87,15 @@ class TestOozieConverter(unittest.TestCase):
         TEMPLATE = 'dag.tpl'
 
         fp = io.StringIO()
-        oozie_converter.write_dag_header(fp, DAG_NAME, template=TEMPLATE)
+        oozie_converter.write_dag_header(fp, DAG_NAME, template=TEMPLATE, schedule_interval=1,
+                                         start_days_ago=1)
         fp.seek(0)
 
         template_loader = jinja2.FileSystemLoader(searchpath=TPL_PATH)
         template_env = jinja2.Environment(loader=template_loader)
         template = template_env.get_template(TEMPLATE)
-        expected = template.render(dag_name=DAG_NAME)
+        expected = template.render(dag_name=DAG_NAME, schedule_interval=1,
+                                   start_days_ago=1)
 
         self.assertEqual(expected, fp.read())
 
