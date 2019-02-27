@@ -17,8 +17,8 @@ import logging
 
 from o2a_libs import el_basic_functions
 
-FN_MATCH = re.compile(r'\$\{\s?(\w+)\(([\w\s,\'\"\-]*)\)\s?\}')
-VAR_MATCH = re.compile(r'\${([\w\.]+)}')
+FN_MATCH = re.compile(r'\${\s?(\w+)\(([\w\s,\'\"\-]*)\)\s?\}')
+VAR_MATCH = re.compile(r'\${([\w.]+)}')
 
 EL_CONSTANTS = {
     'KB': 1024 ** 1,
@@ -85,9 +85,11 @@ def replace_el_with_var(el, params, quote=True):
     return '\'' + jinjafied_el + '\'' if quote else jinjafied_el
 
 
-def parse_el_func(el, el_func_map=EL_FUNCTIONS):
+def parse_el_func(el, el_func_map=None):
     # Finds things like ${ function(arg1, arg2 } and returns
     # a list like ['function', 'arg1, arg2']
+    if el_func_map is None:
+        el_func_map = EL_FUNCTIONS
     fn_match = FN_MATCH.findall(el)
 
     if not fn_match:
@@ -134,7 +136,7 @@ def convert_el_to_jinja(oozie_el, quote=True):
     return '\'' + jinjafied_el + '\'' if quote else jinjafied_el
 
 
-def parse_els(properties_file, prop_dict={}):
+def parse_els(properties_file, prop_dict=None):
     """
     Parses the properties file into a dictionary, if the value has
     and EL function in it, it gets replaced with the corresponding
@@ -150,6 +152,8 @@ def parse_els(properties_file, prop_dict={}):
         command='ssh user@google.com',
     }
     """
+    if prop_dict is None:
+        prop_dict = {}
     if properties_file:
         with open(properties_file, 'r') as prop_file:
             for line in prop_file.readlines():
