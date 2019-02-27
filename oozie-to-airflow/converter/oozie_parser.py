@@ -62,7 +62,6 @@ class OozieParser(object):
             'import datetime',
             'from airflow import models',
             'from airflow.utils.trigger_rule import TriggerRule',
-            'from o2a_libs.el_basic_functions import *'
         }
         self.relations = set()
 
