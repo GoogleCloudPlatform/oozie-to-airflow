@@ -26,6 +26,7 @@ import mappers.kill_mapper
 import mappers.null_mapper
 import mappers.spark_mapper
 import mappers.ssh_mapper
+import mappers.pig_mapper
 import utils.xml_utils
 from converter.parsed_node import ParsedNode
 
@@ -42,6 +43,7 @@ ACTION_MAP = {
     'unknown': mappers.dummy_mapper.DummyMapper,
     'ssh': mappers.ssh_mapper.SSHMapper,
     'spark': mappers.spark_mapper.SparkMapper,
+    'pig': mappers.pig_mapper.PigMapper,
 }
 
 
