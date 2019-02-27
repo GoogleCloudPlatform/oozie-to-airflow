@@ -1,8 +1,6 @@
 # IntelliJ IDEA / PyCharm
 .idea
-
-# Generated DAG
-output.py
+*.iml
 
 # Python
 __pycache__
