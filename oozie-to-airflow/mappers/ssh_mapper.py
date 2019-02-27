@@ -82,5 +82,6 @@ class SSHMapper(ActionMapper):
 
     @staticmethod
     def required_imports():
-        return ['from airflow.contrib.operators import ssh_operator',
+        return ['from airflow.utils import dates',
+                'from airflow.contrib.operators import ssh_operator',
                 'from airflow.contrib.hooks import ssh_hook']
