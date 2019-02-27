@@ -292,7 +292,6 @@ class OozieParser(object):
         """
         Given a dictionary of task_ids and ParsedNodes,
         returns a set of logical connectives for each task in Airflow.
-        :param ops: A dictionary of {task_id: ParsedNode}
         :return: Set with strings of task's downstream nodes.
         """
         ops = self.OPERATORS
