@@ -37,6 +37,7 @@ def main():
 
     params = {'user.name': args.user or os.environ['USER']}
     params = el_utils.parse_els(args.properties, params)
+    params = el_utils.parse_els(args.configuration, params)
 
     # Each OozieParser class corresponds to one workflow, where one can get
     # the workflow's required dependencies (imports), operator relations,
@@ -62,6 +63,8 @@ def parse_args(args):
     parser.add_argument('-d', '--dag', help='Desired DAG name')
     parser.add_argument('-p', '--properties',
                         help='Path to the properties file')
+    parser.add_argument('-c', '--configuration',
+                        help='Path to the configuration file')
     parser.add_argument('-u', '--user',
                         help='The user to be used in place of all ${user.name},'
                              ' if empty, then user who ran the conversion is used')
