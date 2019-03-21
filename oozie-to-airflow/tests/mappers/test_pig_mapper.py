@@ -70,10 +70,6 @@ class TestPigMapper(unittest.TestCase):
         self.assertEqual(self.et.getroot(), mapper.oozie_node)
         self.assertEqual('localhost:8032', mapper.resource_manager)
         self.assertEqual('hdfs://localhost:8020', mapper.name_node)
-        self.assertEqual('${nameNode}/examples/output-data/demo/pig-node', mapper.prepare['delete'][0])
-        self.assertEqual('${nameNode}/examples/output-data/demo/pig-node2', mapper.prepare['delete'][1])
-        self.assertEqual('${nameNode}/examples/input-data/demo/pig-node', mapper.prepare['mkdir'][0])
-        self.assertEqual('${nameNode}/examples/input-data/demo/pig-node2', mapper.prepare['mkdir'][1])
         self.assertEqual('id.pig', mapper.script)
         self.assertEqual('${queueName}', mapper.properties['mapred.job.queue.name'])
         self.assertEqual('/user/${wf:user()}/${examplesRoot}/input-data/text', mapper.params_dict['INPUT'])
@@ -99,14 +95,6 @@ class TestPigMapper(unittest.TestCase):
         self.assertEqual(self.et.getroot(), mapper.oozie_node)
         self.assertEqual('localhost:9999', mapper.resource_manager)
         self.assertEqual('hdfs://localhost:8021', mapper.name_node)
-        self.assertEqual('hdfs://localhost:8021/examples/output-data/demo/pig-node',
-                         mapper.prepare['delete'][0])
-        self.assertEqual('hdfs://localhost:8021/examples/output-data/demo/pig-node2',
-                         mapper.prepare['delete'][1])
-        self.assertEqual('hdfs://localhost:8021/examples/input-data/demo/pig-node',
-                         mapper.prepare['mkdir'][0])
-        self.assertEqual('hdfs://localhost:8021/examples/input-data/demo/pig-node2',
-                         mapper.prepare['mkdir'][1])
         self.assertEqual('id_el.pig', mapper.script)
         self.assertEqual('myQueue', mapper.properties['mapred.job.queue.name'])
         self.assertEqual('/user/${wf:user()}/examples/input-data/text', mapper.params_dict['INPUT'])
@@ -116,7 +104,11 @@ class TestPigMapper(unittest.TestCase):
     def test_convert_to_text(self):
         mapper = pig_mapper.PigMapper(oozie_node=self.et.getroot(),
                                       task_id='test_id',
-                                      trigger_rule=TriggerRule.DUMMY)
+                                      trigger_rule=TriggerRule.DUMMY,
+                                      params={
+                                          'dataproc_cluster': 'my-cluster',
+                                          'gcp_region': 'europe-west3'
+                                      })
         # Throws a syntax error if doesn't parse correctly
         ast.parse(mapper.convert_to_text())
 
