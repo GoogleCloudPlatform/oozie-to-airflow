@@ -5,10 +5,11 @@ from airflow.utils.trigger_rule import TriggerRule
 
 from definitions import ROOT_DIR
 from mappers.action_mapper import ActionMapper
+from mappers.prepare_mixin import PrepareMixin
 from utils import el_utils, xml_utils
 
 
-class PigMapper(ActionMapper):
+class PigMapper(ActionMapper, PrepareMixin):
     """
     Converts a Pig Oozie node to an Airflow task.
     """
@@ -31,7 +32,6 @@ class PigMapper(ActionMapper):
         self.resource_manager = el_utils.replace_el_with_var(res_man_text, params=self.params, quote=False)
         self.name_node = el_utils.replace_el_with_var(name_node_text, params=self.params, quote=False)
         self.script = el_utils.replace_el_with_var(script_text, params=self.params, quote=False)
-        self._parse_prepare()
         self._parse_config()
         self._parse_params()
 
@@ -43,12 +43,6 @@ class PigMapper(ActionMapper):
                 param = el_utils.replace_el_with_var(node.text, params=self.params, quote=False)
                 key, value = param.split('=')
                 self.params_dict[key] = value
-
-    def _parse_prepare(self):
-        prepare_node = self.oozie_node.find('prepare')
-        if prepare_node:
-            self.prepare = {'delete': self._parse_prepare_subnodes(prepare_node, 'delete'),
-                            'mkdir': self._parse_prepare_subnodes(prepare_node, 'mkdir')}
 
     def _parse_config(self):
         config = self.oozie_node.find('configuration')
@@ -62,22 +56,12 @@ class PigMapper(ActionMapper):
                                                          quote=False)
                     self.properties[name] = value
 
-    def _parse_prepare_subnodes(self, prepare_node, subnode_type):
-        subnode_values = []
-        nodes = xml_utils.find_nodes_by_tag(prepare_node, subnode_type)
-        if nodes:
-            for node in nodes:
-                path = node.get('path')
-                value = el_utils.replace_el_with_var(path, params=self.params, quote=False)
-                subnode_values.append(value)
-        return subnode_values
-
     def convert_to_text(self):
         template_loader = jinja2.FileSystemLoader(searchpath=os.path.join(ROOT_DIR, 'templates/'))
         template_env = jinja2.Environment(loader=template_loader)
-
         template = template_env.get_template(self.template)
-        return template.render(**self.__dict__)
+        prepare_command = self.get_prepare_command(self.oozie_node, self.params)
+        return template.render(prepare_command=prepare_command, **self.__dict__)
 
     def convert_to_airflow_op(self):
         pass
