@@ -205,8 +205,8 @@ class OozieParser(object):
                              params=self.PARAMS)
 
         p_node = parsed_node.ParsedNode(operator)
-        p_node.add_downstream_node_name(action_node[1].attrib['to'])
-        p_node.set_error_node_name(action_node[2].attrib['to'])
+        p_node.add_downstream_node_name(action_node[1].attrib['to'])  # 'ok' node
+        p_node.set_error_node_name(action_node[2].attrib['to'])  # 'fail' node
 
         logging.info(
             "Parsed {} as Action Node of type {}.".format(operator.task_id,
