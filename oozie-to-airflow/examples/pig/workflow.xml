@@ -24,7 +24,7 @@
             <resource-manager>${resourceManager}</resource-manager>
             <name-node>${nameNode}</name-node>
             <prepare>
-                <!--<create path="${nameNode}/examples/input-data/demo/pig-node"/>-->
+                <create path="${nameNode}/examples/input-data/demo/pig-node"/>
                 <delete path="${nameNode}/examples/output-data/demo/pig-node"/>
             </prepare>
             <configuration>

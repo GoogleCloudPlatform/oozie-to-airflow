@@ -1,3 +1,8 @@
+{{ task_id }}_prepare = bash_operator.BashOperator(
+    task_id='{{ task_id }}_prepare',
+    bash_command='{{ prepare_command }}'
+)
+
 {{ task_id }} = dataproc_operator.DataProcPigOperator(
     query_uri='{}/{}'.format(PARAMS['gcp_uri_prefix'], '{{ script }}'),
     task_id='{{ task_id }}',
@@ -9,5 +14,7 @@
     region=PARAMS['gcp_region'],
     dataproc_job_id='{{ task_id }}'
 )
+
+{{ task_id }}_prepare.set_downstream({{ task_id }})
 
 
