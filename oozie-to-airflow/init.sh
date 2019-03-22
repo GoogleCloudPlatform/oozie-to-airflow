@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+
 # Check for pip
 command -v pip >/dev/null 2>&1 || { echo >&2 "pip appears to not be installed. Aborting."; exit 1; }
 
@@ -23,8 +25,4 @@ command -v python3 >/dev/null 2>&1 || { echo >&2 "python 3 does not appear to be
 export SLUGIFY_USES_TEXT_UNIDECODE=yes
 
 # Install required dependencies
-pip install apache-airflow
-pip install paramiko
-pip install sshtunnel
-pip install jinja2
-pip install parameterized
+pip install -r ${MY_DIR}/requirements.txt

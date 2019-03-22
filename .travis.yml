@@ -1,0 +1,14 @@
+language: python
+env:
+  - SLUGIFY_USES_TEXT_UNIDECODE=yes
+python:
+  - "3.6"
+cache: pip
+before_install: cd oozie-to-airflow
+install:
+  - pip install -r requirements.txt
+script:
+  - pytest --cov=./
+#  - black --check .
+after_success:
+  - bash <(curl -s https://codecov.io/bash)
