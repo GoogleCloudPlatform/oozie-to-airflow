@@ -25,9 +25,15 @@ import jinja2
 
 class SparkMapper(ActionMapper):
     def __init__(
-        self, oozie_node, task_id, trigger_rule=TriggerRule.ALL_SUCCESS, params={}, template="spark.tpl"
+        self,
+        oozie_node,
+        task_id,
+        trigger_rule=TriggerRule.ALL_SUCCESS,
+        params={},
+        template="spark.tpl",
+        **kwargs,
     ):
-        ActionMapper.__init__(self, oozie_node, task_id, trigger_rule)
+        ActionMapper.__init__(self, oozie_node, task_id, trigger_rule, **kwargs)
         self.template = template
         self.params = params
         self.task_id = task_id

@@ -32,9 +32,15 @@ class SSHMapper(ActionMapper):
     """
 
     def __init__(
-        self, oozie_node, task_id, trigger_rule=TriggerRule.ALL_SUCCESS, params={}, template="ssh.tpl"
+        self,
+        oozie_node,
+        task_id,
+        trigger_rule=TriggerRule.ALL_SUCCESS,
+        params={},
+        template="ssh.tpl",
+        **kwargs,
     ):
-        ActionMapper.__init__(self, oozie_node, task_id, trigger_rule)
+        ActionMapper.__init__(self, oozie_node, task_id, trigger_rule, **kwargs)
 
         self.template = template
 
