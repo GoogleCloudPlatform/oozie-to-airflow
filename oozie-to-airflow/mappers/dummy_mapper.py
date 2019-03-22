@@ -21,25 +21,19 @@ from definitions import ROOT_DIR
 
 
 class DummyMapper(BaseMapper):
-
     def convert_to_text(self):
-        template_loader = jinja2.FileSystemLoader(
-            searchpath=os.path.join(ROOT_DIR, 'templates/'))
+        template_loader = jinja2.FileSystemLoader(searchpath=os.path.join(ROOT_DIR, "templates/"))
         template_env = jinja2.Environment(loader=template_loader)
 
-        template = template_env.get_template('dummy.tpl')
-        return template.render(task_id=self.task_id,
-                               trigger_rule=self.trigger_rule)
+        template = template_env.get_template("dummy.tpl")
+        return template.render(task_id=self.task_id, trigger_rule=self.trigger_rule)
 
     def convert_to_airflow_op(self):
-        return dummy_operator.DummyOperator(
-            task_id=self.task_id,
-            trigger_rule=self.trigger_rule
-        )
+        return dummy_operator.DummyOperator(task_id=self.task_id, trigger_rule=self.trigger_rule)
 
     @staticmethod
     def required_imports():
-        return ['from airflow.operators import dummy_operator']
+        return ["from airflow.operators import dummy_operator"]
 
     def has_prepare(self):
         """ Required for Unknown Action Mapper """

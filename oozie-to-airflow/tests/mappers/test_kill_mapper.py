@@ -21,21 +21,17 @@ from airflow.utils.trigger_rule import TriggerRule
 
 class TestKillMapper(unittest.TestCase):
     def test_create_mapper(self):
-        mapper = kill_mapper.KillMapper(oozie_node=None,
-                                        task_id='test_id',
-                                        trigger_rule=TriggerRule.DUMMY)
+        mapper = kill_mapper.KillMapper(oozie_node=None, task_id="test_id", trigger_rule=TriggerRule.DUMMY)
         # make sure everything is getting initialized correctly
-        self.assertEqual('test_id', mapper.task_id)
+        self.assertEqual("test_id", mapper.task_id)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
 
     def test_convert_to_text(self):
-        mapper = kill_mapper.KillMapper(oozie_node=None,
-                                        task_id='test_id',
-                                        trigger_rule=TriggerRule.DUMMY)
+        mapper = kill_mapper.KillMapper(oozie_node=None, task_id="test_id", trigger_rule=TriggerRule.DUMMY)
         # Throws a syntax error if doesn't parse correctly
         ast.parse(mapper.convert_to_text())
 
     def test_required_imports(self):
         imps = kill_mapper.KillMapper.required_imports()
-        imp_str = '\n'.join(imps)
+        imp_str = "\n".join(imps)
         ast.parse(imp_str)

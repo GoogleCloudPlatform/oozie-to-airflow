@@ -48,8 +48,7 @@ class DecisionMapper(BaseMapper):
     </workflow-app>
     """
 
-    def __init__(self, oozie_node, task_id, trigger_rule=TriggerRule.ALL_DONE,
-                 params={}):
+    def __init__(self, oozie_node, task_id, trigger_rule=TriggerRule.ALL_DONE, params={}):
         BaseMapper.__init__(self, oozie_node, task_id, trigger_rule)
         self.oozie_node = oozie_node
         self.task_id = task_id
@@ -61,22 +60,22 @@ class DecisionMapper(BaseMapper):
 
         case_dict = collections.OrderedDict()
         for case in switch_node:
-            if 'case' in case.tag:
-                case_dict[case.text] = case.attrib['to']
+            if "case" in case.tag:
+                case_dict[case.text] = case.attrib["to"]
             else:  # Default return value
-                case_dict['default'] = case.attrib['to']
+                case_dict["default"] = case.attrib["to"]
 
         template_env = jinja2.Environment(
-            loader=jinja2.FileSystemLoader(
-                searchpath=os.path.join(ROOT_DIR, 'templates/')),
+            loader=jinja2.FileSystemLoader(searchpath=os.path.join(ROOT_DIR, "templates/")),
             trim_blocks=True,
-            lstrip_blocks=True)
+            lstrip_blocks=True,
+        )
 
-        template = template_env.get_template('decision.tpl')
-        return template.render(task_id=self.task_id,
-                               trigger_rule=self.trigger_rule,
-                               case_dict=case_dict.items())
+        template = template_env.get_template("decision.tpl")
+        return template.render(
+            task_id=self.task_id, trigger_rule=self.trigger_rule, case_dict=case_dict.items()
+        )
 
     @staticmethod
     def required_imports():
-        return ['from airflow.operators import python_operator']
+        return ["from airflow.operators import python_operator"]

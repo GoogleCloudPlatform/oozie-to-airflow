@@ -22,7 +22,7 @@ class NullMapper(BaseMapper):
         self.task_id = task_id
 
     def convert_to_text(self):
-        return ''
+        return ""
 
     @staticmethod
     def required_imports():

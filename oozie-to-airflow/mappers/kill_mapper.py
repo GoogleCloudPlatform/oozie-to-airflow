@@ -22,21 +22,17 @@ from mappers.base_mapper import BaseMapper
 
 class KillMapper(BaseMapper):
     def convert_to_text(self):
-        template_loader = jinja2.FileSystemLoader(
-            searchpath=os.path.join(ROOT_DIR, 'templates/'))
+        template_loader = jinja2.FileSystemLoader(searchpath=os.path.join(ROOT_DIR, "templates/"))
         template_env = jinja2.Environment(loader=template_loader)
 
-        template = template_env.get_template('kill.tpl')
-        return template.render(task_id=self.task_id,
-                               trigger_rule=self.trigger_rule)
+        template = template_env.get_template("kill.tpl")
+        return template.render(task_id=self.task_id, trigger_rule=self.trigger_rule)
 
     def convert_to_airflow_op(self):
         return bash_operator.BashOperator(
-            bash_command='exit 1',
-            task_id=self.task_id,
-            trigger_rule=self.trigger_rule,
+            bash_command="exit 1", task_id=self.task_id, trigger_rule=self.trigger_rule
         )
 
     @staticmethod
     def required_imports():
-        return ['from airflow.operators import bash_operator']
+        return ["from airflow.operators import bash_operator"]

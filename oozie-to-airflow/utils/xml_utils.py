@@ -32,13 +32,12 @@ def find_node_by_name(root, name):
     :param name: Name of ndoe to look for.
     :return: The XML node that was found, or raises an exception if not found.
     """
-    node = find_nodes_by_attribute(root, 'name', name)
+    node = find_nodes_by_attribute(root, "name", name)
 
     if len(node) == 0:
         raise NoNodeFoundException("Node with name {} not found.".format(name))
     elif len(node) > 1:
-        raise MultipleNodeFoundException(
-            "More than one node with name {} found".format(name))
+        raise MultipleNodeFoundException("More than one node with name {} found".format(name))
     else:
         return node[0]
 
@@ -48,7 +47,7 @@ def find_nodes_by_tag(root, tag):
     Returns a list of XML nodes that have the tag provided. In this case
     only direct descendants under the root node are checked for the tag.
     """
-    return root.findall('.' + tag)
+    return root.findall("." + tag)
 
 
 def find_nodes_by_attribute(root, attr, val, tag=None):
