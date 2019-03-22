@@ -17,6 +17,7 @@ import logging
 import xml.etree.ElementTree as ET
 
 import uuid
+# noinspection PyPackageRequirements
 from airflow.utils.trigger_rule import TriggerRule
 from converter import parsed_node
 import mappers.decision_mapper
