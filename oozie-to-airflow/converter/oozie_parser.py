@@ -28,6 +28,7 @@ import mappers.null_mapper
 import mappers.spark_mapper
 import mappers.ssh_mapper
 import mappers.pig_mapper
+import mappers.subwf_mapper
 import utils.xml_utils
 from converter.parsed_node import ParsedNode
 
@@ -45,12 +46,13 @@ ACTION_MAP = {
     "ssh": mappers.ssh_mapper.SSHMapper,
     "spark": mappers.spark_mapper.SparkMapper,
     "pig": mappers.pig_mapper.PigMapper,
+    "sub-workflow": mappers.subwf_mapper.SubworkflowMapper,
 }
 
 
 # noinspection PyDefaultArgument
 class OozieParser(object):
-    def __init__(self, oozie_wflow, params, action_mapper=ACTION_MAP, control_map=CONTROL_MAP):
+    def __init__(self, oozie_wflow, params, action_mapper=ACTION_MAP, control_map=CONTROL_MAP, dag_name=None):
         self.workflow = oozie_wflow
         self.ACTION_MAP = action_mapper
         self.CONTROL_MAP = control_map
@@ -66,6 +68,7 @@ class OozieParser(object):
             "from airflow.utils.trigger_rule import TriggerRule",
         }
         self.relations = set()
+        self.dag_name = dag_name
 
     def _parse_kill_node(self, kill_node):
         """
@@ -197,7 +200,9 @@ class OozieParser(object):
             action_name = "unknown"
 
         map_class = self.ACTION_MAP[action_name]
-        operator = map_class(action_node[0], action_node.attrib["name"], params=self.PARAMS)
+        operator = map_class(
+            action_node[0], action_node.attrib["name"], params=self.PARAMS, dag_name=self.dag_name
+        )
 
         p_node = parsed_node.ParsedNode(operator)
         p_node.add_downstream_node_name(action_node[1].attrib["to"])  # 'ok' node

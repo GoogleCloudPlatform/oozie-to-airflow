@@ -15,15 +15,22 @@ class PigMapper(ActionMapper, PrepareMixin):
     """
 
     def __init__(
-        self, oozie_node, task_id, trigger_rule=TriggerRule.ALL_SUCCESS, params=None, template="pig.tpl"
+        self,
+        oozie_node,
+        task_id,
+        trigger_rule=TriggerRule.ALL_SUCCESS,
+        params=None,
+        template="pig.tpl",
+        **kwargs,
     ):
-        ActionMapper.__init__(self, oozie_node, task_id, trigger_rule)
+        ActionMapper.__init__(self, oozie_node, task_id, trigger_rule, **kwargs)
         if params is None:
             params = {}
         self.template = template
         self.params = params
         self.task_id = task_id
         self.trigger_rule = trigger_rule
+        self.properties = {}
         self._parse_oozie_node()
 
     def _parse_oozie_node(self):
@@ -48,7 +55,6 @@ class PigMapper(ActionMapper, PrepareMixin):
     def _parse_config(self):
         config = self.oozie_node.find("configuration")
         if config:
-            self.properties = {}
             property_nodes = xml_utils.find_nodes_by_tag(config, "property")
             if property_nodes:
                 for node in property_nodes:

@@ -16,7 +16,7 @@ from airflow.utils.trigger_rule import TriggerRule
 
 
 class BaseMapper:
-    def __init__(self, oozie_node, task_id, trigger_rule=TriggerRule.ALL_SUCCESS, params={}):
+    def __init__(self, oozie_node, task_id, trigger_rule=TriggerRule.ALL_SUCCESS, params={}, **kwargs):
         self.params = params
         self.oozie_node = oozie_node
         self.task_id = task_id
