@@ -15,6 +15,7 @@ import io
 import unittest
 
 import oozie_converter
+from oozie_converter import OozieConverter
 from converter import parsed_node
 from definitions import TPL_PATH
 import jinja2
@@ -53,7 +54,7 @@ class TestOozieConverter(unittest.TestCase):
         ops = {"task1": node}
 
         fp = io.StringIO()
-        oozie_converter.write_operators(fp, ops, indent=0)
+        OozieConverter.write_operators(fp, ops, indent=0)
         fp.seek(0)
 
         self.assertEqual(node.operator.convert_to_text(), fp.read())
@@ -62,7 +63,7 @@ class TestOozieConverter(unittest.TestCase):
         relations = ["task1.set_downstream(task2)", "task2.set_upstream(task1)"]
 
         fp = io.StringIO()
-        oozie_converter.write_relations(fp, relations, indent=0)
+        OozieConverter.write_relations(fp, relations, indent=0)
         fp.seek(0)
 
         expected = "\n".join(relations) + "\n"
@@ -72,7 +73,7 @@ class TestOozieConverter(unittest.TestCase):
         depends = ["import airflow", "from jaws import thriller"]
 
         fp = io.StringIO()
-        oozie_converter.write_relations(fp, depends, indent=0)
+        OozieConverter.write_relations(fp, depends, indent=0)
         fp.seek(0)
 
         expected = "\n".join(depends) + "\n"
@@ -83,7 +84,7 @@ class TestOozieConverter(unittest.TestCase):
         TEMPLATE = "dag.tpl"
 
         fp = io.StringIO()
-        oozie_converter.write_dag_header(
+        OozieConverter.write_dag_header(
             fp, DAG_NAME, template=TEMPLATE, schedule_interval=1, start_days_ago=1
         )
         fp.seek(0)

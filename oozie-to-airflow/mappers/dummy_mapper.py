@@ -16,6 +16,7 @@ import os
 import jinja2
 
 from airflow.operators import dummy_operator
+
 from mappers.base_mapper import BaseMapper
 from definitions import ROOT_DIR
 
