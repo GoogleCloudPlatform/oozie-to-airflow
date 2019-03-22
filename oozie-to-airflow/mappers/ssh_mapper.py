@@ -31,31 +31,31 @@ class SSHMapper(ActionMapper):
     provide the password there.
     """
 
-    def __init__(self, oozie_node, task_id,
-                 trigger_rule=TriggerRule.ALL_SUCCESS, params={}, template='ssh.tpl'):
+    def __init__(
+        self, oozie_node, task_id, trigger_rule=TriggerRule.ALL_SUCCESS, params={}, template="ssh.tpl"
+    ):
         ActionMapper.__init__(self, oozie_node, task_id, trigger_rule)
 
         self.template = template
 
-        cmd_node = self.oozie_node.find('command')
-        arg_nodes = self.oozie_node.findall('args')
-        cmd = ' '.join([cmd_node.text] + [x.text for x in arg_nodes])
+        cmd_node = self.oozie_node.find("command")
+        arg_nodes = self.oozie_node.findall("args")
+        cmd = " ".join([cmd_node.text] + [x.text for x in arg_nodes])
         self.command = el_utils.convert_el_to_jinja(cmd, quote=True)
 
-        host_key = el_utils.strip_el(self.oozie_node.find('host').text)
+        host_key = el_utils.strip_el(self.oozie_node.find("host").text)
         # the <user> node is formatted like [USER]@[HOST]
         if host_key in params:
             host_key = params[host_key]
 
         # Since ariflow separates user and host, we can't use jinja templating.
         # We must check if it is in params.
-        user_host = host_key.split('@')
+        user_host = host_key.split("@")
         self.user = user_host[0]
         self.host = user_host[1]
 
     def convert_to_text(self):
-        template_loader = jinja2.FileSystemLoader(
-            searchpath=os.path.join(ROOT_DIR, 'templates/'))
+        template_loader = jinja2.FileSystemLoader(searchpath=os.path.join(ROOT_DIR, "templates/"))
         template_env = jinja2.Environment(loader=template_loader)
 
         template = template_env.get_template(self.template)
@@ -68,20 +68,15 @@ class SSHMapper(ActionMapper):
 
         returns an SSH Operator
         """
-        hook = ssh_hook.SSHHook(
-            ssh_conn_id='ssh_default',
-            username=self.user,
-            remote_host=self.host,
-        )
+        hook = ssh_hook.SSHHook(ssh_conn_id="ssh_default", username=self.user, remote_host=self.host)
         return ssh_operator.SSHOperator(
-            ssh_hook=hook,
-            task_id=self.task_id,
-            command=self.command,
-            trigger_rule=self.trigger_rule
+            ssh_hook=hook, task_id=self.task_id, command=self.command, trigger_rule=self.trigger_rule
         )
 
     @staticmethod
     def required_imports():
-        return ['from airflow.utils import dates',
-                'from airflow.contrib.operators import ssh_operator',
-                'from airflow.contrib.hooks import ssh_hook']
+        return [
+            "from airflow.utils import dates",
+            "from airflow.contrib.operators import ssh_operator",
+            "from airflow.contrib.hooks import ssh_hook",
+        ]

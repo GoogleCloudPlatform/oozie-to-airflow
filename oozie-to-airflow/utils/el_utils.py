@@ -17,43 +17,37 @@ import logging
 
 from o2a_libs import el_basic_functions
 
-FN_MATCH = re.compile(r'\${\s?(\w+)\(([\w\s,\'\"\-]*)\)\s?\}')
-VAR_MATCH = re.compile(r'\${([\w.]+)}')
+FN_MATCH = re.compile(r"\${\s?(\w+)\(([\w\s,\'\"\-]*)\)\s?\}")
+VAR_MATCH = re.compile(r"\${([\w.]+)}")
 
-EL_CONSTANTS = {
-    'KB': 1024 ** 1,
-    'MB': 1024 ** 2,
-    'GB': 1024 ** 3,
-    'TB': 1024 ** 4,
-    'PB': 1024 ** 5,
-}
+EL_CONSTANTS = {"KB": 1024 ** 1, "MB": 1024 ** 2, "GB": 1024 ** 3, "TB": 1024 ** 4, "PB": 1024 ** 5}
 
 EL_FUNCTIONS = {
-    'firstNotNull': el_basic_functions.first_not_null,
-    'concat': el_basic_functions.concat,
-    'replaceAll': el_basic_functions.replace_all,
-    'appendAll': el_basic_functions.append_all,
-    'trim': el_basic_functions.trim,
-    'urlEncode': el_basic_functions.url_encode,
-    'timestamp': el_basic_functions.timestamp,
-    'toJsonStr': el_basic_functions.to_json_str,
-    'toPropertiesStr': None,
-    'toConfigurationStr': None,
+    "firstNotNull": el_basic_functions.first_not_null,
+    "concat": el_basic_functions.concat,
+    "replaceAll": el_basic_functions.replace_all,
+    "appendAll": el_basic_functions.append_all,
+    "trim": el_basic_functions.trim,
+    "urlEncode": el_basic_functions.url_encode,
+    "timestamp": el_basic_functions.timestamp,
+    "toJsonStr": el_basic_functions.to_json_str,
+    "toPropertiesStr": None,
+    "toConfigurationStr": None,
 }
 
 WF_EL_FUNCTIONS = {
-    'wf:id': None,
-    'wf:name': None,
-    'wf:appPath': None,
-    'wf:conf': None,
-    'wf:user': None,
-    'wf:group': None,
-    'wf:callback': None,
-    'wf:transition': None,
-    'wf:lastErrorNode': None,
-    'wf:errorCode': None,
-    'wf:errorMessage': None,
-    'wf:run': None,
+    "wf:id": None,
+    "wf:name": None,
+    "wf:appPath": None,
+    "wf:conf": None,
+    "wf:user": None,
+    "wf:group": None,
+    "wf:callback": None,
+    "wf:transition": None,
+    "wf:lastErrorNode": None,
+    "wf:errorCode": None,
+    "wf:errorMessage": None,
+    "wf:run": None,
 }
 
 
@@ -63,7 +57,7 @@ def strip_el(el):
     strips out everything except for the variable.
     """
 
-    return re.sub('[${}]', '', el).strip()
+    return re.sub("[${}]", "", el).strip()
 
 
 def replace_el_with_var(el, params, quote=True):
@@ -77,12 +71,11 @@ def replace_el_with_var(el, params, quote=True):
     if var_match:
         for var in var_match:
             if var in params:
-                jinjafied_el = jinjafied_el.replace('${' + var + '}',
-                                                    params[var])
+                jinjafied_el = jinjafied_el.replace("${" + var + "}", params[var])
             else:
-                logging.info('Couldn\'t replace EL {}'.format(var))
+                logging.info("Couldn't replace EL {}".format(var))
 
-    return '\'' + jinjafied_el + '\'' if quote else jinjafied_el
+    return "'" + jinjafied_el + "'" if quote else jinjafied_el
 
 
 def parse_el_func(el, el_func_map=None):
@@ -98,12 +91,12 @@ def parse_el_func(el, el_func_map=None):
     # fn_match is of the form [('concat', "'ls', '-l'")]
     # for an el function like ${concat('ls', '-l')}
     if fn_match[0][0] not in el_func_map:
-        raise KeyError('{} EL function not supported.'.format(fn_match[0][0]))
+        raise KeyError("{} EL function not supported.".format(fn_match[0][0]))
 
     mapped_func = el_func_map[fn_match[0][0]]
 
     func_name = mapped_func.__name__
-    return '{}({})'.format(func_name, fn_match[0][1])
+    return "{}({})".format(func_name, fn_match[0][1])
 
 
 def convert_el_to_jinja(oozie_el, quote=True):
@@ -130,10 +123,9 @@ def convert_el_to_jinja(oozie_el, quote=True):
         return jinjafied_el
     elif var_match:
         for var in var_match:
-            jinjafied_el = jinjafied_el.replace(
-                '${' + var + '}', '{{ params.' + var + ' }}')
+            jinjafied_el = jinjafied_el.replace("${" + var + "}", "{{ params." + var + " }}")
 
-    return '\'' + jinjafied_el + '\'' if quote else jinjafied_el
+    return "'" + jinjafied_el + "'" if quote else jinjafied_el
 
 
 def parse_els(properties_file, prop_dict=None):
@@ -155,14 +147,12 @@ def parse_els(properties_file, prop_dict=None):
     if prop_dict is None:
         prop_dict = {}
     if properties_file:
-        with open(properties_file, 'r') as prop_file:
+        with open(properties_file, "r") as prop_file:
             for line in prop_file.readlines():
-                if line.startswith('#') or line.startswith(' ') or line.startswith('\n'):
+                if line.startswith("#") or line.startswith(" ") or line.startswith("\n"):
                     continue
                 else:
-                    props = [x.strip() for x in line.split('=', 1)]
-                    prop_dict[props[0]] = replace_el_with_var(props[1],
-                                                              prop_dict,
-                                                              quote=False)
+                    props = [x.strip() for x in line.split("=", 1)]
+                    prop_dict[props[0]] = replace_el_with_var(props[1], prop_dict, quote=False)
 
     return prop_dict

@@ -27,7 +27,7 @@ def first_not_null(str_one, str_two):
     if str_one:
         return str_one
     else:
-        return str_two if str_two else ''
+        return str_two if str_two else ""
 
 
 def concat(str_one, str_two):
@@ -36,9 +36,9 @@ def concat(str_one, str_two):
     with null value is considered as an empty string.
     """
     if not str_one:
-        str_one = ''
+        str_one = ""
     if not str_two:
-        str_two = ''
+        str_two = ""
     return str_one + str_two
 
 
@@ -52,7 +52,7 @@ def replace_all(src_string, regex, replacement):
     if not regex:
         return src_string
     if not replacement:
-        replacement = ''
+        replacement = ""
     return re.sub(regex, replacement, src_string)
 
 
@@ -68,7 +68,7 @@ def append_all(src_str, append, delimiter):
     if not delimiter:
         return src_str
     if not append:
-        append = ''
+        append = ""
 
     split_str = src_str.split(delimiter)
     appended_list = []
@@ -83,7 +83,7 @@ def trim(src_str):
     A string with null value is considered as an empty string.
     """
     if not src_str:
-        return ''
+        return ""
     else:
         # May not behave like java, their documentation is unclear what
         # types of whitespace they strip..
@@ -96,10 +96,11 @@ def url_encode(src_str):
     A string with null value is considered as an empty string.
     """
     if not src_str:
-        return ''
+        return ""
     else:
         import urllib.parse
-        return urllib.parse.quote(src_str, encoding='UTF-8')
+
+        return urllib.parse.quote(src_str, encoding="UTF-8")
 
 
 def timestamp():
@@ -110,9 +111,11 @@ def timestamp():
     """
     import datetime
     import pytz
+
     return datetime.datetime.now(pytz.utc).isoformat()
 
 
 def to_json_str(py_map):
     import json
+
     return json.dumps(py_map)

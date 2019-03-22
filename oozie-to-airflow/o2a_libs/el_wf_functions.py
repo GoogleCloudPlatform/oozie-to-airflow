@@ -23,7 +23,7 @@ def wf_id():
     This has the effect that some parameters cannot be templated, and thus
     this will fail.
     """
-    return '{{ run_id }}'
+    return "{{ run_id }}"
 
 
 def wf_name():
@@ -35,7 +35,7 @@ def wf_name():
     
     :return: Current DAG id.
     """
-    return '{{ dag.dag_id }}'
+    return "{{ dag.dag_id }}"
 
 
 def wf_app_path():
@@ -63,7 +63,7 @@ def wf_user():
     Returns the user name that started the current workflow job.
 
     """
-    return '{{ params.user.name }}'
+    return "{{ params.user.name }}"
 
 
 def wf_group():

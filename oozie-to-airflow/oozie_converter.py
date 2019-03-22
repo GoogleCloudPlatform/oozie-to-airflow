@@ -35,7 +35,7 @@ def main():
     in_file_name = args.input
     out_file_name = args.output
 
-    params = {'user.name': args.user or os.environ['USER']}
+    params = {"user.name": args.user or os.environ["USER"]}
     params = el_utils.parse_els(args.properties, params)
     params = el_utils.parse_els(args.configuration, params)
 
@@ -50,35 +50,41 @@ def main():
     ops = parser.get_operators()
     parser.update_trigger_rules()
 
-    create_dag_file(ops, depens, relations, params, out_file_name, start_days_ago=args.start,
-                    schedule_interval=args.interval, dag_name=args.dag)
+    create_dag_file(
+        ops,
+        depens,
+        relations,
+        params,
+        out_file_name,
+        start_days_ago=args.start,
+        schedule_interval=args.interval,
+        dag_name=args.dag,
+    )
 
 
 def parse_args(args):
     parser = argparse.ArgumentParser(
-        description="Convert Apache Oozie workflows to Apache Airflow workflows.")
-    parser.add_argument('-i', '--input', help='Path to input file name',
-                        required=True)
-    parser.add_argument('-o', '--output', help='Desired output name')
-    parser.add_argument('-d', '--dag', help='Desired DAG name')
-    parser.add_argument('-p', '--properties',
-                        help='Path to the properties file')
-    parser.add_argument('-c', '--configuration',
-                        help='Path to the configuration file')
-    parser.add_argument('-u', '--user',
-                        help='The user to be used in place of all ${user.name},'
-                             ' if empty, then user who ran the conversion is used')
-    parser.add_argument('-s', '--start',
-                        help='Desired DAG start as number of days ago',
-                        default=0)
-    parser.add_argument('-v', '--interval',
-                        help='Desired DAG schedule interval as number of days',
-                        default=0)
+        description="Convert Apache Oozie workflows to Apache Airflow workflows."
+    )
+    parser.add_argument("-i", "--input", help="Path to input file name", required=True)
+    parser.add_argument("-o", "--output", help="Desired output name")
+    parser.add_argument("-d", "--dag", help="Desired DAG name")
+    parser.add_argument("-p", "--properties", help="Path to the properties file")
+    parser.add_argument("-c", "--configuration", help="Path to the configuration file")
+    parser.add_argument(
+        "-u",
+        "--user",
+        help="The user to be used in place of all ${user.name},"
+        " if empty, then user who ran the conversion is used",
+    )
+    parser.add_argument("-s", "--start", help="Desired DAG start as number of days ago", default=0)
+    parser.add_argument("-v", "--interval", help="Desired DAG schedule interval as number of days", default=0)
     return parser.parse_args(args)
 
 
-def create_dag_file(operators, depends, relations, params, fn=None,
-                    dag_name=None, schedule_interval=None, start_days_ago=None):
+def create_dag_file(
+    operators, depends, relations, params, fn=None, dag_name=None, schedule_interval=None, start_days_ago=None
+):
     """
     Writes to a file the Apache Oozie parsed workflow in Airflow's DAG format.
 
@@ -95,19 +101,19 @@ def create_dag_file(operators, depends, relations, params, fn=None,
     :param start_days_ago: Desired DAG start date, expressed as number of days ago from the present day
     """
     if not fn:
-        fn = '/tmp/' + str(uuid.uuid4())
+        fn = "/tmp/" + str(uuid.uuid4())
     if not dag_name:
         dag_name = str(uuid.uuid4())
 
-    with open(fn, 'w') as f:
+    with open(fn, "w") as f:
         logging.info("Saving to file: {}".format(fn))
 
         write_dependencies(f, depends)
-        f.write('PARAMS = ' + json.dumps(params, indent=INDENT) + '\n\n')
+        f.write("PARAMS = " + json.dumps(params, indent=INDENT) + "\n\n")
         write_dag_header(f, dag_name, schedule_interval, start_days_ago)
 
         write_operators(f, operators)
-        f.write('\n\n')
+        f.write("\n\n")
         write_relations(f, relations)
 
 
@@ -120,9 +126,8 @@ def write_operators(fp, operators, indent=INDENT):
     :param indent: integer of how many spaces to indent entire operator
     """
     for op in operators.values():
-        fp.write(textwrap.indent(op.operator.convert_to_text(), indent * ' '))
-        logging.info(
-            "Wrote Airflow Task ID: {}".format(op.operator.get_task_id()))
+        fp.write(textwrap.indent(op.operator.convert_to_text(), indent * " "))
+        logging.info("Wrote Airflow Task ID: {}".format(op.operator.get_task_id()))
 
 
 def write_relations(fp, relations, indent=INDENT):
@@ -133,8 +138,8 @@ def write_relations(fp, relations, indent=INDENT):
     """
     logging.info("Writing control flow dependencies to file.")
     for relation in relations:
-        fp.write(textwrap.indent(relation, indent * ' '))
-        fp.write('\n')
+        fp.write(textwrap.indent(relation, indent * " "))
+        fp.write("\n")
 
 
 def write_dependencies(fp, depends):
@@ -144,11 +149,11 @@ def write_dependencies(fp, depends):
     Of the form: from time import time, etc.
     """
     logging.info("Writing imports to file")
-    fp.write('\n'.join(depends))
-    fp.write('\n\n')
+    fp.write("\n".join(depends))
+    fp.write("\n\n")
 
 
-def write_dag_header(fp, dag_name, schedule_interval, start_days_ago, template='dag.tpl'):
+def write_dag_header(fp, dag_name, schedule_interval, start_days_ago, template="dag.tpl"):
     """
     Write the DAG header to the open file specified in the file pointer
     :param fp: Opened file to write to.
@@ -161,10 +166,11 @@ def write_dag_header(fp, dag_name, schedule_interval, start_days_ago, template='
     template_env = jinja2.Environment(loader=template_loader)
 
     template = template_env.get_template(template)
-    fp.write(template.render(dag_name=dag_name, schedule_interval=schedule_interval,
-                             start_days_ago=start_days_ago))
+    fp.write(
+        template.render(dag_name=dag_name, schedule_interval=schedule_interval, start_days_ago=start_days_ago)
+    )
     logging.info("Wrote DAG header.")
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
