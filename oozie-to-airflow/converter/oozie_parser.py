@@ -29,6 +29,7 @@ import mappers.spark_mapper
 import mappers.ssh_mapper
 import mappers.pig_mapper
 import mappers.subwf_mapper
+import mappers.shell_mapper
 import utils.xml_utils
 from converter.parsed_node import ParsedNode
 
@@ -47,6 +48,7 @@ ACTION_MAP = {
     "spark": mappers.spark_mapper.SparkMapper,
     "pig": mappers.pig_mapper.PigMapper,
     "sub-workflow": mappers.subwf_mapper.SubworkflowMapper,
+    "shell": mappers.shell_mapper.ShellMapper,
 }
 
 
