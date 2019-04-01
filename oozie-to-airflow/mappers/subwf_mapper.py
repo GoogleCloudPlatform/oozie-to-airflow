@@ -36,7 +36,6 @@ class SubworkflowMapper(ActionMapper):
         self.params = params
         self.task_id = task_id
         self.trigger_rule = trigger_rule
-        self.dag_name = kwargs.get("dag_name") if "dag_name" in kwargs else None
         self.properties = {}
         self._parse_oozie_node()
 
@@ -53,7 +52,6 @@ class SubworkflowMapper(ActionMapper):
             properties=app_path + self.PROPERTIES_SUFFIX,
             configuration=app_path + self.CONFIGURATION_SUFFIX,
             start_days_ago=0,
-            dag_name=f"{self.dag_name}.{self.task_id}",
             config_properties=self.get_config_properties(),
         )
         converter.convert()
