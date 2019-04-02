@@ -28,7 +28,7 @@ class TestDecisionMapper(unittest.TestCase):
         case2 = ET.SubElement(switch, "case", attrib={"to": "task2"})
         case3 = ET.SubElement(switch, "default", attrib={"to": "task3"})
 
-        case1.text = "False"
+        case1.text = "${firstNotNull('', '')}"
         case2.text = "True"
         # default does not have text
 
@@ -42,6 +42,8 @@ class TestDecisionMapper(unittest.TestCase):
         self.assertEqual("test_id", mapper.task_id)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.et.getroot(), mapper.oozie_node)
+        # test conversion from Oozie EL to Jinja
+        self.assertEqual("first_not_null('', '')", next(iter(mapper.case_dict)))
 
     def test_convert_to_text(self):
         # TODO
