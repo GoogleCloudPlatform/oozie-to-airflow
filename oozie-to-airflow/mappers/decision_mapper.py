@@ -20,6 +20,7 @@ from airflow.utils.trigger_rule import TriggerRule
 
 from definitions import ROOT_DIR
 from mappers.base_mapper import BaseMapper
+from utils.el_utils import convert_el_to_jinja
 
 
 class DecisionMapper(BaseMapper):
@@ -54,17 +55,20 @@ class DecisionMapper(BaseMapper):
         self.task_id = task_id
         self.trigger_rule = trigger_rule
         self.params = params
+        self.case_dict = self._get_cases()
 
-    def convert_to_text(self):
+    def _get_cases(self):
         switch_node = self.oozie_node[0]
-
         case_dict = collections.OrderedDict()
         for case in switch_node:
             if "case" in case.tag:
-                case_dict[case.text] = case.attrib["to"]
+                case_text = convert_el_to_jinja(case.text.strip(), quote=True)
+                case_dict[case_text] = case.attrib["to"]
             else:  # Default return value
                 case_dict["default"] = case.attrib["to"]
+        return case_dict
 
+    def convert_to_text(self):
         template_env = jinja2.Environment(
             loader=jinja2.FileSystemLoader(searchpath=os.path.join(ROOT_DIR, "templates/")),
             trim_blocks=True,
@@ -73,9 +77,13 @@ class DecisionMapper(BaseMapper):
 
         template = template_env.get_template("decision.tpl")
         return template.render(
-            task_id=self.task_id, trigger_rule=self.trigger_rule, case_dict=case_dict.items()
+            task_id=self.task_id, trigger_rule=self.trigger_rule, case_dict=self.case_dict.items()
         )
 
     @staticmethod
     def required_imports():
-        return ["from airflow.operators import python_operator"]
+        return [
+            "from airflow.operators import python_operator",
+            "from airflow.utils import dates",
+            "from o2a_libs.el_basic_functions import first_not_null",
+        ]
