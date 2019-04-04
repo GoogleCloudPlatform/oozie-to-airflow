@@ -12,27 +12,26 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+from typing import Set
 
 import jinja2
-from airflow.operators import bash_operator
+from airflow.operators.bash_operator import BashOperator
 
 from definitions import ROOT_DIR
 from mappers.base_mapper import BaseMapper
 
 
 class KillMapper(BaseMapper):
-    def convert_to_text(self):
+    def convert_to_text(self) -> str:
         template_loader = jinja2.FileSystemLoader(searchpath=os.path.join(ROOT_DIR, "templates/"))
         template_env = jinja2.Environment(loader=template_loader)
 
         template = template_env.get_template("kill.tpl")
         return template.render(task_id=self.task_id, trigger_rule=self.trigger_rule)
 
-    def convert_to_airflow_op(self):
-        return bash_operator.BashOperator(
-            bash_command="exit 1", task_id=self.task_id, trigger_rule=self.trigger_rule
-        )
+    def convert_to_airflow_op(self) -> BashOperator:
+        return BashOperator(bash_command="exit 1", task_id=self.task_id, trigger_rule=self.trigger_rule)
 
     @staticmethod
-    def required_imports():
-        return ["from airflow.operators import bash_operator"]
+    def required_imports() -> Set[str]:
+        return {"from airflow.operators import bash_operator"}

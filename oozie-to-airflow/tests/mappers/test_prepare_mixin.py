@@ -27,7 +27,7 @@ class TestPrepareMixin(unittest.TestCase):
         pig = ET.Element("pig")
         name_node = ET.SubElement(pig, "name-node")
         self.et = ET.ElementTree(pig)
-        name_node.text = "hdfs://localhost:8020"
+        name_node.text = "hdfs://"
 
     def test_with_prepare(self):
         pig = self.et.getroot()

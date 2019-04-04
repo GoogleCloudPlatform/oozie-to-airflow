@@ -12,13 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from mappers.base_mapper import BaseMapper
+import os
 
+O2A_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir, os.path.pardir))
+EXAMPLES_PATH = os.path.join(O2A_PATH, "examples")
 
-# noinspection PyAbstractClass
-class ActionMapper(BaseMapper):
-    def has_prepare(self) -> bool:
-        """
-        Returns whether or not the Action node has a prepare statement.
-        """
-        return False
+# Mapper examples
+EXAMPLE_DEMO_PATH = os.path.join(EXAMPLES_PATH, "demo")
+EXAMPLE_EL_PATH = os.path.join(EXAMPLES_PATH, "el")
+EXAMPLE_PIG_PATH = os.path.join(EXAMPLES_PATH, "pig")
+EXAMPLE_SUBWORKFLOW_PATH = os.path.join(EXAMPLES_PATH, "subwf")

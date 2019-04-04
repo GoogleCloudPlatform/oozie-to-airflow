@@ -56,7 +56,7 @@ class TestSparkMapper(unittest.TestCase):
             "--executor-memory 20G --num-executors 50 --conf "
             'spark.executor.extraJavaOptions="-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"'
         )
-        arg1.text = "inputpath=hdfs://localhost/input/file.txt"
+        arg1.text = "inputpath=hdfs:///input/file.txt"
         arg2.text = "value=2"
 
         self.et = ET.ElementTree(spark)

@@ -44,7 +44,7 @@ class TestPigMapper(unittest.TestCase):
         self.et = ET.ElementTree(pig)
 
         res_man.text = "localhost:8032"
-        name_node.text = "hdfs://localhost:8020"
+        name_node.text = "hdfs://"
         script.text = "id.pig"
 
         delete1.set("path", "${nameNode}/examples/output-data/demo/pig-node")
@@ -69,8 +69,8 @@ class TestPigMapper(unittest.TestCase):
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.et.getroot(), mapper.oozie_node)
         self.assertEqual("localhost:8032", mapper.resource_manager)
-        self.assertEqual("hdfs://localhost:8020", mapper.name_node)
-        self.assertEqual("id.pig", mapper.script)
+        self.assertEqual("hdfs://", mapper.name_node)
+        self.assertEqual("id.pig", mapper.script_file_name)
         self.assertEqual("${queueName}", mapper.properties["mapred.job.queue.name"])
         self.assertEqual("/user/${wf:user()}/${examplesRoot}/input-data/text", mapper.params_dict["INPUT"])
         self.assertEqual(
@@ -84,7 +84,7 @@ class TestPigMapper(unittest.TestCase):
         self.et.find("script").text = "${scriptName}"
         params = {
             "resourceManager": "localhost:9999",
-            "nameNode": "hdfs://localhost:8021",
+            "nameNode": "hdfs://",
             "queueName": "myQueue",
             "examplesRoot": "examples",
             "scriptName": "id_el.pig",
@@ -99,8 +99,8 @@ class TestPigMapper(unittest.TestCase):
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.et.getroot(), mapper.oozie_node)
         self.assertEqual("localhost:9999", mapper.resource_manager)
-        self.assertEqual("hdfs://localhost:8021", mapper.name_node)
-        self.assertEqual("id_el.pig", mapper.script)
+        self.assertEqual("hdfs://", mapper.name_node)
+        self.assertEqual("id_el.pig", mapper.script_file_name)
         self.assertEqual("myQueue", mapper.properties["mapred.job.queue.name"])
         self.assertEqual("/user/${wf:user()}/examples/input-data/text", mapper.params_dict["INPUT"])
         self.assertEqual(
