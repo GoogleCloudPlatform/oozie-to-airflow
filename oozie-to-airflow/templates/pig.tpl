@@ -4,7 +4,7 @@
 )
 
 {{ task_id }} = dataproc_operator.DataProcPigOperator(
-    query_uri='{}/{}'.format(PARAMS['gcp_uri_prefix'], '{{ script }}'),
+    query_uri='{}/{}'.format(PARAMS['gcp_uri_prefix'], '{{ script_file_name }}'),
     task_id='{{ task_id }}',
     trigger_rule='{{ trigger_rule }}',
     variables={{ params_dict }},

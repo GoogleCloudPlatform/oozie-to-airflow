@@ -24,8 +24,8 @@
             <resource-manager>${resourceManager}</resource-manager>
             <name-node>${nameNode}</name-node>
             <prepare>
-                <create path="${nameNode}/examples/input-data/demo/pig-node"/>
-                <delete path="${nameNode}/examples/output-data/demo/pig-node"/>
+                <create path="/user/pig/examples/test_pig_node/created-folder"/>
+                <delete path="/user/pig/examples/test_pig_node/output-data"/>
             </prepare>
             <configuration>
                 <property>
@@ -38,9 +38,13 @@
                 </property>
             </configuration>
             <script>id.pig</script>
-            <param>INPUT=/examples/test-data.txt</param>
-            <param>OUTPUT=/examples/output-data/demo/pig-node</param>
+            <param>INPUT=/user/pig/examples/test_pig_node/input-data/test-data.txt</param>
+            <param>OUTPUT=/user/pig/examples/test_pig_node/output-data</param>
         </pig>
+        <file>test_dir/test.txt#test_link.txt</file>
+        <file>/user/pig/examples/test_pig_node/test_dir/test2.zip#test_link.zip</file>
+        <archive>test_dir/test2.zip#test_zip_dir</archive>
+        <archive>test_dir/test3.zip#test3_zip_dir</archive>
         <ok to="end"/>
         <error to="fail"/>
     </action>

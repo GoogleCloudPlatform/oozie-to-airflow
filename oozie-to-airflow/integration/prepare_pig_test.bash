@@ -1,17 +1,31 @@
 #!/usr/bin/env bash
 set -x
 MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-BASE_DIR=${MY_DIR}/..
-REMOTE_HOME=$1 # TODO There were issues with permission with SCP. Patched this way for now, needs rethinking.
+LOCAL_BASE_DIR=${MY_DIR}/..
+LOCAL_EXAMPLE_DIR=examples
+LOCAL_APP_DIR=pig
 
-gcloud dataproc jobs submit pig --cluster=cluster-o2a --region=europe-west3 \
---execute 'fs -mkdir -p /examples'
+HADOOP_USER=pig
+TEMP_APPLICATION_FOLDER=/tmp/tmp_pig_dir
+EXAMPLE_DIR=examples
+TEST_APP=test_pig_node
 
-gcloud compute scp ${BASE_DIR}/examples/pig/test-data.txt cluster-o2a-m:${REMOTE_HOME} \
---zone=europe-west3-b
+CLUSTER_MASTER=cluster-o2a-m
+CLUSTER_NAME=cluster-o2a
+REGION=europe-west3
+ZONE=europe-west3-b
 
-gcloud dataproc jobs submit pig --cluster=cluster-o2a --region=europe-west3 \
---execute 'fs -rm /examples/test-data.txt'
 
-gcloud dataproc jobs submit pig --cluster=cluster-o2a --region=europe-west3 \
---execute 'fs -copyFromLocal '${REMOTE_HOME}'/test-data.txt /examples/test-data.txt'
+gcloud compute ssh ${CLUSTER_MASTER} --command "rm -rf ${TEMP_APPLICATION_FOLDER}" --zone=${ZONE}
+gcloud compute ssh ${CLUSTER_MASTER} --command "mkdir -p ${TEMP_APPLICATION_FOLDER}" --zone=${ZONE}
+gcloud compute scp --recurse ${LOCAL_BASE_DIR}/${LOCAL_EXAMPLE_DIR}/${LOCAL_APP_DIR} ${CLUSTER_MASTER}:${TEMP_APPLICATION_FOLDER}/${TEST_APP} --zone=${ZONE}
+
+gcloud dataproc jobs submit pig --cluster=${CLUSTER_NAME} --region=${REGION} \
+    --execute "fs -rm -r -f /user/${HADOOP_USER}/${EXAMPLE_DIR}"
+
+gcloud dataproc jobs submit pig --cluster=${CLUSTER_NAME} --region=${REGION} \
+    --execute "fs -mkdir -p /user/${HADOOP_USER}/${EXAMPLE_DIR}"
+
+gcloud dataproc jobs submit pig --cluster=${CLUSTER_NAME} --region=${REGION} \
+    --execute "fs -copyFromLocal ${TEMP_APPLICATION_FOLDER}/${TEST_APP} /user/${HADOOP_USER}/${EXAMPLE_DIR}/"
+    # Note! The target folder will be /user/<USER>/examples/<TEST_APP>/

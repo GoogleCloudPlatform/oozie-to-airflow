@@ -11,11 +11,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import Dict, List
+
 from utils import xml_utils, el_utils
+import xml.etree.ElementTree as ET
 
 
 class PrepareMixin:
-    def get_prepare_command(self, oozie_node, params):
+    def get_prepare_command(self, oozie_node: ET.Element, params: Dict[str, str]):
         # In BashOperator in Composer we can't read from $DAGS_FOLDER (~/dags) - permission denied.
         # However we can read from ~/data -> /home/airflow/gcs/data.
         # The easiest way to access it is using the $DAGS_FOLDER env variable.
@@ -32,7 +35,7 @@ class PrepareMixin:
         return ""
 
     @staticmethod
-    def _parse_prepare_node(oozie_node, params):
+    def _parse_prepare_node(oozie_node: ET.Element, params: Dict[str, str]) -> (List[str], List[str]):
         """
         <prepare>
             <delete path="[PATH]"/>

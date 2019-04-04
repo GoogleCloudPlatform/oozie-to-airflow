@@ -11,9 +11,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+import os
 import re
 import logging
+from typing import Dict
 
 from o2a_libs import el_basic_functions
 
@@ -128,7 +129,7 @@ def convert_el_to_jinja(oozie_el, quote=True):
     return "'" + jinjafied_el + "'" if quote else jinjafied_el
 
 
-def parse_els(properties_file, prop_dict=None):
+def parse_els(properties_file: str, prop_dict: Dict[str, str] = None):
     """
     Parses the properties file into a dictionary, if the value has
     and EL function in it, it gets replaced with the corresponding
@@ -147,12 +148,14 @@ def parse_els(properties_file, prop_dict=None):
     if prop_dict is None:
         prop_dict = {}
     if properties_file:
-        with open(properties_file, "r") as prop_file:
-            for line in prop_file.readlines():
-                if line.startswith("#") or line.startswith(" ") or line.startswith("\n"):
-                    continue
-                else:
-                    props = [x.strip() for x in line.split("=", 1)]
-                    prop_dict[props[0]] = replace_el_with_var(props[1], prop_dict, quote=False)
-
+        if os.path.isfile(properties_file):
+            with open(properties_file, "r") as prop_file:
+                for line in prop_file.readlines():
+                    if line.startswith("#") or line.startswith(" ") or line.startswith("\n"):
+                        continue
+                    else:
+                        props = [x.strip() for x in line.split("=", 1)]
+                        prop_dict[props[0]] = replace_el_with_var(props[1], prop_dict, quote=False)
+        else:
+            logging.warning("The job.properties file is missing: %s ", properties_file)
     return prop_dict
