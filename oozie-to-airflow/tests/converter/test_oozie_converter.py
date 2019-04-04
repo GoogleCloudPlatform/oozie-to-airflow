@@ -15,46 +15,45 @@ import io
 import unittest
 
 import oozie_converter
-from oozie_converter import OozieConverter
 from converter import parsed_node
+from converter.converter import OozieConverter
+from converter.mappers import CONTROL_MAP, ACTION_MAP
 from definitions import TPL_PATH
 import jinja2
 from mappers import dummy_mapper
+from tests.utils.test_paths import EXAMPLE_DEMO_PATH
 
 
 class TestOozieConverter(unittest.TestCase):
-    def test_parse_args_input(self):
-        FILE_NAME = "/tmp/does.not.exist"
-        args = oozie_converter.parse_args(["-i", FILE_NAME])
-        self.assertEqual(args.input, FILE_NAME)
+    def setUp(self):
+        self.converter = OozieConverter(
+            dag_name="test_dag",
+            input_directory_path=EXAMPLE_DEMO_PATH,
+            output_directory_path="/tmp",
+            action_mapper=ACTION_MAP,
+            control_mapper=CONTROL_MAP,
+        )
 
-    def test_parse_args_prop_file(self):
-        FILE_NAME = "/tmp/does.not.exist"
-        PROP_FILE_NAME = "/tmp/job.properties"
-        args = oozie_converter.parse_args(["-i", FILE_NAME, "-p", PROP_FILE_NAME])
-        self.assertEqual(args.input, FILE_NAME)
-        self.assertEqual(args.properties, PROP_FILE_NAME)
-
-    def test_parse_args_output_file(self):
-        FILE_NAME = "/tmp/does.not.exist"
-        OUT_FILE_NAME = "/tmp/out.py"
-        args = oozie_converter.parse_args(["-i", FILE_NAME, "-o", OUT_FILE_NAME])
-        self.assertEqual(args.input, FILE_NAME)
-        self.assertEqual(args.output, OUT_FILE_NAME)
+    def test_parse_args_input_output_file(self):
+        input_dir = "/tmp/does.not.exist/"
+        output_dir = "/tmp/out/"
+        args = oozie_converter.parse_args(["-i", input_dir, "-o", output_dir])
+        self.assertEqual(args.input_directory_path, input_dir)
+        self.assertEqual(args.output_directory_path, output_dir)
 
     def test_parse_args_user(self):
-        FILE_NAME = "/tmp/does.not.exist"
-        USER = "oozie_test"
-        args = oozie_converter.parse_args(["-i", FILE_NAME, "-u", USER])
-        self.assertEqual(args.input, FILE_NAME)
-        self.assertEqual(args.user, USER)
+        input_dir = "/tmp/does.not.exist"
+        output_dir = "/tmp/out/"
+        user = "oozie_test"
+        args = oozie_converter.parse_args(["-i", input_dir, "-o", output_dir, "-u", user])
+        self.assertEqual(args.user, user)
 
     def test_write_operators(self):
-        node = parsed_node.ParsedNode(dummy_mapper.DummyMapper(None, "task1"))
+        node = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=None, task_id="task1"))
         ops = {"task1": node}
 
         fp = io.StringIO()
-        OozieConverter.write_operators(fp, ops, indent=0)
+        self.converter.write_operators(fp=fp, operators=ops, indent=0)
         fp.seek(0)
 
         self.assertEqual(node.operator.convert_to_text(), fp.read())
@@ -80,18 +79,18 @@ class TestOozieConverter(unittest.TestCase):
         self.assertEqual(expected, fp.read())
 
     def test_write_dag_header(self):
-        DAG_NAME = "dag_name"
-        TEMPLATE = "dag.tpl"
+        dag_name = "dag_name"
+        template = "dag.tpl"
 
         fp = io.StringIO()
         OozieConverter.write_dag_header(
-            fp, DAG_NAME, template=TEMPLATE, schedule_interval=1, start_days_ago=1
+            fp, dag_name, template=template, schedule_interval=1, start_days_ago=1
         )
         fp.seek(0)
 
         template_loader = jinja2.FileSystemLoader(searchpath=TPL_PATH)
         template_env = jinja2.Environment(loader=template_loader)
-        template = template_env.get_template(TEMPLATE)
-        expected = template.render(dag_name=DAG_NAME, schedule_interval=1, start_days_ago=1)
+        template = template_env.get_template(template)
+        expected = template.render(dag_name=dag_name, schedule_interval=1, start_days_ago=1)
 
         self.assertEqual(expected, fp.read())

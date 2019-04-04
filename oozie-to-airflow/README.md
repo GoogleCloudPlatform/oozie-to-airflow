@@ -150,12 +150,8 @@ A workflow definition may have zero or more kill nodes.
 ## Running the Program
 
 #### Required Python Dependencies
-* python > 3.5
-* apache-airflow
-* paramiko
-* sshtunnel
-* jinja2
-* parameterized (for unit tests)
+* python > 3.6
+* see [requirements.txt](requirements.txt)
 
 Additionally the shell script included in the directory, `init.sh`, can
 be ran to set up the dependencies and ready your machine to run the examples.

@@ -12,9 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+from typing import Dict, Set
+from xml.etree.ElementTree import Element
 
-from airflow.contrib.operators import ssh_operator
 from airflow.contrib.hooks import ssh_hook
+from airflow.contrib.operators.ssh_operator import SSHOperator
 from airflow.utils.trigger_rule import TriggerRule
 
 from definitions import ROOT_DIR
@@ -33,15 +35,19 @@ class SSHMapper(ActionMapper):
 
     def __init__(
         self,
-        oozie_node,
-        task_id,
-        trigger_rule=TriggerRule.ALL_SUCCESS,
-        params={},
-        template="ssh.tpl",
+        oozie_node: Element,
+        task_id: str,
+        trigger_rule: str = TriggerRule.ALL_SUCCESS,
+        params: Dict[str, str] = None,
+        template: str = "ssh.tpl",
         **kwargs,
     ):
-        ActionMapper.__init__(self, oozie_node, task_id, trigger_rule, **kwargs)
+        ActionMapper.__init__(
+            self, oozie_node=oozie_node, task_id=task_id, trigger_rule=trigger_rule, **kwargs
+        )
 
+        if params is None:
+            params = {}
         self.template = template
 
         cmd_node = self.oozie_node.find("command")
@@ -60,14 +66,14 @@ class SSHMapper(ActionMapper):
         self.user = user_host[0]
         self.host = user_host[1]
 
-    def convert_to_text(self):
+    def convert_to_text(self) -> str:
         template_loader = jinja2.FileSystemLoader(searchpath=os.path.join(ROOT_DIR, "templates/"))
         template_env = jinja2.Environment(loader=template_loader)
 
         template = template_env.get_template(self.template)
         return template.render(**self.__dict__)
 
-    def convert_to_airflow_op(self):
+    def convert_to_airflow_op(self) -> SSHOperator:
         """
         Oozie has 3 properties, host, arguments, command, and capture-output
         Airflow has host and command
@@ -75,14 +81,14 @@ class SSHMapper(ActionMapper):
         returns an SSH Operator
         """
         hook = ssh_hook.SSHHook(ssh_conn_id="ssh_default", username=self.user, remote_host=self.host)
-        return ssh_operator.SSHOperator(
+        return SSHOperator(
             ssh_hook=hook, task_id=self.task_id, command=self.command, trigger_rule=self.trigger_rule
         )
 
     @staticmethod
-    def required_imports():
-        return [
+    def required_imports() -> Set[str]:
+        return {
             "from airflow.utils import dates",
             "from airflow.contrib.operators import ssh_operator",
             "from airflow.contrib.hooks import ssh_hook",
-        ]
+        }

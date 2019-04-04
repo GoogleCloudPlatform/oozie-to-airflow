@@ -16,45 +16,53 @@ import unittest
 from unittest import mock
 from xml.etree import ElementTree as ET
 
-from converter import oozie_parser
+from converter import parser
 from converter import parsed_node
+from converter.mappers import ACTION_MAP, CONTROL_MAP
 from definitions import ROOT_DIR
 from mappers import dummy_mapper
 from mappers import ssh_mapper
+from tests.utils.test_paths import EXAMPLE_DEMO_PATH
 
 
 class TestOozieParser(unittest.TestCase):
     def setUp(self):
         params = {}
-        self.parser = oozie_parser.OozieParser(None, params=params)
+        self.parser = parser.OozieParser(
+            input_directory_path=EXAMPLE_DEMO_PATH,
+            output_directory_path="/tmp",
+            params=params,
+            action_mapper=ACTION_MAP,
+            control_mapper=CONTROL_MAP,
+        )
 
     def test_parse_kill_node(self):
-        NODE_NAME = "kill_name"
-        kill = ET.Element("kill", attrib={"name": NODE_NAME})
+        node_name = "kill_name"
+        kill = ET.Element("kill", attrib={"name": node_name})
         message = ET.SubElement(kill, "message")
         message.text = "kill-text-to-log"
 
         self.parser._parse_kill_node(kill)
 
-        self.assertIn(NODE_NAME, self.parser.OPERATORS)
-        for depend in self.parser.OPERATORS[NODE_NAME].operator.required_imports():
+        self.assertIn(node_name, self.parser.OPERATORS)
+        for depend in self.parser.OPERATORS[node_name].operator.required_imports():
             self.assertIn(depend, self.parser.DEPENDENCIES)
 
     def test_parse_end_node(self):
-        NODE_NAME = "end_name"
-        end = ET.Element("end", attrib={"name": NODE_NAME})
+        node_name = "end_name"
+        end = ET.Element("end", attrib={"name": node_name})
 
         self.parser._parse_end_node(end)
 
-        self.assertIn(NODE_NAME, self.parser.OPERATORS)
-        for depend in self.parser.OPERATORS[NODE_NAME].operator.required_imports():
+        self.assertIn(node_name, self.parser.OPERATORS)
+        for depend in self.parser.OPERATORS[node_name].operator.required_imports():
             self.assertIn(depend, self.parser.DEPENDENCIES)
 
-    @mock.patch("converter.oozie_parser.OozieParser.parse_node")
+    @mock.patch("converter.parser.OozieParser.parse_node")
     def test_parse_fork_node(self, parse_node_mock):
-        NODE_NAME = "fork_name"
+        node_name = "fork_name"
         root = ET.Element("root")
-        fork = ET.SubElement(root, "fork", attrib={"name": NODE_NAME})
+        fork = ET.SubElement(root, "fork", attrib={"name": node_name})
         path1 = ET.SubElement(fork, "path", attrib={"start": "task1"})
         path2 = ET.SubElement(fork, "path", attrib={"start": "task2"})
         node1 = ET.SubElement(root, "action", attrib={"name": "task1"})
@@ -64,31 +72,31 @@ class TestOozieParser(unittest.TestCase):
 
         self.parser._parse_fork_node(root, fork)
 
-        p_op = self.parser.OPERATORS[NODE_NAME]
+        p_op = self.parser.OPERATORS[node_name]
         self.assertIn("task1", p_op.get_downstreams())
         self.assertIn("task2", p_op.get_downstreams())
-        self.assertIn(NODE_NAME, self.parser.OPERATORS)
+        self.assertIn(node_name, self.parser.OPERATORS)
         parse_node_mock.assert_any_call(root, node1)
         parse_node_mock.assert_any_call(root, node2)
         for depend in p_op.operator.required_imports():
             self.assertIn(depend, self.parser.DEPENDENCIES)
 
     def test_parse_join_node(self):
-        NODE_NAME = "join_name"
-        END_NAME = "end_name"
-        join = ET.Element("join", attrib={"name": NODE_NAME, "to": END_NAME})
+        node_name = "join_name"
+        end_name = "end_name"
+        join = ET.Element("join", attrib={"name": node_name, "to": end_name})
 
         self.parser._parse_join_node(join)
 
-        p_op = self.parser.OPERATORS[NODE_NAME]
-        self.assertIn(NODE_NAME, self.parser.OPERATORS)
-        self.assertIn(END_NAME, p_op.get_downstreams())
+        p_op = self.parser.OPERATORS[node_name]
+        self.assertIn(node_name, self.parser.OPERATORS)
+        self.assertIn(end_name, p_op.get_downstreams())
         for depend in p_op.operator.required_imports():
             self.assertIn(depend, self.parser.DEPENDENCIES)
 
     def test_parse_decision_node(self):
-        NODE_NAME = "decision_node"
-        decision = ET.Element("decision", attrib={"name": NODE_NAME})
+        node_name = "decision_node"
+        decision = ET.Element("decision", attrib={"name": node_name})
         switch = ET.SubElement(decision, "switch")
         case1 = ET.SubElement(switch, "case", attrib={"to": "down1"})
         case1.text = "${fs:fileSize(secondjobOutputDir) gt 10 * GB}"
@@ -98,8 +106,8 @@ class TestOozieParser(unittest.TestCase):
 
         self.parser._parse_decision_node(decision)
 
-        p_op = self.parser.OPERATORS[NODE_NAME]
-        self.assertIn(NODE_NAME, self.parser.OPERATORS)
+        p_op = self.parser.OPERATORS[node_name]
+        self.assertIn(node_name, self.parser.OPERATORS)
         self.assertIn("down1", p_op.get_downstreams())
         self.assertIn("down2", p_op.get_downstreams())
         self.assertIn("end1", p_op.get_downstreams())
@@ -109,23 +117,23 @@ class TestOozieParser(unittest.TestCase):
     @mock.patch("uuid.uuid4")
     def test_parse_start_node(self, uuid_mock):
         uuid_mock.return_value = "1234"
-        NODE_NAME = "start_node_1234"
-        END_NAME = "end_name"
-        start = ET.Element("start", attrib={"to": END_NAME})
+        node_name = "start_node_1234"
+        end_name = "end_name"
+        start = ET.Element("start", attrib={"to": end_name})
 
         self.parser._parse_start_node(start)
 
-        p_op = self.parser.OPERATORS[NODE_NAME]
-        self.assertIn(NODE_NAME, self.parser.OPERATORS)
-        self.assertIn(END_NAME, p_op.get_downstreams())
+        p_op = self.parser.OPERATORS[node_name]
+        self.assertIn(node_name, self.parser.OPERATORS)
+        self.assertIn(end_name, p_op.get_downstreams())
         for depend in p_op.operator.required_imports():
             self.assertIn(depend, self.parser.DEPENDENCIES)
 
     def test_parse_action_node_ssh(self):
         self.parser.ACTION_MAP = {"ssh": ssh_mapper.SSHMapper}
-        NODE_NAME = "action_name"
+        node_name = "action_name"
         # Set up XML to mimic Oozie
-        action = ET.Element("action", attrib={"name": NODE_NAME})
+        action = ET.Element("action", attrib={"name": node_name})
         ssh = ET.SubElement(action, "ssh")
         ok = ET.SubElement(action, "ok", attrib={"to": "end1"})
         error = ET.SubElement(action, "error", attrib={"to": "fail1"})
@@ -143,8 +151,8 @@ class TestOozieParser(unittest.TestCase):
 
         self.parser._parse_action_node(action)
 
-        p_op = self.parser.OPERATORS[NODE_NAME]
-        self.assertIn(NODE_NAME, self.parser.OPERATORS)
+        p_op = self.parser.OPERATORS[node_name]
+        self.assertIn(node_name, self.parser.OPERATORS)
         self.assertIn("end1", p_op.get_downstreams())
         self.assertEqual("fail1", p_op.get_error_downstream_name())
         for depend in p_op.operator.required_imports():
@@ -173,49 +181,49 @@ class TestOozieParser(unittest.TestCase):
         for depend in p_op.operator.required_imports():
             self.assertIn(depend, self.parser.DEPENDENCIES)
 
-    @mock.patch("converter.oozie_parser.OozieParser._parse_action_node")
+    @mock.patch("converter.parser.OozieParser._parse_action_node")
     def test_parse_node_action(self, action_mock):
         root = ET.Element("root")
         action = ET.SubElement(root, "action", attrib={"name": "test_name"})
         self.parser.parse_node(root, action)
         action_mock.assert_called_once_with(action)
 
-    @mock.patch("converter.oozie_parser.OozieParser._parse_start_node")
+    @mock.patch("converter.parser.OozieParser._parse_start_node")
     def test_parse_node_start(self, start_mock):
         root = ET.Element("root")
         start = ET.SubElement(root, "start", attrib={"name": "test_name"})
         self.parser.parse_node(root, start)
         start_mock.assert_called_once_with(start)
 
-    @mock.patch("converter.oozie_parser.OozieParser._parse_kill_node")
+    @mock.patch("converter.parser.OozieParser._parse_kill_node")
     def test_parse_node_kill(self, kill_mock):
         root = ET.Element("root")
         kill = ET.SubElement(root, "kill", attrib={"name": "test_name"})
         self.parser.parse_node(root, kill)
         kill_mock.assert_called_once_with(kill)
 
-    @mock.patch("converter.oozie_parser.OozieParser._parse_end_node")
+    @mock.patch("converter.parser.OozieParser._parse_end_node")
     def test_parse_node_end(self, end_mock):
         root = ET.Element("root")
         end = ET.SubElement(root, "end", attrib={"name": "test_name"})
         self.parser.parse_node(root, end)
         end_mock.assert_called_once_with(end)
 
-    @mock.patch("converter.oozie_parser.OozieParser._parse_fork_node")
+    @mock.patch("converter.parser.OozieParser._parse_fork_node")
     def test_parse_node_fork(self, fork_mock):
         root = ET.Element("root")
         fork = ET.SubElement(root, "fork", attrib={"name": "test_name"})
         self.parser.parse_node(root, fork)
         fork_mock.assert_called_once_with(root, fork)
 
-    @mock.patch("converter.oozie_parser.OozieParser._parse_join_node")
+    @mock.patch("converter.parser.OozieParser._parse_join_node")
     def test_parse_node_join(self, join_mock):
         root = ET.Element("root")
         join = ET.SubElement(root, "join", attrib={"name": "test_name"})
         self.parser.parse_node(root, join)
         join_mock.assert_called_once_with(join)
 
-    @mock.patch("converter.oozie_parser.OozieParser._parse_decision_node")
+    @mock.patch("converter.parser.OozieParser._parse_decision_node")
     def test_parse_node_decision(self, decision_mock):
         root = ET.Element("root")
         decision = ET.SubElement(root, "decision", attrib={"name": "test_name"})
@@ -223,17 +231,17 @@ class TestOozieParser(unittest.TestCase):
         decision_mock.assert_called_once_with(decision)
 
     def test_create_relations(self):
-        op1 = parsed_node.ParsedNode(dummy_mapper.DummyMapper(None, "task1"))
+        op1 = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=None, task_id="task1"))
         op1.downstream_names = ["task2", "task3"]
         op1.error_xml = "fail1"
-        op2 = parsed_node.ParsedNode(dummy_mapper.DummyMapper(None, "task2"))
+        op2 = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=None, task_id="task2"))
         op2.downstream_names = ["task3"]
         op2.error_xml = "fail1"
-        op3 = parsed_node.ParsedNode(dummy_mapper.DummyMapper(None, "task3"))
+        op3 = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=None, task_id="task3"))
         op3.downstream_names = ["end1"]
         op3.error_xml = "fail1"
-        end = parsed_node.ParsedNode(dummy_mapper.DummyMapper(None, "end1"))
-        fail = parsed_node.ParsedNode(dummy_mapper.DummyMapper(None, "fail1"))
+        end = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=None, task_id="end1"))
+        fail = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=None, task_id="fail1"))
         op_dict = {"task1": op1, "task2": op2, "task3": op3, "end1": end, "fail1": fail}
         self.parser.OPERATORS.update(op_dict)
         self.parser.create_relations()
@@ -247,17 +255,17 @@ class TestOozieParser(unittest.TestCase):
         self.assertIn("task1.set_downstream(fail1)", self.parser.relations)
 
     def test_update_trigger_rules(self):
-        op1 = parsed_node.ParsedNode(dummy_mapper.DummyMapper(None, "task1"))
+        op1 = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=None, task_id="task1"))
         op1.downstream_names = ["task2", "task3"]
         op1.error_xml = "fail1"
-        op2 = parsed_node.ParsedNode(dummy_mapper.DummyMapper(None, "task2"))
+        op2 = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=None, task_id="task2"))
         op2.downstream_names = ["task3"]
         op2.error_xml = "fail1"
-        op3 = parsed_node.ParsedNode(dummy_mapper.DummyMapper(None, "task3"))
+        op3 = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=None, task_id="task3"))
         op3.downstream_names = ["end1"]
         op3.error_xml = "fail1"
-        end = parsed_node.ParsedNode(dummy_mapper.DummyMapper(None, "end1"))
-        fail = parsed_node.ParsedNode(dummy_mapper.DummyMapper(None, "fail1"))
+        end = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=None, task_id="end1"))
+        fail = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=None, task_id="fail1"))
         op_dict = {"task1": op1, "task2": op2, "task3": op3, "end1": end, "fail1": fail}
 
         self.parser.OPERATORS.update(op_dict)

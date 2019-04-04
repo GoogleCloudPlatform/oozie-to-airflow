@@ -12,20 +12,35 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import ast
+import os
 import unittest
+from contextlib import suppress
 from unittest import mock
 from xml.etree import ElementTree as ET
 
 from airflow.utils.trigger_rule import TriggerRule
 
-from mappers import subwf_mapper
+from converter.mappers import CONTROL_MAP, ACTION_MAP
+from mappers import subworkflow_mapper
+from tests.utils.test_paths import EXAMPLE_SUBWORKFLOW_PATH
 
 
 class TestSubworkflowMapper(unittest.TestCase):
-    params = {
+
+    subworkflow_params = {
+        "dataproc_cluster": "test_cluster",
+        "gcp_conn_id": "google_cloud_default",
+        "gcp_region": "europe-west3",
+        "gcp_uri_prefix": "gs://test_bucket/dags",
+        "nameNode": "hdfs://",
+        "oozie.wf.application.path": "hdfs:///user/pig/examples/test_pig_node",
+    }
+
+    main_params = {
         "examplesRoot": "examples",
-        "nameNode": "hdfs://localhost:8020",
+        "nameNode": "hdfs://",
         "resourceManager": "localhost:8032",
+        "dataproc_cluster": "cluster-o2a",
     }
 
     def setUp(self):
@@ -41,67 +56,85 @@ class TestSubworkflowMapper(unittest.TestCase):
         name1.text = "resourceManager"
         value1.text = "${resourceManager}"
 
-    @mock.patch("oozie_converter.OozieSubworkflowConverter")
-    def test_create_mapper_jinja(self, mock_subwf_converter):
+    @mock.patch("utils.el_utils.parse_els")
+    def test_create_mapper_jinja(self, parse_els):
+        # Given
+        parse_els.return_value = self.subworkflow_params
+        # Removing subdag
+        with suppress(OSError):
+            os.remove("/tmp/test.test_id.py")
         # When
-        mapper = subwf_mapper.SubworkflowMapper(
+        mapper = subworkflow_mapper.SubworkflowMapper(
             oozie_node=self.et.getroot(),
             task_id="test_id",
+            dag_name="test",
+            input_directory_path=EXAMPLE_SUBWORKFLOW_PATH,
+            output_directory_path="/tmp",
+            action_mapper=ACTION_MAP,
+            control_mapper=CONTROL_MAP,
             trigger_rule=TriggerRule.DUMMY,
-            params=self.params,
+            params=self.main_params,
         )
 
         # Then
         self.assertEqual("test_id", mapper.task_id)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.et.getroot(), mapper.oozie_node)
-        self.assertEqual(self.params, mapper.params)
+        self.assertEqual(self.main_params, mapper.params)
         self.assertEqual("subwf.tpl", mapper.template)
-        mock_subwf_converter.assert_called_once()
         # Propagate config node is present, should forward config properties
         self.assertEqual({"resourceManager": "localhost:8032"}, mapper.get_config_properties())
+        self.assertTrue(os.path.isfile("/tmp/test.test_id.py"))
 
-    @mock.patch("oozie_converter.OozieSubworkflowConverter")
-    def test_create_mapper_jinja_no_propagate(self, mock_subwf_converter):
+    @mock.patch("utils.el_utils.parse_els")
+    def test_create_mapper_jinja_no_propagate(self, parse_els):
         # Given
+        parse_els.return_value = self.subworkflow_params
+        # Removing subdag
+        with suppress(OSError):
+            os.remove("/tmp/test.test_id.py")
         # Removing the propagate-configuration node
         pg = self.et.find("propagate-configuration")
         self.et.getroot().remove(pg)
 
         # When
-        mapper = subwf_mapper.SubworkflowMapper(
+        mapper = subworkflow_mapper.SubworkflowMapper(
             oozie_node=self.et.getroot(),
             task_id="test_id",
+            dag_name="test",
+            input_directory_path=EXAMPLE_SUBWORKFLOW_PATH,
+            output_directory_path="/tmp",
+            action_mapper=ACTION_MAP,
+            control_mapper=CONTROL_MAP,
             trigger_rule=TriggerRule.DUMMY,
-            params=self.params,
+            params=self.main_params,
         )
 
         # Then
         self.assertEqual("test_id", mapper.task_id)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.et.getroot(), mapper.oozie_node)
-        self.assertEqual(self.params, mapper.params)
+        self.assertEqual(self.main_params, mapper.params)
         self.assertEqual("subwf.tpl", mapper.template)
-        mock_subwf_converter.assert_called_once()
         # Propagate config node is missing, should NOT forward config properties
         self.assertEqual({}, mapper.get_config_properties())
+        self.assertTrue(os.path.isfile("/tmp/test.test_id.py"))
 
     @mock.patch("utils.el_utils.parse_els")
     def test_convert_to_text(self, parse_els):
         # Given
-        parse_els.return_value = {
-            "dataproc_cluster": "test_cluster",
-            "gcp_conn_id": "google_cloud_default",
-            "gcp_region": "europe-west3",
-            "gcp_uri_prefix": "gs://test_bucket/dags",
-        }
-
+        parse_els.return_value = self.subworkflow_params
         # When
-        mapper = subwf_mapper.SubworkflowMapper(
+        mapper = subworkflow_mapper.SubworkflowMapper(
+            input_directory_path=EXAMPLE_SUBWORKFLOW_PATH,
+            output_directory_path="/tmp",
             oozie_node=self.et.getroot(),
             task_id="test_id",
+            dag_name="test",
             trigger_rule=TriggerRule.DUMMY,
-            params=self.params,
+            params=self.main_params,
+            action_mapper=ACTION_MAP,
+            control_mapper=CONTROL_MAP,
         )
 
         # Then
@@ -109,6 +142,6 @@ class TestSubworkflowMapper(unittest.TestCase):
         ast.parse(mapper.convert_to_text())
 
     def test_required_imports(self):
-        imps = subwf_mapper.SubworkflowMapper.required_imports()
+        imps = subworkflow_mapper.SubworkflowMapper.required_imports()
         imp_str = "\n".join(imps)
         ast.parse(imp_str)

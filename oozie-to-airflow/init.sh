@@ -18,10 +18,16 @@ MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 # Check for pip
 command -v pip >/dev/null 2>&1 || { echo >&2 "pip appears to not be installed. Aborting."; exit 1; }
 
-# Check for python3
-command -v python3 >/dev/null 2>&1 || { echo >&2 "python 3 does not appear to be installed. Aborting."; exit 1; }
+python - <<EOF
+split_version = [int(x) for x in platform.python_version().split('.')]
+if split_version[0] < 3 or split_version[0] == 3 and split_version[1] < 6:
+    print("\n\nPython version {} not supported. Must be 3.6 or above.\n\n".format(platform.python_version()))
+    sys.exit(1)
+EOF
+
 
 # Apache airflow installation requires an environment variable set to be GPL safe, exporting that:
+# TODO: Remove me when 1.10.3 Airflow is released
 export SLUGIFY_USES_TEXT_UNIDECODE=yes
 
 # Install required dependencies

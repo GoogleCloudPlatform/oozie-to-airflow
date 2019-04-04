@@ -11,19 +11,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import Set
 
 from airflow.utils.trigger_rule import TriggerRule
 from mappers.base_mapper import BaseMapper
 
 
+# noinspection PyAbstractClass
 class NullMapper(BaseMapper):
-    def __init__(self, task_id):
-        BaseMapper.__init__(self, None, task_id, TriggerRule.DUMMY)
+    def __init__(self, oozie_node: str = None, task_id: str = None):
+        BaseMapper.__init__(self, oozie_node=oozie_node, task_id=task_id, trigger_rule=TriggerRule.DUMMY)
         self.task_id = task_id
 
-    def convert_to_text(self):
+    def convert_to_text(self) -> str:
         return ""
 
     @staticmethod
-    def required_imports():
-        return []
+    def required_imports() -> Set[str]:
+        return set()

@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+from typing import Dict, Set
 
 import jinja2
 from airflow.utils.trigger_rule import TriggerRule
@@ -20,6 +21,7 @@ from definitions import ROOT_DIR
 from mappers.action_mapper import ActionMapper
 from mappers.prepare_mixin import PrepareMixin
 from utils import el_utils, xml_utils
+import xml.etree.ElementTree as ET
 
 
 class ShellMapper(ActionMapper, PrepareMixin):
@@ -29,11 +31,11 @@ class ShellMapper(ActionMapper, PrepareMixin):
 
     def __init__(
         self,
-        oozie_node,
-        task_id,
-        trigger_rule=TriggerRule.ALL_SUCCESS,
-        params=None,
-        template="shell.tpl",
+        oozie_node: ET.Element,
+        task_id: str,
+        trigger_rule: str = TriggerRule.ALL_SUCCESS,
+        params: Dict[str, str] = None,
+        template: str = "shell.tpl",
         **kwargs,
     ):
         ActionMapper.__init__(self, oozie_node, task_id, trigger_rule, **kwargs)
@@ -69,7 +71,7 @@ class ShellMapper(ActionMapper, PrepareMixin):
                     )
                     self.properties[name] = value
 
-    def convert_to_text(self):
+    def convert_to_text(self) -> str:
         template_loader = jinja2.FileSystemLoader(searchpath=os.path.join(ROOT_DIR, "templates/"))
         template_env = jinja2.Environment(loader=template_loader)
         template = template_env.get_template(self.template)
@@ -80,5 +82,5 @@ class ShellMapper(ActionMapper, PrepareMixin):
         pass
 
     @staticmethod
-    def required_imports():
-        return ["from airflow.utils import dates", "from airflow.contrib.operators import dataproc_operator"]
+    def required_imports() -> Set[str]:
+        return {"from airflow.utils import dates", "from airflow.contrib.operators import dataproc_operator"}

@@ -16,24 +16,25 @@
 from airflow.utils.trigger_rule import TriggerRule
 import logging
 
+from mappers.base_mapper import BaseMapper
+
 
 class ParsedNode(object):
-    def __init__(self, operator):
+    def __init__(self, operator: BaseMapper):
         self.operator = operator
-        self.parsed_downstream = []
-        self.downstream_names = []
-        self.is_error = False
-        self.is_ok = False
-        self.error_xml = None
+        self.downstream_names: [str] = []
+        self.is_error: bool = False
+        self.is_ok: bool = False
+        self.error_xml: str = None
 
-    def add_downstream_node_name(self, node_name):
+    def add_downstream_node_name(self, node_name: str):
         """
         Adds a single downstream name string to the list `downstream_names`.
         :param node_name: The name to append to the list
         """
         self.downstream_names.append(node_name)
 
-    def set_error_node_name(self, error_name):
+    def set_error_node_name(self, error_name: str):
         """
         Sets the error_xml class variable to the supplied `error_name` 
         :param error_name: The downstream error node, Oozie nodes can only have
@@ -41,13 +42,13 @@ class ParsedNode(object):
         """
         self.error_xml = error_name
 
-    def get_downstreams(self):
+    def get_downstreams(self) -> [str]:
         return self.downstream_names
 
-    def get_error_downstream_name(self):
+    def get_error_downstream_name(self) -> str:
         return self.error_xml
 
-    def set_is_error(self, is_error):
+    def set_is_error(self, is_error: bool):
         """
         A bit that switches when the node is the error downstream of any other
         node.
@@ -55,7 +56,7 @@ class ParsedNode(object):
         """
         self.is_error = is_error
 
-    def set_is_ok(self, is_ok):
+    def set_is_ok(self, is_ok: bool):
         """
         A bit that switches when the node is the ok downstream of any other
         node.
