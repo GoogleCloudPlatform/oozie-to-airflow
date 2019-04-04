@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 import os
+from typing import Set
 
 import jinja2
 
@@ -33,9 +34,10 @@ class DummyMapper(BaseMapper):
         return dummy_operator.DummyOperator(task_id=self.task_id, trigger_rule=self.trigger_rule)
 
     @staticmethod
-    def required_imports():
-        return ["from airflow.operators import dummy_operator"]
+    def required_imports() -> Set[str]:
+        return {"from airflow.operators import dummy_operator"}
 
-    def has_prepare(self):
+    # noinspection PyMethodMayBeStatic
+    def has_prepare(self) -> bool:
         """ Required for Unknown Action Mapper """
         return False

@@ -11,8 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from typing import Dict, Set
 
-from airflow.contrib.operators import spark_submit_operator
+from airflow.contrib.operators.spark_submit_operator import SparkSubmitOperator
 from airflow.utils.trigger_rule import TriggerRule
 
 import xml.etree.ElementTree as ET
@@ -26,21 +27,23 @@ import jinja2
 class SparkMapper(ActionMapper):
     def __init__(
         self,
-        oozie_node,
-        task_id,
-        trigger_rule=TriggerRule.ALL_SUCCESS,
-        params={},
-        template="spark.tpl",
+        oozie_node: ET.Element,
+        task_id: str,
+        trigger_rule: str = TriggerRule.ALL_SUCCESS,
+        params: Dict[str, str] = None,
+        template: str = "spark.tpl",
         **kwargs,
     ):
         ActionMapper.__init__(self, oozie_node, task_id, trigger_rule, **kwargs)
+        if params is None:
+            params = {}
         self.template = template
         self.params = params
         self.task_id = task_id
         self.trigger_rule = trigger_rule
         self._parse_oozie_node(oozie_node)
 
-    def _parse_oozie_node(self, oozie_node):
+    def _parse_oozie_node(self, oozie_node: ET.Element):
         """
         Property values specified in the configuration element override
         values specified in the job-xml file.
@@ -103,7 +106,9 @@ class SparkMapper(ActionMapper):
             self.application_args.append(el_utils.replace_el_with_var(arg.text, self.params, quote=False))
 
     @staticmethod
-    def _test_and_set(root, tag, default=None, params={}, quote=False):
+    def _test_and_set(
+        root: ET.Element, tag: str, default: str = None, params: Dict[str, str] = None, quote: bool = False
+    ):
         """
         If a node exists in the oozie_node with the tag specified in tag, it
         will attempt to replace the EL (if it exists) with the corresponding
@@ -111,6 +116,8 @@ class SparkMapper(ActionMapper):
         tag is not found under oozie_node, then return default. If there are
         more than one with the specified tag, it uses the first one found.
         """
+        if params is None:
+            params = {}
         var = xml_utils.find_nodes_by_tag(root, tag)
 
         if var:
@@ -120,7 +127,7 @@ class SparkMapper(ActionMapper):
             return default
 
     @staticmethod
-    def _parse_spark_config(config_node):
+    def _parse_spark_config(config_node: ET.Element) -> Dict[str, str]:
         conf_dict = {}
         for prop in config_node:
             name = prop.find("name").text
@@ -128,7 +135,7 @@ class SparkMapper(ActionMapper):
             conf_dict[name] = value
         return conf_dict
 
-    def _update_class_spark_opts(self, spark_opts_node):
+    def _update_class_spark_opts(self, spark_opts_node: ET.Element):
         """
         Some examples of the spark-opts element:
 
@@ -157,7 +164,7 @@ class SparkMapper(ActionMapper):
                 self.__dict__[spark_opt[0]] = "'" + " ".join(spark_opt[1:]) + "'"
 
     @staticmethod
-    def _parse_prepare_node(prepare_node):
+    def _parse_prepare_node(prepare_node: ET.Element):
         """
         <prepare>
             <delete path="[PATH]"/>
@@ -199,13 +206,13 @@ class SparkMapper(ActionMapper):
         else:
             return spark_template.render(**self.__dict__)
 
-    def convert_to_airflow_op(self):
+    def convert_to_airflow_op(self) -> SparkSubmitOperator:
         """
         Converts the class into a SparkSubmitOperator, this requires
         correct setup of the Airflow connection.
 
         """
-        return spark_submit_operator.SparkSubmitOperator(
+        return SparkSubmitOperator(
             task_id=self.task_id,
             trigger_rule=self.trigger_rule,
             params=self.params,
@@ -235,15 +242,15 @@ class SparkMapper(ActionMapper):
         )
 
     @staticmethod
-    def required_imports():
+    def required_imports() -> Set[str]:
         # Dummy and Bash are for the potential prepare statement
-        return [
+        return {
             "from airflow.contrib.operators import spark_submit_operator",
             "from airflow.operators import bash_operator",
             "from airflow.operators import dummy_operator",
-        ]
+        }
 
-    def get_task_id(self):
+    def get_task_id(self) -> str:
         # If the prepare node has been parsed then we reconfigure the execution
         # path of Airflow by adding delete/mkdir bash nodes before the actual
         # spark node executes.
@@ -252,5 +259,5 @@ class SparkMapper(ActionMapper):
         else:
             return self.task_id
 
-    def has_prepare(self):
-        return self.delete_paths or self.mkdir_paths
+    def has_prepare(self) -> bool:
+        return bool(self.delete_paths or self.mkdir_paths)

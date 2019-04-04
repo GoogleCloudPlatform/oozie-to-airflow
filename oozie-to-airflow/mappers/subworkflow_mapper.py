@@ -1,12 +1,16 @@
 import logging
 import os
+from typing import Set, Dict, Type
+from xml.etree.ElementTree import Element
 
 import jinja2
 from airflow.utils.trigger_rule import TriggerRule
 
-import oozie_converter
+from converter.subworkflow_converter import OozieSubworkflowConverter
 from definitions import ROOT_DIR
 from mappers.action_mapper import ActionMapper
+from mappers.base_mapper import BaseMapper
+from tests.utils.test_paths import EXAMPLES_PATH
 from utils import el_utils, xml_utils
 
 
@@ -15,21 +19,23 @@ class SubworkflowMapper(ActionMapper):
     Converts a Sub-workflow Oozie node to an Airflow task.
     """
 
-    IN_FILE_NAME_SUFFIX = "/workflow.xml"
-    PROPERTIES_SUFFIX = "/job.properties"
-    CONFIGURATION_SUFFIX = "/configuration.properties"
-    OUT_FILE_NAME_TEMPLATE = "output/subdag_{}.py"
-
     def __init__(
         self,
-        oozie_node,
-        task_id,
+        oozie_node: Element,
+        task_id: str,
+        dag_name: str,
+        input_directory_path: str,
+        output_directory_path: str,
+        action_mapper: Dict[str, Type[ActionMapper]],
+        control_mapper: Dict[str, Type[BaseMapper]],
         trigger_rule=TriggerRule.ALL_SUCCESS,
         params=None,
         template="subwf.tpl",
         **kwargs,
     ):
-        ActionMapper.__init__(self, oozie_node, task_id, trigger_rule, **kwargs)
+        ActionMapper.__init__(
+            self, oozie_node=oozie_node, task_id=task_id, trigger_rule=trigger_rule, **kwargs
+        )
         if params is None:
             params = {}
         self.template = template
@@ -37,28 +43,35 @@ class SubworkflowMapper(ActionMapper):
         self.task_id = task_id
         self.trigger_rule = trigger_rule
         self.properties = {}
+        self.input_directory_path = input_directory_path
+        self.output_directory_path = output_directory_path
+        self.dag_name = dag_name
+        self.action_mapper = action_mapper
+        self.control_mapper = control_mapper
         self._parse_oozie_node()
 
     def _parse_oozie_node(self):
         app_path = self.oozie_node.find("app-path").text
         app_path = el_utils.replace_el_with_var(app_path, params=self.params, quote=False)
-        app_path = app_path.split("${wf:user()}/")[1]  # TODO hacky: we want to extract "examples/pig"
-        app_name = app_path.split("/")[-1]
+        # TODO: hacky: we should calculate it deriving from input_directory_path and comparing app-path
+        # TODO: but for now we assume app is in "examples"
+        app_path = os.path.join(EXAMPLES_PATH, app_path.split("examples/")[1])
         logging.info(f"Converting subworkflow from {app_path}")
         self._parse_config()
-        converter = oozie_converter.OozieSubworkflowConverter(
-            in_file_name=app_path + self.IN_FILE_NAME_SUFFIX,
-            out_file_name=self.OUT_FILE_NAME_TEMPLATE.format(app_name),
-            properties=app_path + self.PROPERTIES_SUFFIX,
-            configuration=app_path + self.CONFIGURATION_SUFFIX,
+        converter = OozieSubworkflowConverter(
+            input_directory_path=app_path,
+            output_directory_path=self.output_directory_path,
             start_days_ago=0,
-            config_properties=self.get_config_properties(),
+            action_mapper=self.action_mapper,
+            control_mapper=self.control_mapper,
+            dag_name=f"{self.dag_name}.{self.task_id}",
         )
         converter.convert()
 
     def get_config_properties(self):
         propagate_configuration = self.oozie_node.find("propagate-configuration")
-        # Below the `is not None` is necessary due to Element's __bool__() return value: `len(self._children) != 0`,
+        # Below the `is not None` is necessary due to Element's __bool__() return value:
+        # `len(self._children) != 0`,
         # and `propagate_configuration` is an empty node so __bool__() will always return False.
         return self.properties if propagate_configuration is not None else {}
 
@@ -84,10 +97,10 @@ class SubworkflowMapper(ActionMapper):
         pass
 
     @staticmethod
-    def required_imports():
-        return [
+    def required_imports() -> Set[str]:
+        return {
             "from airflow.utils import dates",
             "from airflow.contrib.operators import dataproc_operator",
             "from airflow.operators.subdag_operator import SubDagOperator",
             "from subdag_test import sub_dag",
-        ]
+        }

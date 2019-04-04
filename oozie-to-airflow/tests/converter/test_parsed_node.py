@@ -21,7 +21,7 @@ from mappers import dummy_mapper
 
 class TestParsedNode(unittest.TestCase):
     def setUp(self):
-        op1 = dummy_mapper.DummyMapper(None, "task1")
+        op1 = dummy_mapper.DummyMapper(oozie_node=None, task_id="task1")
         self.p_node = parsed_node.ParsedNode(op1)
 
     def test_add_downstream_node_name(self):
