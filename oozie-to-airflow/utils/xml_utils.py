@@ -1,4 +1,5 @@
-# Copyright 2018 Google LLC
+# -*- coding: utf-8 -*-
+# Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""XML parsing utilities"""
 
 
 class NoNodeFoundException(Exception):
@@ -29,17 +31,16 @@ def find_node_by_name(root, name):
 
     :param root: The node of which to look under for the node name. Only looks
         at direct descendants -- not all descendants.
-    :param name: Name of ndoe to look for.
+    :param name: Name of node to look for.
     :return: The XML node that was found, or raises an exception if not found.
     """
     node = find_nodes_by_attribute(root, "name", name)
 
-    if len(node) == 0:
+    if not node:
         raise NoNodeFoundException("Node with name {} not found.".format(name))
-    elif len(node) > 1:
+    if len(node) > 1:
         raise MultipleNodeFoundException("More than one node with name {} found".format(name))
-    else:
-        return node[0]
+    return node[0]
 
 
 def find_nodes_by_tag(root, tag):

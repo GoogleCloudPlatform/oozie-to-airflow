@@ -1,4 +1,5 @@
-# Copyright 2018 Google LLC
+# -*- coding: utf-8 -*-
+# Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,18 +12,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Converts sub-workflows of Oozie to Airflow"""
 import json
 import textwrap
-from typing import TextIO, Dict, Type
+from typing import TextIO, Dict, Type, List
 
-from converter.converter import OozieConverter, INDENT
+from converter.oozie_converter import OozieConverter, INDENT
 from converter.parsed_node import ParsedNode
 from mappers.action_mapper import ActionMapper
 from mappers.base_mapper import BaseMapper
 
 
+# pylint: disable=too-few-public-methods
 class OozieSubworkflowConverter(OozieConverter):
+    """Converts Oozie Subworkflow to Airflow's DAG"""
+
     def __init__(
         self,
         dag_name: str,
@@ -47,15 +51,15 @@ class OozieSubworkflowConverter(OozieConverter):
         )
 
     def write_dag(
-        self, depends: [str], f: TextIO, operators: Dict[str, ParsedNode], relations: [str]
+        self, depends: List[str], file: TextIO, operators: Dict[str, ParsedNode], relations: List[str]
     ) -> None:
-        self.write_dependencies(f, depends)
-        f.write("PARAMS = " + json.dumps(self.params, indent=INDENT) + "\n\n")
-        f.write("\ndef sub_dag(parent_dag_name, child_dag_name, start_date, schedule_interval):\n")
+        self.write_dependencies(file, depends)
+        file.write("PARAMS = " + json.dumps(self.params, indent=INDENT) + "\n\n")
+        file.write("\ndef sub_dag(parent_dag_name, child_dag_name, start_date, schedule_interval):\n")
         self.write_dag_header(
-            f, self.dag_name, self.schedule_interval, self.start_days_ago, template="dag_subwf.tpl"
+            file, self.dag_name, self.schedule_interval, self.start_days_ago, template="dag_subwf.tpl"
         )
-        self.write_operators(f, operators, indent=INDENT + 4)
-        f.write("\n\n")
-        self.write_relations(f, relations, indent=INDENT + 4)
-        f.write(textwrap.indent("\nreturn dag\n", INDENT * " "))
+        self.write_operators(file, operators, indent=INDENT + 4)
+        file.write("\n\n")
+        self.write_relations(file, relations, indent=INDENT + 4)
+        file.write(textwrap.indent("\nreturn dag\n", INDENT * " "))

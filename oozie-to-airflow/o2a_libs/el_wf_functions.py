@@ -1,4 +1,5 @@
-# Copyright 2018 Google LLC
+# -*- coding: utf-8 -*-
+# Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,8 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-# airflow DAG
+"""All WF EL functions"""
+# pylint: disable=unused-argument
 
 
 def wf_id():
@@ -32,7 +33,7 @@ def wf_name():
 
     This has the effect that some parameters cannot be templated, and thus
     this will fail.
-    
+
     :return: Current DAG id.
     """
     return "{{ dag.dag_id }}"
@@ -44,7 +45,6 @@ def wf_app_path():
     This has the effect that some parameters cannot be templated, and thus
     this will fail.
     """
-    pass
 
 
 def wf_conf():
@@ -55,7 +55,6 @@ def wf_conf():
     This has the effect that some parameters cannot be templated, and thus
     this will fail.
     """
-    pass
 
 
 def wf_user():
@@ -72,10 +71,9 @@ def wf_group():
 
     In Airflow, I believe it uses RBAC vs ACL, need to discuss.
     """
-    pass
 
 
-def wf_callback(stateVar):
+def wf_callback(state_variable):
     """
     It returns the callback URL for the current workflow action node, stateVar
     can be a valid exit state (=OK= or ERROR ) for the action or a token to be
@@ -90,7 +88,6 @@ def wf_callback(stateVar):
     the callback URL upon completion, Oozie has a mechanism to poll
     computation/processing tasks for completion.
     """
-    pass
 
 
 def wf_transition(node):
@@ -99,7 +96,6 @@ def wf_transition(node):
     an empty string if the action has not being executed or it has not completed
     yet.
     """
-    pass
 
 
 def wf_last_error_node():
@@ -108,7 +104,6 @@ def wf_last_error_node():
     exit state, or an empty string if no action has exited with ERROR state in the
     current workflow job.
     """
-    pass
 
 
 def wf_error_code(node):
@@ -118,7 +113,6 @@ def wf_error_code(node):
 
     Each type of action node must define its complete error code list.
     """
-    pass
 
 
 def wf_error_message(message):
@@ -128,15 +122,13 @@ def wf_error_message(message):
 
     The error message can be useful for debugging and notification purposes.
     """
-    pass
 
 
 def wf_run():
     """
-    It returns the run number for the current workflow job, normally 0 unless the 
+    It returns the run number for the current workflow job, normally 0 unless the
     workflow job is re-run, in which case indicates the current run.
     """
-    pass
 
 
 def wf_action_data(node):
@@ -147,7 +139,6 @@ def wf_action_data(node):
     The output data is in a Java Properties format and via this EL function it
     is available as a Map.
     """
-    pass
 
 
 def wf_action_external_id(node):
@@ -155,7 +146,6 @@ def wf_action_external_id(node):
     It returns the external Id for an action node, or an empty string if the
     action has not being executed or it has not completed yet.
     """
-    pass
 
 
 def wf_action_tracker_uri(node):
@@ -163,7 +153,6 @@ def wf_action_tracker_uri(node):
     It returns the tracker URI for an action node, or an empty string if the action
     has not being executed or it has not completed yet.
     """
-    pass
 
 
 def wf_action_external_status(node):
@@ -171,4 +160,3 @@ def wf_action_external_status(node):
     It returns the external status for an action node, or an empty string if the
     action has not being executed or it has not completed yet.
     """
-    pass

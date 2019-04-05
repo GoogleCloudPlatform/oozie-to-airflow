@@ -1,5 +1,20 @@
+# -*- coding: utf-8 -*-
+# Copyright 2019 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""Maps Oozie pig node to Airflow's DAG"""
 import os
-from typing import Set
+from typing import Set, Dict
 from xml.etree.ElementTree import Element
 
 import jinja2
@@ -16,6 +31,9 @@ class PigMapper(ActionMapper, PrepareMixin, ArchiveMixin, FileMixin):
     """
     Converts a Pig Oozie node to an Airflow task.
     """
+
+    properties: Dict[str, str]
+    params_dict: Dict[str, str]
 
     def __init__(
         self,
@@ -38,6 +56,7 @@ class PigMapper(ActionMapper, PrepareMixin, ArchiveMixin, FileMixin):
         self.task_id = task_id
         self.trigger_rule = trigger_rule
         self.properties = {}
+        self.params_dict = {}
         self._parse_oozie_node()
 
     def _parse_oozie_node(self):
@@ -58,18 +77,6 @@ class PigMapper(ActionMapper, PrepareMixin, ArchiveMixin, FileMixin):
                 param = el_utils.replace_el_with_var(node.text, params=self.params, quote=False)
                 key, value = param.split("=")
                 self.params_dict[key] = value
-
-    def _parse_config(self):
-        config = self.oozie_node.find("configuration")
-        if config:
-            property_nodes = xml_utils.find_nodes_by_tag(config, "property")
-            if property_nodes:
-                for node in property_nodes:
-                    name = node.find("name").text
-                    value = el_utils.replace_el_with_var(
-                        node.find("value").text, params=self.params, quote=False
-                    )
-                    self.properties[name] = value
 
     def convert_to_text(self) -> str:
         template_loader = jinja2.FileSystemLoader(searchpath=os.path.join(ROOT_DIR, "templates/"))

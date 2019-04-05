@@ -6,3 +6,5 @@
 __pycache__
 *.pyc
 /oozie-to-airflow/oozie-to-airflow.iml
+
+.mypy_cache

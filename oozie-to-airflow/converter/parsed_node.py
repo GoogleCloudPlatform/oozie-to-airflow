@@ -1,4 +1,5 @@
-# Copyright 2018 Google LLC
+# -*- coding: utf-8 -*-
+# Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,21 +12,25 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Class for parsed Oozie workflow node"""
 # noinspection PyPackageRequirements
-from airflow.utils.trigger_rule import TriggerRule
+from typing import List, Optional
 import logging
+
+from airflow.utils.trigger_rule import TriggerRule
 
 from mappers.base_mapper import BaseMapper
 
 
-class ParsedNode(object):
+class ParsedNode:
+    """Class for parsed Oozie workflow node"""
+
     def __init__(self, operator: BaseMapper):
         self.operator = operator
-        self.downstream_names: [str] = []
+        self.downstream_names: List[str] = []
         self.is_error: bool = False
         self.is_ok: bool = False
-        self.error_xml: str = None
+        self.error_xml: Optional[str] = None
 
     def add_downstream_node_name(self, node_name: str):
         """
@@ -36,16 +41,16 @@ class ParsedNode(object):
 
     def set_error_node_name(self, error_name: str):
         """
-        Sets the error_xml class variable to the supplied `error_name` 
+        Sets the error_xml class variable to the supplied `error_name`
         :param error_name: The downstream error node, Oozie nodes can only have
             one error downstream.
         """
         self.error_xml = error_name
 
-    def get_downstreams(self) -> [str]:
+    def get_downstreams(self) -> List[str]:
         return self.downstream_names
 
-    def get_error_downstream_name(self) -> str:
+    def get_error_downstream_name(self) -> Optional[str]:
         return self.error_xml
 
     def set_is_error(self, is_error: bool):

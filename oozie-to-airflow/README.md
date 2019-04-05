@@ -1,18 +1,18 @@
 <!--
-Copyright 2018 Google LLC
+  Copyright 2019 Google LLC
 
-Licensed under the Apache License, Version 2.0 (the "License");
-you may not use this file except in compliance with the License.
-You may obtain a copy of the License at
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
 
-http://www.apache.org/licenses/LICENSE-2.0
+  http://www.apache.org/licenses/LICENSE-2.0
 
-Unless required by applicable law or agreed to in writing, software
-distributed under the License is distributed on an "AS IS" BASIS,
-WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-See the License for the specific language governing permissions and
-limitations under the License.
--->
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+ -->
 
 ## Oozie to Airflow
 
@@ -164,11 +164,11 @@ $ ./init.sh
 ```
 
 You can run the program (minimally) by calling:
-`python oozie_converter.py -i <INPUT_WORKFLOW_XML>`
+`python o2a.py -i <INPUT_WORKFLOW_XML>`
 
 You can also specify the job.properties file, user, and output file.
 
-`python oozie_converter.py -i <INPUT_FILE> -p <PROP_FILE> -u <USER> -o
+`python o2a.py -i <INPUT_FILE> -p <PROP_FILE> -u <USER> -o
 <OUTPUT_FILE>`
 
 #### Known Limitations
@@ -233,7 +233,7 @@ is there.
 
 The demo can be run as:
 
-`python oozie_converter.py -i examples/demo/workflow.xml -p examples/demo/job.properties`
+`python o2a.py -i examples/demo/workflow.xml -p examples/demo/job.properties`
 
 This will parse and write to an output file (since no -o flag). The output
 file will be noted in the logs.
@@ -247,7 +247,7 @@ edit the python output file and change the decision node expression.
 
 The ssh example can be run as:
 
-`python oozie_converter.py -i examples/ssh/workflow.xml -p examples/ssh/job.properties -o output.py`
+`python o2a.py -i examples/ssh/workflow.xml -p examples/ssh/job.properties -o output.py`
 
 This will convert the specified Oozie XML and write the output into the
 specified output file, in this case `output.py`. There are some differences
@@ -279,7 +279,7 @@ More information can be found on [Airflow's Website](https://airflow.apache.org/
 
 The spark example, like the other examples can be run as:
 
-`python oozie_converter.py -i examples/spark/workflow.xml -p examples/spark/job.properties -o output.py`
+`python o2a.py -i examples/spark/workflow.xml -p examples/spark/job.properties -o output.py`
 
 This will write the XML file to `output.py`. The spark node, similarly
 to the SSH node requires editing of an Airflow Connection to specify the
@@ -289,7 +289,7 @@ or created from the command line (see above).
 ### EL Example
 
 The Oozie Expression Language (EL) example can be run as:
-`python oozie_converter.py -i examples/ssh/workflow.xml -p examples/el/job.properties -o output.py`
+`python o2a.py -i examples/ssh/workflow.xml -p examples/el/job.properties -o output.py`
 
 This will showcase the ability to use the `o2a_libs` directory to map EL functions
 to python methods. This example assumes that the user has a valid Apache Airflow

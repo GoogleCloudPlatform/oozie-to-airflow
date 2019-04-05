@@ -1,4 +1,5 @@
-# Copyright 2018 Google LLC
+# -*- coding: utf-8 -*-
+# Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests Archive Mixin"""
 import unittest
 
 from mappers.file_archive_mixins import ArchiveMixin
@@ -29,8 +31,8 @@ class TestArchiveMixin(unittest.TestCase):
         # When
         archive_mixin.add_archive("test_archive.zip")
         # Then
-        self.assertEquals(archive_mixin.archives, "test_archive.zip")
-        self.assertEquals(
+        self.assertEqual(archive_mixin.archives, "test_archive.zip")
+        self.assertEqual(
             archive_mixin.hdfs_archives, "hdfs:///user/pig/examples/pig_test_node/test_archive.zip"
         )
 
@@ -40,8 +42,8 @@ class TestArchiveMixin(unittest.TestCase):
         # When
         archive_mixin.add_archive("/test_archive.zip")
         # Then
-        self.assertEquals(archive_mixin.archives, "/test_archive.zip")
-        self.assertEquals(archive_mixin.hdfs_archives, "hdfs:///test_archive.zip")
+        self.assertEqual(archive_mixin.archives, "/test_archive.zip")
+        self.assertEqual(archive_mixin.hdfs_archives, "hdfs:///test_archive.zip")
 
     def test_add_multiple_archives(self):
         # Given
@@ -51,8 +53,8 @@ class TestArchiveMixin(unittest.TestCase):
         archive_mixin.add_archive("test_archive2.tar")
         archive_mixin.add_archive("/test_archive3.tar.gz")
         # Then
-        self.assertEquals(archive_mixin.archives, "/test_archive.zip,test_archive2.tar,/test_archive3.tar.gz")
-        self.assertEquals(
+        self.assertEqual(archive_mixin.archives, "/test_archive.zip,test_archive2.tar,/test_archive3.tar.gz")
+        self.assertEqual(
             archive_mixin.hdfs_archives,
             "hdfs:///test_archive.zip,"
             "hdfs:///user/pig/examples/pig_test_node/test_archive2.tar,"
@@ -67,11 +69,11 @@ class TestArchiveMixin(unittest.TestCase):
         archive_mixin.add_archive("test_archive2.tar#test_link")
         archive_mixin.add_archive("/test_archive3.tar.gz")
         # Then
-        self.assertEquals(
+        self.assertEqual(
             archive_mixin.archives,
             "/test_archive.zip#test3_link,test_archive2.tar#test_link,/test_archive3.tar.gz",
         )
-        self.assertEquals(
+        self.assertEqual(
             archive_mixin.hdfs_archives,
             "hdfs:///test_archive.zip#test3_link,"
             "hdfs:///user/pig/examples/pig_test_node/test_archive2.tar#test_link,"
@@ -85,6 +87,6 @@ class TestArchiveMixin(unittest.TestCase):
         with self.assertRaises(Exception) as context:
             archive_mixin.add_archive("/test_archive.zip#4rarear#")
         # Then
-        self.assertEquals(
+        self.assertEqual(
             "There should be maximum one '#' in the path /test_archive.zip#4rarear#", str(context.exception)
         )
