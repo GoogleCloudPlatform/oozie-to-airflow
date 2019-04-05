@@ -1,4 +1,5 @@
-# Copyright 2018 Google LLC
+# -*- coding: utf-8 -*-
+# Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests shell mapper"""
 import ast
 import unittest
 from xml.etree import ElementTree as ET
@@ -22,52 +24,41 @@ from mappers import shell_mapper
 
 class TestShellMapper(unittest.TestCase):
     def setUp(self):
-        shell = ET.Element("shell")
-        res_man = ET.SubElement(shell, "resource-manager")
-        name_node = ET.SubElement(shell, "name-node")
-        prepare = ET.SubElement(shell, "prepare")
-        delete1 = ET.SubElement(prepare, "delete")
-        delete2 = ET.SubElement(prepare, "delete")
-        mkdir1 = ET.SubElement(prepare, "mkdir")
-        mkdir2 = ET.SubElement(prepare, "mkdir")
-        config = ET.SubElement(shell, "configuration")
-        property1 = ET.SubElement(config, "property")
-        name1 = ET.SubElement(property1, "name")
-        value1 = ET.SubElement(property1, "value")
-        property2 = ET.SubElement(config, "property")
-        name2 = ET.SubElement(property2, "name")
-        value2 = ET.SubElement(property2, "value")
-        exec_node = ET.SubElement(shell, "exec")
-        arg1 = ET.SubElement(shell, "argument")
-        arg2 = ET.SubElement(shell, "argument")
-
-        self.et = ET.ElementTree(shell)
-
-        res_man.text = "localhost:8032"
-        name_node.text = "hdfs://localhost:8020"
-
-        delete1.set("path", "${nameNode}/examples/output-data/demo/pig-node")
-        delete2.set("path", "${nameNode}/examples/output-data/demo/pig-node2")
-        mkdir1.set("path", "${nameNode}/examples/input-data/demo/pig-node")
-        mkdir2.set("path", "${nameNode}/examples/input-data/demo/pig-node2")
-
-        name1.text = "mapred.job.queue.name"
-        value1.text = "${queueName}"
-        name2.text = "mapred.map.output.compress"
-        value2.text = "false"
-
-        exec_node.text = "echo"
-        arg1.text = "arg1"
-        arg2.text = "arg2"
+        # language=XML
+        shell_node_str = """
+<shell>
+    <resource-manager>localhost:8032</resource-manager>
+    <name-node>hdfs://localhost:8020</name-node>
+    <prepare>
+        <delete path="${nameNode}/examples/output-data/demo/pig-node" />
+        <delete path="${nameNode}/examples/output-data/demo/pig-node2" />
+        <mkdir path="${nameNode}/examples/input-data/demo/pig-node" />
+        <mkdir path="${nameNode}/examples/input-data/demo/pig-node2" />
+     </prepare>
+     <configuration>
+        <property>
+            <name>mapred.job.queue.name</name>
+            <value>${queueName}</value>
+        </property><property>
+            <name>mapred.map.output.compress</name>
+            <value>false</value>
+        </property>
+    </configuration>
+    <exec>echo</exec>
+    <argument>arg1</argument>
+    <argument>arg2</argument>
+</shell>
+"""
+        self.shell_node = ET.fromstring(shell_node_str)
 
     def test_create_mapper_no_jinja(self):
         mapper = shell_mapper.ShellMapper(
-            oozie_node=self.et.getroot(), task_id="test_id", trigger_rule=TriggerRule.DUMMY
+            oozie_node=self.shell_node, task_id="test_id", trigger_rule=TriggerRule.DUMMY
         )
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.task_id)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
-        self.assertEqual(self.et.getroot(), mapper.oozie_node)
+        self.assertEqual(self.shell_node, mapper.oozie_node)
         self.assertEqual("localhost:8032", mapper.resource_manager)
         self.assertEqual("hdfs://localhost:8020", mapper.name_node)
         self.assertEqual("${queueName}", mapper.properties["mapred.job.queue.name"])
@@ -75,8 +66,8 @@ class TestShellMapper(unittest.TestCase):
 
     def test_create_mapper_jinja(self):
         # test jinja templating
-        self.et.find("resource-manager").text = "${resourceManager}"
-        self.et.find("name-node").text = "${nameNode}"
+        self.shell_node.find("resource-manager").text = "${resourceManager}"
+        self.shell_node.find("name-node").text = "${nameNode}"
         params = {
             "resourceManager": "localhost:9999",
             "nameNode": "hdfs://localhost:8021",
@@ -85,13 +76,13 @@ class TestShellMapper(unittest.TestCase):
         }
 
         mapper = shell_mapper.ShellMapper(
-            oozie_node=self.et.getroot(), task_id="test_id", trigger_rule=TriggerRule.DUMMY, params=params
+            oozie_node=self.shell_node, task_id="test_id", trigger_rule=TriggerRule.DUMMY, params=params
         )
 
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.task_id)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
-        self.assertEqual(self.et.getroot(), mapper.oozie_node)
+        self.assertEqual(self.shell_node, mapper.oozie_node)
         self.assertEqual("localhost:9999", mapper.resource_manager)
         self.assertEqual("hdfs://localhost:8021", mapper.name_node)
         self.assertEqual("myQueue", mapper.properties["mapred.job.queue.name"])
@@ -99,7 +90,7 @@ class TestShellMapper(unittest.TestCase):
 
     def test_convert_to_text(self):
         mapper = shell_mapper.ShellMapper(
-            oozie_node=self.et.getroot(),
+            oozie_node=self.shell_node,
             task_id="test_id",
             trigger_rule=TriggerRule.DUMMY,
             params={"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"},
@@ -107,6 +98,7 @@ class TestShellMapper(unittest.TestCase):
         # Throws a syntax error if doesn't parse correctly
         ast.parse(mapper.convert_to_text())
 
+    # pylint: disable=no-self-use
     def test_required_imports(self):
         imps = shell_mapper.ShellMapper.required_imports()
         imp_str = "\n".join(imps)

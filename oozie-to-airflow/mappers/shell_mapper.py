@@ -1,4 +1,5 @@
-# Copyright 2018 Google LLC
+# -*- coding: utf-8 -*-
+# Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,8 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Maps Shell action into Airflow's DAG"""
 import os
 from typing import Dict, Set
+
+import xml.etree.ElementTree as ET
 
 import jinja2
 from airflow.utils.trigger_rule import TriggerRule
@@ -20,8 +24,7 @@ from airflow.utils.trigger_rule import TriggerRule
 from definitions import ROOT_DIR
 from mappers.action_mapper import ActionMapper
 from mappers.prepare_mixin import PrepareMixin
-from utils import el_utils, xml_utils
-import xml.etree.ElementTree as ET
+from utils import el_utils
 
 
 class ShellMapper(ActionMapper, PrepareMixin):
@@ -45,7 +48,6 @@ class ShellMapper(ActionMapper, PrepareMixin):
         self.params = params
         self.task_id = task_id
         self.trigger_rule = trigger_rule
-        self.properties = {}
         self._parse_oozie_node()
 
     def _parse_oozie_node(self):
@@ -58,18 +60,6 @@ class ShellMapper(ActionMapper, PrepareMixin):
         arg_nodes = self.oozie_node.findall("argument")
         cmd = " ".join([cmd_node.text] + [x.text for x in arg_nodes])
         self.bash_command = el_utils.convert_el_to_jinja(cmd, quote=False)
-
-    def _parse_config(self):
-        config = self.oozie_node.find("configuration")
-        if config:
-            property_nodes = xml_utils.find_nodes_by_tag(config, "property")
-            if property_nodes:
-                for node in property_nodes:
-                    name = node.find("name").text
-                    value = el_utils.replace_el_with_var(
-                        node.find("value").text, params=self.params, quote=False
-                    )
-                    self.properties[name] = value
 
     def convert_to_text(self) -> str:
         template_loader = jinja2.FileSystemLoader(searchpath=os.path.join(ROOT_DIR, "templates/"))

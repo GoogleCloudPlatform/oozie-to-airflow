@@ -1,4 +1,5 @@
-# Copyright 2018 Google LLC
+# -*- coding: utf-8 -*-
+# Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,17 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Main entry point for the Oozie to Airflow converter"""
 import argparse
 import os
 import sys
 
-from converter.converter import OozieConverter
+from converter.oozie_converter import OozieConverter
 from converter.mappers import ACTION_MAP, CONTROL_MAP
 
 INDENT = 4
 
 
+# pylint: disable=missing-docstring
 def main():
     args = parse_args(sys.argv[1:])
     input_directory_path = args.input_directory_path

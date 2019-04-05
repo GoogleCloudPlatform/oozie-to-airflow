@@ -1,4 +1,5 @@
-# Copyright 2018 Google LLC
+# -*- coding: utf-8 -*-
+# Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,26 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Dict
+"""Mixins for File and Archives"""
+from typing import Dict, List
 
 
 class HdfsPathProcessor:
     def __init__(self, params: Dict[str, str]):
         self.params = params
-
-    @staticmethod
-    def split_by_hash_sign(path: str) -> [str]:
-        """
-        Checks if the path contains maximum one hash.
-        :param path: path to check
-        :return: path split into array on the hash
-        """
-        if "#" in path:
-            split_path = path.split("#")
-            if len(split_path) > 2:
-                raise Exception("There should be maximum one '#' in the path {}".format(path))
-            return split_path
-        return [path]
 
     @staticmethod
     def check_path_for_comma(path: str) -> None:
@@ -45,14 +33,30 @@ class HdfsPathProcessor:
     def preprocess_path_to_hdfs(self, path: str):
         if path.startswith("/"):
             return self.params["nameNode"] + path
-        else:
-            return self.params["oozie.wf.application.path"] + "/" + path
+        return self.params["oozie.wf.application.path"] + "/" + path
 
 
+def split_by_hash_sign(path: str) -> List[str]:
+    """
+    Checks if the path contains maximum one hash.
+    :param path: path to check
+    :return: path split into array on the hash
+    """
+    if "#" in path:
+        split_path = path.split("#")
+        if len(split_path) > 2:
+            raise Exception("There should be maximum one '#' in the path {}".format(path))
+        return split_path
+    return [path]
+
+
+# pylint: disable=too-few-public-methods
 class FileMixin:
+    """Mixin for file node"""
+
     def __init__(self, params: Dict[str, str]):
-        self.files = None
-        self.hdfs_files = None
+        self.files = ""
+        self.hdfs_files = ""
         self.file_path_processor = HdfsPathProcessor(params=params)
 
     def add_file(self, oozie_file_path: str) -> None:
@@ -63,7 +67,7 @@ class FileMixin:
         :return: None
         """
         self.file_path_processor.check_path_for_comma(oozie_file_path)
-        self.file_path_processor.split_by_hash_sign(oozie_file_path)
+        split_by_hash_sign(oozie_file_path)
         self.files = "{},{}".format(self.files, oozie_file_path) if self.files else oozie_file_path
         self.hdfs_files = (
             self.hdfs_files + "," + self.file_path_processor.preprocess_path_to_hdfs(oozie_file_path)
@@ -72,22 +76,24 @@ class FileMixin:
         )
 
 
+# pylint: disable=too-few-public-methods
 class ArchiveMixin:
+    """Mixin for archive node"""
 
     ALLOWED_EXTENSIONS = [".zip", ".gz", ".tar.gz", ".tar", ".jar"]
 
     def __init__(self, params: Dict[str, str]):
-        self.archives = None
-        self.hdfs_archives = None
+        self.archives = ""
+        self.hdfs_archives = ""
         self.archive_path_processor = HdfsPathProcessor(params=params)
 
-    def _check_archive_extensions(self, oozie_archive_path: str) -> [str]:
+    def _check_archive_extensions(self, oozie_archive_path: str) -> List[str]:
         """
         Checks if the archive path is correct archive path.
         :param oozie_archive_path: path to check
         :return: path split on hash
         """
-        split_path = self.archive_path_processor.split_by_hash_sign(oozie_archive_path)
+        split_path = split_by_hash_sign(oozie_archive_path)
         archive_path = split_path[0]
         extension_accepted = False
         for extension in self.ALLOWED_EXTENSIONS:

@@ -1,4 +1,5 @@
-# Copyright 2018 Google LLC
+# -*- coding: utf-8 -*-
+# Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,18 +12,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Optional, Set
+"""Base mapper - it is a base class for all mappers actions, and logic alike"""
+from typing import Set
 from xml.etree.ElementTree import Element
 
-from airflow.utils.trigger_rule import TriggerRule
+import airflow.utils.trigger_rule
 
 
 class BaseMapper:
+    """The Base Mapper class - parent for all mappers."""
+
+    # pylint: disable=unused-argument
     def __init__(
         self,
-        oozie_node: Optional[Element],
+        oozie_node: Element,
         task_id: str,
-        trigger_rule=TriggerRule.ALL_SUCCESS,
+        trigger_rule=airflow.utils.trigger_rule.TriggerRule.ALL_SUCCESS,
         params=None,
         **kwargs,
     ):
@@ -33,7 +38,7 @@ class BaseMapper:
         self.task_id = task_id
         self.trigger_rule = trigger_rule
 
-    def convert_to_text(self) -> None:
+    def convert_to_text(self) -> str:
         """
         Returns a python operator equivalent string. This will be appended to
         the file.
@@ -65,6 +70,7 @@ class BaseMapper:
         """
         return self.task_id
 
+    # pylint: disable=unused-argument,no-self-use
     def copy_extra_assets(self, input_directory_path: str, output_directory_path: str) -> None:
         """
         Copies extra assets required by the generated DAG - such as script files, jars etc.

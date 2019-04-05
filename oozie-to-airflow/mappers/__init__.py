@@ -1,4 +1,5 @@
-# Copyright 2018 Google LLC
+# -*- coding: utf-8 -*-
+# Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,3 +12,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""This module contains all mappers used in Oozie to Airflow converter.
+
+"""
+__all__ = [
+    "action_mapper",
+    "base_mapper",
+    "decision_mapper",
+    "dummy_mapper",
+    "file_archive_mixins",
+    "kill_mapper",
+    "null_mapper",
+    "pig_mapper",
+    "prepare_mixin",
+    "shell_mapper",
+    "spark_mapper",
+    "ssh_mapper",
+    "subworkflow_mapper",
+]

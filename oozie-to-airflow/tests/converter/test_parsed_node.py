@@ -1,4 +1,5 @@
-# Copyright 2018 Google LLC
+# -*- coding: utf-8 -*-
+# Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,7 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests parsed node"""
 import unittest
+from xml.etree.ElementTree import Element
 
 from airflow.utils.trigger_rule import TriggerRule
 
@@ -21,7 +24,8 @@ from mappers import dummy_mapper
 
 class TestParsedNode(unittest.TestCase):
     def setUp(self):
-        op1 = dummy_mapper.DummyMapper(oozie_node=None, task_id="task1")
+        oozie_node = Element("dummy")
+        op1 = dummy_mapper.DummyMapper(oozie_node=oozie_node, task_id="task1")
         self.p_node = parsed_node.ParsedNode(op1)
 
     def test_add_downstream_node_name(self):

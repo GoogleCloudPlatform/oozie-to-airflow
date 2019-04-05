@@ -1,4 +1,5 @@
-# Copyright 2018 Google LLC
+# -*- coding: utf-8 -*-
+# Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,11 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests for subworkflow mapper"""
 import ast
 import os
-import unittest
 from contextlib import suppress
-from unittest import mock
+from unittest import mock, TestCase
 from xml.etree import ElementTree as ET
 
 from airflow.utils.trigger_rule import TriggerRule
@@ -25,7 +26,7 @@ from mappers import subworkflow_mapper
 from tests.utils.test_paths import EXAMPLE_SUBWORKFLOW_PATH
 
 
-class TestSubworkflowMapper(unittest.TestCase):
+class TestSubworkflowMapper(TestCase):
 
     subworkflow_params = {
         "dataproc_cluster": "test_cluster",
@@ -44,17 +45,19 @@ class TestSubworkflowMapper(unittest.TestCase):
     }
 
     def setUp(self):
-        subwf = ET.Element("sub-workflow")
-        app_path = ET.SubElement(subwf, "app-path")
-        ET.SubElement(subwf, "propagate-configuration")
-        configuration = ET.SubElement(subwf, "configuration")
-        property1 = ET.SubElement(configuration, "property")
-        name1 = ET.SubElement(property1, "name")
-        value1 = ET.SubElement(property1, "value")
-        self.et = ET.ElementTree(subwf)
-        app_path.text = "${nameNode}/user/${wf:user()}/${examplesRoot}/pig"
-        name1.text = "resourceManager"
-        value1.text = "${resourceManager}"
+        # language=XML
+        subworkflow_node_str = """
+<sub-workflow>
+    <app-path>${nameNode}/user/${wf:user()}/${examplesRoot}/pig</app-path>
+    <propagate-configuration />
+    <configuration>
+        <property>
+            <name>resourceManager</name>
+            <value>${resourceManager}</value>
+        </property>
+    </configuration>
+</sub-workflow>"""
+        self.subworkflow_node = ET.fromstring(subworkflow_node_str)
 
     @mock.patch("utils.el_utils.parse_els")
     def test_create_mapper_jinja(self, parse_els):
@@ -65,7 +68,7 @@ class TestSubworkflowMapper(unittest.TestCase):
             os.remove("/tmp/test.test_id.py")
         # When
         mapper = subworkflow_mapper.SubworkflowMapper(
-            oozie_node=self.et.getroot(),
+            oozie_node=self.subworkflow_node,
             task_id="test_id",
             dag_name="test",
             input_directory_path=EXAMPLE_SUBWORKFLOW_PATH,
@@ -79,7 +82,7 @@ class TestSubworkflowMapper(unittest.TestCase):
         # Then
         self.assertEqual("test_id", mapper.task_id)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
-        self.assertEqual(self.et.getroot(), mapper.oozie_node)
+        self.assertEqual(self.subworkflow_node, mapper.oozie_node)
         self.assertEqual(self.main_params, mapper.params)
         self.assertEqual("subwf.tpl", mapper.template)
         # Propagate config node is present, should forward config properties
@@ -94,12 +97,12 @@ class TestSubworkflowMapper(unittest.TestCase):
         with suppress(OSError):
             os.remove("/tmp/test.test_id.py")
         # Removing the propagate-configuration node
-        pg = self.et.find("propagate-configuration")
-        self.et.getroot().remove(pg)
+        propagate_configuration = self.subworkflow_node.find("propagate-configuration")
+        self.subworkflow_node.remove(propagate_configuration)
 
         # When
         mapper = subworkflow_mapper.SubworkflowMapper(
-            oozie_node=self.et.getroot(),
+            oozie_node=self.subworkflow_node,
             task_id="test_id",
             dag_name="test",
             input_directory_path=EXAMPLE_SUBWORKFLOW_PATH,
@@ -113,7 +116,7 @@ class TestSubworkflowMapper(unittest.TestCase):
         # Then
         self.assertEqual("test_id", mapper.task_id)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
-        self.assertEqual(self.et.getroot(), mapper.oozie_node)
+        self.assertEqual(self.subworkflow_node, mapper.oozie_node)
         self.assertEqual(self.main_params, mapper.params)
         self.assertEqual("subwf.tpl", mapper.template)
         # Propagate config node is missing, should NOT forward config properties
@@ -128,7 +131,7 @@ class TestSubworkflowMapper(unittest.TestCase):
         mapper = subworkflow_mapper.SubworkflowMapper(
             input_directory_path=EXAMPLE_SUBWORKFLOW_PATH,
             output_directory_path="/tmp",
-            oozie_node=self.et.getroot(),
+            oozie_node=self.subworkflow_node,
             task_id="test_id",
             dag_name="test",
             trigger_rule=TriggerRule.DUMMY,
@@ -141,6 +144,7 @@ class TestSubworkflowMapper(unittest.TestCase):
         # Throws a syntax error if doesn't parse correctly
         ast.parse(mapper.convert_to_text())
 
+    # pylint: disable=no-self-use
     def test_required_imports(self):
         imps = subworkflow_mapper.SubworkflowMapper.required_imports()
         imp_str = "\n".join(imps)

@@ -1,4 +1,5 @@
-# Copyright 2018 Google LLC
+# -*- coding: utf-8 -*-
+# Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,9 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Maps SSH Oozie node to Airflow's DAG"""
 import os
 from typing import Dict, Set
 from xml.etree.ElementTree import Element
+
+import jinja2
 
 from airflow.contrib.hooks import ssh_hook
 from airflow.contrib.operators.ssh_operator import SSHOperator
@@ -22,7 +26,6 @@ from airflow.utils.trigger_rule import TriggerRule
 from definitions import ROOT_DIR
 from mappers.action_mapper import ActionMapper
 from utils import el_utils
-import jinja2
 
 
 class SSHMapper(ActionMapper):
@@ -52,10 +55,14 @@ class SSHMapper(ActionMapper):
 
         cmd_node = self.oozie_node.find("command")
         arg_nodes = self.oozie_node.findall("args")
-        cmd = " ".join([cmd_node.text] + [x.text for x in arg_nodes])
+        if cmd_node is None or not cmd_node.text:
+            raise Exception("Missing or empty command node in SSH action {}".format(self.oozie_node))
+        cmd = " ".join([cmd_node.text] + [x.text if x.text else "" for x in arg_nodes])
         self.command = el_utils.convert_el_to_jinja(cmd, quote=True)
-
-        host_key = el_utils.strip_el(self.oozie_node.find("host").text)
+        host = self.oozie_node.find("host")
+        if host is None:
+            raise Exception("Missing host node in SSH action: {}".format(self.oozie_node))
+        host_key = el_utils.strip_el(host.text)
         # the <user> node is formatted like [USER]@[HOST]
         if host_key in params:
             host_key = params[host_key]

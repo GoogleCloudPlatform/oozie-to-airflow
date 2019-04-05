@@ -1,4 +1,5 @@
-# Copyright 2018 Google LLC
+# -*- coding: utf-8 -*-
+# Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,37 +12,37 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Tests decision_mapper"""
 import ast
 import unittest
 
-from mappers import decision_mapper
-from airflow.utils.trigger_rule import TriggerRule
 from xml.etree import ElementTree as ET
+from airflow.utils.trigger_rule import TriggerRule
+from mappers import decision_mapper
 
 
 class TestDecisionMapper(unittest.TestCase):
     def setUp(self):
-        doc = ET.Element("decision", attrib={"name": "decision"})
-        switch = ET.SubElement(doc, "switch")
-        case1 = ET.SubElement(switch, "case", attrib={"to": "task1"})
-        case2 = ET.SubElement(switch, "case", attrib={"to": "task2"})
-        case3 = ET.SubElement(switch, "default", attrib={"to": "task3"})
-
-        case1.text = "${firstNotNull('', '')}"
-        case2.text = "True"
-        # default does not have text
-
-        self.et = ET.ElementTree(doc)
+        # language=XML
+        decision_node_str = """
+<decision name="decision">
+    <switch>
+        <case to="task1">${firstNotNull('', '')}</case>
+        <case to="task2">True</case>
+        <default to="task3" />
+    </switch>
+</decision>
+"""
+        self.decision_node = ET.fromstring(decision_node_str)
 
     def test_create_mapper(self):
         mapper = decision_mapper.DecisionMapper(
-            oozie_node=self.et.getroot(), task_id="test_id", trigger_rule=TriggerRule.DUMMY
+            oozie_node=self.decision_node, task_id="test_id", trigger_rule=TriggerRule.DUMMY
         )
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.task_id)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
-        self.assertEqual(self.et.getroot(), mapper.oozie_node)
+        self.assertEqual(self.decision_node, mapper.oozie_node)
         # test conversion from Oozie EL to Jinja
         self.assertEqual("first_not_null('', '')", next(iter(mapper.case_dict)))
 
@@ -50,10 +51,12 @@ class TestDecisionMapper(unittest.TestCase):
         # decision mapper does not have the required EL parsing to correctly get
         # parsed, so once that is finished need to redo tests.
         mapper = decision_mapper.DecisionMapper(
-            oozie_node=self.et.getroot(), task_id="test_id", trigger_rule=TriggerRule.DUMMY
+            oozie_node=self.decision_node, task_id="test_id", trigger_rule=TriggerRule.DUMMY
         )
-        ast.parse(mapper.convert_to_text())
+        res = mapper.convert_to_text()
+        ast.parse(res)
 
+    # pylint: disable=no-self-use
     def test_required_imports(self):
         imps = decision_mapper.DecisionMapper.required_imports()
         imp_str = "\n".join(imps)

@@ -1,4 +1,5 @@
-# Copyright 2018 Google LLC
+# -*- coding: utf-8 -*-
+# Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,6 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Dummy Mapper that is used as temporary solution while we are implementing the real mappers.
+"""
 import os
 from typing import Set
 
@@ -18,11 +21,11 @@ import jinja2
 
 from airflow.operators import dummy_operator
 
-from mappers.base_mapper import BaseMapper
+from mappers.action_mapper import ActionMapper
 from definitions import ROOT_DIR
 
 
-class DummyMapper(BaseMapper):
+class DummyMapper(ActionMapper):
     def convert_to_text(self):
         template_loader = jinja2.FileSystemLoader(searchpath=os.path.join(ROOT_DIR, "templates/"))
         template_env = jinja2.Environment(loader=template_loader)
@@ -38,6 +41,7 @@ class DummyMapper(BaseMapper):
         return {"from airflow.operators import dummy_operator"}
 
     # noinspection PyMethodMayBeStatic
+    @property
     def has_prepare(self) -> bool:
         """ Required for Unknown Action Mapper """
         return False

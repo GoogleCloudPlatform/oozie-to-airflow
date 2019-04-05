@@ -1,4 +1,5 @@
-# Copyright 2018 Google LLC
+# -*- coding: utf-8 -*-
+# Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,6 +12,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Mappers defined for the converter.
+
+This module contains mappings between Oozie actions and corresponding mappers that handle
+particular actions.
+
+"""
+
 from typing import Type, Dict
 
 from mappers.action_mapper import ActionMapper
@@ -23,6 +31,7 @@ from mappers.shell_mapper import ShellMapper
 from mappers.spark_mapper import SparkMapper
 from mappers.ssh_mapper import SSHMapper
 from mappers.subworkflow_mapper import SubworkflowMapper
+
 
 CONTROL_MAP: Dict[str, Type[BaseMapper]] = {
     "decision": DecisionMapper,

@@ -1,4 +1,5 @@
-# Copyright 2018 Google LLC
+# -*- coding: utf-8 -*-
+# Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Tests File mixin"""
 import unittest
 
 from mappers.file_archive_mixins import FileMixin
@@ -29,8 +31,8 @@ class TestFileMixin(unittest.TestCase):
         # When
         file_mixin.add_file("test_file")
         # Then
-        self.assertEquals(file_mixin.files, "test_file")
-        self.assertEquals(file_mixin.hdfs_files, "hdfs:///user/pig/examples/pig_test_node/test_file")
+        self.assertEqual(file_mixin.files, "test_file")
+        self.assertEqual(file_mixin.hdfs_files, "hdfs:///user/pig/examples/pig_test_node/test_file")
 
     def test_add_absolute_file(self):
         # Given
@@ -38,8 +40,8 @@ class TestFileMixin(unittest.TestCase):
         # When
         file_mixin.add_file("/test_file")
         # Then
-        self.assertEquals(file_mixin.files, "/test_file")
-        self.assertEquals(file_mixin.hdfs_files, "hdfs:///test_file")
+        self.assertEqual(file_mixin.files, "/test_file")
+        self.assertEqual(file_mixin.hdfs_files, "hdfs:///test_file")
 
     def test_add_multiple_files(self):
         # Given
@@ -49,8 +51,8 @@ class TestFileMixin(unittest.TestCase):
         file_mixin.add_file("test_file2")
         file_mixin.add_file("/test_file3")
         # Then
-        self.assertEquals(file_mixin.files, "/test_file,test_file2,/test_file3")
-        self.assertEquals(
+        self.assertEqual(file_mixin.files, "/test_file,test_file2,/test_file3")
+        self.assertEqual(
             file_mixin.hdfs_files,
             "hdfs:///test_file," "hdfs:///user/pig/examples/pig_test_node/test_file2," "hdfs:///test_file3",
         )
@@ -63,8 +65,8 @@ class TestFileMixin(unittest.TestCase):
         file_mixin.add_file("test_file2#test_link")
         file_mixin.add_file("/test_file3")
         # Then
-        self.assertEquals(file_mixin.files, "/test_file#test3_link,test_file2#test_link,/test_file3")
-        self.assertEquals(
+        self.assertEqual(file_mixin.files, "/test_file#test3_link,test_file2#test_link,/test_file3")
+        self.assertEqual(
             file_mixin.hdfs_files,
             "hdfs:///test_file#test3_link,"
             "hdfs:///user/pig/examples/pig_test_node/test_file2#test_link,"
@@ -78,6 +80,6 @@ class TestFileMixin(unittest.TestCase):
         with self.assertRaises(Exception) as context:
             file_mixin.add_file("/test_file#4rarear#")
         # Then
-        self.assertEquals(
+        self.assertEqual(
             "There should be maximum one '#' in the path /test_file#4rarear#", str(context.exception)
         )

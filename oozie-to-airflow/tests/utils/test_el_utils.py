@@ -1,4 +1,5 @@
-# Copyright 2018 Google LLC
+# -*- coding: utf-8 -*-
+# Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Tests EL utils"""
 import unittest
 import unittest.mock
 from utils import el_utils
@@ -19,18 +20,18 @@ from utils import el_utils
 
 class TestELUtils(unittest.TestCase):
     def test_strip_el(self):
-        EXP_FUNC = 'concat("abc", "def")'
-        EXP_VAR = "hostname"
+        exp_func = 'concat("abc", "def")'
+        exp_var = "hostname"
 
         el_func1 = '${concat("abc", "def")}'
         el_var1 = "${hostname}"
         el_func2 = '${ concat("abc", "def") }'
         el_var2 = "${ hostname }"
 
-        self.assertEqual(el_utils.strip_el(el_func1), EXP_FUNC)
-        self.assertEqual(el_utils.strip_el(el_func2), EXP_FUNC)
-        self.assertEqual(el_utils.strip_el(el_var1), EXP_VAR)
-        self.assertEqual(el_utils.strip_el(el_var2), EXP_VAR)
+        self.assertEqual(el_utils.strip_el(el_func1), exp_func)
+        self.assertEqual(el_utils.strip_el(el_func2), exp_func)
+        self.assertEqual(el_utils.strip_el(el_var1), exp_var)
+        self.assertEqual(el_utils.strip_el(el_var2), exp_var)
 
     def test_replace_el_with_var_var_no_quote(self):
         params = {"hostname": "airflow@apache.org"}
@@ -95,34 +96,34 @@ class TestELUtils(unittest.TestCase):
             el_utils.parse_el_func(el_func, el_func_map)
 
     def test_convert_el_to_jinja_var_no_quote(self):
-        el = "${hostname}"
+        el_function = "${hostname}"
         expected = "{{ params.hostname }}"
-        self.assertEqual(expected, el_utils.convert_el_to_jinja(el, quote=False))
+        self.assertEqual(expected, el_utils.convert_el_to_jinja(el_function, quote=False))
 
     def test_convert_el_to_jinja_var_quote(self):
-        el = "${hostname}"
+        el_function = "${hostname}"
         expected = "'{{ params.hostname }}'"
-        self.assertEqual(expected, el_utils.convert_el_to_jinja(el, quote=True))
+        self.assertEqual(expected, el_utils.convert_el_to_jinja(el_function, quote=True))
 
     def test_convert_el_to_jinja_func_no_quote(self):
-        el = '${concat("ab", "de")}'
+        el_function = '${concat("ab", "de")}'
         expected = 'concat("ab", "de")'
-        self.assertEqual(expected, el_utils.convert_el_to_jinja(el, quote=False))
+        self.assertEqual(expected, el_utils.convert_el_to_jinja(el_function, quote=False))
 
     def test_convert_el_to_jinja_func_quote(self):
-        el = '${concat("ab", "de")}'
+        el_function = '${concat("ab", "de")}'
         expected = 'concat("ab", "de")'
-        self.assertEqual(expected, el_utils.convert_el_to_jinja(el, quote=True))
+        self.assertEqual(expected, el_utils.convert_el_to_jinja(el_function, quote=True))
 
     def test_convert_el_to_jinja_no_change_no_quote(self):
-        el = "no_el_here"
+        el_function = "no_el_here"
         expected = "no_el_here"
-        self.assertEqual(expected, el_utils.convert_el_to_jinja(el, quote=False))
+        self.assertEqual(expected, el_utils.convert_el_to_jinja(el_function, quote=False))
 
     def test_convert_el_to_jinja_no_change_quote(self):
-        el = "no_el_here"
+        el_function = "no_el_here"
         expected = "'no_el_here'"
-        self.assertEqual(expected, el_utils.convert_el_to_jinja(el, quote=True))
+        self.assertEqual(expected, el_utils.convert_el_to_jinja(el_function, quote=True))
 
     def test_parse_els_no_file(self):
         params = {"test": "answer"}

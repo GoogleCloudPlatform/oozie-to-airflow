@@ -1,4 +1,5 @@
-# Copyright 2018 Google LLC
+#!/usr/bin/env bash
+# Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-#!/usr/bin/env bash
+
 MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 BASE_DIR=${MY_DIR}/..
 
@@ -22,7 +23,7 @@ if [[ ! -f ${BASE_DIR}/examples/decision/configuration.properties ]]; then
     exit 1
 fi
 
-python ${BASE_DIR}/oozie_converter.py -i ${BASE_DIR}/examples/decision/workflow.xml \
+python ${BASE_DIR}/o2a.py -i ${BASE_DIR}/examples/decision/workflow.xml \
   -p ${BASE_DIR}/examples/decision/job.properties \
   -o ${BASE_DIR}/output/decision_test.py -c ${BASE_DIR}/examples/decision/configuration.properties -d test_decision_dag $@
 
