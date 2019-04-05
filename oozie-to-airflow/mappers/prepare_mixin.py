@@ -1,4 +1,5 @@
-# Copyright 2018 Google LLC
+# -*- coding: utf-8 -*-
+# Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,18 +12,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Dict, List
+"""Prepare node mixin"""
+from typing import Dict, List, Tuple
+import xml.etree.ElementTree as ET
 
 from utils import xml_utils, el_utils
-import xml.etree.ElementTree as ET
 
 
 class PrepareMixin:
+    """Mixin used to add Prepare node capability to a node"""
+
     def get_prepare_command(self, oozie_node: ET.Element, params: Dict[str, str]):
         # In BashOperator in Composer we can't read from $DAGS_FOLDER (~/dags) - permission denied.
         # However we can read from ~/data -> /home/airflow/gcs/data.
         # The easiest way to access it is using the $DAGS_FOLDER env variable.
-        delete_paths, mkdir_paths = self._parse_prepare_node(oozie_node, params)
+        delete_paths, mkdir_paths = self.parse_prepare_node(oozie_node, params)
         if delete_paths or mkdir_paths:
             delete = " ".join(delete_paths)
             mkdir = " ".join(mkdir_paths)
@@ -35,7 +39,7 @@ class PrepareMixin:
         return ""
 
     @staticmethod
-    def _parse_prepare_node(oozie_node: ET.Element, params: Dict[str, str]) -> (List[str], List[str]):
+    def parse_prepare_node(oozie_node: ET.Element, params: Dict[str, str]) -> Tuple[List[str], List[str]]:
         """
         <prepare>
             <delete path="[PATH]"/>

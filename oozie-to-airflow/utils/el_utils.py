@@ -1,4 +1,5 @@
-# Copyright 2018 Google LLC
+# -*- coding: utf-8 -*-
+# Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,6 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Utilities used by EL functions"""
 import os
 import re
 import logging
@@ -52,23 +54,23 @@ WF_EL_FUNCTIONS = {
 }
 
 
-def strip_el(el):
+def strip_el(el_function):
     """
     Given an el function or variable like ${ variable },
     strips out everything except for the variable.
     """
 
-    return re.sub("[${}]", "", el).strip()
+    return re.sub("[${}]", "", el_function).strip()
 
 
-def replace_el_with_var(el, params, quote=True):
+def replace_el_with_var(el_function, params, quote=True):
     """
     Only supports a single variable
     """
     # Matches oozie EL variables e.g. ${hostname}
-    var_match = VAR_MATCH.findall(el)
+    var_match = VAR_MATCH.findall(el_function)
 
-    jinjafied_el = el
+    jinjafied_el = el_function
     if var_match:
         for var in var_match:
             if var in params:
@@ -79,12 +81,12 @@ def replace_el_with_var(el, params, quote=True):
     return "'" + jinjafied_el + "'" if quote else jinjafied_el
 
 
-def parse_el_func(el, el_func_map=None):
+def parse_el_func(el_function, el_func_map=None):
     # Finds things like ${ function(arg1, arg2 } and returns
     # a list like ['function', 'arg1, arg2']
     if el_func_map is None:
         el_func_map = EL_FUNCTIONS
-    fn_match = FN_MATCH.findall(el)
+    fn_match = FN_MATCH.findall(el_function)
 
     if not fn_match:
         return None
@@ -122,7 +124,7 @@ def convert_el_to_jinja(oozie_el, quote=True):
     if fn_match:
         jinjafied_el = parse_el_func(oozie_el)
         return jinjafied_el
-    elif var_match:
+    if var_match:
         for var in var_match:
             jinjafied_el = jinjafied_el.replace("${" + var + "}", "{{ params." + var + " }}")
 
@@ -157,5 +159,5 @@ def parse_els(properties_file: str, prop_dict: Dict[str, str] = None):
                         props = [x.strip() for x in line.split("=", 1)]
                         prop_dict[props[0]] = replace_el_with_var(props[1], prop_dict, quote=False)
         else:
-            logging.warning("The job.properties file is missing: %s ", properties_file)
+            logging.warning(f"The job.properties file is missing: {properties_file}")
     return prop_dict

@@ -1,4 +1,5 @@
-# Copyright 2018 Google LLC
+# -*- coding: utf-8 -*-
+# Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,8 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-# airflow DAG AIRFLOW dag
+"""Basic EL functions of the Oozie workflow"""
 import re
 
 
@@ -26,8 +26,7 @@ def first_not_null(str_one, str_two):
     """
     if str_one:
         return str_one
-    else:
-        return str_two if str_two else ""
+    return str_two if str_two else ""
 
 
 def concat(str_one, str_two):
@@ -58,7 +57,7 @@ def replace_all(src_string, regex, replacement):
 
 def append_all(src_str, append, delimiter):
     """
-    Add the append string into each splitted sub-strings of the
+    Add the append string into each split sub-strings of the
     first string(=src=). The split is performed into src string
     using the delimiter . E.g. appendAll("/a/b/,/c/b/,/c/d/", "ADD", ",")
     will return /a/b/ADD,/c/b/ADD,/c/d/ADD. A append string with null
@@ -84,23 +83,21 @@ def trim(src_str):
     """
     if not src_str:
         return ""
-    else:
-        # May not behave like java, their documentation is unclear what
-        # types of whitespace they strip..
-        return src_str.strip()
+    # May not behave like java, their documentation is unclear what
+    # types of whitespace they strip..
+    return src_str.strip()
 
 
 def url_encode(src_str):
     """
-    It returns the URL UTF-8 encoded value of the given string. 
+    It returns the URL UTF-8 encoded value of the given string.
     A string with null value is considered as an empty string.
     """
     if not src_str:
         return ""
-    else:
-        import urllib.parse
+    import urllib.parse
 
-        return urllib.parse.quote(src_str, encoding="UTF-8")
+    return urllib.parse.quote(src_str, encoding="UTF-8")
 
 
 def timestamp():

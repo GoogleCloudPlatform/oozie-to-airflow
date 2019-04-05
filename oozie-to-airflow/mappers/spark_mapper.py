@@ -1,4 +1,5 @@
-# Copyright 2018 Google LLC
+# -*- coding: utf-8 -*-
+# Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,20 +12,30 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-from typing import Dict, Set
+"""Maps Spark action to Airflow Dag"""
+from typing import Dict, Set, List
+
+import xml.etree.ElementTree as ET
+import jinja2
 
 from airflow.contrib.operators.spark_submit_operator import SparkSubmitOperator
 from airflow.utils.trigger_rule import TriggerRule
 
-import xml.etree.ElementTree as ET
 
 from definitions import TPL_PATH
 from mappers.action_mapper import ActionMapper
 from utils import xml_utils, el_utils
-import jinja2
 
 
+# pylint: disable=too-many-instance-attributes
 class SparkMapper(ActionMapper):
+    """Maps Spark Action"""
+
+    delete_paths: List[str]
+    mkdir_paths: List[str]
+    application_args: List[str]
+    conf: Dict[str, str]
+
     def __init__(
         self,
         oozie_node: ET.Element,
@@ -80,33 +91,33 @@ class SparkMapper(ActionMapper):
         if prepare_nodes:
             # If there exists a prepare node, there will only be one, according
             # to oozie xml schema
-            self.delete_paths, self.mkdir_paths = self._parse_prepare_node(prepare_nodes[0])
+            self.delete_paths, self.mkdir_paths = self.parse_prepare_node(prepare_nodes[0])
 
         # master url, deploy mode,
-        self.application = self._test_and_set(oozie_node, "jar", "''", params=self.params, quote=True)
-        self.name = self._test_and_set(oozie_node, "name", "'airflow-spark'", params=self.params, quote=True)
-        self.java_class = self._test_and_set(oozie_node, "class", None, params=self.params, quote=True)
+        self.application = self.test_and_set(oozie_node, "jar", "''", params=self.params, quote=True)
+        self.name = self.test_and_set(oozie_node, "name", "'airflow-spark'", params=self.params, quote=True)
+        self.java_class = self.test_and_set(oozie_node, "class", None, params=self.params, quote=True)
 
         config_node = xml_utils.find_nodes_by_tag(oozie_node, "configuration")
         job_xml = xml_utils.find_nodes_by_tag(oozie_node, "job-xml")
 
         for xml_file in job_xml:
             tree = ET.parse(xml_file.text)
-            self.conf = {**self.conf, **self._parse_spark_config(tree.getroot())}
+            self.conf = {**self.conf, **self.parse_spark_config(tree.getroot())}
 
         if config_node:
-            self.conf = {**self.conf, **self._parse_spark_config(config_node[0])}
+            self.conf = {**self.conf, **self.parse_spark_config(config_node[0])}
 
         spark_opts = xml_utils.find_nodes_by_tag(oozie_node, "spark-opts")
         if spark_opts:
-            self._update_class_spark_opts(spark_opts[0])
+            self.update_class_spark_opts(spark_opts[0])
 
         app_args = xml_utils.find_nodes_by_tag(oozie_node, "arg")
         for arg in app_args:
             self.application_args.append(el_utils.replace_el_with_var(arg.text, self.params, quote=False))
 
     @staticmethod
-    def _test_and_set(
+    def test_and_set(
         root: ET.Element, tag: str, default: str = None, params: Dict[str, str] = None, quote: bool = False
     ):
         """
@@ -123,19 +134,19 @@ class SparkMapper(ActionMapper):
         if var:
             # Only check the first one
             return el_utils.replace_el_with_var(var[0].text, params=params, quote=quote)
-        else:
-            return default
+        return default
 
     @staticmethod
-    def _parse_spark_config(config_node: ET.Element) -> Dict[str, str]:
+    def parse_spark_config(config_node: ET.Element) -> Dict[str, str]:
         conf_dict = {}
         for prop in config_node:
-            name = prop.find("name").text
-            value = prop.find("value").text
-            conf_dict[name] = value
+            name_node = prop.find("name")
+            value_node = prop.find("value")
+            if name_node is not None and name_node.text and value_node is not None and value_node.text:
+                conf_dict[name_node.text] = value_node.text
         return conf_dict
 
-    def _update_class_spark_opts(self, spark_opts_node: ET.Element):
+    def update_class_spark_opts(self, spark_opts_node: ET.Element):
         """
         Some examples of the spark-opts element:
 
@@ -145,8 +156,10 @@ class SparkMapper(ActionMapper):
         '--conf key1=value1 key2="value2 value3"'
         '--conf key=value --verbose --properties-file user.properties'
         """
-
-        spark_opts = spark_opts_node.text.split("--")[1:]
+        if spark_opts_node.text:
+            spark_opts = spark_opts_node.text.split("--")[1:]
+        else:
+            raise Exception("Spark opts node has no text: {}".format(spark_opts_node))
         clean_opts = [opt.strip() for opt in spark_opts]
         clean_opts_split = [opt.split(maxsplit=1) for opt in clean_opts]
 
@@ -156,7 +169,7 @@ class SparkMapper(ActionMapper):
 
         for spark_opt in clean_opts_split:
             # Can have multiple "--conf" in spark_opts
-            if "conf" == spark_opt[0]:
+            if spark_opt[0] == "conf":
                 # Splits key1=value1 into [key1, value1]
                 conf_val = spark_opt[1].split("=", maxsplit=1)
                 self.conf[conf_val[0]] = conf_val[1]
@@ -164,7 +177,7 @@ class SparkMapper(ActionMapper):
                 self.__dict__[spark_opt[0]] = "'" + " ".join(spark_opt[1:]) + "'"
 
     @staticmethod
-    def _parse_prepare_node(prepare_node: ET.Element):
+    def parse_prepare_node(prepare_node: ET.Element):
         """
         <prepare>
             <delete path="[PATH]"/>
@@ -184,6 +197,7 @@ class SparkMapper(ActionMapper):
         return delete_paths, mkdir_paths
 
     def convert_to_text(self):
+        """Converts subworkflow to text"""
         template_loader = jinja2.FileSystemLoader(searchpath=TPL_PATH)
         template_env = jinja2.Environment(loader=template_loader)
 
@@ -202,9 +216,8 @@ class SparkMapper(ActionMapper):
             op_dict = self.__dict__.copy()
             op_dict["task_id"] = self.task_id + "_reorder"
             op_text = spark_template.render(**op_dict)
-            return op_text + prep_text
-        else:
-            return spark_template.render(**self.__dict__)
+            return op_text + "\n" + prep_text
+        return spark_template.render(**self.__dict__)
 
     def convert_to_airflow_op(self) -> SparkSubmitOperator:
         """
@@ -254,10 +267,9 @@ class SparkMapper(ActionMapper):
         # If the prepare node has been parsed then we reconfigure the execution
         # path of Airflow by adding delete/mkdir bash nodes before the actual
         # spark node executes.
-        if self.has_prepare():
+        if self.has_prepare:
             return self.task_id + "_reorder"
-        else:
-            return self.task_id
+        return self.task_id
 
     def has_prepare(self) -> bool:
         return bool(self.delete_paths or self.mkdir_paths)

@@ -1,4 +1,5 @@
-# Copyright 2018 Google LLC
+# -*- coding: utf-8 -*-
+# Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,98 +12,87 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+"""Tests Spark Mapper"""
 import ast
 import unittest
-
-from mappers import spark_mapper
-from airflow.utils.trigger_rule import TriggerRule
 from xml.etree import ElementTree as ET
+
+from airflow.utils.trigger_rule import TriggerRule
+from mappers import spark_mapper
 
 
 class TestSparkMapper(unittest.TestCase):
     def setUp(self):
-        spark = ET.Element("spark", attrib={"name": "decision"})
-        job_tracker = ET.SubElement(spark, "job-tracker")
-        name_node = ET.SubElement(spark, "name-node")
-        prepare = ET.SubElement(spark, "prepare")
-        mkdir = ET.SubElement(prepare, "mkdir", attrib={"path": "/tmp/mk_path"})
-        delete = ET.SubElement(prepare, "delete", attrib={"path": "/tmp/d_path"})
-        # job_xml = ET.SubElement(spark, 'job-xml')
-        config = ET.SubElement(spark, "configuration")
-        prop = ET.SubElement(config, "property")
-        prop_name = ET.SubElement(prop, "name")
-        prop_value = ET.SubElement(prop, "value")
-        master = ET.SubElement(spark, "master")
-        name = ET.SubElement(spark, "name")
-        mode = ET.SubElement(spark, "mode")
-        clazz = ET.SubElement(spark, "class")
-        jar = ET.SubElement(spark, "jar")
-        spark_opts = ET.SubElement(spark, "spark-opts")
-        arg1 = ET.SubElement(spark, "arg")
-        arg2 = ET.SubElement(spark, "arg")
-
-        job_tracker.text = "foo:8021"
-        name_node.text = "bar:8020"
-        # job_xml.text = '/tmp/job.xml'
-        prop_name.text = "mapred.compress.map.output"
-        prop_value.text = "true"
-        master.text = "local[*]"
-        mode.text = "client"
-        name.text = "Spark Examples"
-        clazz.text = "org.apache.spark.examples.mllib.JavaALS"
-        jar.text = "/lib/spark-examples_2.10-1.1.0.jar"
-        spark_opts.text = (
-            "--executor-memory 20G --num-executors 50 --conf "
-            'spark.executor.extraJavaOptions="-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"'
-        )
-        arg1.text = "inputpath=hdfs:///input/file.txt"
-        arg2.text = "value=2"
-
-        self.et = ET.ElementTree(spark)
+        # language=XML
+        spark_node_str = """
+<spark name="decision">
+    <job-tracker>foo:8021</job-tracker>
+    <name-node>bar:8020</name-node>
+    <prepare>
+        <mkdir path="/tmp/mk_path" />
+        <delete path="/tmp/d_path" />
+    </prepare>
+    <configuration>
+        <property>
+            <name>mapred.compress.map.output</name>
+            <value>true</value>
+        </property>
+    </configuration>
+    <master>local[*]</master>
+    <name>Spark Examples</name>
+    <mode>client</mode>
+    <class>org.apache.spark.examples.mllib.JavaALS</class>
+    <jar>/lib/spark-examples_2.10-1.1.0.jar</jar>
+    <spark-opts>--executor-memory 20G --num-executors 50 --conf spark.executor.extraJavaOptions="-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"</spark-opts>
+    <arg>inputpath=hdfs:///input/file.txt</arg>
+    <arg>value=2</arg>
+</spark>"""  # noqa
+        self.spark_node = ET.fromstring(spark_node_str)
 
     def test_create_mapper(self):
         mapper = spark_mapper.SparkMapper(
-            oozie_node=self.et.getroot(), task_id="test_id", trigger_rule=TriggerRule.DUMMY
+            oozie_node=self.spark_node, task_id="test_id", trigger_rule=TriggerRule.DUMMY
         )
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.task_id)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
-        self.assertEqual(self.et.getroot(), mapper.oozie_node)
+        self.assertEqual(self.spark_node, mapper.oozie_node)
 
     def test_convert_to_text(self):
         mapper = spark_mapper.SparkMapper(
-            oozie_node=self.et.getroot(), task_id="test_id", trigger_rule=TriggerRule.DUMMY
+            oozie_node=self.spark_node, task_id="test_id", trigger_rule=TriggerRule.DUMMY
         )
-        ast.parse(mapper.convert_to_text())
+        res = mapper.convert_to_text()
+        ast.parse(res)
 
+    # pylint: disable=no-self-use
     def test_required_imports(self):
         imps = spark_mapper.SparkMapper.required_imports()
         imp_str = "\n".join(imps)
         ast.parse(imp_str)
 
     def test_test_and_set_found(self):
-        TAG = "test_tag"
+        tag = "test_tag"
         params = {"hostname": "user@apache.org"}
 
         spark = ET.Element("spark")
-        sub_spark = ET.SubElement(spark, TAG)
+        sub_spark = ET.SubElement(spark, tag)
         sub_spark.text = "${hostname}"
 
-        parsed = spark_mapper.SparkMapper._test_and_set(root=spark, tag=TAG, default=None, params=params)
+        parsed = spark_mapper.SparkMapper.test_and_set(root=spark, tag=tag, default=None, params=params)
         self.assertEqual("user@apache.org", parsed)
 
     def test_test_and_set_not_found(self):
-        TAG = "test_tag"
-        NOT_FOUND = "not_found"
+        tag = "test_tag"
+        not_found = "not_found"
         params = {"hostname": "user@apache.org"}
 
         spark = ET.Element("spark")
-        sub_spark = ET.SubElement(spark, TAG)
+        sub_spark = ET.SubElement(spark, tag)
         sub_spark.text = "${hostname}"
 
-        parsed = spark_mapper.SparkMapper._test_and_set(
-            root=spark, tag=NOT_FOUND, default="not_here", params=params
+        parsed = spark_mapper.SparkMapper.test_and_set(
+            root=spark, tag=not_found, default="not_here", params=params
         )
         self.assertEqual("not_here", parsed)
 
@@ -115,7 +105,7 @@ class TestSparkMapper(unittest.TestCase):
         prop_name.text = "red_cup"
         prop_val.text = "green_drink"
 
-        parsed = spark_mapper.SparkMapper._parse_spark_config(config)
+        parsed = spark_mapper.SparkMapper.parse_spark_config(config)
         expected = {"red_cup": "green_drink"}
 
         self.assertEqual(expected, parsed)
@@ -127,13 +117,13 @@ class TestSparkMapper(unittest.TestCase):
             'spark.executor.extraJavaOptions="-XX:+HeapDumpOnOutOfMemoryError '
             '-XX:HeapDumpPath=/tmp"'
         )
-        self.et.getroot().remove(self.et.getroot().find("spark-opts"))
+        self.spark_node.remove(self.spark_node.find("spark-opts"))
 
         mapper = spark_mapper.SparkMapper(
-            oozie_node=self.et.getroot(), task_id="test_id", trigger_rule=TriggerRule.DUMMY
+            oozie_node=self.spark_node, task_id="test_id", trigger_rule=TriggerRule.DUMMY
         )
 
-        mapper._update_class_spark_opts(spark_opts)
+        mapper.update_class_spark_opts(spark_opts)
 
         self.assertIn("executor_memory", mapper.__dict__)
         self.assertIn("num_executors", mapper.__dict__)
@@ -142,13 +132,13 @@ class TestSparkMapper(unittest.TestCase):
         self.assertIn("spark.executor.extraJavaOptions", mapper.__dict__["conf"])
 
     def test_parse_prepared_node(self):
-        EXP_MKDIR = ["/tmp/mk_path"]
-        EXP_DEL = ["/tmp/d_path"]
+        exp_mkdir = ["/tmp/mk_path"]
+        exp_del = ["/tmp/d_path"]
         prepare = ET.Element("prepare")
         ET.SubElement(prepare, "mkdir", attrib={"path": "/tmp/mk_path"})
         ET.SubElement(prepare, "delete", attrib={"path": "/tmp/d_path"})
 
-        delete_list, mkdir_list = spark_mapper.SparkMapper._parse_prepare_node(prepare)
+        delete_list, mkdir_list = spark_mapper.SparkMapper.parse_prepare_node(prepare)
 
-        self.assertEqual(EXP_DEL, delete_list)
-        self.assertEqual(EXP_MKDIR, mkdir_list)
+        self.assertEqual(exp_del, delete_list)
+        self.assertEqual(exp_mkdir, mkdir_list)
