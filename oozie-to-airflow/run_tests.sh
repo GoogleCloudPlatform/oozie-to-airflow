@@ -16,5 +16,5 @@ set -euo pipefail
 MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
 pushd ${MY_DIR}
-pytest
+pytest tests
 popd
