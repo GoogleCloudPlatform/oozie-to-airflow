@@ -24,6 +24,7 @@ import o2a
 from converter.oozie_converter import OozieConverter
 from converter.mappers import CONTROL_MAP, ACTION_MAP
 from converter.parsed_node import ParsedNode
+from converter.relation import Relation
 from definitions import TPL_PATH
 from mappers import dummy_mapper
 from tests.utils.test_paths import EXAMPLE_DEMO_PATH
@@ -54,33 +55,37 @@ class TestOozieConverter(unittest.TestCase):
         self.assertEqual(args.user, user)
 
     def test_write_operators(self):
-        node = ParsedNode(dummy_mapper.DummyMapper(oozie_node=Element("test"), task_id="task1"))
-        ops = {"task1": node}
+        node = ParsedNode(dummy_mapper.DummyMapper(oozie_node=Element("test"), name="task1"))
+        nodes = {"task1": node}
 
         file = io.StringIO()
-        self.converter.write_operators(file=file, operators=ops, indent=0)
+        self.converter.write_nodes(file=file, nodes=nodes, indent=0)
         file.seek(0)
 
-        self.assertEqual(node.operator.convert_to_text(), file.read())
+        self.assertEqual(node.mapper.convert_to_text(), file.read())
 
     def test_write_relations(self):
-        relations = ["task1.set_downstream(task2)", "task2.set_upstream(task1)"]
+        relations = [
+            Relation(from_name="task1", to_name="task2"),
+            Relation(from_name="task2", to_name="task1"),
+        ]
 
         file = io.StringIO()
         OozieConverter.write_relations(file, relations, indent=0)
         file.seek(0)
 
-        expected = "\n".join(relations) + "\n"
-        self.assertEqual(expected, file.read())
+        content = file.read()
+        self.assertIn("task1.set_downstream(task2)", content)
+        self.assertIn("task2.set_downstream(task1)", content)
 
     def test_write_dependencies(self):
         depends = ["import airflow", "from jaws import thriller"]
 
         file = io.StringIO()
-        OozieConverter.write_relations(file, depends, indent=0)
+        OozieConverter.write_dependencies(file, depends)
         file.seek(0)
 
-        expected = "\n".join(depends) + "\n"
+        expected = "\n".join(depends) + "\n\n"
         self.assertEqual(expected, file.read())
 
     def test_write_dag_header(self):

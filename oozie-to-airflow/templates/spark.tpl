@@ -20,7 +20,7 @@
     trigger_rule = '{{ trigger_rule }}',
     params=PARAMS,
     # Spark specific
-    name = {{ name }},
+    name = {{ spark_name }},
     application = {{ application }},
     conf = {{ conf }},
     conn_id = 'spark_default',

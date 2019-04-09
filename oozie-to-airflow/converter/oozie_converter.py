@@ -15,7 +15,7 @@
 """Converts Oozie application workflow into Airflow's DAG
 """
 import shutil
-from typing import Dict, TextIO, Type, List
+from typing import Dict, TextIO, Type, Set
 
 import os
 import json
@@ -25,6 +25,7 @@ import logging
 
 from converter import parser
 from converter.parsed_node import ParsedNode
+from converter.relation import Relation
 from mappers.action_mapper import ActionMapper
 from mappers.base_mapper import BaseMapper
 from utils import el_utils
@@ -84,10 +85,10 @@ class OozieConverter:
         self.parser.parse_workflow()
         relations = self.parser.get_relations()
         depends = self.parser.get_dependencies()
-        ops = self.parser.get_operators()
+        nodes = self.parser.get_nodes()
         self.parser.update_trigger_rules()
         self._recreate_output_directory()
-        self.create_dag_file(ops, depends, relations)
+        self.create_dag_file(nodes, depends, relations)
 
     def _recreate_output_directory(self):
         shutil.rmtree(self.output_directory_path, ignore_errors=True)
@@ -99,23 +100,22 @@ class OozieConverter:
         """
         return el_utils.parse_els(self.job_properties_file, params)
 
-    def create_dag_file(self, operators: Dict[str, ParsedNode], depends: List[str], relations: List[str]):
+    def create_dag_file(self, nodes: Dict[str, ParsedNode], depends: Set[str], relations: Set[Relation]):
         """
         Writes to a file the Apache Oozie parsed workflow in Airflow's DAG format.
 
-        :param operators: A dictionary of {'task_id': ParsedNode object}
+        :param nodes: A dictionary of {'task_id': ParsedNode object}
         :param depends: A list of strings that will be interpreted as import
             statements
-        :param relations: A list of strings corresponding to operator relations,
-            such as task_1.set_downstream(task_2)
+        :param relations: A list of Relation corresponding to operator relations
         """
         file_name = self.output_dag_name
         with open(file_name, "w") as file:
             logging.info(f"Saving to file: {file_name}")
-            self.write_dag(depends, file, operators, relations)
+            self.write_dag(depends, file, nodes, relations)
 
     def write_dag(
-        self, depends: List[str], file: TextIO, operators: Dict[str, ParsedNode], relations: List[str]
+        self, depends: Set[str], file: TextIO, nodes: Dict[str, ParsedNode], relations: Set[Relation]
     ):
         """
         Template method, can be overridden.
@@ -123,22 +123,22 @@ class OozieConverter:
         self.write_dependencies(file, depends)
         file.write("PARAMS = " + json.dumps(self.params, indent=INDENT) + "\n\n")
         self.write_dag_header(file, self.dag_name, self.schedule_interval, self.start_days_ago)
-        self.write_operators(file, operators)
+        self.write_nodes(file, nodes)
         file.write("\n\n")
         self.write_relations(file, relations)
 
-    def write_operators(self, file: TextIO, operators: Dict[str, ParsedNode], indent: int = INDENT):
+    def write_nodes(self, file: TextIO, nodes: Dict[str, ParsedNode], indent: int = INDENT):
         """
         Writes the Airflow operators to the given opened file object.
 
         :param file: The file pointer to write to.
-        :param operators: Dictionary of {'task_id', ParsedNode}
+        :param nodes: Dictionary of {'task_id', ParsedNode}
         :param indent: integer of how many spaces to indent entire operator
         """
-        for operator in operators.values():
-            file.write(textwrap.indent(operator.operator.convert_to_text(), indent * " "))
-            logging.info(f"Wrote Airflow Task ID: {operator.operator.get_task_id()}")
-            operator.operator.copy_extra_assets(
+        for node in nodes.values():
+            file.write(textwrap.indent(node.mapper.convert_to_text(), indent * " "))
+            logging.info(f"Wrote operator corresponding to the action named: {node.mapper.name}")
+            node.mapper.copy_extra_assets(
                 input_directory_path=self.input_directory_path,
                 output_directory_path=self.output_directory_path,
             )
@@ -146,14 +146,13 @@ class OozieConverter:
     @staticmethod
     def write_relations(file, relations, indent=INDENT):
         """
-        Each relation is in the form of: task_1.setdownstream(task_2)
+        Write the relations to the given opened file object.
 
         These are each written on a new line.
         """
         logging.info("Writing control flow dependencies to file.")
-        for relation in relations:
-            file.write(textwrap.indent(relation, indent * " "))
-            file.write("\n")
+        relations_str = render_template(template_name="relations.tpl", relations=relations)
+        file.write(textwrap.indent(relations_str, indent * " "))
 
     @staticmethod
     def write_dependencies(file, depends, line_prefix=""):

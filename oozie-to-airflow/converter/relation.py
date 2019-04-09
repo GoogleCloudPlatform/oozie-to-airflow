@@ -12,17 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Kill mapper - maps the workflow end"""
-from typing import Set
-
-from mappers.base_mapper import BaseMapper
-from utils.template_utils import render_template
+"""Class for Airflow relation"""
+from typing import NamedTuple
 
 
-class KillMapper(BaseMapper):
-    def convert_to_text(self) -> str:
-        return render_template(template_name="kill.tpl", task_id=self.name, trigger_rule=self.trigger_rule)
+class Relation(NamedTuple):
+    """Class for Airflow relation"""
 
-    @staticmethod
-    def required_imports() -> Set[str]:
-        return {"from airflow.operators import bash_operator"}
+    from_name: str
+    to_name: str

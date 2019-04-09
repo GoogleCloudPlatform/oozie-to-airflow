@@ -19,6 +19,7 @@ from xml.etree.ElementTree import Element
 
 from airflow.utils.trigger_rule import TriggerRule
 
+from converter.relation import Relation
 from mappers.action_mapper import ActionMapper
 from mappers.file_archive_mixins import FileMixin, ArchiveMixin
 from mappers.prepare_mixin import PrepareMixin
@@ -37,7 +38,7 @@ class PigMapper(ActionMapper, PrepareMixin, ArchiveMixin, FileMixin):
     def __init__(
         self,
         oozie_node: Element,
-        task_id: str,
+        name: str,
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
         params=None,
         template_file_name: str = "pig.tpl",
@@ -45,14 +46,11 @@ class PigMapper(ActionMapper, PrepareMixin, ArchiveMixin, FileMixin):
     ):
         ArchiveMixin.__init__(self, params=params)
         FileMixin.__init__(self, params=params)
-        ActionMapper.__init__(
-            self, oozie_node=oozie_node, task_id=task_id, trigger_rule=trigger_rule, **kwargs
-        )
+        ActionMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, **kwargs)
         if params is None:
             params = dict()
         self.template = template_file_name
         self.params = params
-        self.task_id = task_id
         self.trigger_rule = trigger_rule
         self.properties = {}
         self.params_dict = {}
@@ -79,7 +77,14 @@ class PigMapper(ActionMapper, PrepareMixin, ArchiveMixin, FileMixin):
 
     def convert_to_text(self) -> str:
         prepare_command = self.get_prepare_command(self.oozie_node, self.params)
-        return render_template(template_name=self.template, prepare_command=prepare_command, **self.__dict__)
+        relations = [Relation(from_name=self.name + "_prepare", to_name=self.name)]
+        return render_template(
+            template_name=self.template,
+            prepare_command=prepare_command,
+            task_id=self.name,
+            relations=relations,
+            **self.__dict__,
+        )
 
     def _add_symlinks(self, destination_pig_file):
         destination_pig_file.write("set mapred.create.symlink yes;\n")
@@ -109,9 +114,10 @@ class PigMapper(ActionMapper, PrepareMixin, ArchiveMixin, FileMixin):
         if not output_directory_path:
             raise Exception("The output_directory_path should be set and is {}".format(output_directory_path))
 
-    def convert_to_airflow_op(self):
-        pass
-
     @staticmethod
     def required_imports() -> Set[str]:
         return {"from airflow.utils import dates", "from airflow.contrib.operators import dataproc_operator"}
+
+    @property
+    def first_task_id(self):
+        return "{task_id}_prepare".format(task_id=self.name)

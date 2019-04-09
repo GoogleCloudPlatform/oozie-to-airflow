@@ -69,7 +69,7 @@ class TestSubworkflowMapper(TestCase):
         # When
         mapper = subworkflow_mapper.SubworkflowMapper(
             oozie_node=self.subworkflow_node,
-            task_id="test_id",
+            name="test_id",
             dag_name="test",
             input_directory_path=EXAMPLE_SUBWORKFLOW_PATH,
             output_directory_path="/tmp",
@@ -103,7 +103,7 @@ class TestSubworkflowMapper(TestCase):
         # When
         mapper = subworkflow_mapper.SubworkflowMapper(
             oozie_node=self.subworkflow_node,
-            task_id="test_id",
+            name="test_id",
             dag_name="test",
             input_directory_path=EXAMPLE_SUBWORKFLOW_PATH,
             output_directory_path="/tmp",
@@ -132,7 +132,7 @@ class TestSubworkflowMapper(TestCase):
             input_directory_path=EXAMPLE_SUBWORKFLOW_PATH,
             output_directory_path="/tmp",
             oozie_node=self.subworkflow_node,
-            task_id="test_id",
+            name="test_id",
             dag_name="test",
             trigger_rule=TriggerRule.DUMMY,
             params=self.main_params,

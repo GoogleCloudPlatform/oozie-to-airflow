@@ -26,7 +26,7 @@ class BaseMapper:
     def __init__(
         self,
         oozie_node: Element,
-        task_id: str,
+        name: str,
         trigger_rule=airflow.utils.trigger_rule.TriggerRule.ALL_SUCCESS,
         params=None,
         **kwargs,
@@ -35,21 +35,13 @@ class BaseMapper:
             params = {}
         self.params = params
         self.oozie_node = oozie_node
-        self.task_id = task_id
+        self.name = name
         self.trigger_rule = trigger_rule
 
     def convert_to_text(self) -> str:
         """
-        Returns a python operator equivalent string. This will be appended to
-        the file.
-        """
-        raise NotImplementedError("Not Implemented")
-
-    def convert_to_airflow_op(self) -> None:
-        """
-        Return a corresponding Airflow Operator python object. As of now, it is
-        not used, but it could come in handy in the future for extending the
-        program.
+        Returns a python operators equivalent string with relation.
+        This will be appended to the file.
         """
         raise NotImplementedError("Not Implemented")
 
@@ -63,17 +55,25 @@ class BaseMapper:
         """
         raise NotImplementedError("Not Implemented")
 
-    def get_task_id(self) -> str:
+    @property
+    def first_task_id(self) -> str:
         """
-        Returns the task_id of the operator, this can be handy if any prepare
-        statements need to be used or any reordering of operators.
+        Returns task_id of first task in mapper
         """
-        return self.task_id
+        return self.name
+
+    @property
+    def last_task_id(self) -> str:
+        """
+        Returns task_id of first task in mapper
+        """
+        return self.name
 
     # pylint: disable=unused-argument,no-self-use
     def copy_extra_assets(self, input_directory_path: str, output_directory_path: str) -> None:
         """
         Copies extra assets required by the generated DAG - such as script files, jars etc.
+
         :param input_directory_path: oozie workflow application directory
         :param output_directory_path: output directory for the generated DAG and assets
         :return: None

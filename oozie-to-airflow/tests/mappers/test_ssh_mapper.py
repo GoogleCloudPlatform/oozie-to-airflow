@@ -37,10 +37,10 @@ class TestSSHMapper(unittest.TestCase):
 
     def test_create_mapper_no_jinja(self):
         mapper = ssh_mapper.SSHMapper(
-            oozie_node=self.ssh_node, task_id="test_id", trigger_rule=TriggerRule.DUMMY
+            oozie_node=self.ssh_node, name="test_id", trigger_rule=TriggerRule.DUMMY
         )
         # make sure everything is getting initialized correctly
-        self.assertEqual("test_id", mapper.task_id)
+        self.assertEqual("test_id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.ssh_node, mapper.oozie_node)
         self.assertEqual("user", mapper.user)
@@ -53,10 +53,10 @@ class TestSSHMapper(unittest.TestCase):
         params = {"hostname": "user@apache.org"}
 
         mapper = ssh_mapper.SSHMapper(
-            oozie_node=self.ssh_node, task_id="test_id", trigger_rule=TriggerRule.DUMMY, params=params
+            oozie_node=self.ssh_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=params
         )
         # make sure everything is getting initialized correctly
-        self.assertEqual("test_id", mapper.task_id)
+        self.assertEqual("test_id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.ssh_node, mapper.oozie_node)
         self.assertEqual("user", mapper.user)
@@ -65,7 +65,7 @@ class TestSSHMapper(unittest.TestCase):
 
     def test_convert_to_text(self):
         mapper = ssh_mapper.SSHMapper(
-            oozie_node=self.ssh_node, task_id="test_id", trigger_rule=TriggerRule.DUMMY
+            oozie_node=self.ssh_node, name="test_id", trigger_rule=TriggerRule.DUMMY
         )
         # Throws a syntax error if doesn't parse correctly
         ast.parse(mapper.convert_to_text())

@@ -16,8 +16,6 @@
 from typing import Dict, Set
 from xml.etree.ElementTree import Element
 
-from airflow.contrib.hooks import ssh_hook
-from airflow.contrib.operators.ssh_operator import SSHOperator
 from airflow.utils.trigger_rule import TriggerRule
 
 from mappers.action_mapper import ActionMapper
@@ -37,15 +35,13 @@ class SSHMapper(ActionMapper):
     def __init__(
         self,
         oozie_node: Element,
-        task_id: str,
+        name: str,
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
         params: Dict[str, str] = None,
         template: str = "ssh.tpl",
         **kwargs,
     ):
-        ActionMapper.__init__(
-            self, oozie_node=oozie_node, task_id=task_id, trigger_rule=trigger_rule, **kwargs
-        )
+        ActionMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, **kwargs)
 
         if params is None:
             params = {}
@@ -72,19 +68,7 @@ class SSHMapper(ActionMapper):
         self.host = user_host[1]
 
     def convert_to_text(self) -> str:
-        return render_template(template_name=self.template, **self.__dict__)
-
-    def convert_to_airflow_op(self) -> SSHOperator:
-        """
-        Oozie has 3 properties, host, arguments, command, and capture-output
-        Airflow has host and command
-
-        returns an SSH Operator
-        """
-        hook = ssh_hook.SSHHook(ssh_conn_id="ssh_default", username=self.user, remote_host=self.host)
-        return SSHOperator(
-            ssh_hook=hook, task_id=self.task_id, command=self.command, trigger_rule=self.trigger_rule
-        )
+        return render_template(template_name=self.template, task_id=self.name, **self.__dict__)
 
     @staticmethod
     def required_imports() -> Set[str]:

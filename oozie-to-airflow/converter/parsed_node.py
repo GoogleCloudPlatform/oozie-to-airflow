@@ -25,8 +25,8 @@ from mappers.base_mapper import BaseMapper
 class ParsedNode:
     """Class for parsed Oozie workflow node"""
 
-    def __init__(self, operator: BaseMapper):
-        self.operator = operator
+    def __init__(self, mapper: BaseMapper):
+        self.mapper = mapper
         self.downstream_names: List[str] = []
         self.is_error: bool = False
         self.is_ok: bool = False
@@ -52,6 +52,20 @@ class ParsedNode:
 
     def get_error_downstream_name(self) -> Optional[str]:
         return self.error_xml
+
+    @property
+    def first_task_id(self) -> str:
+        """
+        Returns task_id of first task in mapper
+        """
+        return self.mapper.first_task_id
+
+    @property
+    def last_task_id(self) -> str:
+        """
+        Returns task_id of last task in mapper
+        """
+        return self.mapper.last_task_id
 
     def set_is_error(self, is_error: bool):
         """
@@ -83,14 +97,12 @@ class ParsedNode:
         is a python branch operator, and make a decision there.
         """
         if self.is_ok and self.is_error:
-            logging.warning(
-                "Task {} is both an error node and a ok node.".format(self.operator.get_task_id())
-            )
-            self.operator.trigger_rule = TriggerRule.DUMMY
+            logging.warning(f"Task {self.mapper.name} is both an error node and a ok node.")
+            self.mapper.trigger_rule = TriggerRule.DUMMY
         elif not self.is_ok and not self.is_error:
             # Sets to dummy, but does not warn user about it.
-            self.operator.trigger_rule = TriggerRule.DUMMY
+            self.mapper.trigger_rule = TriggerRule.DUMMY
         elif self.is_ok:
-            self.operator.trigger_rule = TriggerRule.ONE_SUCCESS
+            self.mapper.trigger_rule = TriggerRule.ONE_SUCCESS
         else:
-            self.operator.trigger_rule = TriggerRule.ONE_FAILED
+            self.mapper.trigger_rule = TriggerRule.ONE_FAILED
