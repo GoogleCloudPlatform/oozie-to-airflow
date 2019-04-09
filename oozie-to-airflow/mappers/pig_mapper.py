@@ -17,14 +17,13 @@ import os
 from typing import Set, Dict
 from xml.etree.ElementTree import Element
 
-import jinja2
 from airflow.utils.trigger_rule import TriggerRule
 
-from definitions import ROOT_DIR
 from mappers.action_mapper import ActionMapper
 from mappers.file_archive_mixins import FileMixin, ArchiveMixin
 from mappers.prepare_mixin import PrepareMixin
 from utils import el_utils, xml_utils
+from utils.template_utils import render_template
 
 
 class PigMapper(ActionMapper, PrepareMixin, ArchiveMixin, FileMixin):
@@ -79,11 +78,8 @@ class PigMapper(ActionMapper, PrepareMixin, ArchiveMixin, FileMixin):
                 self.params_dict[key] = value
 
     def convert_to_text(self) -> str:
-        template_loader = jinja2.FileSystemLoader(searchpath=os.path.join(ROOT_DIR, "templates/"))
-        template_env = jinja2.Environment(loader=template_loader)
-        template = template_env.get_template(self.template)
         prepare_command = self.get_prepare_command(self.oozie_node, self.params)
-        return template.render(prepare_command=prepare_command, **self.__dict__)
+        return render_template(template_name=self.template, prepare_command=prepare_command, **self.__dict__)
 
     def _add_symlinks(self, destination_pig_file):
         destination_pig_file.write("set mapred.create.symlink yes;\n")

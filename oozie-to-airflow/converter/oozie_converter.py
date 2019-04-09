@@ -23,14 +23,12 @@ import json
 import textwrap
 import logging
 
-import jinja2
-
 from converter import parser
 from converter.parsed_node import ParsedNode
-from definitions import TPL_PATH
 from mappers.action_mapper import ActionMapper
 from mappers.base_mapper import BaseMapper
 from utils import el_utils
+from utils.template_utils import render_template
 
 INDENT = 4
 
@@ -178,13 +176,13 @@ class OozieConverter:
         :param start_days_ago: Desired DAG start date, expressed as number of days ago from the present day
         :param template: Desired template to use when creating the DAG header.
         """
-        template_loader = jinja2.FileSystemLoader(searchpath=TPL_PATH)
-        template_env = jinja2.Environment(loader=template_loader)
 
-        template = template_env.get_template(template)
         file.write(
-            template.render(
-                dag_name=dag_name, schedule_interval=schedule_interval, start_days_ago=start_days_ago
+            render_template(
+                template_name=template,
+                dag_name=dag_name,
+                schedule_interval=schedule_interval,
+                start_days_ago=start_days_ago,
             )
         )
         logging.info("Wrote DAG header.")

@@ -13,18 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Maps Shell action into Airflow's DAG"""
-import os
 from typing import Dict, Set
 
 import xml.etree.ElementTree as ET
 
-import jinja2
 from airflow.utils.trigger_rule import TriggerRule
 
-from definitions import ROOT_DIR
 from mappers.action_mapper import ActionMapper
 from mappers.prepare_mixin import PrepareMixin
 from utils import el_utils
+
+from utils.template_utils import render_template
 
 
 class ShellMapper(ActionMapper, PrepareMixin):
@@ -62,11 +61,8 @@ class ShellMapper(ActionMapper, PrepareMixin):
         self.bash_command = el_utils.convert_el_to_jinja(cmd, quote=False)
 
     def convert_to_text(self) -> str:
-        template_loader = jinja2.FileSystemLoader(searchpath=os.path.join(ROOT_DIR, "templates/"))
-        template_env = jinja2.Environment(loader=template_loader)
-        template = template_env.get_template(self.template)
         prepare_command = self.get_prepare_command(self.oozie_node, self.params)
-        return template.render(prepare_command=prepare_command, **self.__dict__)
+        return render_template(template_name=self.template, prepare_command=prepare_command, **self.__dict__)
 
     def convert_to_airflow_op(self):
         pass
