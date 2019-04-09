@@ -18,15 +18,14 @@ import os
 from typing import Set, Dict, Type
 from xml.etree.ElementTree import Element
 
-import jinja2
 from airflow.utils.trigger_rule import TriggerRule
 
 from converter.subworkflow_converter import OozieSubworkflowConverter
-from definitions import ROOT_DIR
 from mappers.action_mapper import ActionMapper
 from mappers.base_mapper import BaseMapper
 from tests.utils.test_paths import EXAMPLES_PATH
 from utils import el_utils, xml_utils
+from utils.template_utils import render_template
 
 
 class SubworkflowMapper(ActionMapper):
@@ -106,10 +105,7 @@ class SubworkflowMapper(ActionMapper):
                     self.properties[name] = value
 
     def convert_to_text(self):
-        template_loader = jinja2.FileSystemLoader(searchpath=os.path.join(ROOT_DIR, "templates/"))
-        template_env = jinja2.Environment(loader=template_loader)
-        template = template_env.get_template(self.template)
-        return template.render(**self.__dict__)
+        return render_template(template_name=self.template, **self.__dict__)
 
     def convert_to_airflow_op(self):
         pass

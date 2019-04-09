@@ -14,24 +14,20 @@
 # limitations under the License.
 """Dummy Mapper that is used as temporary solution while we are implementing the real mappers.
 """
-import os
 from typing import Set
 
-import jinja2
 
 from airflow.operators import dummy_operator
 
 from mappers.action_mapper import ActionMapper
-from definitions import ROOT_DIR
+from utils.template_utils import render_template
 
 
 class DummyMapper(ActionMapper):
     def convert_to_text(self):
-        template_loader = jinja2.FileSystemLoader(searchpath=os.path.join(ROOT_DIR, "templates/"))
-        template_env = jinja2.Environment(loader=template_loader)
-
-        template = template_env.get_template("dummy.tpl")
-        return template.render(task_id=self.task_id, trigger_rule=self.trigger_rule)
+        return render_template(
+            template_name="dummy.tpl", task_id=self.task_id, trigger_rule=self.trigger_rule
+        )
 
     def convert_to_airflow_op(self):
         return dummy_operator.DummyOperator(task_id=self.task_id, trigger_rule=self.trigger_rule)
