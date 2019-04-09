@@ -16,15 +16,15 @@
 from typing import Dict, Set, List
 
 import xml.etree.ElementTree as ET
-import jinja2
 
 from airflow.contrib.operators.spark_submit_operator import SparkSubmitOperator
 from airflow.utils.trigger_rule import TriggerRule
 
 
-from definitions import TPL_PATH
 from mappers.action_mapper import ActionMapper
 from utils import xml_utils, el_utils
+
+from utils.template_utils import render_template
 
 
 # pylint: disable=too-many-instance-attributes
@@ -198,26 +198,19 @@ class SparkMapper(ActionMapper):
 
     def convert_to_text(self):
         """Converts subworkflow to text"""
-        template_loader = jinja2.FileSystemLoader(searchpath=TPL_PATH)
-        template_env = jinja2.Environment(loader=template_loader)
-
-        spark_template = template_env.get_template(self.template)
-        prepare_template = template_env.get_template("prepare.tpl")
+        op_text = render_template(template_name=self.template, **self.__dict__)
 
         # If we have found a prepare node, we must reorder nodes.
         if self.delete_paths or self.mkdir_paths:
-            prep_text = prepare_template.render(
-                task_id=self.task_id,
+            prep_text = render_template(
+                template_name="prepare.tpl",
+                task_id=self.task_id + "_reorder",
                 trigger_rule=self.trigger_rule,
                 delete_paths=self.delete_paths,
                 mkdir_paths=self.mkdir_paths,
             )
-            # Don't want to change class variable
-            op_dict = self.__dict__.copy()
-            op_dict["task_id"] = self.task_id + "_reorder"
-            op_text = spark_template.render(**op_dict)
-            return op_text + "\n" + prep_text
-        return spark_template.render(**self.__dict__)
+            return op_text + prep_text
+        return op_text
 
     def convert_to_airflow_op(self) -> SparkSubmitOperator:
         """

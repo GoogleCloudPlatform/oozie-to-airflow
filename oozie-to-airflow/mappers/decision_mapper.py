@@ -14,16 +14,14 @@
 # limitations under the License.
 """Maps decision node to Airflow's DAG"""
 import collections
-import os
 from typing import Dict, Set
 from xml.etree.ElementTree import Element
 
-import jinja2
 from airflow.utils.trigger_rule import TriggerRule
 
-from definitions import ROOT_DIR
 from mappers.base_mapper import BaseMapper
 from utils.el_utils import convert_el_to_jinja
+from utils.template_utils import render_template
 
 
 # noinspection PyAbstractClass
@@ -86,15 +84,11 @@ class DecisionMapper(BaseMapper):
                 self.case_dict["default"] = case.attrib["to"]
 
     def convert_to_text(self) -> str:
-        template_env = jinja2.Environment(
-            loader=jinja2.FileSystemLoader(searchpath=os.path.join(ROOT_DIR, "templates/")),
-            trim_blocks=True,
-            lstrip_blocks=True,
-        )
-
-        template = template_env.get_template("decision.tpl")
-        return template.render(
-            task_id=self.task_id, trigger_rule=self.trigger_rule, case_dict=self.case_dict.items()
+        return render_template(
+            template_name="decision.tpl",
+            task_id=self.task_id,
+            trigger_rule=self.trigger_rule,
+            case_dict=self.case_dict.items(),
         )
 
     def convert_to_airflow_op(self) -> None:
