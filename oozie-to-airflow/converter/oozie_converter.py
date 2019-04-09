@@ -113,7 +113,7 @@ class OozieConverter:
         """
         file_name = self.output_dag_name
         with open(file_name, "w") as file:
-            logging.info("Saving to file: {}".format(file_name))
+            logging.info(f"Saving to file: {file_name}")
             self.write_dag(depends, file, operators, relations)
 
     def write_dag(
@@ -139,7 +139,7 @@ class OozieConverter:
         """
         for operator in operators.values():
             file.write(textwrap.indent(operator.operator.convert_to_text(), indent * " "))
-            logging.info("Wrote Airflow Task ID: {}".format(operator.operator.get_task_id()))
+            logging.info(f"Wrote Airflow Task ID: {operator.operator.get_task_id()}")
             operator.operator.copy_extra_assets(
                 input_directory_path=self.input_directory_path,
                 output_directory_path=self.output_directory_path,

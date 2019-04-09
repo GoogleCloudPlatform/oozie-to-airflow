@@ -76,7 +76,7 @@ def replace_el_with_var(el_function, params, quote=True):
             if var in params:
                 jinjafied_el = jinjafied_el.replace("${" + var + "}", params[var])
             else:
-                logging.info("Couldn't replace EL {}".format(var))
+                logging.info(f"Couldn't replace EL {var}")
 
     return "'" + jinjafied_el + "'" if quote else jinjafied_el
 
