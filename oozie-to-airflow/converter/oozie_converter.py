@@ -129,7 +129,7 @@ class OozieConverter:
 
     def write_nodes(self, file: TextIO, nodes: Dict[str, ParsedNode], indent: int = INDENT):
         """
-        Writes the Airflow operators to the given opened file object.
+        Writes the Airflow tasks to the given opened file object.
 
         :param file: The file pointer to write to.
         :param nodes: Dictionary of {'task_id', ParsedNode}
@@ -137,7 +137,7 @@ class OozieConverter:
         """
         for node in nodes.values():
             file.write(textwrap.indent(node.mapper.convert_to_text(), indent * " "))
-            logging.info(f"Wrote operator corresponding to the action named: {node.mapper.name}")
+            logging.info(f"Wrote tasks corresponding to the action named: {node.mapper.name}")
             node.mapper.copy_extra_assets(
                 input_directory_path=self.input_directory_path,
                 output_directory_path=self.output_directory_path,
