@@ -30,7 +30,6 @@ from converter.parsed_node import ParsedNode
 from converter.primitives import Relation, Workflow
 from mappers.action_mapper import ActionMapper
 from mappers.base_mapper import BaseMapper
-from mappers.file_archive_mixins import FileMixin, ArchiveMixin
 
 
 # noinspection PyDefaultArgument
@@ -222,38 +221,12 @@ class OozieParser:
             raise Exception("Missing error node in {}".format(action_node))
         p_node.set_error_node_name(error_node.attrib["to"])
 
-        self._parse_file_nodes(action_node, mapper)
-
-        self._parse_archive_nodes(action_node, mapper)
-
         mapper.on_parse_node(self.workflow)
 
         logging.info(f"Parsed {mapper.name} as Action Node of type {action_name}.")
         self.workflow.dependencies.update(mapper.required_imports())
 
         self.workflow.nodes[mapper.name] = p_node
-
-    @staticmethod
-    def _parse_file_nodes(action_node, operator: ActionMapper):
-        file_nodes = action_node.findall("file")
-        if file_nodes:
-            if isinstance(operator, FileMixin):
-                for file_node in file_nodes:
-                    file_path = file_node.text
-                    operator.add_file(file_path)
-            else:
-                raise Exception("The operator {} does not derive from FileMixin".format(operator))
-
-    @staticmethod
-    def _parse_archive_nodes(action_node, operator: ActionMapper):
-        archive_nodes = action_node.findall("archive")
-        if archive_nodes:
-            if isinstance(operator, ArchiveMixin):
-                for archive_node in archive_nodes:
-                    archive_path = archive_node.text
-                    operator.add_archive(archive_path)
-            else:
-                raise Exception("The operator {} does not derive from ArchiveMixin".format(operator))
 
     def parse_start_node(self, start_node):
         """
