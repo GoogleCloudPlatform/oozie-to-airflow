@@ -34,18 +34,17 @@ class ShellMapper(ActionMapper, PrepareMixin):
     def __init__(
         self,
         oozie_node: ET.Element,
-        task_id: str,
+        name: str,
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
         params: Dict[str, str] = None,
         template: str = "shell.tpl",
         **kwargs,
     ):
-        ActionMapper.__init__(self, oozie_node, task_id, trigger_rule, **kwargs)
+        ActionMapper.__init__(self, oozie_node, name, trigger_rule, **kwargs)
         if params is None:
             params = {}
         self.template = template
         self.params = params
-        self.task_id = task_id
         self.trigger_rule = trigger_rule
         self._parse_oozie_node()
 
@@ -62,10 +61,9 @@ class ShellMapper(ActionMapper, PrepareMixin):
 
     def convert_to_text(self) -> str:
         prepare_command = self.get_prepare_command(self.oozie_node, self.params)
-        return render_template(template_name=self.template, prepare_command=prepare_command, **self.__dict__)
-
-    def convert_to_airflow_op(self):
-        pass
+        return render_template(
+            template_name=self.template, prepare_command=prepare_command, task_id=self.name, **self.__dict__
+        )
 
     @staticmethod
     def required_imports() -> Set[str]:

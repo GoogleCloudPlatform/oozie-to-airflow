@@ -51,16 +51,16 @@ class TestSparkMapper(unittest.TestCase):
 
     def test_create_mapper(self):
         mapper = spark_mapper.SparkMapper(
-            oozie_node=self.spark_node, task_id="test_id", trigger_rule=TriggerRule.DUMMY
+            oozie_node=self.spark_node, name="test_id", trigger_rule=TriggerRule.DUMMY
         )
         # make sure everything is getting initialized correctly
-        self.assertEqual("test_id", mapper.task_id)
+        self.assertEqual("test_id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.spark_node, mapper.oozie_node)
 
     def test_convert_to_text(self):
         mapper = spark_mapper.SparkMapper(
-            oozie_node=self.spark_node, task_id="test_id", trigger_rule=TriggerRule.DUMMY
+            oozie_node=self.spark_node, name="test_id", trigger_rule=TriggerRule.DUMMY
         )
         res = mapper.convert_to_text()
         ast.parse(res)
@@ -120,7 +120,7 @@ class TestSparkMapper(unittest.TestCase):
         self.spark_node.remove(self.spark_node.find("spark-opts"))
 
         mapper = spark_mapper.SparkMapper(
-            oozie_node=self.spark_node, task_id="test_id", trigger_rule=TriggerRule.DUMMY
+            oozie_node=self.spark_node, name="test_id", trigger_rule=TriggerRule.DUMMY
         )
 
         mapper.update_class_spark_opts(spark_opts)

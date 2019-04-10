@@ -31,4 +31,6 @@
     dataproc_job_id='{{ task_id }}'
 )
 
-{{ task_id }}_prepare.set_downstream({{ task_id }})
+{% with relation=relations %}
+{% include "relations.tpl" %}
+{% endwith %}

@@ -15,10 +15,11 @@
 """Converts sub-workflows of Oozie to Airflow"""
 import json
 import textwrap
-from typing import TextIO, Dict, Type, List
+from typing import TextIO, Dict, Type, Set
 
 from converter.oozie_converter import OozieConverter, INDENT
 from converter.parsed_node import ParsedNode
+from converter.relation import Relation
 from mappers.action_mapper import ActionMapper
 from mappers.base_mapper import BaseMapper
 
@@ -51,7 +52,7 @@ class OozieSubworkflowConverter(OozieConverter):
         )
 
     def write_dag(
-        self, depends: List[str], file: TextIO, operators: Dict[str, ParsedNode], relations: List[str]
+        self, depends: Set[str], file: TextIO, nodes: Dict[str, ParsedNode], relations: Set[Relation]
     ) -> None:
         self.write_dependencies(file, depends)
         file.write("PARAMS = " + json.dumps(self.params, indent=INDENT) + "\n\n")
@@ -59,7 +60,7 @@ class OozieSubworkflowConverter(OozieConverter):
         self.write_dag_header(
             file, self.dag_name, self.schedule_interval, self.start_days_ago, template="dag_subwf.tpl"
         )
-        self.write_operators(file, operators, indent=INDENT + 4)
+        self.write_nodes(file, nodes, indent=INDENT + 4)
         file.write("\n\n")
         self.write_relations(file, relations, indent=INDENT + 4)
         file.write(textwrap.indent("\nreturn dag\n", INDENT * " "))

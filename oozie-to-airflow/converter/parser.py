@@ -28,10 +28,10 @@ from typing import Type, Dict, Set
 from airflow.utils.trigger_rule import TriggerRule
 import utils.xml_utils
 from converter.parsed_node import ParsedNode
+from converter.relation import Relation
 from mappers.action_mapper import ActionMapper
 from mappers.base_mapper import BaseMapper
 from mappers.file_archive_mixins import FileMixin, ArchiveMixin
-from mappers.null_mapper import NullMapper
 
 
 # noinspection PyDefaultArgument
@@ -40,10 +40,10 @@ class OozieParser:
 
     control_map: Dict[str, Type[BaseMapper]]
     action_map: Dict[str, Type[ActionMapper]]
-    relations: Set[str]
+    relations: Set[Relation]
     params: Dict[str, str]
     dependencies: Set[str]  # TODO: Check is set likely maintain insertion order (Python 3.6 ?)
-    operators: Dict[str, ParsedNode]
+    nodes: Dict[str, ParsedNode]
 
     def __init__(
         self,
@@ -62,7 +62,7 @@ class OozieParser:
         self.params = params
         # Dictionary is ordered purely for output being somewhat ordered the
         # same as how Oozie workflow was parsed.
-        self.operators = OrderedDict()
+        self.nodes = OrderedDict()
         # These are the general dependencies required that every operator
         # requires. The o2a_libs are for the external EL function parsing.
         self.dependencies = {
@@ -79,14 +79,14 @@ class OozieParser:
         A workflow definition may have zero or more kill nodes.
         """
         map_class = self.control_map["kill"]
-        operator = map_class(
-            oozie_node=kill_node, task_id=kill_node.attrib["name"], trigger_rule=TriggerRule.ONE_FAILED
+        mapper = map_class(
+            oozie_node=kill_node, name=kill_node.attrib["name"], trigger_rule=TriggerRule.ONE_FAILED
         )
-        p_node = ParsedNode(operator)
+        p_node = ParsedNode(mapper)
 
-        logging.info(f"Parsed {operator.task_id} as Kill Node.")
-        self.operators[kill_node.attrib["name"]] = p_node
-        self.dependencies.update(operator.required_imports())
+        logging.info(f"Parsed {mapper.name} as Kill Node.")
+        self.nodes[kill_node.attrib["name"]] = p_node
+        self.dependencies.update(mapper.required_imports())
 
     def parse_end_node(self, end_node):
         """
@@ -94,12 +94,12 @@ class OozieParser:
         Thus it gets mapped to a dummy node that always completes.
         """
         map_class = self.control_map["end"]
-        operator = map_class(oozie_node=end_node, task_id=end_node.attrib["name"])
-        p_node = ParsedNode(operator)
+        mapper = map_class(oozie_node=end_node, name=end_node.attrib["name"])
+        p_node = ParsedNode(mapper)
 
-        logging.info(f"Parsed {operator.task_id} as End Node.")
-        self.operators[end_node.attrib["name"]] = p_node
-        self.dependencies.update(operator.required_imports())
+        logging.info(f"Parsed {mapper.name} as End Node.")
+        self.nodes[end_node.attrib["name"]] = p_node
+        self.dependencies.update(mapper.required_imports())
 
     def parse_fork_node(self, root, fork_node):
         """
@@ -114,10 +114,10 @@ class OozieParser:
         """
         map_class = self.control_map["fork"]
         fork_name = fork_node.attrib["name"]
-        fork_start_op = map_class(oozie_node=fork_node, task_id=fork_name)
+        fork_start_op = map_class(oozie_node=fork_node, name=fork_name)
         p_node = ParsedNode(fork_start_op)
 
-        logging.info(f"Parsed {fork_start_op.task_id} as Fork Node.")
+        logging.info(f"Parsed {fork_start_op.name} as Fork Node.")
         paths = []
         for node in fork_node:
             if "path" in node.tag:
@@ -125,17 +125,18 @@ class OozieParser:
                 curr_name = node.attrib["start"]
                 paths.append(utils.xml_utils.find_node_by_name(root, curr_name))
 
-        self.operators[fork_name] = p_node
+        self.nodes[fork_name] = p_node
         self.dependencies.update(fork_start_op.required_imports())
 
         for path in paths:
             p_node.add_downstream_node_name(path.attrib["name"])
-            logging.info(f"Added {fork_start_op.task_id}'s downstream: {path.attrib['name']}")
+            logging.info(f"Added {fork_start_op.name}'s downstream: {path.attrib['name']}")
+
             # Theoretically these will all be action nodes, however I don't
             # think that is guaranteed.
             # The end of the execution path has not been reached
             self.parse_node(root, path)
-            if path.attrib["name"] not in self.operators:
+            if path.attrib["name"] not in self.nodes:
                 root.remove(path)
 
     def parse_join_node(self, join_node):
@@ -145,14 +146,14 @@ class OozieParser:
         schema perfectly.
         """
         map_class = self.control_map["join"]
-        operator = map_class(oozie_node=join_node, task_id=join_node.attrib["name"])
+        mapper = map_class(oozie_node=join_node, name=join_node.attrib["name"])
 
-        p_node = ParsedNode(operator)
+        p_node = ParsedNode(mapper)
         p_node.add_downstream_node_name(join_node.attrib["to"])
 
-        logging.info(f"Parsed {operator.task_id} as Join Node.")
-        self.operators[join_node.attrib["name"]] = p_node
-        self.dependencies.update(operator.required_imports())
+        logging.info(f"Parsed {mapper.name} as Join Node.")
+        self.nodes[join_node.attrib["name"]] = p_node
+        self.dependencies.update(mapper.required_imports())
 
     def parse_decision_node(self, decision_node):
         """
@@ -179,15 +180,15 @@ class OozieParser:
         </decision>
         """
         map_class = self.control_map["decision"]
-        operator = map_class(oozie_node=decision_node, task_id=decision_node.attrib["name"])
+        mapper = map_class(oozie_node=decision_node, name=decision_node.attrib["name"])
 
-        p_node = ParsedNode(operator)
+        p_node = ParsedNode(mapper)
         for cases in decision_node[0]:
             p_node.add_downstream_node_name(cases.attrib["to"])
 
-        logging.info(f"Parsed {operator.task_id} as Decision Node.")
-        self.operators[decision_node.attrib["name"]] = p_node
-        self.dependencies.update(operator.required_imports())
+        logging.info(f"Parsed {mapper.name} as Decision Node.")
+        self.nodes[decision_node.attrib["name"]] = p_node
+        self.dependencies.update(mapper.required_imports())
 
     def parse_action_node(self, action_node: ET.Element):
         """
@@ -205,16 +206,16 @@ class OozieParser:
             action_name = "unknown"
 
         map_class = self.action_map[action_name]
-        operator = map_class(
+        mapper = map_class(
             oozie_node=action_node[0],
-            task_id=action_node.attrib["name"],
+            name=action_node.attrib["name"],
             params=self.params,
             dag_name=self.dag_name,
             input_directory_path=self.input_directory_path,
             output_directory_path=self.output_directory_path,
         )
 
-        p_node = ParsedNode(operator)
+        p_node = ParsedNode(mapper)
         ok_node = action_node.find("ok")
         if ok_node is None:
             raise Exception("Missing ok node in {}".format(action_node))
@@ -224,21 +225,14 @@ class OozieParser:
             raise Exception("Missing error node in {}".format(action_node))
         p_node.set_error_node_name(error_node.attrib["to"])
 
-        self._parse_file_nodes(action_node, operator)
+        self._parse_file_nodes(action_node, mapper)
 
-        self._parse_archive_nodes(action_node, operator)
+        self._parse_archive_nodes(action_node, mapper)
 
-        logging.info(f"Parsed {operator.task_id} as Action Node of type {action_name}.")
-        self.dependencies.update(operator.required_imports())
+        logging.info(f"Parsed {mapper.name} as Action Node of type {action_name}.")
+        self.dependencies.update(mapper.required_imports())
 
-        # TODO A hacky way to get the correct control flow for now, fix
-        if operator.has_prepare:
-            print(operator.task_id)
-            self.operators[operator.task_id] = ParsedNode(
-                NullMapper(oozie_node=action_node, task_id=operator.task_id)
-            )
-
-        self.operators[operator.get_task_id()] = p_node
+        self.nodes[mapper.name] = p_node
 
     @staticmethod
     def _parse_file_nodes(action_node, operator: ActionMapper):
@@ -275,14 +269,14 @@ class OozieParser:
         map_class = self.control_map["start"]
         # Theoretically this could cause conflicts, but it is very unlikely
         start_name = "start_node_" + str(uuid.uuid4())[:4]
-        operator = map_class(oozie_node=start_node, task_id=start_name)
+        mapper = map_class(oozie_node=start_node, name=start_name)
 
-        p_node = ParsedNode(operator)
+        p_node = ParsedNode(mapper)
         p_node.add_downstream_node_name(start_node.attrib["to"])
 
-        logging.info(f"Parsed {operator.task_id} as Start Node.")
-        self.operators[start_name] = p_node
-        self.dependencies.update(operator.required_imports())
+        logging.info(f"Parsed {mapper.name} as Start Node.")
+        self.nodes[start_name] = p_node
+        self.dependencies.update(mapper.required_imports())
 
     def parse_node(self, root, node):
         """
@@ -338,34 +332,38 @@ class OozieParser:
         returns a set of logical connectives for each task in Airflow.
         :return: Set with strings of task's downstream nodes.
         """
-        ops = self.operators
         logging.info("Parsing relations between operators.")
-        for node_name, p_node in ops.items():
+        for p_node in self.nodes.values():
             for downstream in p_node.get_downstreams():
-                ok_str = "{}.set_downstream({})".format(node_name, downstream)
-                self.relations.add(ok_str)
-            if p_node.get_error_downstream_name():
-                error_str = "{}.set_downstream({})".format(node_name, p_node.get_error_downstream_name())
-                self.relations.add(error_str)
+                relation = Relation(
+                    from_task_id=p_node.last_task_id, to_task_id=self.nodes[downstream].first_task_id
+                )
+                self.relations.add(relation)
+            error_downstream = p_node.get_error_downstream_name()
+            if error_downstream:
+                relation = Relation(
+                    from_task_id=p_node.last_task_id, to_task_id=self.nodes[error_downstream].first_task_id
+                )
+                self.relations.add(relation)
 
     def update_trigger_rules(self) -> None:
         """
         Updates the trigger rules of each node based on the downstream and
         error nodes.
         """
-        for operator in self.operators.values():
+        for node in self.nodes.values():
             # If a task is referenced  by an "ok to=<task>", flip bit in parsed
             # node class
-            for downstream in operator.get_downstreams():
-                self.operators[downstream].set_is_ok(True)
-            error_name = operator.get_error_downstream_name()
+            for downstream in node.get_downstreams():
+                self.nodes[downstream].set_is_ok(True)
+            error_name = node.get_error_downstream_name()
             if error_name:
                 # If a task is referenced  by an "error to=<task>", flip
                 # corresponding bit in the parsed node class
-                self.operators[error_name].set_is_error(True)
-            operator.update_trigger_rule()
+                self.nodes[error_name].set_is_error(True)
+            node.update_trigger_rule()
 
-    def get_relations(self) -> Set[str]:
+    def get_relations(self) -> Set[Relation]:
         if not self.relations:
             self.create_relations()
         return self.relations
@@ -373,5 +371,5 @@ class OozieParser:
     def get_dependencies(self) -> Set[str]:
         return self.dependencies
 
-    def get_operators(self) -> Dict[str, ParsedNode]:
-        return self.operators
+    def get_nodes(self) -> Dict[str, ParsedNode]:
+        return self.nodes
