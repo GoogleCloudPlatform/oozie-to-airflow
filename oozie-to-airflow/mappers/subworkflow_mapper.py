@@ -39,7 +39,7 @@ class SubworkflowMapper(ActionMapper):
     def __init__(
         self,
         oozie_node: Element,
-        task_id: str,
+        name: str,
         dag_name: str,
         input_directory_path: str,
         output_directory_path: str,
@@ -50,14 +50,12 @@ class SubworkflowMapper(ActionMapper):
         template="subwf.tpl",
         **kwargs,
     ):
-        ActionMapper.__init__(
-            self, oozie_node=oozie_node, task_id=task_id, trigger_rule=trigger_rule, **kwargs
-        )
+        ActionMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, **kwargs)
         if params is None:
             params = {}
         self.template = template
         self.params = params
-        self.task_id = task_id
+        self.task_id = name
         self.trigger_rule = trigger_rule
         self.properties = {}
         self.input_directory_path = input_directory_path
@@ -106,9 +104,6 @@ class SubworkflowMapper(ActionMapper):
 
     def convert_to_text(self):
         return render_template(template_name=self.template, **self.__dict__)
-
-    def convert_to_airflow_op(self):
-        pass
 
     @staticmethod
     def required_imports() -> Set[str]:

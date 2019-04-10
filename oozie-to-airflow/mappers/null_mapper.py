@@ -21,9 +21,8 @@ from mappers.base_mapper import BaseMapper
 
 
 class NullMapper(BaseMapper):
-    def __init__(self, oozie_node: Element, task_id: str):
-        BaseMapper.__init__(self, oozie_node=oozie_node, task_id=task_id, trigger_rule=TriggerRule.DUMMY)
-        self.task_id = task_id
+    def __init__(self, oozie_node: Element, name: str):
+        BaseMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=TriggerRule.DUMMY)
 
     # pylint: disable=no-self-use
     def convert_to_text(self) -> str:

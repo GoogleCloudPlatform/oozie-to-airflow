@@ -37,10 +37,10 @@ class TestDecisionMapper(unittest.TestCase):
 
     def test_create_mapper(self):
         mapper = decision_mapper.DecisionMapper(
-            oozie_node=self.decision_node, task_id="test_id", trigger_rule=TriggerRule.DUMMY
+            oozie_node=self.decision_node, name="test_id", trigger_rule=TriggerRule.DUMMY
         )
         # make sure everything is getting initialized correctly
-        self.assertEqual("test_id", mapper.task_id)
+        self.assertEqual("test_id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.decision_node, mapper.oozie_node)
         # test conversion from Oozie EL to Jinja
@@ -51,7 +51,7 @@ class TestDecisionMapper(unittest.TestCase):
         # decision mapper does not have the required EL parsing to correctly get
         # parsed, so once that is finished need to redo tests.
         mapper = decision_mapper.DecisionMapper(
-            oozie_node=self.decision_node, task_id="test_id", trigger_rule=TriggerRule.DUMMY
+            oozie_node=self.decision_node, name="test_id", trigger_rule=TriggerRule.DUMMY
         )
         res = mapper.convert_to_text()
         ast.parse(res)

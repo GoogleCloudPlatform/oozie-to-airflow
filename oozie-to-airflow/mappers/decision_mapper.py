@@ -60,15 +60,15 @@ class DecisionMapper(BaseMapper):
     def __init__(
         self,
         oozie_node: Element,
-        task_id: str,
+        name: str,
         trigger_rule: str = TriggerRule.ALL_DONE,
         params: Dict[str, str] = None,
     ):
-        BaseMapper.__init__(self, oozie_node=oozie_node, task_id=task_id, trigger_rule=trigger_rule)
+        BaseMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule)
         if params is None:
             params = {}
         self.oozie_node = oozie_node
-        self.task_id = task_id
+        self.name = name
         self.trigger_rule = trigger_rule
         self.params = params
         self._get_cases()
@@ -86,13 +86,10 @@ class DecisionMapper(BaseMapper):
     def convert_to_text(self) -> str:
         return render_template(
             template_name="decision.tpl",
-            task_id=self.task_id,
+            task_id=self.name,
             trigger_rule=self.trigger_rule,
             case_dict=self.case_dict.items(),
         )
-
-    def convert_to_airflow_op(self) -> None:
-        return
 
     @staticmethod
     def required_imports() -> Set[str]:

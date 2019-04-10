@@ -27,13 +27,6 @@ class ActionMapper(BaseMapper):
 
     properties: Dict[str, str] = {}
 
-    @property
-    def has_prepare(self) -> bool:
-        """
-        Returns whether or not the Action node has a prepare statement.
-        """
-        return False
-
     def _parse_config(self):
         config = self.oozie_node.find("configuration")
         if config:
