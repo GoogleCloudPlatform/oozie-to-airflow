@@ -1,4 +1,4 @@
-apache-airflow==1.10.2
+apache-airflow==1.10.3
 black==19.3b0
 flake8==3.7.7
 google-api-python-client==1.7.8
