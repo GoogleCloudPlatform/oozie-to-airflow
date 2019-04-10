@@ -65,7 +65,7 @@ class BaseMapper:
     @property
     def last_task_id(self) -> str:
         """
-        Returns task_id of first task in mapper
+        Returns task_id of last task in mapper
         """
         return self.name
 
