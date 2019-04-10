@@ -23,6 +23,7 @@ branches:
     - master
 before_install: cd oozie-to-airflow
 install:
+  - pip uninstall -y mock
   - pip install -r ../requirements.txt
 script:
   - pre-commit run --all-files
