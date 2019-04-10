@@ -71,6 +71,8 @@ class OozieParser:
         )
         p_node = ParsedNode(mapper)
 
+        mapper.on_parse_node(self.workflow)
+
         logging.info(f"Parsed {mapper.name} as Kill Node.")
         self.workflow.nodes[kill_node.attrib["name"]] = p_node
         self.workflow.dependencies.update(mapper.required_imports())
@@ -83,6 +85,8 @@ class OozieParser:
         map_class = self.control_map["end"]
         mapper = map_class(oozie_node=end_node, name=end_node.attrib["name"])
         p_node = ParsedNode(mapper)
+
+        mapper.on_parse_node(self.workflow)
 
         logging.info(f"Parsed {mapper.name} as End Node.")
         self.workflow.nodes[end_node.attrib["name"]] = p_node
@@ -101,10 +105,12 @@ class OozieParser:
         """
         map_class = self.control_map["fork"]
         fork_name = fork_node.attrib["name"]
-        fork_start_op = map_class(oozie_node=fork_node, name=fork_name)
-        p_node = ParsedNode(fork_start_op)
+        mapper = map_class(oozie_node=fork_node, name=fork_name)
+        p_node = ParsedNode(mapper)
 
-        logging.info(f"Parsed {fork_start_op.name} as Fork Node.")
+        mapper.on_parse_node(self.workflow)
+
+        logging.info(f"Parsed {mapper.name} as Fork Node.")
         paths = []
         for node in fork_node:
             if "path" in node.tag:
@@ -113,11 +119,11 @@ class OozieParser:
                 paths.append(utils.xml_utils.find_node_by_name(root, curr_name))
 
         self.workflow.nodes[fork_name] = p_node
-        self.workflow.dependencies.update(fork_start_op.required_imports())
+        self.workflow.dependencies.update(mapper.required_imports())
 
         for path in paths:
             p_node.add_downstream_node_name(path.attrib["name"])
-            logging.info(f"Added {fork_start_op.name}'s downstream: {path.attrib['name']}")
+            logging.info(f"Added {mapper.name}'s downstream: {path.attrib['name']}")
 
             # Theoretically these will all be action nodes, however I don't
             # think that is guaranteed.
@@ -137,6 +143,8 @@ class OozieParser:
 
         p_node = ParsedNode(mapper)
         p_node.add_downstream_node_name(join_node.attrib["to"])
+
+        mapper.on_parse_node(self.workflow)
 
         logging.info(f"Parsed {mapper.name} as Join Node.")
         self.workflow.nodes[join_node.attrib["name"]] = p_node
@@ -172,6 +180,8 @@ class OozieParser:
         p_node = ParsedNode(mapper)
         for cases in decision_node[0]:
             p_node.add_downstream_node_name(cases.attrib["to"])
+
+        mapper.on_parse_node(self.workflow)
 
         logging.info(f"Parsed {mapper.name} as Decision Node.")
         self.workflow.nodes[decision_node.attrib["name"]] = p_node
@@ -215,6 +225,8 @@ class OozieParser:
         self._parse_file_nodes(action_node, mapper)
 
         self._parse_archive_nodes(action_node, mapper)
+
+        mapper.on_parse_node(self.workflow)
 
         logging.info(f"Parsed {mapper.name} as Action Node of type {action_name}.")
         self.workflow.dependencies.update(mapper.required_imports())
@@ -260,6 +272,8 @@ class OozieParser:
 
         p_node = ParsedNode(mapper)
         p_node.add_downstream_node_name(start_node.attrib["to"])
+
+        mapper.on_parse_node(self.workflow)
 
         logging.info(f"Parsed {mapper.name} as Start Node.")
         self.workflow.nodes[start_name] = p_node
@@ -313,6 +327,11 @@ class OozieParser:
             logging.debug(f"Parsing node: {node}")
             self.parse_node(root, node)
 
+        self.create_relations()
+
+        for node in self.workflow.nodes.values():
+            node.mapper.on_finish_parse_nodes(self.workflow)
+
     def create_relations(self) -> None:
         """
         Given a dictionary of task_ids and ParsedNodes,
@@ -353,8 +372,6 @@ class OozieParser:
             node.update_trigger_rule()
 
     def get_relations(self) -> Set[Relation]:
-        if not self.workflow.relations:
-            self.create_relations()
         return self.workflow.relations
 
     def get_dependencies(self) -> Set[str]:
