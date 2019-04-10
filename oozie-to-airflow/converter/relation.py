@@ -19,5 +19,5 @@ from typing import NamedTuple
 class Relation(NamedTuple):
     """Class for Airflow relation"""
 
-    from_name: str
-    to_name: str
+    from_task_id: str
+    to_task_id: str

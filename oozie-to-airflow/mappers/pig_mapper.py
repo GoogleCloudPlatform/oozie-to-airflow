@@ -77,7 +77,7 @@ class PigMapper(ActionMapper, PrepareMixin, ArchiveMixin, FileMixin):
 
     def convert_to_text(self) -> str:
         prepare_command = self.get_prepare_command(self.oozie_node, self.params)
-        relations = [Relation(from_name=self.name + "_prepare", to_name=self.name)]
+        relations = [Relation(from_task_id=self.name + "_prepare", to_task_id=self.name)]
         return render_template(
             template_name=self.template,
             prepare_command=prepare_command,

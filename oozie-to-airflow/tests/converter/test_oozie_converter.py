@@ -66,8 +66,8 @@ class TestOozieConverter(unittest.TestCase):
 
     def test_write_relations(self):
         relations = [
-            Relation(from_name="task1", to_name="task2"),
-            Relation(from_name="task2", to_name="task1"),
+            Relation(from_task_id="task1", to_task_id="task2"),
+            Relation(from_task_id="task2", to_task_id="task3"),
         ]
 
         file = io.StringIO()
@@ -76,7 +76,7 @@ class TestOozieConverter(unittest.TestCase):
 
         content = file.read()
         self.assertIn("task1.set_downstream(task2)", content)
-        self.assertIn("task2.set_downstream(task1)", content)
+        self.assertIn("task2.set_downstream(task3)", content)
 
     def test_write_dependencies(self):
         depends = ["import airflow", "from jaws import thriller"]

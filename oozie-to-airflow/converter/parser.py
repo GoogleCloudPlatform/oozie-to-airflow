@@ -336,13 +336,13 @@ class OozieParser:
         for p_node in self.nodes.values():
             for downstream in p_node.get_downstreams():
                 relation = Relation(
-                    from_name=p_node.last_task_id, to_name=self.nodes[downstream].first_task_id
+                    from_task_id=p_node.last_task_id, to_task_id=self.nodes[downstream].first_task_id
                 )
                 self.relations.add(relation)
             error_downstream = p_node.get_error_downstream_name()
             if error_downstream:
                 relation = Relation(
-                    from_name=p_node.last_task_id, to_name=self.nodes[error_downstream].first_task_id
+                    from_task_id=p_node.last_task_id, to_task_id=self.nodes[error_downstream].first_task_id
                 )
                 self.relations.add(relation)
 
