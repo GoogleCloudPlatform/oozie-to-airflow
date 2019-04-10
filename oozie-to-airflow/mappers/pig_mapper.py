@@ -19,7 +19,7 @@ from xml.etree.ElementTree import Element
 
 from airflow.utils.trigger_rule import TriggerRule
 
-from converter.relation import Relation
+from converter.primitives import Relation
 from mappers.action_mapper import ActionMapper
 from mappers.file_archive_mixins import FileMixin, ArchiveMixin
 from mappers.prepare_mixin import PrepareMixin

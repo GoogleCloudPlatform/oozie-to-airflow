@@ -19,7 +19,7 @@ from typing import TextIO, Dict, Type, Set
 
 from converter.oozie_converter import OozieConverter, INDENT
 from converter.parsed_node import ParsedNode
-from converter.relation import Relation
+from converter.primitives import Relation
 from mappers.action_mapper import ActionMapper
 from mappers.base_mapper import BaseMapper
 
