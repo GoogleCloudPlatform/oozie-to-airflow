@@ -14,9 +14,9 @@
 # limitations under the License.
 """Tests parsed node"""
 import unittest
+from unittest import mock
 from xml.etree.ElementTree import Element
 
-import mock
 from airflow.utils.trigger_rule import TriggerRule
 
 from converter import parsed_node
