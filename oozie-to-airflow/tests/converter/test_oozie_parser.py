@@ -25,7 +25,7 @@ from converter import parser
 from converter import parsed_node
 from converter.mappers import ACTION_MAP, CONTROL_MAP
 from converter.primitives import Relation
-from mappers import dummy_mapper
+from mappers import dummy_mapper, pig_mapper
 from mappers import ssh_mapper
 from tests.utils.test_paths import EXAMPLE_DEMO_PATH, EXAMPLES_PATH
 
@@ -204,8 +204,39 @@ class TestOozieParser(unittest.TestCase):
         self.assertEqual("fail1", p_op.get_error_downstream_name())
         for depend in p_op.mapper.required_imports():
             self.assertIn(depend, self.parser.workflow.dependencies)
-
         on_parse_node_mock.assert_called_once_with()
+
+    def test_parse_action_node_pig_with_file_and_archive(self):
+        self.parser.action_map = {"pig": pig_mapper.PigMapper}
+        node_name = "pig-node"
+        self.parser.params = {"nameNode": "myNameNode"}
+        # language=XML
+        action_string = """
+<action name='{node_name}'>
+    <pig>
+        <resource-manager>myResManager</resource-manager>
+        <name-node>myNameNode</name-node>
+        <script>id.pig</script>
+        <file>/test_dir/test.txt#test_link.txt</file>
+        <archive>/test_dir/test2.zip#test_zip_dir</archive>
+    </pig>
+    <ok to='end1'/>
+    <error to='fail1'/>
+</action>
+""".format(
+            node_name=node_name
+        )
+        action_node = ET.fromstring(action_string)
+        self.parser.parse_action_node(action_node)
+
+        p_op = self.parser.workflow.nodes[node_name]
+        self.assertIn(node_name, self.parser.workflow.nodes)
+        self.assertIn("end1", p_op.get_downstreams())
+        self.assertEqual("fail1", p_op.get_error_downstream_name())
+        for depend in p_op.mapper.required_imports():
+            self.assertIn(depend, self.parser.workflow.dependencies)
+        self.assertEqual("myNameNode/test_dir/test.txt#test_link.txt", p_op.mapper.hdfs_files)
+        self.assertEqual("myNameNode/test_dir/test2.zip#test_zip_dir", p_op.mapper.hdfs_archives)
 
     @mock.patch("mappers.dummy_mapper.DummyMapper.on_parse_node", wraps=None)
     def test_parse_action_node_unknown(self, on_parse_node_mock):

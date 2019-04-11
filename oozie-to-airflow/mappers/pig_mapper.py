@@ -27,7 +27,7 @@ from utils import el_utils, xml_utils
 from utils.template_utils import render_template
 
 
-class PigMapper(ActionMapper, PrepareMixin, ArchiveMixin, FileMixin):
+class PigMapper(PrepareMixin, ArchiveMixin, FileMixin, ActionMapper):
     """
     Converts a Pig Oozie node to an Airflow task.
     """

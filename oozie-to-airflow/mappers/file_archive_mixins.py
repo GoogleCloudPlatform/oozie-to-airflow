@@ -61,11 +61,11 @@ class FileMixin:
 
     def on_parse_node(self):
         super().on_parse_node()
-        archive_nodes = self.oozie_node.findall("archive")
+        file_nodes = self.oozie_node.findall("file")
 
-        for archive_node in archive_nodes:
-            archive_path = archive_node.text
-            self.add_archive(archive_path)
+        for file_node in file_nodes:
+            file_path = file_node.text
+            self.add_file(file_path)
 
     def add_file(self, oozie_file_path: str) -> None:
         """
