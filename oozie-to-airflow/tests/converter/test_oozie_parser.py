@@ -56,7 +56,7 @@ class TestOozieParser(unittest.TestCase):
         for depend in self.parser.workflow.nodes[node_name].mapper.required_imports():
             self.assertIn(depend, self.parser.workflow.dependencies)
 
-        on_parse_node_mock.assert_called_once_with(self.parser.workflow)
+        on_parse_node_mock.assert_called_once_with()
 
     @mock.patch("mappers.dummy_mapper.DummyMapper.on_parse_node", wraps=None)
     def test_parse_end_node(self, on_parse_node_mock):
@@ -71,7 +71,7 @@ class TestOozieParser(unittest.TestCase):
         for depend in self.parser.workflow.nodes[node_name].mapper.required_imports():
             self.assertIn(depend, self.parser.workflow.dependencies)
 
-        on_parse_node_mock.assert_called_once_with(self.parser.workflow)
+        on_parse_node_mock.assert_called_once_with()
 
     @mock.patch("mappers.dummy_mapper.DummyMapper.on_parse_node", wraps=None)
     @mock.patch("converter.parser.OozieParser.parse_node")
@@ -105,7 +105,7 @@ class TestOozieParser(unittest.TestCase):
         for depend in node.mapper.required_imports():
             self.assertIn(depend, self.parser.workflow.dependencies)
 
-        on_parse_node_mock.assert_called_once_with(self.parser.workflow)
+        on_parse_node_mock.assert_called_once_with()
 
     @mock.patch("mappers.dummy_mapper.DummyMapper.on_parse_node", wraps=None)
     def test_parse_join_node(self, on_parse_node_mock):
@@ -124,7 +124,7 @@ class TestOozieParser(unittest.TestCase):
         for depend in node.mapper.required_imports():
             self.assertIn(depend, self.parser.workflow.dependencies)
 
-        on_parse_node_mock.assert_called_once_with(self.parser.workflow)
+        on_parse_node_mock.assert_called_once_with()
 
     @mock.patch("mappers.decision_mapper.DecisionMapper.on_parse_node", wraps=None)
     def test_parse_decision_node(self, on_parse_node_mock):
@@ -152,7 +152,7 @@ class TestOozieParser(unittest.TestCase):
         for depend in p_op.mapper.required_imports():
             self.assertIn(depend, self.parser.workflow.dependencies)
 
-        on_parse_node_mock.assert_called_once_with(self.parser.workflow)
+        on_parse_node_mock.assert_called_once_with()
 
     @mock.patch("mappers.dummy_mapper.DummyMapper.on_parse_node", wraps=None)
     @mock.patch("uuid.uuid4")
@@ -171,7 +171,7 @@ class TestOozieParser(unittest.TestCase):
         for depend in p_op.mapper.required_imports():
             self.assertIn(depend, self.parser.workflow.dependencies)
 
-        on_parse_node_mock.assert_called_once_with(self.parser.workflow)
+        on_parse_node_mock.assert_called_once_with()
 
     @mock.patch("mappers.ssh_mapper.SSHMapper.on_parse_node", wraps=None)
     def test_parse_action_node_ssh(self, on_parse_node_mock):
@@ -203,7 +203,7 @@ class TestOozieParser(unittest.TestCase):
         for depend in p_op.mapper.required_imports():
             self.assertIn(depend, self.parser.workflow.dependencies)
 
-        on_parse_node_mock.assert_called_once_with(self.parser.workflow)
+        on_parse_node_mock.assert_called_once_with()
 
     @mock.patch("mappers.dummy_mapper.DummyMapper.on_parse_node", wraps=None)
     def test_parse_action_node_unknown(self, on_parse_node_mock):
@@ -234,7 +234,7 @@ class TestOozieParser(unittest.TestCase):
         for depend in p_op.mapper.required_imports():
             self.assertIn(depend, self.parser.workflow.dependencies)
 
-        on_parse_node_mock.assert_called_once_with(self.parser.workflow)
+        on_parse_node_mock.assert_called_once_with()
 
     @mock.patch("converter.parser.OozieParser.parse_action_node")
     def test_parse_node_action(self, action_mock):
@@ -358,9 +358,7 @@ class TestOozieParser(unittest.TestCase):
         self.assertFalse(fail.is_ok)
         self.assertTrue(fail.is_error)
 
-    @mock.patch("uuid.uuid4", return_value="1234")
-    @mock.patch("mappers.base_mapper.BaseMapper.on_finish_parse_nodes", wraps=None)
-    def test_parse_workflow(self, uuid_mock, on_finish_parse_nodes_mock):  # pylint: disable=unused-argument
+    def test_parse_workflow(self):  # pylint: disable=unused-argument
         filename = os.path.join(ROOT_DIR, "examples/demo/workflow.xml")
         self.parser.workflow_file = filename
         self.parser.parse_workflow()
@@ -369,27 +367,3 @@ class TestOozieParser(unittest.TestCase):
         self.assertIn("fork_node", self.parser.workflow.nodes)
         self.assertIn("pig_node", self.parser.workflow.nodes)
         self.assertIn("fail", self.parser.workflow.nodes)
-
-        self.assertEqual(
-            self.parser.workflow.relations,
-            {
-                Relation(from_task_id="cleanup_node", to_task_id="fail"),
-                Relation(from_task_id="cleanup_node", to_task_id="fork_node"),
-                Relation(from_task_id="decision_node", to_task_id="end"),
-                Relation(from_task_id="decision_node", to_task_id="hdfs_node"),
-                Relation(from_task_id="fork_node", to_task_id="pig_node_prepare"),
-                Relation(from_task_id="fork_node", to_task_id="streaming_node"),
-                Relation(from_task_id="hdfs_node", to_task_id="end"),
-                Relation(from_task_id="hdfs_node", to_task_id="fail"),
-                Relation(from_task_id="join_node", to_task_id="mr_node"),
-                Relation(from_task_id="mr_node", to_task_id="decision_node"),
-                Relation(from_task_id="mr_node", to_task_id="fail"),
-                Relation(from_task_id="pig_node", to_task_id="fail"),
-                Relation(from_task_id="pig_node", to_task_id="join_node"),
-                Relation(from_task_id="start_node_1234", to_task_id="cleanup_node"),
-                Relation(from_task_id="streaming_node", to_task_id="fail"),
-                Relation(from_task_id="streaming_node", to_task_id="join_node"),
-            },
-        )
-
-        on_finish_parse_nodes_mock.assert_called()

@@ -59,7 +59,7 @@ class FileMixin:
         self.hdfs_files = ""
         self.file_path_processor = HdfsPathProcessor(params=params)
 
-    def on_parse_node(self, _):
+    def on_parse_node(self):
         super().on_parse_node()
         archive_nodes = self.oozie_node.findall("archive")
 
@@ -95,7 +95,7 @@ class ArchiveMixin:
         self.hdfs_archives = ""
         self.archive_path_processor = HdfsPathProcessor(params=params)
 
-    def on_parse_node(self, _):
+    def on_parse_node(self):
         super().on_parse_node()
         archive_nodes = self.oozie_node.findall("archive")
         if archive_nodes:
