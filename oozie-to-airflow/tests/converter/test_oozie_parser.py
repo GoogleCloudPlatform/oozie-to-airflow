@@ -58,7 +58,7 @@ class TestOozieParser(unittest.TestCase):
 
         on_parse_node_mock.assert_called_once_with()
 
-    @mock.patch("mappers.dummy_mapper.DummyMapper.on_parse_node", wraps=None)
+    @mock.patch("mappers.end_mapper.EndMapper.on_parse_node", wraps=None)
     def test_parse_end_node(self, on_parse_node_mock):
         node_name = "end_name"
         # language=XML
@@ -154,7 +154,7 @@ class TestOozieParser(unittest.TestCase):
 
         on_parse_node_mock.assert_called_once_with()
 
-    @mock.patch("mappers.dummy_mapper.DummyMapper.on_parse_node", wraps=None)
+    @mock.patch("mappers.start_mapper.StartMapper.on_parse_node", wraps=None)
     @mock.patch("uuid.uuid4")
     def test_parse_start_node(self, uuid_mock, on_parse_node_mock):
         uuid_mock.return_value = "1234"
@@ -358,7 +358,9 @@ class TestOozieParser(unittest.TestCase):
         self.assertFalse(fail.is_ok)
         self.assertTrue(fail.is_error)
 
-    def test_parse_workflow(self):  # pylint: disable=unused-argument
+    @mock.patch("uuid.uuid4", return_value="1234")
+    @mock.patch("mappers.base_mapper.BaseMapper.on_parse_finish", wraps=None)
+    def test_parse_workflow(self, _, on_parse_finish_mock):
         filename = os.path.join(ROOT_DIR, "examples/demo/workflow.xml")
         self.parser.workflow_file = filename
         self.parser.parse_workflow()
@@ -367,3 +369,24 @@ class TestOozieParser(unittest.TestCase):
         self.assertIn("fork_node", self.parser.workflow.nodes)
         self.assertIn("pig_node", self.parser.workflow.nodes)
         self.assertIn("fail", self.parser.workflow.nodes)
+
+        self.assertEqual(
+            self.parser.workflow.relations,
+            {
+                Relation(from_task_id="cleanup_node", to_task_id="fail"),
+                Relation(from_task_id="cleanup_node", to_task_id="fork_node"),
+                Relation(from_task_id="decision_node", to_task_id="hdfs_node"),
+                Relation(from_task_id="fork_node", to_task_id="pig_node_prepare"),
+                Relation(from_task_id="fork_node", to_task_id="streaming_node"),
+                Relation(from_task_id="hdfs_node", to_task_id="fail"),
+                Relation(from_task_id="join_node", to_task_id="mr_node"),
+                Relation(from_task_id="mr_node", to_task_id="decision_node"),
+                Relation(from_task_id="mr_node", to_task_id="fail"),
+                Relation(from_task_id="pig_node", to_task_id="fail"),
+                Relation(from_task_id="pig_node", to_task_id="join_node"),
+                Relation(from_task_id="streaming_node", to_task_id="fail"),
+                Relation(from_task_id="streaming_node", to_task_id="join_node"),
+            },
+        )
+
+        on_parse_finish_mock.assert_called()
