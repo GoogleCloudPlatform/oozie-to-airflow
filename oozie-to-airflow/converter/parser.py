@@ -14,7 +14,6 @@
 # limitations under the License.
 """Parsing module """
 import os
-from collections import OrderedDict
 import logging
 
 # noinspection PyPep8Naming
@@ -28,10 +27,9 @@ from typing import Type, Dict, Set
 from airflow.utils.trigger_rule import TriggerRule
 import utils.xml_utils
 from converter.parsed_node import ParsedNode
-from converter.relation import Relation
+from converter.primitives import Relation, Workflow
 from mappers.action_mapper import ActionMapper
 from mappers.base_mapper import BaseMapper
-from mappers.file_archive_mixins import FileMixin, ArchiveMixin
 
 
 # noinspection PyDefaultArgument
@@ -40,10 +38,7 @@ class OozieParser:
 
     control_map: Dict[str, Type[BaseMapper]]
     action_map: Dict[str, Type[ActionMapper]]
-    relations: Set[Relation]
     params: Dict[str, str]
-    dependencies: Set[str]  # TODO: Check is set likely maintain insertion order (Python 3.6 ?)
-    nodes: Dict[str, ParsedNode]
 
     def __init__(
         self,
@@ -54,24 +49,15 @@ class OozieParser:
         control_mapper: Dict[str, Type[BaseMapper]],
         dag_name: str = None,
     ):
-        self.input_directory_path = input_directory_path
-        self.output_directory_path = output_directory_path
-        self.workflow = os.path.join(input_directory_path, "workflow.xml")
+        self.workflow = Workflow(
+            dag_name=dag_name,
+            input_directory_path=input_directory_path,
+            output_directory_path=output_directory_path,
+        )
+        self.workflow_file = os.path.join(input_directory_path, "workflow.xml")
+        self.params = params
         self.action_map = action_mapper
         self.control_map = control_mapper
-        self.params = params
-        # Dictionary is ordered purely for output being somewhat ordered the
-        # same as how Oozie workflow was parsed.
-        self.nodes = OrderedDict()
-        # These are the general dependencies required that every operator
-        # requires. The o2a_libs are for the external EL function parsing.
-        self.dependencies = {
-            "import datetime",
-            "from airflow import models",
-            "from airflow.utils.trigger_rule import TriggerRule",
-        }
-        self.relations = set()
-        self.dag_name = dag_name
 
     def parse_kill_node(self, kill_node: ET.Element):
         """
@@ -84,9 +70,11 @@ class OozieParser:
         )
         p_node = ParsedNode(mapper)
 
+        mapper.on_parse_node()
+
         logging.info(f"Parsed {mapper.name} as Kill Node.")
-        self.nodes[kill_node.attrib["name"]] = p_node
-        self.dependencies.update(mapper.required_imports())
+        self.workflow.nodes[kill_node.attrib["name"]] = p_node
+        self.workflow.dependencies.update(mapper.required_imports())
 
     def parse_end_node(self, end_node):
         """
@@ -97,9 +85,11 @@ class OozieParser:
         mapper = map_class(oozie_node=end_node, name=end_node.attrib["name"])
         p_node = ParsedNode(mapper)
 
+        mapper.on_parse_node()
+
         logging.info(f"Parsed {mapper.name} as End Node.")
-        self.nodes[end_node.attrib["name"]] = p_node
-        self.dependencies.update(mapper.required_imports())
+        self.workflow.nodes[end_node.attrib["name"]] = p_node
+        self.workflow.dependencies.update(mapper.required_imports())
 
     def parse_fork_node(self, root, fork_node):
         """
@@ -114,10 +104,12 @@ class OozieParser:
         """
         map_class = self.control_map["fork"]
         fork_name = fork_node.attrib["name"]
-        fork_start_op = map_class(oozie_node=fork_node, name=fork_name)
-        p_node = ParsedNode(fork_start_op)
+        mapper = map_class(oozie_node=fork_node, name=fork_name)
+        p_node = ParsedNode(mapper)
 
-        logging.info(f"Parsed {fork_start_op.name} as Fork Node.")
+        mapper.on_parse_node()
+
+        logging.info(f"Parsed {mapper.name} as Fork Node.")
         paths = []
         for node in fork_node:
             if "path" in node.tag:
@@ -125,18 +117,18 @@ class OozieParser:
                 curr_name = node.attrib["start"]
                 paths.append(utils.xml_utils.find_node_by_name(root, curr_name))
 
-        self.nodes[fork_name] = p_node
-        self.dependencies.update(fork_start_op.required_imports())
+        self.workflow.nodes[fork_name] = p_node
+        self.workflow.dependencies.update(mapper.required_imports())
 
         for path in paths:
             p_node.add_downstream_node_name(path.attrib["name"])
-            logging.info(f"Added {fork_start_op.name}'s downstream: {path.attrib['name']}")
+            logging.info(f"Added {mapper.name}'s downstream: {path.attrib['name']}")
 
             # Theoretically these will all be action nodes, however I don't
             # think that is guaranteed.
             # The end of the execution path has not been reached
             self.parse_node(root, path)
-            if path.attrib["name"] not in self.nodes:
+            if path.attrib["name"] not in self.workflow.nodes:
                 root.remove(path)
 
     def parse_join_node(self, join_node):
@@ -151,9 +143,11 @@ class OozieParser:
         p_node = ParsedNode(mapper)
         p_node.add_downstream_node_name(join_node.attrib["to"])
 
+        mapper.on_parse_node()
+
         logging.info(f"Parsed {mapper.name} as Join Node.")
-        self.nodes[join_node.attrib["name"]] = p_node
-        self.dependencies.update(mapper.required_imports())
+        self.workflow.nodes[join_node.attrib["name"]] = p_node
+        self.workflow.dependencies.update(mapper.required_imports())
 
     def parse_decision_node(self, decision_node):
         """
@@ -186,9 +180,11 @@ class OozieParser:
         for cases in decision_node[0]:
             p_node.add_downstream_node_name(cases.attrib["to"])
 
+        mapper.on_parse_node()
+
         logging.info(f"Parsed {mapper.name} as Decision Node.")
-        self.nodes[decision_node.attrib["name"]] = p_node
-        self.dependencies.update(mapper.required_imports())
+        self.workflow.nodes[decision_node.attrib["name"]] = p_node
+        self.workflow.dependencies.update(mapper.required_imports())
 
     def parse_action_node(self, action_node: ET.Element):
         """
@@ -210,9 +206,9 @@ class OozieParser:
             oozie_node=action_node[0],
             name=action_node.attrib["name"],
             params=self.params,
-            dag_name=self.dag_name,
-            input_directory_path=self.input_directory_path,
-            output_directory_path=self.output_directory_path,
+            dag_name=self.workflow.dag_name,
+            input_directory_path=self.workflow.input_directory_path,
+            output_directory_path=self.workflow.output_directory_path,
         )
 
         p_node = ParsedNode(mapper)
@@ -225,36 +221,12 @@ class OozieParser:
             raise Exception("Missing error node in {}".format(action_node))
         p_node.set_error_node_name(error_node.attrib["to"])
 
-        self._parse_file_nodes(action_node, mapper)
-
-        self._parse_archive_nodes(action_node, mapper)
+        mapper.on_parse_node()
 
         logging.info(f"Parsed {mapper.name} as Action Node of type {action_name}.")
-        self.dependencies.update(mapper.required_imports())
+        self.workflow.dependencies.update(mapper.required_imports())
 
-        self.nodes[mapper.name] = p_node
-
-    @staticmethod
-    def _parse_file_nodes(action_node, operator: ActionMapper):
-        file_nodes = action_node.findall("file")
-        if file_nodes:
-            if isinstance(operator, FileMixin):
-                for file_node in file_nodes:
-                    file_path = file_node.text
-                    operator.add_file(file_path)
-            else:
-                raise Exception("The operator {} does not derive from FileMixin".format(operator))
-
-    @staticmethod
-    def _parse_archive_nodes(action_node, operator: ActionMapper):
-        archive_nodes = action_node.findall("archive")
-        if archive_nodes:
-            if isinstance(operator, ArchiveMixin):
-                for archive_node in archive_nodes:
-                    archive_path = archive_node.text
-                    operator.add_archive(archive_path)
-            else:
-                raise Exception("The operator {} does not derive from ArchiveMixin".format(operator))
+        self.workflow.nodes[mapper.name] = p_node
 
     def parse_start_node(self, start_node):
         """
@@ -274,9 +246,11 @@ class OozieParser:
         p_node = ParsedNode(mapper)
         p_node.add_downstream_node_name(start_node.attrib["to"])
 
+        mapper.on_parse_node()
+
         logging.info(f"Parsed {mapper.name} as Start Node.")
-        self.nodes[start_name] = p_node
-        self.dependencies.update(mapper.required_imports())
+        self.workflow.nodes[start_name] = p_node
+        self.workflow.dependencies.update(mapper.required_imports())
 
     def parse_node(self, root, node):
         """
@@ -303,7 +277,7 @@ class OozieParser:
 
     def parse_workflow(self):
         """Parses workflow replacing invalid characters in the names of the nodes"""
-        tree = ET.parse(self.workflow)
+        tree = ET.parse(self.workflow_file)
         root = tree.getroot()
 
         for node in tree.iter():
@@ -330,46 +304,48 @@ class OozieParser:
         """
         Given a dictionary of task_ids and ParsedNodes,
         returns a set of logical connectives for each task in Airflow.
+
         :return: Set with strings of task's downstream nodes.
         """
         logging.info("Parsing relations between operators.")
-        for p_node in self.nodes.values():
+        for p_node in self.workflow.nodes.values():
             for downstream in p_node.get_downstreams():
                 relation = Relation(
-                    from_task_id=p_node.last_task_id, to_task_id=self.nodes[downstream].first_task_id
+                    from_task_id=p_node.last_task_id, to_task_id=self.workflow.nodes[downstream].first_task_id
                 )
-                self.relations.add(relation)
+                self.workflow.relations.add(relation)
             error_downstream = p_node.get_error_downstream_name()
             if error_downstream:
                 relation = Relation(
-                    from_task_id=p_node.last_task_id, to_task_id=self.nodes[error_downstream].first_task_id
+                    from_task_id=p_node.last_task_id,
+                    to_task_id=self.workflow.nodes[error_downstream].first_task_id,
                 )
-                self.relations.add(relation)
+                self.workflow.relations.add(relation)
 
     def update_trigger_rules(self) -> None:
         """
         Updates the trigger rules of each node based on the downstream and
         error nodes.
         """
-        for node in self.nodes.values():
+        for node in self.workflow.nodes.values():
             # If a task is referenced  by an "ok to=<task>", flip bit in parsed
             # node class
             for downstream in node.get_downstreams():
-                self.nodes[downstream].set_is_ok(True)
+                self.workflow.nodes[downstream].set_is_ok(True)
             error_name = node.get_error_downstream_name()
             if error_name:
                 # If a task is referenced  by an "error to=<task>", flip
                 # corresponding bit in the parsed node class
-                self.nodes[error_name].set_is_error(True)
+                self.workflow.nodes[error_name].set_is_error(True)
             node.update_trigger_rule()
 
     def get_relations(self) -> Set[Relation]:
-        if not self.relations:
+        if not self.workflow.relations:
             self.create_relations()
-        return self.relations
+        return self.workflow.relations
 
     def get_dependencies(self) -> Set[str]:
-        return self.dependencies
+        return self.workflow.dependencies
 
     def get_nodes(self) -> Dict[str, ParsedNode]:
-        return self.nodes
+        return self.workflow.nodes

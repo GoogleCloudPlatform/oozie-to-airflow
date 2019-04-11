@@ -24,7 +24,7 @@ import o2a
 from converter.oozie_converter import OozieConverter
 from converter.mappers import CONTROL_MAP, ACTION_MAP
 from converter.parsed_node import ParsedNode
-from converter.relation import Relation
+from converter.primitives import Relation
 from definitions import TPL_PATH
 from mappers import dummy_mapper
 from tests.utils.test_paths import EXAMPLE_DEMO_PATH

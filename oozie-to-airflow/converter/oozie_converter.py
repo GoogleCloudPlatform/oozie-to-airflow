@@ -25,7 +25,7 @@ import logging
 
 from converter import parser
 from converter.parsed_node import ParsedNode
-from converter.relation import Relation
+from converter.primitives import Relation
 from mappers.action_mapper import ActionMapper
 from mappers.base_mapper import BaseMapper
 from utils import el_utils
