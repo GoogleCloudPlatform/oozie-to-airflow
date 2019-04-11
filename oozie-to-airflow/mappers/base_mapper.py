@@ -74,6 +74,13 @@ class BaseMapper:
         Called when processing a node.
         """
 
+    def on_parse_finish(self, workflow):
+        """
+        Called when processing of all nodes is finished.
+
+        This is a good time to copy additional files, or to perform additional operations on the workflow.
+        """
+
     # pylint: disable=unused-argument,no-self-use
     def copy_extra_assets(self, input_directory_path: str, output_directory_path: str) -> None:
         """

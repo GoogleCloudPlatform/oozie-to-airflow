@@ -25,21 +25,23 @@ from mappers.action_mapper import ActionMapper
 from mappers.base_mapper import BaseMapper
 from mappers.decision_mapper import DecisionMapper
 from mappers.dummy_mapper import DummyMapper
+from mappers.end_mapper import EndMapper
 from mappers.kill_mapper import KillMapper
 from mappers.pig_mapper import PigMapper
 from mappers.shell_mapper import ShellMapper
 from mappers.spark_mapper import SparkMapper
 from mappers.ssh_mapper import SSHMapper
+from mappers.start_mapper import StartMapper
 from mappers.subworkflow_mapper import SubworkflowMapper
 
 
 CONTROL_MAP: Dict[str, Type[BaseMapper]] = {
     "decision": DecisionMapper,
-    "end": DummyMapper,
+    "end": EndMapper,
     "kill": KillMapper,
     "fork": DummyMapper,
     "join": DummyMapper,
-    "start": DummyMapper,
+    "start": StartMapper,
 }
 
 ACTION_MAP: Dict[str, Type[ActionMapper]] = {
