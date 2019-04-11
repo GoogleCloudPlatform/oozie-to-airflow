@@ -15,6 +15,7 @@
 """Converts Oozie application workflow into Airflow's DAG
 """
 import shutil
+from pathlib import Path
 from typing import Dict, TextIO, Type, Set
 
 import os
@@ -22,6 +23,8 @@ import json
 
 import textwrap
 import logging
+
+import black
 
 from converter import parser
 from converter.parsed_node import ParsedNode
@@ -113,6 +116,10 @@ class OozieConverter:
         with open(file_name, "w") as file:
             logging.info(f"Saving to file: {file_name}")
             self.write_dag(depends, file, nodes, relations)
+
+        black.format_file_in_place(
+            Path(file_name), mode=black.FileMode(line_length=110), fast=False, write_back=black.WriteBack.YES
+        )
 
     def write_dag(
         self, depends: Set[str], file: TextIO, nodes: Dict[str, ParsedNode], relations: Set[Relation]
