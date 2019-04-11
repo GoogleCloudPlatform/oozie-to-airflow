@@ -300,6 +300,11 @@ class OozieParser:
             logging.debug(f"Parsing node: {node}")
             self.parse_node(root, node)
 
+        self.create_relations()
+
+        for node in self.workflow.nodes.values():
+            node.mapper.on_parse_finish(self.workflow)
+
     def create_relations(self) -> None:
         """
         Given a dictionary of task_ids and ParsedNodes,
@@ -340,8 +345,6 @@ class OozieParser:
             node.update_trigger_rule()
 
     def get_relations(self) -> Set[Relation]:
-        if not self.workflow.relations:
-            self.create_relations()
         return self.workflow.relations
 
     def get_dependencies(self) -> Set[str]:
