@@ -69,6 +69,11 @@ class BaseMapper:
         """
         return self.name
 
+    def on_parse_node(self):
+        """
+        Called when processing a node.
+        """
+
     # pylint: disable=unused-argument,no-self-use
     def copy_extra_assets(self, input_directory_path: str, output_directory_path: str) -> None:
         """

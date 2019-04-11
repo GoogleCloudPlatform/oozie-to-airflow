@@ -59,6 +59,14 @@ class FileMixin:
         self.hdfs_files = ""
         self.file_path_processor = HdfsPathProcessor(params=params)
 
+    def on_parse_node(self):
+        super().on_parse_node()
+        archive_nodes = self.oozie_node.findall("archive")
+
+        for archive_node in archive_nodes:
+            archive_path = archive_node.text
+            self.add_archive(archive_path)
+
     def add_file(self, oozie_file_path: str) -> None:
         """
         Adds file to the list of files for this action.
@@ -86,6 +94,14 @@ class ArchiveMixin:
         self.archives = ""
         self.hdfs_archives = ""
         self.archive_path_processor = HdfsPathProcessor(params=params)
+
+    def on_parse_node(self):
+        super().on_parse_node()
+        archive_nodes = self.oozie_node.findall("archive")
+        if archive_nodes:
+            for archive_node in archive_nodes:
+                archive_path = archive_node.text
+                self.add_archive(archive_path)
 
     def _check_archive_extensions(self, oozie_archive_path: str) -> List[str]:
         """
