@@ -40,8 +40,8 @@
             <resource-manager>${resourceManager}</resource-manager>
             <name-node>${nameNode}</name-node>
             <prepare>
-                <delete path="/user/pig/examples/test_pig_node/output-data"/>
-                <mkdir path="/user/pig/examples/test_pig_node/created-folder"/>
+                <delete path="${nameNode}/user/pig/examples/test_pig_node/output-data"/>
+                <mkdir path="${nameNode}/user/pig/examples/test_pig_node/created-folder"/>
             </prepare>
             <configuration>
                 <property>

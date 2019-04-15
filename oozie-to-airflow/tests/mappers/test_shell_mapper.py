@@ -93,7 +93,11 @@ class TestShellMapper(unittest.TestCase):
             oozie_node=self.shell_node,
             name="test_id",
             trigger_rule=TriggerRule.DUMMY,
-            params={"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"},
+            params={
+                "dataproc_cluster": "my-cluster",
+                "gcp_region": "europe-west3",
+                "nameNode": "hdfs://localhost:9020/",
+            },
         )
         # Throws a syntax error if doesn't parse correctly
         ast.parse(mapper.convert_to_text())

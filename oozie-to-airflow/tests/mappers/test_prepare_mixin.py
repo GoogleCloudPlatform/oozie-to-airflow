@@ -28,6 +28,7 @@ class TestPrepareMixin(unittest.TestCase):
     def test_with_prepare(self):
         cluster = "my-cluster"
         region = "europe-west3"
+        params = {"nameNode": "hdfs://localhost:8020", "dataproc_cluster": cluster, "gcp_region": region}
         # language=XML
         pig_node_prepare_str = """
 <pig>
@@ -41,9 +42,8 @@ class TestPrepareMixin(unittest.TestCase):
 </pig>
 """
         pig_node_prepare = ET.fromstring(pig_node_prepare_str)
-        prepare = prepare_mixin.PrepareMixin().get_prepare_command(
-            oozie_node=pig_node_prepare, params={"dataproc_cluster": cluster, "gcp_region": region}
-        )
+
+        prepare = prepare_mixin.PrepareMixin().get_prepare_command(oozie_node=pig_node_prepare, params=params)
         self.assertEqual(
             '$DAGS_FOLDER/../data/prepare.sh -c {0} -r {1} -d "{2} {3}" -m "{4} {5}"'.format(
                 cluster, region, self.delete_path1, self.delete_path2, self.mkdir_path1, self.mkdir_path2
@@ -54,10 +54,9 @@ class TestPrepareMixin(unittest.TestCase):
     def test_no_prepare(self):
         cluster = "my-cluster"
         region = "europe-west3"
+        params = {"nameNode": "hdfs://localhost:8020", "dataproc_cluster": cluster, "gcp_region": region}
         # language=XML
         pig_node_str = "<pig><name-node>hdfs://</name-node></pig>"
         pig_node = ET.fromstring(pig_node_str)
-        prepare = prepare_mixin.PrepareMixin().get_prepare_command(
-            oozie_node=pig_node, params={"dataproc_cluster": cluster, "gcp_region": region}
-        )
+        prepare = prepare_mixin.PrepareMixin().get_prepare_command(oozie_node=pig_node, params=params)
         self.assertEqual("", prepare)

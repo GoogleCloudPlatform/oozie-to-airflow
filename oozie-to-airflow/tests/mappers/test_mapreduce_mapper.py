@@ -124,9 +124,10 @@ class TestMapReduceMapper(unittest.TestCase):
             name="test_id",
             trigger_rule=TriggerRule.DUMMY,
             params={
+                "nameNode": "hdfs://",
                 "dataproc_cluster": "my-cluster",
                 "gcp_region": "europe-west3",
-                "hadoop_jars": "hdfs:/user/mapred/examples/mapreduce/lib/wordcount.jar",
+                "hadoop_jars": "hdfs:///user/mapred/examples/mapreduce/lib/wordcount.jar",
                 "hadoop_main_class": "WordCount",
             },
         )
