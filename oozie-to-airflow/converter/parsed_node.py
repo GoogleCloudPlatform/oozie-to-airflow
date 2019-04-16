@@ -53,6 +53,12 @@ class ParsedNode:
     def get_error_downstream_name(self) -> Optional[str]:
         return self.error_xml
 
+    def __repr__(self) -> str:
+        return (
+            f"ParsedNode(mapper={repr(self.mapper)}, downstream_names={self.downstream_names}, "
+            f"is_error={self.is_error}, is_ok={self.is_ok}, error_xml={self.error_xml})"
+        )
+
     @property
     def first_task_id(self) -> str:
         """
