@@ -36,6 +36,8 @@ def main():
     if not dag_name:
         dag_name = os.path.basename(input_directory_path)
 
+    os.makedirs(output_directory_path, exist_ok=True)
+
     converter = OozieConverter(
         dag_name=dag_name,
         input_directory_path=input_directory_path,
@@ -46,6 +48,7 @@ def main():
         start_days_ago=start_days_ago,
         schedule_interval=schedule_interval,
     )
+    converter.recreate_output_directory()
     converter.convert()
 
 

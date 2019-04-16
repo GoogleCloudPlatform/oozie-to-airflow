@@ -80,6 +80,7 @@ class SubworkflowMapper(ActionMapper):
             action_mapper=self.action_mapper,
             control_mapper=self.control_mapper,
             dag_name=f"{self.dag_name}.{self.task_id}",
+            output_dag_name="subdag_test.py",  # TODO: do not use hard-coded name for subdaag
         )
         converter.convert()
 
@@ -111,5 +112,5 @@ class SubworkflowMapper(ActionMapper):
             "from airflow.utils import dates",
             "from airflow.contrib.operators import dataproc_operator",
             "from airflow.operators.subdag_operator import SubDagOperator",
-            "from subdag_test import sub_dag",
+            f"from subdag_test import sub_dag",
         }

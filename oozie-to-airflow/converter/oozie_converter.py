@@ -51,6 +51,7 @@ class OozieConverter:
         user: str = None,
         start_days_ago: int = None,
         schedule_interval: str = None,
+        output_dag_name: str = None,
     ):
         """
         :param input_directory_path: Oozie workflow directory.
@@ -70,7 +71,11 @@ class OozieConverter:
         self.dag_name = dag_name
         self.configuration_properties_file = os.path.join(input_directory_path, "configuration.properties")
         self.job_properties_file = os.path.join(input_directory_path, "job.properties")
-        self.output_dag_name = os.path.join(output_directory_path, self.dag_name) + ".py"
+        self.output_dag_name = (
+            os.path.join(output_directory_path, output_dag_name)
+            if output_dag_name
+            else os.path.join(output_directory_path, self.dag_name) + ".py"
+        )
         params = {"user.name": user or os.environ["USER"]}
         params = self.add_properties_to_params(params)
         params = el_utils.parse_els(self.configuration_properties_file, params)
@@ -84,13 +89,14 @@ class OozieConverter:
             control_mapper=control_mapper,
         )
 
+    def recreate_output_directory(self):
+        self._recreate_output_directory()
+
     def convert(self):
         self.parser.parse_workflow()
         relations = self.parser.get_relations()
         depends = self.parser.get_dependencies()
         nodes = self.parser.get_nodes()
-
-        self._recreate_output_directory()
         self.create_dag_file(nodes, depends, relations)
 
     def _recreate_output_directory(self):
@@ -116,7 +122,6 @@ class OozieConverter:
         with open(file_name, "w") as file:
             logging.info(f"Saving to file: {file_name}")
             self.write_dag(depends, file, nodes, relations)
-
         black.format_file_in_place(
             Path(file_name), mode=black.FileMode(line_length=110), fast=False, write_back=black.WriteBack.YES
         )

@@ -53,6 +53,8 @@ class Workflow:  # pylint: disable=too-few-public-methods
             "import datetime",
             "from airflow import models",
             "from airflow.utils.trigger_rule import TriggerRule",
+            "from o2a_libs.el_basic_functions import * ",
+            "from o2a_libs.el_wf_functions import * ",
         }
 
     def __repr__(self) -> str:
