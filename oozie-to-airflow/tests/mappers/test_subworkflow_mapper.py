@@ -87,7 +87,7 @@ class TestSubworkflowMapper(TestCase):
         self.assertEqual("subwf.tpl", mapper.template)
         # Propagate config node is present, should forward config properties
         self.assertEqual({"resourceManager": "localhost:8032"}, mapper.get_config_properties())
-        self.assertTrue(os.path.isfile("/tmp/test.test_id.py"))
+        self.assertTrue(os.path.isfile("/tmp/subdag_test.py"))
 
     @mock.patch("utils.el_utils.parse_els")
     def test_create_mapper_jinja_no_propagate(self, parse_els):
@@ -95,7 +95,7 @@ class TestSubworkflowMapper(TestCase):
         parse_els.return_value = self.subworkflow_params
         # Removing subdag
         with suppress(OSError):
-            os.remove("/tmp/test.test_id.py")
+            os.remove("/tmp/subdag_test.py")
         # Removing the propagate-configuration node
         propagate_configuration = self.subworkflow_node.find("propagate-configuration")
         self.subworkflow_node.remove(propagate_configuration)
@@ -121,7 +121,7 @@ class TestSubworkflowMapper(TestCase):
         self.assertEqual("subwf.tpl", mapper.template)
         # Propagate config node is missing, should NOT forward config properties
         self.assertEqual({}, mapper.get_config_properties())
-        self.assertTrue(os.path.isfile("/tmp/test.test_id.py"))
+        self.assertTrue(os.path.isfile("/tmp/subdag_test.py"))
 
     @mock.patch("utils.el_utils.parse_els")
     def test_convert_to_text(self, parse_els):

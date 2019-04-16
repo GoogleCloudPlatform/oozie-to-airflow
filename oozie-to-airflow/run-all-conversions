@@ -12,14 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+set -euo pipefail
 MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-BASE_DIR=${MY_DIR}/..
-
-gcloud dataproc jobs submit pig --cluster=cluster-o2a --region=europe-west3 \
---execute 'fs -rm -r /examples/output-data'
-
- # Submitting the actual Pig job
-gcloud dataproc jobs submit pig --cluster=cluster-o2a --region=europe-west3 \
---file=${BASE_DIR}/examples/pig/id.pig \
---params="INPUT=/examples/test-data.txt,OUTPUT=/examples/output-data/demo/pig-node/"
+pushd ${MY_DIR}
+for EXAMPLE in $(cd examples; ls)
+do
+    ./run-sys-test --phase convert -a ${EXAMPLE}
+done
+popd

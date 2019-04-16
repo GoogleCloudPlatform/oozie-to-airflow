@@ -77,7 +77,7 @@ repos:
     hooks:
     -   id: pytest
         name: Runs all unit tests with pytest
-        entry: oozie-to-airflow/run_tests.sh
+        entry: oozie-to-airflow/run-all-unit-tests
         language: script
         pass_filenames: false
         always_run: true

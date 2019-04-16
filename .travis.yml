@@ -22,7 +22,9 @@ before_install: cd oozie-to-airflow
 install:
   - pip uninstall -y mock
   - pip install -r ../requirements.txt
+  - sudo apt-get install coreutils
 script:
   - pre-commit run --all-files
+  - ./run-all-conversions
 after_success:
   - bash <(curl -s https://codecov.io/bash)
