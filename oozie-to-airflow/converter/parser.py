@@ -301,8 +301,9 @@ class OozieParser:
             self.parse_node(root, node)
 
         self.create_relations()
+        self.update_trigger_rules()
 
-        for node in self.workflow.nodes.values():
+        for node in self.workflow.nodes.copy().values():
             node.mapper.on_parse_finish(self.workflow)
 
     def create_relations(self) -> None:

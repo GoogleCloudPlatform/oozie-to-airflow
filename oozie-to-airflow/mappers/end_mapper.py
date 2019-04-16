@@ -28,6 +28,7 @@ class EndMapper(BaseMapper):
 
     def on_parse_finish(self, workflow):
         super().on_parse_finish(self)
+        del workflow.nodes[self.name]
         workflow.relations -= {
             relation for relation in workflow.relations if relation.to_task_id == self.name
         }

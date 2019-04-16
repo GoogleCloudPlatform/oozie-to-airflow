@@ -89,7 +89,7 @@ class OozieConverter:
         relations = self.parser.get_relations()
         depends = self.parser.get_dependencies()
         nodes = self.parser.get_nodes()
-        self.parser.update_trigger_rules()
+
         self._recreate_output_directory()
         self.create_dag_file(nodes, depends, relations)
 
