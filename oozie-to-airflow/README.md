@@ -40,7 +40,6 @@ There are a few differences noted below:
 | Oozie   | XML    | Action Node | Control Node                    | Subworkflow    | EL functions/Properties file | URL based callbacks |
 | Airflow | Python | Operators   | Trigger Rules, set_downstream() | SubDag         | jinja2 and macros            | Callbacks/Emails    |
 
-
 ### Oozie Control Nodes
 #### Fork
 
@@ -315,3 +314,95 @@ To run all the tests in a given file call the below command:
 ```
 python -m unittest /path/to/test/file.py
 ```
+
+## System Tests
+
+Oozie to Airflow has a set of system tests that test end-2-end functionality of conversion and execution
+of workflows using Cloud Dataproc and Cloud Composer.
+
+### System test environment
+
+Cloud Composer:
+* composer-1.5.0-airflow-1.10.1
+* python version 3 (3.6.6)
+* machine n1-standard-1
+* node count: 3
+* Additional pypi packages:
+    * sshtunnel==0.1.4
+
+Cloud Dataproc Cluster with Oozie
+* n1-standard-2, 2 vCPU, 7.50 GB memory
+* primary disk size, 50 GB
+* Image 1.3.29-debian9
+* Hadoop version
+* Init action: TODO
+
+
+### Running the tests
+
+We can run examples defined in examples folder to run system tests. The system tests use a real
+Dataproc Cluster, Composer and Oozie run in Dataproc cluster (in the future) to run the tests automatically.
+
+Each test consists of several phases:
+
+* convert - converts workflow application of Oozie to an Airflow DAG
+* prepare-dataproc - prepares Dataproc by creating all necessary Hadoop file structure
+* prepare-composer - prepares Composer by copying reusable libraries and scripts to Airflow's bucket
+* test-composer - runs tests: converted files are copied to Composer bucket and DAG is triggered
+
+By default all phases of test are executed but you can choose to execute only one by using `-p` flag.
+
+You can run the tests using this command:
+
+`./run-sys-tests -a <APPLICATION> `
+
+
+When you run it with `--help` you can see all the options. You can setup autocomplete
+with `-A` option - this way you do not have to remember all the options.
+
+Current options:
+
+```bash
+Usage: run-sys-test [FLAGS]
+
+Executes prepare or run phase for integration testing of O2A converter.
+
+Flags:
+
+-h, --help
+        Shows this help message.
+
+-p, --phase <PHASE>
+        Phase of the test to run. One of [ convert prepare-dataproc prepare-composer test-composer all ]. Defaults to all.
+
+-a, --application <APPLICATION>
+        Application (from examples dir) to run the tests on. Defaults to
+
+-C, --composer-name <COMPOSER_NAME>
+        Composer instance used to run the operations on. Defaults to o2a-integration
+
+-L, --composer-location <COMPOSER_LOCATION>
+        Composer locations. Defaults to europe-west1
+
+-c, --cluster <CLUSTER>
+        Cluster used to run the operations on. Defaults to oozie-o2a-2cpu
+
+-b, --bucket <BUCKET>
+        Airflow Composer DAG bucket used. Defaults to europe-west1-o2a-integratio-f690ede2-bucket
+
+-m, --master <MASTER>
+        Cluster master used to run most operations on. Defaults to <CLUSTER_NAME>-m
+
+-r, --region <REGION>
+        GCP Region where the cluster is located. Defaults to europe-west3
+
+-z, --zone <ZONE>
+        GCP Zone where the master is located. Defaults to europe-west3-c
+
+-A, --setup-autocomplete
+        Sets up autocomplete for run-sys-tests
+```
+
+# Running all example conversions
+
+All example conversions can by run via the `./run-all-conversions` script. It is also executed during automated tests.

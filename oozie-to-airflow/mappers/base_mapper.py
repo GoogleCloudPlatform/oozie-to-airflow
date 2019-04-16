@@ -48,10 +48,10 @@ class BaseMapper:
     @staticmethod
     def required_imports() -> Set[str]:
         """
-        Returns a list of strings that are the import statement that python will
+        Returns a set of strings that are the import statement that python will
         write to use.
 
-        Ex: returns ['from airflow.operators import bash_operator']
+        Ex: returns {'from airflow.operators import bash_operator']}
         """
         raise NotImplementedError("Not Implemented")
 

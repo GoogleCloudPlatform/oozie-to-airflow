@@ -208,6 +208,8 @@ class OozieParser:
             name=action_node.attrib["name"],
             params=self.params,
             dag_name=self.workflow.dag_name,
+            action_mapper=self.action_map,
+            control_mapper=self.control_map,
             input_directory_path=self.workflow.input_directory_path,
             output_directory_path=self.workflow.output_directory_path,
         )
@@ -280,7 +282,6 @@ class OozieParser:
         """Parses workflow replacing invalid characters in the names of the nodes"""
         tree = ET.parse(self.workflow_file)
         root = tree.getroot()
-
         for node in tree.iter():
             # Strip namespaces
             node.tag = node.tag.split("}")[1][0:]

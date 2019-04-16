@@ -8,3 +8,4 @@ __pycache__
 /oozie-to-airflow/oozie-to-airflow.iml
 
 .mypy_cache
+/oozie-to-airflow/output
