@@ -52,16 +52,16 @@ def split_by_hash_sign(path: str) -> List[str]:
 
 
 class FileMapper:
-    """ Converts a file oozie node """
+    """ Extracts all file paths from an Oozie node """
 
     def __init__(self, oozie_node: Element, params: Dict[str, str]):
-        self.files = ""
-        self.hdfs_files = ""
+        self.files: str = ""
+        self.hdfs_files: str = ""
         self.file_path_processor = HdfsPathProcessor(params=params)
         self.oozie_node = oozie_node
 
     def parse_node(self):
-        file_nodes = self.oozie_node.findall("file")
+        file_nodes: List[Element] = self.oozie_node.findall("file")
 
         for file_node in file_nodes:
             file_path = file_node.text
@@ -87,18 +87,18 @@ class FileMapper:
 
 
 class ArchiveMapper:
-    """ Converts an archive oozie node """
+    """ Extracts all archive paths from an Oozie node """
 
     ALLOWED_EXTENSIONS = [".zip", ".gz", ".tar.gz", ".tar", ".jar"]
 
     def __init__(self, oozie_node: Element, params: Dict[str, str]):
-        self.archives = ""
-        self.hdfs_archives = ""
+        self.archives: str = ""
+        self.hdfs_archives: str = ""
         self.archive_path_processor = HdfsPathProcessor(params=params)
         self.oozie_node = oozie_node
 
     def parse_node(self):
-        archive_nodes = self.oozie_node.findall("archive")
+        archive_nodes: List[Element] = self.oozie_node.findall("archive")
         if archive_nodes:
             for archive_node in archive_nodes:
                 archive_path = archive_node.text
