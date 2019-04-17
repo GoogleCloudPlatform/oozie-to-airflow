@@ -368,7 +368,7 @@ class WorkflowTestCase(typing.NamedTuple):
     params: typing.Dict[str, str]
 
 
-class TestOoozieExamples(unittest.TestCase):
+class TestOozieExamples(unittest.TestCase):
     @parameterized.expand(
         [
             (
