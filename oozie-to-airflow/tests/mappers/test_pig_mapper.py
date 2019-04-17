@@ -44,17 +44,22 @@ class TestPigMapper(unittest.TestCase):
             <name>mapred.map.output.compress</name>
             <value>false</value>
         </property>
-     </configuration>
-     <script>id.pig</script>
+    </configuration>
+    <script>id.pig</script>
     <param>INPUT=/user/${wf:user()}/${examplesRoot}/input-data/text</param>
     <param>OUTPUT=/user/${wf:user()}/${examplesRoot}/output-data/demo/pig-node</param>
+    <file>/test_dir/test.txt#test_link.txt</file>
+    <file>/user/pig/examples/test_pig_node/test_dir/test2.zip#test_link.zip</file>
+    <archive>/test_dir/test2.zip#test_zip_dir</archive>
+    <archive>/test_dir/test3.zip#test3_zip_dir</archive>
 </pig>
 """
         self.pig_node = ET.fromstring(pig_node_str)
 
     def test_create_mapper_no_jinja(self):
+        params = {"nameNode": "hdfs://"}
         mapper = pig_mapper.PigMapper(
-            oozie_node=self.pig_node, name="test_id", trigger_rule=TriggerRule.DUMMY
+            oozie_node=self.pig_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=params
         )
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
@@ -104,7 +109,7 @@ class TestPigMapper(unittest.TestCase):
             oozie_node=self.pig_node,
             name="test_id",
             trigger_rule=TriggerRule.DUMMY,
-            params={"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"},
+            params={"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3", "nameNode": "hdfs://"},
         )
         # Throws a syntax error if doesn't parse correctly
         ast.parse(mapper.convert_to_text())
@@ -116,7 +121,8 @@ class TestPigMapper(unittest.TestCase):
         ast.parse(imp_str)
 
     def test_first_task_id(self):
+        params = {"nameNode": "hdfs://"}
         mapper = pig_mapper.PigMapper(
-            oozie_node=self.pig_node, name="test_id", trigger_rule=TriggerRule.DUMMY
+            oozie_node=self.pig_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=params
         )
         self.assertEqual(mapper.first_task_id, "test_id_prepare")

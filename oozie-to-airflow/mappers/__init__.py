@@ -20,7 +20,7 @@ __all__ = [
     "base_mapper",
     "decision_mapper",
     "dummy_mapper",
-    "file_archive_mixins",
+    "file_archive_mappers",
     "kill_mapper",
     "null_mapper",
     "pig_mapper",
