@@ -410,7 +410,7 @@ class TestOozieExamples(unittest.TestCase):
                         Relation(from_task_id="decision_node", to_task_id="fail"),
                         Relation(from_task_id="decision_node", to_task_id="fake_end"),
                     },
-                    params={},
+                    params={"nameNode": "hdfs://"},
                 ),
             ),
             (
@@ -436,20 +436,41 @@ class TestOozieExamples(unittest.TestCase):
                         Relation(from_task_id="pig_node", to_task_id="join_node"),
                         Relation(from_task_id="streaming_node", to_task_id="join_node"),
                     },
-                    params={},
+                    params={"nameNode": "hdfs://"},
                 ),
             ),
             (
                 WorkflowTestCase(
-                    name="el", node_names={"ssh"}, relations=set(), params={"hostname": "AAAA@BBB"}
+                    name="el",
+                    node_names={"ssh"},
+                    relations=set(),
+                    params={"hostname": "AAAA@BBB", "nameNode": "hdfs://"},
                 ),
             ),
-            (WorkflowTestCase(name="pig", node_names={"pig_node"}, relations=set(), params={}),),
-            (WorkflowTestCase(name="shell", node_names={"shell_node"}, relations=set(), params={}),),
-            (WorkflowTestCase(name="spark", node_names={"spark_node"}, relations=set(), params={}),),
             (
                 WorkflowTestCase(
-                    name="ssh", node_names={"ssh"}, relations=set(), params={"hostname": "AAAA@BBB"}
+                    name="pig",
+                    node_names={"pig_node"},
+                    relations=set(),
+                    params={"oozie.wf.application.path": "hdfs://", "nameNode": "hdfs://"},
+                ),
+            ),
+            (
+                WorkflowTestCase(
+                    name="shell", node_names={"shell_node"}, relations=set(), params={"nameNode": "hdfs://"}
+                ),
+            ),
+            (
+                WorkflowTestCase(
+                    name="spark", node_names={"spark_node"}, relations=set(), params={"nameNode": "hdfs://"}
+                ),
+            ),
+            (
+                WorkflowTestCase(
+                    name="ssh",
+                    node_names={"ssh"},
+                    relations=set(),
+                    params={"hostname": "AAAA@BBB", "nameNode": "hdfs://"},
                 ),
             ),
         ],
@@ -466,9 +487,6 @@ class TestOozieExamples(unittest.TestCase):
             control_mapper=CONTROL_MAP,
         )
         current_parser.parse_workflow()
-
         self.assertEqual(case.node_names, set(current_parser.workflow.nodes.keys()))
-
         self.assertEqual(case.relations, current_parser.workflow.relations)
-
         on_parse_finish_mock.assert_called()
