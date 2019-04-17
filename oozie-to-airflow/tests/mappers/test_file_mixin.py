@@ -16,7 +16,7 @@
 import unittest
 from xml.etree.ElementTree import Element
 
-from mappers.file_archive_mappers import FileMapper
+from mappers.file_archive_mappers import FileExtractor
 
 
 class TestFileMixin(unittest.TestCase):
@@ -28,7 +28,7 @@ class TestFileMixin(unittest.TestCase):
 
     def test_add_relative_file(self):
         # Given
-        file_mapper = FileMapper(oozie_node=Element("fake"), params=self.default_params)
+        file_mapper = FileExtractor(oozie_node=Element("fake"), params=self.default_params)
         # When
         file_mapper.add_file("test_file")
         # Then
@@ -37,7 +37,7 @@ class TestFileMixin(unittest.TestCase):
 
     def test_add_absolute_file(self):
         # Given
-        file_mapper = FileMapper(oozie_node=Element("fake"), params=self.default_params)
+        file_mapper = FileExtractor(oozie_node=Element("fake"), params=self.default_params)
         # When
         file_mapper.add_file("/test_file")
         # Then
@@ -46,7 +46,7 @@ class TestFileMixin(unittest.TestCase):
 
     def test_add_multiple_files(self):
         # Given
-        file_mapper = FileMapper(oozie_node=Element("fake"), params=self.default_params)
+        file_mapper = FileExtractor(oozie_node=Element("fake"), params=self.default_params)
         # When
         file_mapper.add_file("/test_file")
         file_mapper.add_file("test_file2")
@@ -60,7 +60,7 @@ class TestFileMixin(unittest.TestCase):
 
     def test_add_hash_files(self):
         # Given
-        file_mapper = FileMapper(oozie_node=Element("fake"), params=self.default_params)
+        file_mapper = FileExtractor(oozie_node=Element("fake"), params=self.default_params)
         # When
         file_mapper.add_file("/test_file#test3_link")
         file_mapper.add_file("test_file2#test_link")
@@ -76,7 +76,7 @@ class TestFileMixin(unittest.TestCase):
 
     def test_add_file_extra_hash(self):
         # Given
-        file_mapper = FileMapper(oozie_node=Element("fake"), params=self.default_params)
+        file_mapper = FileExtractor(oozie_node=Element("fake"), params=self.default_params)
         # When
         with self.assertRaises(Exception) as context:
             file_mapper.add_file("/test_file#4rarear#")

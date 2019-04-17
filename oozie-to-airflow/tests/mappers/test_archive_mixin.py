@@ -16,7 +16,7 @@
 import unittest
 from xml.etree.ElementTree import Element
 
-from mappers.file_archive_mappers import ArchiveMapper
+from mappers.file_archive_mappers import ArchiveExtractor
 
 
 class TestArchiveMixin(unittest.TestCase):
@@ -28,7 +28,7 @@ class TestArchiveMixin(unittest.TestCase):
 
     def test_add_relative_archive(self):
         # Given
-        archive_mapper = ArchiveMapper(oozie_node=Element("fake"), params=self.default_params)
+        archive_mapper = ArchiveExtractor(oozie_node=Element("fake"), params=self.default_params)
         # When
         archive_mapper.add_archive("test_archive.zip")
         # Then
@@ -39,7 +39,7 @@ class TestArchiveMixin(unittest.TestCase):
 
     def test_add_absolute_archive(self):
         # Given
-        archive_mapper = ArchiveMapper(oozie_node=Element("fake"), params=self.default_params)
+        archive_mapper = ArchiveExtractor(oozie_node=Element("fake"), params=self.default_params)
         # When
         archive_mapper.add_archive("/test_archive.zip")
         # Then
@@ -48,7 +48,7 @@ class TestArchiveMixin(unittest.TestCase):
 
     def test_add_multiple_archives(self):
         # Given
-        archive_mapper = ArchiveMapper(oozie_node=Element("fake"), params=self.default_params)
+        archive_mapper = ArchiveExtractor(oozie_node=Element("fake"), params=self.default_params)
         # When
         archive_mapper.add_archive("/test_archive.zip")
         archive_mapper.add_archive("test_archive2.tar")
@@ -64,7 +64,7 @@ class TestArchiveMixin(unittest.TestCase):
 
     def test_add_hash_archives(self):
         # Given
-        archive_mapper = ArchiveMapper(oozie_node=Element("fake"), params=self.default_params)
+        archive_mapper = ArchiveExtractor(oozie_node=Element("fake"), params=self.default_params)
         # When
         archive_mapper.add_archive("/test_archive.zip#test3_link")
         archive_mapper.add_archive("test_archive2.tar#test_link")
@@ -83,7 +83,7 @@ class TestArchiveMixin(unittest.TestCase):
 
     def test_add_archive_extra_hash(self):
         # Given
-        archive_mapper = ArchiveMapper(oozie_node=Element("fake"), params=self.default_params)
+        archive_mapper = ArchiveExtractor(oozie_node=Element("fake"), params=self.default_params)
         # When
         with self.assertRaises(Exception) as context:
             archive_mapper.add_archive("/test_archive.zip#4rarear#")

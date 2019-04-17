@@ -21,7 +21,7 @@ from airflow.utils.trigger_rule import TriggerRule
 
 from converter.primitives import Relation
 from mappers.action_mapper import ActionMapper
-from mappers.file_archive_mappers import FileMapper, ArchiveMapper
+from mappers.file_archive_mappers import FileExtractor, ArchiveExtractor
 from mappers.prepare_mixin import PrepareMixin
 from utils import el_utils, xml_utils
 from utils.template_utils import render_template
@@ -53,8 +53,8 @@ class PigMapper(ActionMapper, PrepareMixin):
         self.trigger_rule = trigger_rule
         self.properties = {}
         self.params_dict = {}
-        self.file_mapper = FileMapper(oozie_node=oozie_node, params=params)
-        self.archive_mapper = ArchiveMapper(oozie_node=oozie_node, params=params)
+        self.file_mapper = FileExtractor(oozie_node=oozie_node, params=params)
+        self.archive_mapper = ArchiveExtractor(oozie_node=oozie_node, params=params)
         self._parse_oozie_node()
 
     def _parse_oozie_node(self):

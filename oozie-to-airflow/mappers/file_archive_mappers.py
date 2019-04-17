@@ -51,7 +51,7 @@ def split_by_hash_sign(path: str) -> List[str]:
     return [path]
 
 
-class FileMapper:
+class FileExtractor:
     """ Extracts all file paths from an Oozie node """
 
     def __init__(self, oozie_node: Element, params: Dict[str, str]):
@@ -86,7 +86,7 @@ class FileMapper:
         )
 
 
-class ArchiveMapper:
+class ArchiveExtractor:
     """ Extracts all archive paths from an Oozie node """
 
     ALLOWED_EXTENSIONS = [".zip", ".gz", ".tar.gz", ".tar", ".jar"]
