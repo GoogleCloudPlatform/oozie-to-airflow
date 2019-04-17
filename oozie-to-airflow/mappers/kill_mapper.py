@@ -15,6 +15,7 @@
 """Kill mapper - maps the workflow end"""
 from typing import Set
 
+from converter.primitives import Workflow
 from mappers.base_mapper import BaseMapper
 from utils.template_utils import render_template
 
@@ -26,3 +27,11 @@ class KillMapper(BaseMapper):
     @staticmethod
     def required_imports() -> Set[str]:
         return {"from airflow.operators import bash_operator"}
+
+    def on_parse_finish(self, workflow: Workflow):
+        super().on_parse_finish(workflow)
+        if workflow.nodes[self.name].is_error:
+            del workflow.nodes[self.name]
+            workflow.relations -= {
+                relation for relation in workflow.relations if relation.to_task_id == self.name
+            }

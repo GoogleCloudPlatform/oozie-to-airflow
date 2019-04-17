@@ -388,7 +388,6 @@ class TestOozieExamples(unittest.TestCase):
                     node_names={
                         "cleanup_node",
                         "decision_node",
-                        "fail",
                         "fork_node",
                         "hdfs_node",
                         "join_node",
@@ -397,18 +396,13 @@ class TestOozieExamples(unittest.TestCase):
                         "streaming_node",
                     },
                     relations={
-                        Relation(from_task_id="cleanup_node", to_task_id="fail"),
                         Relation(from_task_id="cleanup_node", to_task_id="fork_node"),
                         Relation(from_task_id="decision_node", to_task_id="hdfs_node"),
                         Relation(from_task_id="fork_node", to_task_id="pig_node_prepare"),
                         Relation(from_task_id="fork_node", to_task_id="streaming_node"),
-                        Relation(from_task_id="hdfs_node", to_task_id="fail"),
                         Relation(from_task_id="join_node", to_task_id="mr_node"),
                         Relation(from_task_id="mr_node", to_task_id="decision_node"),
-                        Relation(from_task_id="mr_node", to_task_id="fail"),
-                        Relation(from_task_id="pig_node", to_task_id="fail"),
                         Relation(from_task_id="pig_node", to_task_id="join_node"),
-                        Relation(from_task_id="streaming_node", to_task_id="fail"),
                         Relation(from_task_id="streaming_node", to_task_id="join_node"),
                     },
                     params={},
@@ -416,42 +410,15 @@ class TestOozieExamples(unittest.TestCase):
             ),
             (
                 WorkflowTestCase(
-                    name="el",
-                    node_names={"ssh", "fail"},
-                    relations={Relation(from_task_id="ssh", to_task_id="fail")},
-                    params={"hostname": "AAAA@BBB"},
+                    name="el", node_names={"ssh"}, relations=set(), params={"hostname": "AAAA@BBB"}
                 ),
             ),
+            (WorkflowTestCase(name="pig", node_names={"pig_node"}, relations=set(), params={}),),
+            (WorkflowTestCase(name="shell", node_names={"shell_node"}, relations=set(), params={}),),
+            (WorkflowTestCase(name="spark", node_names={"spark_node"}, relations=set(), params={}),),
             (
                 WorkflowTestCase(
-                    name="pig",
-                    node_names={"fail", "pig_node"},
-                    relations={Relation(from_task_id="pig_node", to_task_id="fail")},
-                    params={},
-                ),
-            ),
-            (
-                WorkflowTestCase(
-                    name="shell",
-                    node_names={"shell_node", "fail"},
-                    relations={Relation(from_task_id="shell_node", to_task_id="fail")},
-                    params={},
-                ),
-            ),
-            (
-                WorkflowTestCase(
-                    name="spark",
-                    node_names={"fail", "spark_node"},
-                    relations={Relation(from_task_id="spark_node", to_task_id="fail")},
-                    params={},
-                ),
-            ),
-            (
-                WorkflowTestCase(
-                    name="ssh",
-                    node_names={"ssh", "fail"},
-                    relations={Relation(from_task_id="ssh", to_task_id="fail")},
-                    params={"hostname": "AAAA@BBB"},
+                    name="ssh", node_names={"ssh"}, relations=set(), params={"hostname": "AAAA@BBB"}
                 ),
             ),
         ],
