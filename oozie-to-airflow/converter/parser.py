@@ -196,14 +196,15 @@ class OozieParser:
         """
         # The 0th element of the node is the actual action tag.
         # In the form of 'action'
-        action_name = action_node[0].tag
+        action_operation_node = action_node[0]
+        action_name = action_operation_node.tag
 
         if action_name not in self.action_map:
             action_name = "unknown"
 
         map_class = self.action_map[action_name]
         mapper = map_class(
-            oozie_node=action_node[0],
+            oozie_node=action_operation_node,
             name=action_node.attrib["name"],
             params=self.params,
             dag_name=self.workflow.dag_name,

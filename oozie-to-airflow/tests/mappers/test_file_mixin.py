@@ -12,10 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Tests File mixin"""
+"""Tests File mapper"""
 import unittest
+from xml.etree.ElementTree import Element
 
-from mappers.file_archive_mixins import FileMixin
+from mappers.file_archive_mappers import FileExtractor
 
 
 class TestFileMixin(unittest.TestCase):
@@ -27,47 +28,47 @@ class TestFileMixin(unittest.TestCase):
 
     def test_add_relative_file(self):
         # Given
-        file_mixin = FileMixin(params=self.default_params)
+        file_mapper = FileExtractor(oozie_node=Element("fake"), params=self.default_params)
         # When
-        file_mixin.add_file("test_file")
+        file_mapper.add_file("test_file")
         # Then
-        self.assertEqual(file_mixin.files, "test_file")
-        self.assertEqual(file_mixin.hdfs_files, "hdfs:///user/pig/examples/pig_test_node/test_file")
+        self.assertEqual(file_mapper.files, "test_file")
+        self.assertEqual(file_mapper.hdfs_files, "hdfs:///user/pig/examples/pig_test_node/test_file")
 
     def test_add_absolute_file(self):
         # Given
-        file_mixin = FileMixin(params=self.default_params)
+        file_mapper = FileExtractor(oozie_node=Element("fake"), params=self.default_params)
         # When
-        file_mixin.add_file("/test_file")
+        file_mapper.add_file("/test_file")
         # Then
-        self.assertEqual(file_mixin.files, "/test_file")
-        self.assertEqual(file_mixin.hdfs_files, "hdfs:///test_file")
+        self.assertEqual(file_mapper.files, "/test_file")
+        self.assertEqual(file_mapper.hdfs_files, "hdfs:///test_file")
 
     def test_add_multiple_files(self):
         # Given
-        file_mixin = FileMixin(params=self.default_params)
+        file_mapper = FileExtractor(oozie_node=Element("fake"), params=self.default_params)
         # When
-        file_mixin.add_file("/test_file")
-        file_mixin.add_file("test_file2")
-        file_mixin.add_file("/test_file3")
+        file_mapper.add_file("/test_file")
+        file_mapper.add_file("test_file2")
+        file_mapper.add_file("/test_file3")
         # Then
-        self.assertEqual(file_mixin.files, "/test_file,test_file2,/test_file3")
+        self.assertEqual(file_mapper.files, "/test_file,test_file2,/test_file3")
         self.assertEqual(
-            file_mixin.hdfs_files,
+            file_mapper.hdfs_files,
             "hdfs:///test_file," "hdfs:///user/pig/examples/pig_test_node/test_file2," "hdfs:///test_file3",
         )
 
     def test_add_hash_files(self):
         # Given
-        file_mixin = FileMixin(params=self.default_params)
+        file_mapper = FileExtractor(oozie_node=Element("fake"), params=self.default_params)
         # When
-        file_mixin.add_file("/test_file#test3_link")
-        file_mixin.add_file("test_file2#test_link")
-        file_mixin.add_file("/test_file3")
+        file_mapper.add_file("/test_file#test3_link")
+        file_mapper.add_file("test_file2#test_link")
+        file_mapper.add_file("/test_file3")
         # Then
-        self.assertEqual(file_mixin.files, "/test_file#test3_link,test_file2#test_link,/test_file3")
+        self.assertEqual(file_mapper.files, "/test_file#test3_link,test_file2#test_link,/test_file3")
         self.assertEqual(
-            file_mixin.hdfs_files,
+            file_mapper.hdfs_files,
             "hdfs:///test_file#test3_link,"
             "hdfs:///user/pig/examples/pig_test_node/test_file2#test_link,"
             "hdfs:///test_file3",
@@ -75,10 +76,10 @@ class TestFileMixin(unittest.TestCase):
 
     def test_add_file_extra_hash(self):
         # Given
-        file_mixin = FileMixin(params=self.default_params)
+        file_mapper = FileExtractor(oozie_node=Element("fake"), params=self.default_params)
         # When
         with self.assertRaises(Exception) as context:
-            file_mixin.add_file("/test_file#4rarear#")
+            file_mapper.add_file("/test_file#4rarear#")
         # Then
         self.assertEqual(
             "There should be maximum one '#' in the path /test_file#4rarear#", str(context.exception)

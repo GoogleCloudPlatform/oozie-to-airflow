@@ -21,13 +21,14 @@ from airflow.utils.trigger_rule import TriggerRule
 
 from converter.primitives import Relation
 from mappers.action_mapper import ActionMapper
-from mappers.file_archive_mixins import FileMixin, ArchiveMixin
+from mappers.file_archive_mappers import FileExtractor, ArchiveExtractor
 from mappers.prepare_mixin import PrepareMixin
 from utils import el_utils, xml_utils
 from utils.template_utils import render_template
 
 
-class PigMapper(ActionMapper, PrepareMixin, ArchiveMixin, FileMixin):
+# pylint: disable=too-many-instance-attributes
+class PigMapper(ActionMapper, PrepareMixin):
     """
     Converts a Pig Oozie node to an Airflow task.
     """
@@ -44,8 +45,6 @@ class PigMapper(ActionMapper, PrepareMixin, ArchiveMixin, FileMixin):
         template_file_name: str = "pig.tpl",
         **kwargs,
     ):
-        ArchiveMixin.__init__(self, params=params)
-        FileMixin.__init__(self, params=params)
         ActionMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, **kwargs)
         if params is None:
             params = dict()
@@ -54,6 +53,8 @@ class PigMapper(ActionMapper, PrepareMixin, ArchiveMixin, FileMixin):
         self.trigger_rule = trigger_rule
         self.properties = {}
         self.params_dict = {}
+        self.file_mapper = FileExtractor(oozie_node=oozie_node, params=params)
+        self.archive_mapper = ArchiveExtractor(oozie_node=oozie_node, params=params)
         self._parse_oozie_node()
 
     def _parse_oozie_node(self):
@@ -65,6 +66,8 @@ class PigMapper(ActionMapper, PrepareMixin, ArchiveMixin, FileMixin):
         self.script_file_name = el_utils.replace_el_with_var(script, params=self.params, quote=False)
         self._parse_config()
         self._parse_params()
+        self.files, self.hdfs_files = self.file_mapper.parse_node()
+        self.archives, self.hdfs_archives = self.archive_mapper.parse_node()
 
     def _parse_params(self):
         param_nodes = xml_utils.find_nodes_by_tag(self.oozie_node, "param")
