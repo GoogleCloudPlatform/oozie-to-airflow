@@ -12,8 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Mixins for File and Archives"""
+"""Mapper for File and Archive nodes"""
 from typing import Dict, List
+from xml.etree.ElementTree import Element
 
 
 class HdfsPathProcessor:
@@ -50,22 +51,23 @@ def split_by_hash_sign(path: str) -> List[str]:
     return [path]
 
 
-# pylint: disable=too-few-public-methods
-class FileMixin:
-    """Mixin for file node"""
+class FileMapper:
+    """ Converts a file oozie node """
 
-    def __init__(self, params: Dict[str, str]):
+    def __init__(self, oozie_node: Element, params: Dict[str, str]):
         self.files = ""
         self.hdfs_files = ""
         self.file_path_processor = HdfsPathProcessor(params=params)
+        self.oozie_node = oozie_node
 
-    def on_parse_node(self):
-        super().on_parse_node()
+    def parse_node(self):
         file_nodes = self.oozie_node.findall("file")
 
         for file_node in file_nodes:
             file_path = file_node.text
             self.add_file(file_path)
+
+        return self.files, self.hdfs_files
 
     def add_file(self, oozie_file_path: str) -> None:
         """
@@ -84,24 +86,24 @@ class FileMixin:
         )
 
 
-# pylint: disable=too-few-public-methods
-class ArchiveMixin:
-    """Mixin for archive node"""
+class ArchiveMapper:
+    """ Converts an archive oozie node """
 
     ALLOWED_EXTENSIONS = [".zip", ".gz", ".tar.gz", ".tar", ".jar"]
 
-    def __init__(self, params: Dict[str, str]):
+    def __init__(self, oozie_node: Element, params: Dict[str, str]):
         self.archives = ""
         self.hdfs_archives = ""
         self.archive_path_processor = HdfsPathProcessor(params=params)
+        self.oozie_node = oozie_node
 
-    def on_parse_node(self):
-        super().on_parse_node()
+    def parse_node(self):
         archive_nodes = self.oozie_node.findall("archive")
         if archive_nodes:
             for archive_node in archive_nodes:
                 archive_path = archive_node.text
                 self.add_archive(archive_path)
+        return self.archives, self.hdfs_archives
 
     def _check_archive_extensions(self, oozie_archive_path: str) -> List[str]:
         """
