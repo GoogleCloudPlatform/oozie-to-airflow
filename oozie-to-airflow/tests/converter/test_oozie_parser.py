@@ -13,19 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests oozie parser"""
-import os
+from os import path
+import typing
 import unittest
 from unittest import mock
 from xml.etree import ElementTree as ET
+
+from parameterized import parameterized
 
 from converter import parser
 from converter import parsed_node
 from converter.mappers import ACTION_MAP, CONTROL_MAP
 from converter.primitives import Relation
-from definitions import ROOT_DIR
 from mappers import dummy_mapper
 from mappers import ssh_mapper
-from tests.utils.test_paths import EXAMPLE_DEMO_PATH
+from tests.utils.test_paths import EXAMPLE_DEMO_PATH, EXAMPLES_PATH
 
 
 class TestOozieParser(unittest.TestCase):
@@ -358,35 +360,117 @@ class TestOozieParser(unittest.TestCase):
         self.assertFalse(fail.is_ok)
         self.assertTrue(fail.is_error)
 
-    @mock.patch("uuid.uuid4", return_value="1234")
-    @mock.patch("mappers.base_mapper.BaseMapper.on_parse_finish", wraps=None)
-    def test_parse_workflow(self, _, on_parse_finish_mock):
-        filename = os.path.join(ROOT_DIR, "examples/demo/workflow.xml")
-        self.parser.workflow_file = filename
-        self.parser.parse_workflow()
-        # Checking if names were changed to the Python syntax
-        self.assertIn("cleanup_node", self.parser.workflow.nodes)
-        self.assertIn("fork_node", self.parser.workflow.nodes)
-        self.assertIn("pig_node", self.parser.workflow.nodes)
-        self.assertIn("fail", self.parser.workflow.nodes)
 
-        self.assertEqual(
-            self.parser.workflow.relations,
-            {
-                Relation(from_task_id="cleanup_node", to_task_id="fail"),
-                Relation(from_task_id="cleanup_node", to_task_id="fork_node"),
-                Relation(from_task_id="decision_node", to_task_id="hdfs_node"),
-                Relation(from_task_id="fork_node", to_task_id="pig_node_prepare"),
-                Relation(from_task_id="fork_node", to_task_id="streaming_node"),
-                Relation(from_task_id="hdfs_node", to_task_id="fail"),
-                Relation(from_task_id="join_node", to_task_id="mr_node"),
-                Relation(from_task_id="mr_node", to_task_id="decision_node"),
-                Relation(from_task_id="mr_node", to_task_id="fail"),
-                Relation(from_task_id="pig_node", to_task_id="fail"),
-                Relation(from_task_id="pig_node", to_task_id="join_node"),
-                Relation(from_task_id="streaming_node", to_task_id="fail"),
-                Relation(from_task_id="streaming_node", to_task_id="join_node"),
-            },
+class WorkflowTestCase(typing.NamedTuple):
+    name: str
+    node_names: typing.Set[str]
+    relations: typing.Set[Relation]
+    params: typing.Dict[str, str]
+
+
+class TestOozieExamples(unittest.TestCase):
+    @parameterized.expand(
+        [
+            (
+                WorkflowTestCase(
+                    name="decision",
+                    node_names={"fake_end", "fail", "decision_node"},
+                    relations={
+                        Relation(from_task_id="decision_node", to_task_id="fail"),
+                        Relation(from_task_id="decision_node", to_task_id="fake_end"),
+                    },
+                    params={},
+                ),
+            ),
+            (
+                WorkflowTestCase(
+                    name="demo",
+                    node_names={
+                        "cleanup_node",
+                        "decision_node",
+                        "fail",
+                        "fork_node",
+                        "hdfs_node",
+                        "join_node",
+                        "mr_node",
+                        "pig_node",
+                        "streaming_node",
+                    },
+                    relations={
+                        Relation(from_task_id="cleanup_node", to_task_id="fail"),
+                        Relation(from_task_id="cleanup_node", to_task_id="fork_node"),
+                        Relation(from_task_id="decision_node", to_task_id="hdfs_node"),
+                        Relation(from_task_id="fork_node", to_task_id="pig_node_prepare"),
+                        Relation(from_task_id="fork_node", to_task_id="streaming_node"),
+                        Relation(from_task_id="hdfs_node", to_task_id="fail"),
+                        Relation(from_task_id="join_node", to_task_id="mr_node"),
+                        Relation(from_task_id="mr_node", to_task_id="decision_node"),
+                        Relation(from_task_id="mr_node", to_task_id="fail"),
+                        Relation(from_task_id="pig_node", to_task_id="fail"),
+                        Relation(from_task_id="pig_node", to_task_id="join_node"),
+                        Relation(from_task_id="streaming_node", to_task_id="fail"),
+                        Relation(from_task_id="streaming_node", to_task_id="join_node"),
+                    },
+                    params={},
+                ),
+            ),
+            (
+                WorkflowTestCase(
+                    name="el",
+                    node_names={"ssh", "fail"},
+                    relations={Relation(from_task_id="ssh", to_task_id="fail")},
+                    params={"hostname": "AAAA@BBB"},
+                ),
+            ),
+            (
+                WorkflowTestCase(
+                    name="pig",
+                    node_names={"fail", "pig_node"},
+                    relations={Relation(from_task_id="pig_node", to_task_id="fail")},
+                    params={},
+                ),
+            ),
+            (
+                WorkflowTestCase(
+                    name="shell",
+                    node_names={"shell_node", "fail"},
+                    relations={Relation(from_task_id="shell_node", to_task_id="fail")},
+                    params={},
+                ),
+            ),
+            (
+                WorkflowTestCase(
+                    name="spark",
+                    node_names={"fail", "spark_node"},
+                    relations={Relation(from_task_id="spark_node", to_task_id="fail")},
+                    params={},
+                ),
+            ),
+            (
+                WorkflowTestCase(
+                    name="ssh",
+                    node_names={"ssh", "fail"},
+                    relations={Relation(from_task_id="ssh", to_task_id="fail")},
+                    params={"hostname": "AAAA@BBB"},
+                ),
+            ),
+        ],
+        name_func=lambda func, num, p: f"{func.__name__}_{num}_{p.args[0].name}",
+    )
+    @mock.patch("mappers.base_mapper.BaseMapper.on_parse_finish", wraps=None)
+    @mock.patch("uuid.uuid4", return_value="1234")
+    def test_parse_workflow_examples(self, case: WorkflowTestCase, _, on_parse_finish_mock):
+        current_parser = parser.OozieParser(
+            input_directory_path=path.join(EXAMPLES_PATH, case.name),
+            output_directory_path="/tmp",
+            params=case.params,
+            action_mapper=ACTION_MAP,
+            control_mapper=CONTROL_MAP,
         )
+        current_parser.parse_workflow()
+
+        self.assertEqual(case.node_names, set(current_parser.workflow.nodes.keys()))
+
+        self.assertEqual(case.relations, current_parser.workflow.relations)
 
         on_parse_finish_mock.assert_called()
