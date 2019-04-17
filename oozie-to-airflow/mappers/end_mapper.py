@@ -13,22 +13,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Maps Oozie end node to Airflow's DAG"""
-from typing import Set
+from mappers.decision_mapper import DecisionMapper
+from mappers.dummy_mapper import DummyMapper
 
-from mappers.base_mapper import BaseMapper
 
-
-class EndMapper(BaseMapper):
-    @staticmethod
-    def required_imports() -> Set[str]:
-        return set()
-
-    def convert_to_text(self) -> str:
-        return ""
-
+class EndMapper(DummyMapper):
     def on_parse_finish(self, workflow):
         super().on_parse_finish(self)
-        del workflow.nodes[self.name]
-        workflow.relations -= {
-            relation for relation in workflow.relations if relation.to_task_id == self.name
+        decision_node_ids = {
+            node.last_task_id for node in workflow.nodes.values() if isinstance(node.mapper, DecisionMapper)
         }
+        upstream_task_ids = {
+            relation.from_task_id for relation in workflow.relations if relation.to_task_id == self.name
+        }
+
+        if not decision_node_ids.intersection(upstream_task_ids):
+            del workflow.nodes[self.name]
+            workflow.relations -= {
+                relation for relation in workflow.relations if relation.to_task_id == self.name
+            }
