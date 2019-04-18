@@ -139,3 +139,16 @@ class TestELUtils(unittest.TestCase):
         params = {"test": "answer"}
         expected = {"test": "answer", "key": "value"}
         self.assertEqual(expected, el_utils.parse_els(prop_file.name, params))
+
+    def test_parse_els_file_list(self):
+        # Should remain unchanged, as the conversion from a comma-separated string to a List will
+        # occur before writing to file.
+        import tempfile
+
+        prop_file = tempfile.NamedTemporaryFile("w", delete=False)
+        prop_file.write("#comment\n" "key=value,value2")
+        prop_file.close()
+
+        params = {"test": "answer"}
+        expected = {"test": "answer", "key": "value,value2"}
+        self.assertEqual(expected, el_utils.parse_els(prop_file.name, params))
