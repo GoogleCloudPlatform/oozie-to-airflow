@@ -30,6 +30,10 @@ from mappers import dummy_mapper
 from tests.utils.test_paths import EXAMPLE_DEMO_PATH
 
 
+def remove_all_whitespaces(expected):
+    return "".join(expected.split())
+
+
 class TestOozieConverter(unittest.TestCase):
     def setUp(self):
         self.converter = OozieConverter(
@@ -104,3 +108,22 @@ class TestOozieConverter(unittest.TestCase):
         expected = template.render(dag_name=dag_name, schedule_interval=1, start_days_ago=1)
 
         self.assertEqual(expected, file.read())
+
+    def test_write_params_list(self):
+        expected = """
+        PARAMS = {
+            "list": [
+                "item1",
+                "item2"
+            ],
+            "single": "item"
+        }
+        """
+
+        params = {"list": "item1,item2", "single": "item"}
+
+        file = io.StringIO()
+        OozieConverter.write_params(file, params=params)
+        file.seek(0)
+
+        self.assertEqual(remove_all_whitespaces(expected), remove_all_whitespaces(file.read()))

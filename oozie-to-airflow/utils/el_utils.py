@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Utilities used by EL functions"""
+import logging
 import os
 import re
-import logging
-from typing import Dict
+from typing import Dict, List, Optional, Union
 
 from o2a_libs import el_basic_functions
 
@@ -131,7 +131,7 @@ def convert_el_to_jinja(oozie_el, quote=True):
     return "'" + jinjafied_el + "'" if quote else jinjafied_el
 
 
-def parse_els(properties_file: str, prop_dict: Dict[str, str] = None):
+def parse_els(properties_file: Optional[str], prop_dict: Dict[str, str] = None):
     """
     Parses the properties file into a dictionary, if the value has
     and EL function in it, it gets replaced with the corresponding
@@ -156,8 +156,25 @@ def parse_els(properties_file: str, prop_dict: Dict[str, str] = None):
                     if line.startswith("#") or line.startswith(" ") or line.startswith("\n"):
                         continue
                     else:
-                        props = [x.strip() for x in line.split("=", 1)]
-                        prop_dict[props[0]] = replace_el_with_var(props[1], prop_dict, quote=False)
+                        _convert_line(line, prop_dict)
         else:
             logging.warning(f"The job.properties file is missing: {properties_file}")
     return prop_dict
+
+
+def _convert_line(line: str, prop_dict: Dict[str, str]) -> None:
+    """
+    Converts a line from the properties file and adds it to the properties dictionary.
+    """
+    key, value = line.split("=", 1)
+    value = replace_el_with_var(value.strip(), prop_dict, quote=False)
+    prop_dict[key.strip()] = value
+
+
+def comma_separated_string_to_list(line: str) -> Union[List[str], str]:
+    """
+    Converts a comma-separated string to a List of strings.
+    If the input is a single item (no comma), it will be returned unchanged.
+    """
+    values = line.split(",")
+    return values[0] if len(values) <= 1 else values

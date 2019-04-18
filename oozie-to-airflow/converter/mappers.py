@@ -27,6 +27,7 @@ from mappers.decision_mapper import DecisionMapper
 from mappers.dummy_mapper import DummyMapper
 from mappers.end_mapper import EndMapper
 from mappers.kill_mapper import KillMapper
+from mappers.mapreduce_mapper import MapReduceMapper
 from mappers.pig_mapper import PigMapper
 from mappers.shell_mapper import ShellMapper
 from mappers.spark_mapper import SparkMapper
@@ -51,4 +52,5 @@ ACTION_MAP: Dict[str, Type[ActionMapper]] = {
     "pig": PigMapper,
     "sub-workflow": SubworkflowMapper,
     "shell": ShellMapper,
+    "map-reduce": MapReduceMapper,
 }

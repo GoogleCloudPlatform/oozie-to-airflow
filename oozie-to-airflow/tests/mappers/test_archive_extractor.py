@@ -17,7 +17,7 @@ import unittest
 from xml.etree.ElementTree import Element
 from xml.etree import ElementTree as ET
 
-from mappers.file_archive_extractors import ArchiveExtractor
+from utils.file_archive_extractors import ArchiveExtractor
 
 
 class TestArchiveExtractor(unittest.TestCase):
