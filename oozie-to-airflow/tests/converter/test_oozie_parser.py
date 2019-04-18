@@ -473,6 +473,7 @@ class TestOozieExamples(unittest.TestCase):
                     params={"hostname": "AAAA@BBB", "nameNode": "hdfs://"},
                 ),
             ),
+            (WorkflowTestCase(name="subwf", node_names={"subworkflow_node"}, relations=set(), params={}),),
         ],
         name_func=lambda func, num, p: f"{func.__name__}_{num}_{p.args[0].name}",
     )

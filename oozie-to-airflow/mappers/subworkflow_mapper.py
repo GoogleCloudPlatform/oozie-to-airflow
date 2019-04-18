@@ -70,7 +70,7 @@ class SubworkflowMapper(ActionMapper):
         app_path = el_utils.replace_el_with_var(app_path, params=self.params, quote=False)
         # TODO: hacky: we should calculate it deriving from input_directory_path and comparing app-path
         # TODO: but for now we assume app is in "examples"
-        app_path = os.path.join(EXAMPLES_PATH, app_path.split("examples/")[1])
+        app_path = os.path.join(EXAMPLES_PATH, app_path.rsplit("/", 1)[1])
         logging.info(f"Converting subworkflow from {app_path}")
         self._parse_config()
         converter = OozieSubworkflowConverter(
