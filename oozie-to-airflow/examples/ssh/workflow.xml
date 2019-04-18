@@ -35,7 +35,7 @@
     <start to="ssh"/>
 
     <action name="ssh">
-        <ssh xmlns="uri:oozie:ssh-action:0.1">
+        <ssh xmlns="uri:oozie:ssh-action:0.2">
             <host>user@apache.org</host>
             <command>echo</command>
             <args>"Hello Oozie!"</args>

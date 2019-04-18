@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<schema elementFormDefault="qualified" xmlns="http://www.w3.org/2001/XMLSchema">
+    <import namespace="uri:oozie:workflow:1.0" schemaLocation="oozie-workflow-1.0.xsd"/>
+    <import namespace="uri:oozie:shell-action:1.0" schemaLocation="shell-action-1.0.xsd"/>
+    <import namespace="uri:oozie:ssh-action:0.2" schemaLocation="ssh-action-0.2.xsd"/>
+    <import namespace="uri:oozie:spark-action:1.0" schemaLocation="spark-action-1.0.xsd"/>
+</schema>
