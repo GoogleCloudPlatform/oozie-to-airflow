@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Maps Oozie pig node to Airflow's DAG"""
-import os
 from typing import Dict, Set
 from xml.etree.ElementTree import Element
 
@@ -28,9 +27,9 @@ from utils.template_utils import render_template
 
 
 # pylint: disable=too-many-instance-attributes
-class PigMapper(ActionMapper, PrepareMixin):
+class MapReduceMapper(ActionMapper, PrepareMixin):
     """
-    Converts a Pig Oozie node to an Airflow task.
+    Converts a MapReduce Oozie node to an Airflow task.
     """
 
     properties: Dict[str, str]
@@ -42,7 +41,7 @@ class PigMapper(ActionMapper, PrepareMixin):
         name: str,
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
         params=None,
-        template_file_name: str = "pig.tpl",
+        template_file_name: str = "mapreduce.tpl",
         **kwargs,
     ):
         ActionMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, **kwargs)
@@ -58,12 +57,8 @@ class PigMapper(ActionMapper, PrepareMixin):
         self._parse_oozie_node()
 
     def _parse_oozie_node(self):
-        res_man_text = self.oozie_node.find("resource-manager").text
         name_node_text = self.oozie_node.find("name-node").text
-        script = self.oozie_node.find("script").text
-        self.resource_manager = el_utils.replace_el_with_var(res_man_text, params=self.params, quote=False)
         self.name_node = el_utils.replace_el_with_var(name_node_text, params=self.params, quote=False)
-        self.script_file_name = el_utils.replace_el_with_var(script, params=self.params, quote=False)
         self._parse_config()
         self._parse_params()
         self.files, self.hdfs_files = self.file_extractor.parse_node()
@@ -75,7 +70,7 @@ class PigMapper(ActionMapper, PrepareMixin):
             self.params_dict = {}
             for node in param_nodes:
                 param = el_utils.replace_el_with_var(node.text, params=self.params, quote=False)
-                key, value = param.split("=")
+                key, value = param.split("=", 1)
                 self.params_dict[key] = value
 
     def convert_to_text(self) -> str:
@@ -89,27 +84,6 @@ class PigMapper(ActionMapper, PrepareMixin):
             **self.__dict__,
         )
 
-    def _add_symlinks(self, destination_pig_file):
-        destination_pig_file.write("set mapred.create.symlink yes;\n")
-        if self.files:
-            destination_pig_file.write("set mapred.cache.file {};\n".format(self.hdfs_files))
-        if self.archives:
-            destination_pig_file.write("set mapred.cache.archives {};\n".format(self.hdfs_archives))
-
-    def copy_extra_assets(self, input_directory_path: str, output_directory_path: str):
-        self._validate_paths(input_directory_path, output_directory_path)
-        source_pig_file_path = os.path.join(input_directory_path, self.script_file_name)
-        destination_pig_file_path = os.path.join(output_directory_path, self.script_file_name)
-        self._copy_pig_script_with_path_injection(destination_pig_file_path, source_pig_file_path)
-
-    def _copy_pig_script_with_path_injection(self, destination_pig_file_path, source_pig_file_path):
-        with open(destination_pig_file_path, "w") as destination_pig_file:
-            with open(source_pig_file_path, "r") as source_pig_file:
-                pig_script = source_pig_file.read()
-                if self.files or self.archives:
-                    self._add_symlinks(destination_pig_file)
-                destination_pig_file.write(pig_script)
-
     @staticmethod
     def _validate_paths(input_directory_path, output_directory_path):
         if not input_directory_path:
@@ -120,7 +94,3 @@ class PigMapper(ActionMapper, PrepareMixin):
     @staticmethod
     def required_imports() -> Set[str]:
         return {"from airflow.utils import dates", "from airflow.contrib.operators import dataproc_operator"}
-
-    @property
-    def first_task_id(self):
-        return "{task_id}_prepare".format(task_id=self.name)

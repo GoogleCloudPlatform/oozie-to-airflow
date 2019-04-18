@@ -274,6 +274,57 @@ edit connections so you must add one like:
 
 More information can be found on [Airflow's Website](https://airflow.apache.org/cli.html#connections)
 
+### MapReduce Example
+
+The MapReduce example can be run as:
+
+`python o2a.py -i examples/mapreduce -o output/mapreduce`
+
+Make sure to first copy `/examples/mapreduce/configuration-template.properties`, rename it as
+`configuration.properties` and fill in with configuration data.
+
+The output will appear by default in `/output/mapreduce/mapreduce.py`.
+
+#### Current limitations
+
+**1. Oozie workflow XSD version 0.5**
+
+For now the example uses older version of XSD and not the newest 1.0 version. That's because the
+system tests are run on a Dataproc cluster which installs Oozie version
+4.3.0 using an init-action, and this version only supports schema version 0.5.
+
+There are a few differences between 0.5 and 1.0, such as `<job-tracker>` in 0.5 vs
+`<resource-manager>` in 1.0.
+We will try to upgrade the Oozie version in Dataproc to 5.1.0 and subsequently update
+the example code.
+
+**2. Exit status not available**
+
+From the [Oozie documentation](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a3.2.2_Map-Reduce_Action):
+> The counters of the Hadoop job and job exit status (FAILED, KILLED or SUCCEEDED) must be available to the
+workflow job after the Hadoop jobs ends. This information can be used from within decision nodes and other
+actions configurations.
+
+Currently we use the `DataProcHadoopOperator` which does not store the job exit status in an XCOM for other tasks to use.
+
+**3. Configuration options**
+
+From the [Oozie documentation](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a3.2.2_Map-Reduce_Action)
+(the strikethrough is from us):
+> Hadoop JobConf properties can be specified as part of
+> - ~~the config-default.xml or~~
+> - ~~JobConf XML file bundled with the workflow application or~~
+> - ~~\<global> tag in workflow definition or~~
+> - Inline map-reduce action configuration or
+> - ~~An implementation of OozieActionConfigurator specified by the <config-class> tag in workflow definition.~~
+
+Currently the only supported way of configuring the map-reduce action is with the
+inline action configuration, i.e. using the `<configuration>` tag in the workflow's XML file definition.
+
+**4. Streaming and pipes**
+
+Streaming and pipes are currently not supported.
+
 ### Spark Example
 
 The spark example, like the other examples can be run as:

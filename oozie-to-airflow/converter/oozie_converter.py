@@ -16,7 +16,7 @@
 """
 import shutil
 from pathlib import Path
-from typing import Dict, TextIO, Type, Set
+from typing import Dict, TextIO, Type, Set, Union, List
 
 import os
 import json
@@ -32,6 +32,7 @@ from converter.primitives import Relation
 from mappers.action_mapper import ActionMapper
 from mappers.base_mapper import BaseMapper
 from utils import el_utils
+from utils.el_utils import comma_separated_string_to_list
 from utils.template_utils import render_template
 
 INDENT = 4
@@ -133,11 +134,18 @@ class OozieConverter:
         Template method, can be overridden.
         """
         self.write_dependencies(file, depends)
-        file.write("PARAMS = " + json.dumps(self.params, indent=INDENT) + "\n\n")
+        self.write_params(file, self.params)
         self.write_dag_header(file, self.dag_name, self.schedule_interval, self.start_days_ago)
         self.write_nodes(file, nodes)
         file.write("\n\n")
         self.write_relations(file, relations)
+
+    @staticmethod
+    def write_params(file: TextIO, params: Dict[str, str]) -> None:
+        converted_params: Dict[str, Union[List[str], str]] = {
+            x: comma_separated_string_to_list(y) for x, y in params.items()
+        }
+        file.write("PARAMS = " + json.dumps(converted_params, indent=INDENT) + "\n\n")
 
     def write_nodes(self, file: TextIO, nodes: Dict[str, ParsedNode], indent: int = INDENT):
         """
