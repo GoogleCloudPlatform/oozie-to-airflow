@@ -22,7 +22,7 @@ before_install: cd oozie-to-airflow
 install:
   - pip uninstall -y mock
   - pip install -r ../requirements.txt
-  - sudo apt-get install coreutils
+  - sudo apt-get install coreutils libxml2-utils
 script:
   - pre-commit run --all-files
   - ./run-all-conversions
