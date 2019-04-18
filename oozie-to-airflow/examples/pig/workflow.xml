@@ -40,8 +40,8 @@
             <resource-manager>${resourceManager}</resource-manager>
             <name-node>${nameNode}</name-node>
             <prepare>
-                <create path="/user/pig/examples/test_pig_node/created-folder"/>
                 <delete path="/user/pig/examples/test_pig_node/output-data"/>
+                <mkdir path="/user/pig/examples/test_pig_node/created-folder"/>
             </prepare>
             <configuration>
                 <property>
@@ -66,6 +66,7 @@
     </action>
 
     <kill name="fail">
+        <message>PIG action failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
     </kill>
 
     <end name="end"/>

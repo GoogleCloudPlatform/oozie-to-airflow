@@ -34,12 +34,13 @@
 <workflow-app xmlns="uri:oozie:workflow:1.0" name="shell-wf">
     <start to="shell-node"/>
     <action name="shell-node">
-        <shell xmlns="uri:oozie:shell-action:1.0">
+        <shell xmlns="uri:oozie:shell-action:1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="uri:oozie:shell-action:1.0 ">
             <resource-manager>${resourceManager}</resource-manager>
             <name-node>${nameNode}</name-node>
             <prepare>
-                <create path="${nameNode}/examples/input-data/demo/pig-node"/>
                 <delete path="${nameNode}/examples/output-data/demo/pig-node"/>
+                <mkdir path="${nameNode}/examples/input-data/demo/pig-node"/>
             </prepare>
             <configuration>
                 <property>
