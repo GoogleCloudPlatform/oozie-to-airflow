@@ -365,13 +365,19 @@ function prepare_configuration {
     fi
 }
 
-function prepare_gcloud_configuration {
+function fetch_composer_environment_info {
+    header "Fetching information about the Composer environment"
+    echo
     if [[ -z "${COMPOSER_DAG_BUCKET}" ]]; then
         COMPOSER_DAG_BUCKET=$(gcloud beta composer environments describe "${COMPOSER_NAME}" --location "${COMPOSER_LOCATION}" --format='value(config.dagGcsPrefix)')
         COMPOSER_DAG_BUCKET=${COMPOSER_DAG_BUCKET%/dags}
         COMPOSER_DAG_BUCKET=${COMPOSER_DAG_BUCKET#gs://}
+        echo "DAG Bucket: ${COMPOSER_DAG_BUCKET}"
     fi
     COMPOSER_WEB_UI_URL=$(gcloud beta composer environments describe "${COMPOSER_NAME}" --location "${COMPOSER_LOCATION}" --format='value(config.airflowUri)')
+    echo "WEB UI URL: ${COMPOSER_WEB_UI_URL}"
+    echo
+    footer
 }
 
 LOCAL_BASE_DIR=${MY_DIR}
@@ -412,17 +418,17 @@ prepare_configuration
 if [[ "${PHASE}" == "convert" ]]; then
     convert
 elif [[ "${PHASE}" == "prepare-dataproc" ]]; then
-    prepare_gcloud_configuration
+    fetch_composer_environment_info
     prepare_dataproc
 elif [[ "${PHASE}" == "prepare-composer" ]]; then
-    prepare_gcloud_configuration
+    fetch_composer_environment_info
     prepare_composer
 elif [[ "${PHASE}" == "test-composer" ]]; then
-    prepare_gcloud_configuration
+    fetch_composer_environment_info
     test_composer
 elif [[ "${PHASE}" == "all" ]]; then
     convert
-    prepare_gcloud_configuration
+    fetch_composer_environment_info
     prepare_dataproc
     prepare_composer
     test_composer
