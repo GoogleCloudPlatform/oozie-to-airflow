@@ -19,6 +19,7 @@ MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 command -v pip >/dev/null 2>&1 || { echo >&2 "pip appears to not be installed. Aborting."; exit 1; }
 
 python - <<EOF
+import sys
 import platform
 split_version = [int(x) for x in platform.python_version().split('.')]
 if split_version[0] < 3 or split_version[0] == 3 and split_version[1] < 6:
