@@ -27,7 +27,8 @@ CMDNAME="$(basename -- "$0")"
 DATAPROC_CLUSTER_NAME=oozie-o2a-2cpu
 COMPOSER_NAME=o2a-integration
 COMPOSER_LOCATION=europe-west1
-COMPOSER_DAG_BUCKET=europe-west1-o2a-integratio-f690ede2-bucket
+COMPOSER_DAG_BUCKET=
+COMPOSER_WEB_UI_URL=
 GCP_REGION=europe-west3
 GCP_ZONE=europe-west3-c
 LOCAL_APP_NAME=
@@ -61,7 +62,7 @@ Flags:
         Cluster used to run the operations on. Defaults to ${DATAPROC_CLUSTER_NAME}
 
 -b, --bucket <BUCKET>
-        Airflow Composer DAG bucket used. Defaults to ${COMPOSER_DAG_BUCKET}
+        Airflow Composer DAG bucket used. Defaults to bucket that is used by Composer.
 
 -m, --master <MASTER>
         Cluster master used to run most operations on. Defaults to <CLUSTER_NAME>-m
@@ -333,6 +334,9 @@ function test_composer {
     gcloud composer environments run "${COMPOSER_NAME}" --location "${COMPOSER_LOCATION}" list_dags
     gcloud composer environments run "${COMPOSER_NAME}" --location "${COMPOSER_LOCATION}" trigger_dag\
        -- ${OUTPUT_DAG_NAME}
+    echo
+    echo "You can check the progress at the address: ${COMPOSER_WEB_UI_URL}"
+    echo
     footer
 }
 
@@ -359,6 +363,21 @@ function prepare_configuration {
               -e COMPOSER_DAG_BUCKET \
               -o ${LOCAL_CONFIGURATION_PROPERTIES}
     fi
+}
+
+function fetch_composer_environment_info {
+    header "Fetching information about the Composer environment"
+    echo
+    if [[ -z "${COMPOSER_DAG_BUCKET}" ]]; then
+        COMPOSER_DAG_BUCKET=$(gcloud beta composer environments describe "${COMPOSER_NAME}" --location "${COMPOSER_LOCATION}" --format='value(config.dagGcsPrefix)')
+        COMPOSER_DAG_BUCKET=${COMPOSER_DAG_BUCKET%/dags}
+        COMPOSER_DAG_BUCKET=${COMPOSER_DAG_BUCKET#gs://}
+        echo "DAG Bucket: ${COMPOSER_DAG_BUCKET}"
+    fi
+    COMPOSER_WEB_UI_URL=$(gcloud beta composer environments describe "${COMPOSER_NAME}" --location "${COMPOSER_LOCATION}" --format='value(config.airflowUri)')
+    echo "WEB UI URL: ${COMPOSER_WEB_UI_URL}"
+    echo
+    footer
 }
 
 LOCAL_BASE_DIR=${MY_DIR}
@@ -399,13 +418,17 @@ prepare_configuration
 if [[ "${PHASE}" == "convert" ]]; then
     convert
 elif [[ "${PHASE}" == "prepare-dataproc" ]]; then
+    fetch_composer_environment_info
     prepare_dataproc
 elif [[ "${PHASE}" == "prepare-composer" ]]; then
+    fetch_composer_environment_info
     prepare_composer
 elif [[ "${PHASE}" == "test-composer" ]]; then
+    fetch_composer_environment_info
     test_composer
 elif [[ "${PHASE}" == "all" ]]; then
     convert
+    fetch_composer_environment_info
     prepare_dataproc
     prepare_composer
     test_composer
