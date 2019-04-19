@@ -32,6 +32,7 @@ GCP_REGION=europe-west3
 GCP_ZONE=europe-west3-c
 LOCAL_APP_NAME=
 PHASE=all
+VERBOSE=false
 
 usage() {
       echo """
@@ -74,6 +75,9 @@ Flags:
 
 -A, --setup-autocomplete
         Sets up autocomplete for run-sys-tests
+
+-V, --verbose
+        Make the operation more talkative
 """
 }
 
@@ -230,6 +234,9 @@ do
     -A|--setup-autocomplete)
       setup_autocomplete
       exit ;;
+    -V|--verbose)
+      export VERBOSE=true;
+      shift 1 ;;
     --)
       shift ;
       break ;;
@@ -268,11 +275,15 @@ function header {
     printf '#%.0s' {1..140}
     echo
     echo
-    set -x
+    if [[ "${VERBOSE}" == "true" ]]; then
+        set -x
+    fi
 }
 
 function footer {
-    set +x
+    if [[ "${VERBOSE}" == "true" ]]; then
+        set +x
+    fi
     echo
     printf '#%.0s' {1..140}
     echo
