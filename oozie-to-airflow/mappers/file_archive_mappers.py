@@ -16,6 +16,8 @@
 from typing import Dict, List
 from xml.etree.ElementTree import Element
 
+from utils.el_utils import replace_el_with_var
+
 
 class HdfsPathProcessor:
     def __init__(self, params: Dict[str, str]):
@@ -59,12 +61,13 @@ class FileExtractor:
         self.hdfs_files: str = ""
         self.file_path_processor = HdfsPathProcessor(params=params)
         self.oozie_node = oozie_node
+        self.params = params
 
     def parse_node(self):
         file_nodes: List[Element] = self.oozie_node.findall("file")
 
         for file_node in file_nodes:
-            file_path = file_node.text
+            file_path = replace_el_with_var(file_node.text, params=self.params, quote=False)
             self.add_file(file_path)
 
         return self.files, self.hdfs_files
@@ -96,12 +99,13 @@ class ArchiveExtractor:
         self.hdfs_archives: str = ""
         self.archive_path_processor = HdfsPathProcessor(params=params)
         self.oozie_node = oozie_node
+        self.params = params
 
     def parse_node(self):
         archive_nodes: List[Element] = self.oozie_node.findall("archive")
         if archive_nodes:
             for archive_node in archive_nodes:
-                archive_path = archive_node.text
+                archive_path = replace_el_with_var(archive_node.text, params=self.params, quote=False)
                 self.add_archive(archive_path)
         return self.archives, self.hdfs_archives
 
