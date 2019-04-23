@@ -38,3 +38,25 @@ You can run all the checks manually by running:
 You can always skip running the tests by providing `--no-verify` flag to `git commit` command.
 
 You can check all commands of pre-commit framework at https://pre-commit.com/
+
+
+# Running Oozie 5.1.0 in Dataproc
+
+We prepared Dataproc [initialization action](https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/init-actions) 
+that allows to run Oozie 5.1.0 on Dataproc.
+
+Please upload `dataproc/oozie-5.1.sh` to your GCS bucket and create cluster using following command:
+```bash
+gcloud dataproc clusters create <CLUSTER_NAME> \
+  --single-node \
+  --image-version 1.3-debian9 \
+  --initialization-actions <PATH_TO_INIT_ACTION_ON_YOUR_GCS> \
+  --initialization-action-timeout=30m
+```
+**note 1:** it might take ~20 minutes to create the cluster
+
+**note 2:** the init-action works only with [single-node cluster](https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/single-node-clusters)
+and Dataproc 1.3
+
+Once cluster is created, steps from `dataproc/example-map-reduce.job.sh` can be run to execute Oozie's
+example Map-Reduce job.
