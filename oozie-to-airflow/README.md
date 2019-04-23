@@ -26,7 +26,7 @@ The program targets Apache Airflow >= 1.10 and Apache Oozie 1.0 XML schema.
 Apache Airflow is a workflow management system developed by AirBnB in 2014.
 It is a platform to programmatically author, schedule, and monitor workflows.
 Airflow workflows are designed as [Directed Acyclic Graphs](https://airflow.apache.org/tutorial.html#example-pipeline-definition)
-(DAGs) of tasks in python. The Airflow scheduler executes your tasks on an array of
+(DAGs) of tasks in Python. The Airflow scheduler executes your tasks on an array of
 workers while following the specified dependencies.
 
 Apache Oozie is a workflow scheduler system to manage Apache Hadoop jobs.
@@ -149,8 +149,8 @@ A workflow definition may have zero or more kill nodes.
 ## Running the Program
 
 #### Required Python Dependencies
-* python > 3.6
-* see [requirements.txt](requirements.txt)
+* Python > 3.6
+* See [requirements.txt](../requirements.txt)
 
 Additionally the shell script included in the directory, `init.sh`, can
 be ran to set up the dependencies and ready your machine to run the examples.
@@ -163,12 +163,35 @@ $ ./init.sh
 ```
 
 You can run the program (minimally) by calling:
-`python o2a.py -i <INPUT_WORKFLOW_XML>`
+`python o2a.py -i <INPUT_WORKFLOW_FOLDER_PATH> -o <OUTPUT_FOLDER_PATH>`
 
-You can also specify the job.properties file, user, and output file.
+Example:
+`python o2a.py -i examples/demo -o output/demo`
 
-`python o2a.py -i <INPUT_FILE> -p <PROP_FILE> -u <USER> -o
-<OUTPUT_FILE>`
+This is the full usage guide, available by running `python o2a.py -h`
+
+```
+usage: o2a.py [-h] -i INPUT_DIRECTORY_PATH -o OUTPUT_DIRECTORY_PATH
+              [-d DAG_NAME] [-u USER] [-s START_DAYS_AGO]
+              [-v SCHEDULE_INTERVAL]
+
+Convert Apache Oozie workflows to Apache Airflow workflows.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  -i INPUT_DIRECTORY_PATH, --input-directory-path INPUT_DIRECTORY_PATH
+                        Path to input directory
+  -o OUTPUT_DIRECTORY_PATH, --output-directory-path OUTPUT_DIRECTORY_PATH
+                        Desired output directory
+  -d DAG_NAME, --dag-name DAG_NAME
+                        Desired DAG name [defaults to input directory name]
+  -u USER, --user USER  The user to be used in place of all ${user.name}
+                        [defaults to user who ran the conversion]
+  -s START_DAYS_AGO, --start-days-ago START_DAYS_AGO
+                        Desired DAG start as number of days ago
+  -v SCHEDULE_INTERVAL, --schedule-interval SCHEDULE_INTERVAL
+                        Desired DAG schedule interval as number of days
+```
 
 #### Known Limitations
 
@@ -176,7 +199,7 @@ The goal of this program is to mimic both the actions and control flow
 that is outlined by the Oozie workflow file. Unfortunately there are some
 limitations as of now that have not been worked around regarding the execution
 flow. The situation where the execution path might not execute correctly is when
-there are 4 nodes, A, B, C, D, with the following Oozie specified execution paths
+there are 4 nodes, A, B, C, D, with the following Oozie specified execution paths:
 ```
 A executes ok to C
 B executes error to C
@@ -197,61 +220,60 @@ C will then execute incorrectly.
 As of now, a very minimal set of [Oozie EL](https://oozie.apache.org/docs/4.0.1/WorkflowFunctionalSpec.html#a4.2_Expression_Language_Functions)
 functions are supported. The way they work is that there exists a
 dictionary mapping from each Oozie EL function string to the
-corresponding python function. This is in `utils/el_utils.py`.
+corresponding Python function. This is in `utils/el_utils.py`.
 This design allows for custom EL function mapping if one so chooses. By
 default everything gets mapped to the module `o2a_libs`. This means in
 order to use EL function mapping, the folder `o2a_libs` should
 be copied over to the Airflow DAG folder. This should then be picked up and
 parsed by the Airflow workers and then available to all DAGs.
 
-#### Command Line Flags
-
-| Flag                                  | Meaning                                                                                      |
-|---------------------------------------|----------------------------------------------------------------------------------------------|
-| -h/--help                             | Shows help message and exits                                                                 |
-| -i INPUT/--input INPUT                | Path to the XML file to be converted                                                         |
-| -o OUTPUT/--output OUTPUT             | Desired output python file name (optional)                                                              |
-| -d DAG/--dag DAG                      | Desired Airflow DAG name (optional)                                                                     |
-| -p PROPERTIES/--properties PROPERTIES | Path to the job.properties file (optional)                                                   |
-| -u USER/--user USER                   | The user to be replaced for ${user.name}. If none specified, current user is used (optional) |
-
 ## Examples
 
 All examples can be found in the `examples/` directory.
 
+* [Demo](#demo-example)
+* [SSH](#ssh-example)
+* [MapReduce](#mapreduce-example)
+* [Pig](#pig-example)
+* [Shell](#shell-example)
+* [Sub-workflow](#sub-workflow-example)
+* [Decision](#decision-example)
+* [EL](#el-example)
+
 ### Demo Example
 
 The demo example contains several action and control nodes. The control
-nodes are fork, join, decision, start, end, and kill. As far as action
-nodes go, there are fs, map-reduce, and pig. Unfortunately, none of these
-are currently supported, but when the program encounters a node it does
-not know how to parse, it will perform a sort of "skeleton transformation"
-where it will convert all the unknown nodes to dummy nodes, which will
+nodes are `fork`, `join`, `decision`, `start`, `end`, and `kill`. As far as action
+nodes go, there are `fs`, `map-reduce`, and `pig`.
+
+Most of these are already supported, but when the program encounters a node it does
+not know how to parse, it will perform a sort of "skeleton transformation" -
+it will convert all the unknown nodes to dummy nodes. This will
 allow users to manually parse the nodes if they so wish as the control flow
 is there.
 
 The demo can be run as:
 
-`python o2a.py -i examples/demo/workflow.xml -p examples/demo/job.properties`
+`python o2a.py -i examples/demo -o output/demo`
 
-This will parse and write to an output file (since no -o flag). The output
-file will be noted in the logs.
+This will parse and write to an output file in the `output/demo` directory.
 
-Note: The decision node is not fully functional as there is not currently
+**Note:** The decision node is not fully functional as there is not currently
 support for all EL functions. So in order for it to run in Airflow you must
-edit the python output file and change the decision node expression.
+edit the Python output file and change the decision node expression.
 
 
 ### SSH Example
 
 The ssh example can be run as:
 
-`python o2a.py -i examples/ssh/workflow.xml -p examples/ssh/job.properties -o output.py`
+`python o2a.py -i examples/ssh -o output/ssh`
 
 This will convert the specified Oozie XML and write the output into the
-specified output file, in this case `output.py`. There are some differences
-between Apache Oozie and Apache Airflow as far as the SSH specification goes.
-In Airflow you will have to add/edit an SSH specific Connection that contains
+specified output directory, in this case `output/ssh/ssh.py`.
+
+There are some differences between Apache Oozie and Apache Airflow as far as the SSH specification goes.
+In Airflow you will have to add/edit an SSH-specific connection that contains
 the credentials required for the specified SSH action. For example, if
 the SSH node looks like:
 ```xml
@@ -272,7 +294,7 @@ edit connections so you must add one like:
 
 `airflow connections --add --conn_id <SSH_CONN_ID> --conn_type SSH --conn_password <PASSWORD>`
 
-More information can be found on [Airflow's Website](https://airflow.apache.org/cli.html#connections)
+More information can be found in [Airflow's documentation](https://airflow.apache.org/cli.html#connections).
 
 ### MapReduce Example
 
@@ -280,25 +302,17 @@ The MapReduce example can be run as:
 
 `python o2a.py -i examples/mapreduce -o output/mapreduce`
 
-Make sure to first copy `/examples/mapreduce/configuration-template.properties`, rename it as
+Make sure to first copy `/examples/mapreduce/configuration.template.properties`, rename it as
 `configuration.properties` and fill in with configuration data.
 
-The output will appear by default in `/output/mapreduce/mapreduce.py`.
+##### Output
+In this example the output will appear in `/output/mapreduce/mapreduce.py`.
+
+The converted DAG uses the `DataProcHadoopOperator` in Airflow.
 
 #### Current limitations
 
-**1. Oozie workflow XSD version 0.5**
-
-For now the example uses older version of XSD and not the newest 1.0 version. That's because the
-system tests are run on a Dataproc cluster which installs Oozie version
-4.3.0 using an init-action, and this version only supports schema version 0.5.
-
-There are a few differences between 0.5 and 1.0, such as `<job-tracker>` in 0.5 vs
-`<resource-manager>` in 1.0.
-We will try to upgrade the Oozie version in Dataproc to 5.1.0 and subsequently update
-the example code.
-
-**2. Exit status not available**
+**1. Exit status not available**
 
 From the [Oozie documentation](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a3.2.2_Map-Reduce_Action):
 > The counters of the Hadoop job and job exit status (FAILED, KILLED or SUCCEEDED) must be available to the
@@ -307,7 +321,7 @@ actions configurations.
 
 Currently we use the `DataProcHadoopOperator` which does not store the job exit status in an XCOM for other tasks to use.
 
-**3. Configuration options**
+**2. Configuration options**
 
 From the [Oozie documentation](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a3.2.2_Map-Reduce_Action)
 (the strikethrough is from us):
@@ -321,28 +335,117 @@ From the [Oozie documentation](https://oozie.apache.org/docs/5.1.0/WorkflowFunct
 Currently the only supported way of configuring the map-reduce action is with the
 inline action configuration, i.e. using the `<configuration>` tag in the workflow's XML file definition.
 
-**4. Streaming and pipes**
+**3. Streaming and pipes**
 
 Streaming and pipes are currently not supported.
 
-### Spark Example
 
-The spark example, like the other examples can be run as:
+### Pig Example
 
-`python o2a.py -i examples/spark/workflow.xml -p examples/spark/job.properties -o output.py`
+The Pig example can be run as:
 
-This will write the XML file to `output.py`. The spark node, similarly
-to the SSH node requires editing of an Airflow Connection to specify the
-spark cluster is running. This can be found under **Admin >> Connections**
-or created from the command line (see above).
+`python o2a.py -i examples/pig -o output/pig`
+
+Make sure to first copy `/examples/pig/configuration.template.properties`, rename it as
+`configuration.properties` and fill in with configuration data.
+
+##### Output
+In this example the output will appear in `/output/pig/pig.py`.
+
+The converted DAG uses the `DataProcPigOperator` in Airflow.
+
+#### Current limitations
+
+**1. Configuration options**
+
+From the [Oozie documentation](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a3.2.3_Pig_Action)
+(the strikethrough is from us):
+> Hadoop JobConf properties can be specified as part of
+> - ~~the config-default.xml or~~
+> - ~~JobConf XML file bundled with the workflow application or~~
+> - ~~\<global> tag in workflow definition or~~
+> - Inline pig action configuration.
+
+Currently the only supported way of configuring the pig action is with the
+inline action configuration, i.e. using the `<configuration>` tag in the workflow's XML file definition.
+
+
+### Shell Example
+
+The Shell example can be run as:
+
+`python o2a.py -i examples/shell -o output/shell`
+
+Make sure to first copy `/examples/shell/configuration.template.properties`, rename it as
+`configuration.properties` and fill in with configuration data.
+
+##### Output
+In this example the output will appear in `/output/shell/shell.py`.
+
+The converted DAG uses the `BashOperator` in Airflow, which executes the desired shell
+action with Pig by invoking `gcloud dataproc jobs submit pig --cluster=<cluster> --region=<region>
+--execute 'sh <action> <args>'`.
+
+#### Current limitations
+
+**1. Exit status not available**
+
+From the [Oozie documentation](https://oozie.apache.org/docs/5.1.0/DG_ShellActionExtension.html):
+> The output (STDOUT) of the Shell job can be made available to the workflow job after the Shell job ends.
+This information could be used from within decision nodes.
+
+Currently we use the `BashOperator` which can store only the last line of the job output in an XCOM.
+In this case the line is not helpful as it relates to the Dataproc job submission status and
+not the Shell action's result.
+
+**2. No Shell launcher configuration**
+
+From the [Oozie documentation](https://oozie.apache.org/docs/5.1.0/DG_ShellActionExtension.html):
+> Shell launcher configuration can be specified with a file, using the job-xml element, and inline,
+using the configuration elements.
+
+Currently there is no way specify the shell launcher configuration (it is ignored).
+
+
+### Sub-workflow Example
+
+The Sub-workflow example can be run as:
+
+`python o2a.py -i examples/subwf -o output/subwf`
+
+Make sure to first copy `/examples/subwf/configuration.template.properties`, rename it as
+`configuration.properties` and fill in with configuration data.
+
+##### Output
+In this example the output will appear in `/output/subwf/subwf.py`.
+Additionally, a `subdag_test.py` (name to be changed soon) file is generated in the same directory,
+which contains the factory method `sub_dag()` returning the actual Airflow subdag.
+
+The converted DAG uses the `SubDagOperator` in Airflow.
+
+
+### Decision Example
+
+The decision example can be run as:
+
+`python o2a.py -i examples/decision -o output/decision`
+
+Make sure to first copy `/examples/decision/configuration.template.properties`, rename it as
+`configuration.properties` and fill in with configuration data.
+
+##### Output
+In this example the output will appear in `/output/decision/decision.py`.
+
+The converted DAG uses the `BranchPythonOperator` in Airflow.
+
 
 ### EL Example
 
 The Oozie Expression Language (EL) example can be run as:
-`python o2a.py -i examples/ssh/workflow.xml -p examples/el/job.properties -o output.py`
+`python o2a.py -i examples/el -o output/el`
 
 This will showcase the ability to use the `o2a_libs` directory to map EL functions
-to python methods. This example assumes that the user has a valid Apache Airflow
+to Python methods. This example assumes that the user has a valid Apache Airflow
 SSH connection set up and the `o2a_libs` directory has been copied to the dags
 folder.
 
