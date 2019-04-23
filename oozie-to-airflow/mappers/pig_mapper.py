@@ -21,7 +21,7 @@ from airflow.utils.trigger_rule import TriggerRule
 
 from converter.primitives import Relation
 from mappers.action_mapper import ActionMapper
-from mappers.file_archive_mappers import FileExtractor, ArchiveExtractor
+from mappers.file_archive_extractors import FileExtractor, ArchiveExtractor
 from mappers.prepare_mixin import PrepareMixin
 from utils import el_utils, xml_utils
 from utils.template_utils import render_template
