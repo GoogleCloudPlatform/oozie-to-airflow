@@ -12,5 +12,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-dataproc_cluster=CLUSTER-NAME
-gcp_region=europe-west3
+/*/configuration.properties

@@ -70,7 +70,7 @@ class SubworkflowMapper(ActionMapper):
         app_path = el_utils.replace_el_with_var(app_path, params=self.params, quote=False)
         # TODO: hacky: we should calculate it deriving from input_directory_path and comparing app-path
         # TODO: but for now we assume app is in "examples"
-        app_path = os.path.join(EXAMPLES_PATH, app_path.split("examples/")[1])
+        app_path = os.path.join(EXAMPLES_PATH, app_path.rsplit("/", 1)[1])
         logging.info(f"Converting subworkflow from {app_path}")
         self._parse_config()
         converter = OozieSubworkflowConverter(
@@ -80,6 +80,7 @@ class SubworkflowMapper(ActionMapper):
             action_mapper=self.action_mapper,
             control_mapper=self.control_mapper,
             dag_name=f"{self.dag_name}.{self.task_id}",
+            output_dag_name="subdag_test.py",  # TODO: do not use hard-coded name for subdaag
         )
         converter.convert()
 
@@ -111,5 +112,5 @@ class SubworkflowMapper(ActionMapper):
             "from airflow.utils import dates",
             "from airflow.contrib.operators import dataproc_operator",
             "from airflow.operators.subdag_operator import SubDagOperator",
-            "from subdag_test import sub_dag",
+            f"from subdag_test import sub_dag",
         }

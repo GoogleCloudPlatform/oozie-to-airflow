@@ -13,19 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests oozie parser"""
-import os
+from os import path
+import typing
 import unittest
 from unittest import mock
 from xml.etree import ElementTree as ET
 
+from parameterized import parameterized
+
 from converter import parser
 from converter import parsed_node
 from converter.mappers import ACTION_MAP, CONTROL_MAP
-from converter.relation import Relation
-from definitions import ROOT_DIR
-from mappers import dummy_mapper
+from converter.primitives import Relation
+from mappers import dummy_mapper, pig_mapper
 from mappers import ssh_mapper
-from tests.utils.test_paths import EXAMPLE_DEMO_PATH
+from tests.utils.test_paths import EXAMPLE_DEMO_PATH, EXAMPLES_PATH
 
 
 class TestOozieParser(unittest.TestCase):
@@ -39,7 +41,8 @@ class TestOozieParser(unittest.TestCase):
             control_mapper=CONTROL_MAP,
         )
 
-    def test_parse_kill_node(self):
+    @mock.patch("mappers.kill_mapper.KillMapper.on_parse_node", wraps=None)
+    def test_parse_kill_node(self, on_parse_node_mock):
         node_name = "kill_name"
         # language=XML
         kill_string = """
@@ -51,11 +54,14 @@ class TestOozieParser(unittest.TestCase):
         )
         self.parser.parse_kill_node(ET.fromstring(kill_string))
 
-        self.assertIn(node_name, self.parser.nodes)
-        for depend in self.parser.nodes[node_name].mapper.required_imports():
-            self.assertIn(depend, self.parser.dependencies)
+        self.assertIn(node_name, self.parser.workflow.nodes)
+        for depend in self.parser.workflow.nodes[node_name].mapper.required_imports():
+            self.assertIn(depend, self.parser.workflow.dependencies)
 
-    def test_parse_end_node(self):
+        on_parse_node_mock.assert_called_once_with()
+
+    @mock.patch("mappers.end_mapper.EndMapper.on_parse_node", wraps=None)
+    def test_parse_end_node(self, on_parse_node_mock):
         node_name = "end_name"
         # language=XML
         end_node_str = "<end name='{node_name}'/>".format(node_name=node_name)
@@ -63,12 +69,15 @@ class TestOozieParser(unittest.TestCase):
         end = ET.fromstring(end_node_str)
         self.parser.parse_end_node(end)
 
-        self.assertIn(node_name, self.parser.nodes)
-        for depend in self.parser.nodes[node_name].mapper.required_imports():
-            self.assertIn(depend, self.parser.dependencies)
+        self.assertIn(node_name, self.parser.workflow.nodes)
+        for depend in self.parser.workflow.nodes[node_name].mapper.required_imports():
+            self.assertIn(depend, self.parser.workflow.dependencies)
 
+        on_parse_node_mock.assert_called_once_with()
+
+    @mock.patch("mappers.dummy_mapper.DummyMapper.on_parse_node", wraps=None)
     @mock.patch("converter.parser.OozieParser.parse_node")
-    def test_parse_fork_node(self, parse_node_mock):
+    def test_parse_fork_node(self, parse_node_mock, on_parse_node_mock):
         node_name = "fork_name"
         # language=XML
         root_string = """
@@ -89,16 +98,19 @@ class TestOozieParser(unittest.TestCase):
         fork = root.find("fork")
         node1, node2 = root.findall("action")[0:2]
         self.parser.parse_fork_node(root, fork)
-        node = self.parser.nodes[node_name]
+        node = self.parser.workflow.nodes[node_name]
         self.assertIn("task1", node.get_downstreams())
         self.assertIn("task2", node.get_downstreams())
-        self.assertIn(node_name, self.parser.nodes)
+        self.assertIn(node_name, self.parser.workflow.nodes)
         parse_node_mock.assert_any_call(root, node1)
         parse_node_mock.assert_any_call(root, node2)
         for depend in node.mapper.required_imports():
-            self.assertIn(depend, self.parser.dependencies)
+            self.assertIn(depend, self.parser.workflow.dependencies)
 
-    def test_parse_join_node(self):
+        on_parse_node_mock.assert_called_once_with()
+
+    @mock.patch("mappers.dummy_mapper.DummyMapper.on_parse_node", wraps=None)
+    def test_parse_join_node(self, on_parse_node_mock):
         node_name = "join_name"
         end_name = "end_name"
         # language=XML
@@ -108,13 +120,16 @@ class TestOozieParser(unittest.TestCase):
         join = ET.fromstring(join_str)
         self.parser.parse_join_node(join)
 
-        node = self.parser.nodes[node_name]
-        self.assertIn(node_name, self.parser.nodes)
+        node = self.parser.workflow.nodes[node_name]
+        self.assertIn(node_name, self.parser.workflow.nodes)
         self.assertIn(end_name, node.get_downstreams())
         for depend in node.mapper.required_imports():
-            self.assertIn(depend, self.parser.dependencies)
+            self.assertIn(depend, self.parser.workflow.dependencies)
 
-    def test_parse_decision_node(self):
+        on_parse_node_mock.assert_called_once_with()
+
+    @mock.patch("mappers.decision_mapper.DecisionMapper.on_parse_node", wraps=None)
+    def test_parse_decision_node(self, on_parse_node_mock):
         node_name = "decision_node"
         # language=XML
         decision_str = """
@@ -131,16 +146,19 @@ class TestOozieParser(unittest.TestCase):
         decision = ET.fromstring(decision_str)
         self.parser.parse_decision_node(decision)
 
-        p_op = self.parser.nodes[node_name]
-        self.assertIn(node_name, self.parser.nodes)
+        p_op = self.parser.workflow.nodes[node_name]
+        self.assertIn(node_name, self.parser.workflow.nodes)
         self.assertIn("down1", p_op.get_downstreams())
         self.assertIn("down2", p_op.get_downstreams())
         self.assertIn("end1", p_op.get_downstreams())
         for depend in p_op.mapper.required_imports():
-            self.assertIn(depend, self.parser.dependencies)
+            self.assertIn(depend, self.parser.workflow.dependencies)
 
+        on_parse_node_mock.assert_called_once_with()
+
+    @mock.patch("mappers.start_mapper.StartMapper.on_parse_node", wraps=None)
     @mock.patch("uuid.uuid4")
-    def test_parse_start_node(self, uuid_mock):
+    def test_parse_start_node(self, uuid_mock, on_parse_node_mock):
         uuid_mock.return_value = "1234"
         node_name = "start_node_1234"
         end_name = "end_name"
@@ -149,13 +167,16 @@ class TestOozieParser(unittest.TestCase):
         start = ET.fromstring(start_node_str)
         self.parser.parse_start_node(start)
 
-        p_op = self.parser.nodes[node_name]
-        self.assertIn(node_name, self.parser.nodes)
+        p_op = self.parser.workflow.nodes[node_name]
+        self.assertIn(node_name, self.parser.workflow.nodes)
         self.assertIn(end_name, p_op.get_downstreams())
         for depend in p_op.mapper.required_imports():
-            self.assertIn(depend, self.parser.dependencies)
+            self.assertIn(depend, self.parser.workflow.dependencies)
 
-    def test_parse_action_node_ssh(self):
+        on_parse_node_mock.assert_called_once_with()
+
+    @mock.patch("mappers.ssh_mapper.SSHMapper.on_parse_node", wraps=None)
+    def test_parse_action_node_ssh(self, on_parse_node_mock):
         self.parser.action_map = {"ssh": ssh_mapper.SSHMapper}
         node_name = "action_name"
         # language=XML
@@ -177,14 +198,48 @@ class TestOozieParser(unittest.TestCase):
         action_node = ET.fromstring(action_string)
         self.parser.parse_action_node(action_node)
 
-        p_op = self.parser.nodes[node_name]
-        self.assertIn(node_name, self.parser.nodes)
+        p_op = self.parser.workflow.nodes[node_name]
+        self.assertIn(node_name, self.parser.workflow.nodes)
         self.assertIn("end1", p_op.get_downstreams())
         self.assertEqual("fail1", p_op.get_error_downstream_name())
         for depend in p_op.mapper.required_imports():
-            self.assertIn(depend, self.parser.dependencies)
+            self.assertIn(depend, self.parser.workflow.dependencies)
+        on_parse_node_mock.assert_called_once_with()
 
-    def test_parse_action_node_unknown(self):
+    def test_parse_action_node_pig_with_file_and_archive(self):
+        self.parser.action_map = {"pig": pig_mapper.PigMapper}
+        node_name = "pig-node"
+        self.parser.params = {"nameNode": "myNameNode"}
+        # language=XML
+        action_string = """
+<action name='{node_name}'>
+    <pig>
+        <resource-manager>myResManager</resource-manager>
+        <name-node>myNameNode</name-node>
+        <script>id.pig</script>
+        <file>/test_dir/test.txt#test_link.txt</file>
+        <archive>/test_dir/test2.zip#test_zip_dir</archive>
+    </pig>
+    <ok to='end1'/>
+    <error to='fail1'/>
+</action>
+""".format(
+            node_name=node_name
+        )
+        action_node = ET.fromstring(action_string)
+        self.parser.parse_action_node(action_node)
+
+        p_op = self.parser.workflow.nodes[node_name]
+        self.assertIn(node_name, self.parser.workflow.nodes)
+        self.assertIn("end1", p_op.get_downstreams())
+        self.assertEqual("fail1", p_op.get_error_downstream_name())
+        for depend in p_op.mapper.required_imports():
+            self.assertIn(depend, self.parser.workflow.dependencies)
+        self.assertEqual("myNameNode/test_dir/test.txt#test_link.txt", p_op.mapper.hdfs_files)
+        self.assertEqual("myNameNode/test_dir/test2.zip#test_zip_dir", p_op.mapper.hdfs_archives)
+
+    @mock.patch("mappers.dummy_mapper.DummyMapper.on_parse_node", wraps=None)
+    def test_parse_action_node_unknown(self, on_parse_node_mock):
         self.parser.action_map = {"unknown": dummy_mapper.DummyMapper}
         node_name = "action_name"
         # language=XML
@@ -205,12 +260,14 @@ class TestOozieParser(unittest.TestCase):
         action = ET.fromstring(action_str)
         self.parser.parse_action_node(action)
 
-        p_op = self.parser.nodes[node_name]
-        self.assertIn(node_name, self.parser.nodes)
+        p_op = self.parser.workflow.nodes[node_name]
+        self.assertIn(node_name, self.parser.workflow.nodes)
         self.assertIn("end1", p_op.get_downstreams())
         self.assertEqual("fail1", p_op.get_error_downstream_name())
         for depend in p_op.mapper.required_imports():
-            self.assertIn(depend, self.parser.dependencies)
+            self.assertIn(depend, self.parser.workflow.dependencies)
+
+        on_parse_node_mock.assert_called_once_with()
 
     @mock.patch("converter.parser.OozieParser.parse_action_node")
     def test_parse_node_action(self, action_mock):
@@ -283,11 +340,11 @@ class TestOozieParser(unittest.TestCase):
         end = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=oozie_node, name="end1"))
         fail = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=oozie_node, name="fail1"))
         op_dict = {"task1": op1, "task2": op2, "task3": op3, "task4": op4, "end1": end, "fail1": fail}
-        self.parser.nodes.update(op_dict)
+        self.parser.workflow.nodes.update(op_dict)
         self.parser.create_relations()
 
         self.assertEqual(
-            self.parser.relations,
+            self.parser.workflow.relations,
             {
                 Relation(from_task_id="task1", to_task_id="fail1"),
                 Relation(from_task_id="task1", to_task_id="task2"),
@@ -319,7 +376,7 @@ class TestOozieParser(unittest.TestCase):
         fail = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=oozie_node, name="fail1"))
         op_dict = {"task1": op1, "task2": op2, "task3": op3, "end1": end, "fail1": fail}
 
-        self.parser.nodes.update(op_dict)
+        self.parser.workflow.nodes.update(op_dict)
         self.parser.create_relations()
         self.parser.update_trigger_rules()
 
@@ -334,12 +391,103 @@ class TestOozieParser(unittest.TestCase):
         self.assertFalse(fail.is_ok)
         self.assertTrue(fail.is_error)
 
-    def test_parse_workflow(self):
-        filename = os.path.join(ROOT_DIR, "examples/demo/workflow.xml")
-        self.parser.workflow = filename
-        self.parser.parse_workflow()
-        # Checking if names were changed to the Python syntax
-        self.assertIn("cleanup_node", self.parser.nodes)
-        self.assertIn("fork_node", self.parser.nodes)
-        self.assertIn("pig_node", self.parser.nodes)
-        self.assertIn("fail", self.parser.nodes)
+
+class WorkflowTestCase(typing.NamedTuple):
+    name: str
+    node_names: typing.Set[str]
+    relations: typing.Set[Relation]
+    params: typing.Dict[str, str]
+
+
+class TestOozieExamples(unittest.TestCase):
+    @parameterized.expand(
+        [
+            (
+                WorkflowTestCase(
+                    name="decision",
+                    node_names={"fake_end", "fail", "decision_node"},
+                    relations={
+                        Relation(from_task_id="decision_node", to_task_id="fail"),
+                        Relation(from_task_id="decision_node", to_task_id="fake_end"),
+                    },
+                    params={"nameNode": "hdfs://"},
+                ),
+            ),
+            (
+                WorkflowTestCase(
+                    name="demo",
+                    node_names={
+                        "cleanup_node",
+                        "decision_node",
+                        "fork_node",
+                        "hdfs_node",
+                        "join_node",
+                        "mr_node",
+                        "pig_node",
+                        "streaming_node",
+                    },
+                    relations={
+                        Relation(from_task_id="cleanup_node", to_task_id="fork_node"),
+                        Relation(from_task_id="decision_node", to_task_id="hdfs_node"),
+                        Relation(from_task_id="fork_node", to_task_id="pig_node_prepare"),
+                        Relation(from_task_id="fork_node", to_task_id="streaming_node"),
+                        Relation(from_task_id="join_node", to_task_id="mr_node"),
+                        Relation(from_task_id="mr_node", to_task_id="decision_node"),
+                        Relation(from_task_id="pig_node", to_task_id="join_node"),
+                        Relation(from_task_id="streaming_node", to_task_id="join_node"),
+                    },
+                    params={"nameNode": "hdfs://"},
+                ),
+            ),
+            (
+                WorkflowTestCase(
+                    name="el",
+                    node_names={"ssh"},
+                    relations=set(),
+                    params={"hostname": "AAAA@BBB", "nameNode": "hdfs://"},
+                ),
+            ),
+            (
+                WorkflowTestCase(
+                    name="pig",
+                    node_names={"pig_node"},
+                    relations=set(),
+                    params={"oozie.wf.application.path": "hdfs://", "nameNode": "hdfs://"},
+                ),
+            ),
+            (
+                WorkflowTestCase(
+                    name="shell", node_names={"shell_node"}, relations=set(), params={"nameNode": "hdfs://"}
+                ),
+            ),
+            (
+                WorkflowTestCase(
+                    name="spark", node_names={"spark_node"}, relations=set(), params={"nameNode": "hdfs://"}
+                ),
+            ),
+            (
+                WorkflowTestCase(
+                    name="ssh",
+                    node_names={"ssh"},
+                    relations=set(),
+                    params={"hostname": "AAAA@BBB", "nameNode": "hdfs://"},
+                ),
+            ),
+            (WorkflowTestCase(name="subwf", node_names={"subworkflow_node"}, relations=set(), params={}),),
+        ],
+        name_func=lambda func, num, p: f"{func.__name__}_{num}_{p.args[0].name}",
+    )
+    @mock.patch("mappers.base_mapper.BaseMapper.on_parse_finish", wraps=None)
+    @mock.patch("uuid.uuid4", return_value="1234")
+    def test_parse_workflow_examples(self, case: WorkflowTestCase, _, on_parse_finish_mock):
+        current_parser = parser.OozieParser(
+            input_directory_path=path.join(EXAMPLES_PATH, case.name),
+            output_directory_path="/tmp",
+            params=case.params,
+            action_mapper=ACTION_MAP,
+            control_mapper=CONTROL_MAP,
+        )
+        current_parser.parse_workflow()
+        self.assertEqual(case.node_names, set(current_parser.workflow.nodes.keys()))
+        self.assertEqual(case.relations, current_parser.workflow.relations)
+        on_parse_finish_mock.assert_called()

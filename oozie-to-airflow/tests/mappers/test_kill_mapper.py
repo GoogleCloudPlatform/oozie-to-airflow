@@ -15,10 +15,14 @@
 """Tests Kill Mapper"""
 import ast
 import unittest
+from unittest import mock
 from xml.etree.ElementTree import Element
 from airflow.utils.trigger_rule import TriggerRule
 
+from converter.parsed_node import ParsedNode
+from converter.primitives import Workflow, Relation
 from mappers import kill_mapper
+from mappers.base_mapper import BaseMapper
 
 
 class TestKillMapper(unittest.TestCase):
@@ -45,3 +49,21 @@ class TestKillMapper(unittest.TestCase):
         imps = kill_mapper.KillMapper.required_imports()
         imp_str = "\n".join(imps)
         ast.parse(imp_str)
+
+    def test_on_parse_finish(self):
+        workflow = Workflow(input_directory_path=None, output_directory_path=None, dag_name=None)
+        workflow.relations = {
+            Relation(from_task_id="task", to_task_id="fail_task"),
+            Relation(from_task_id="task", to_task_id="success_task"),
+        }
+        workflow.nodes["task"] = ParsedNode(mock.Mock(autospec=BaseMapper))
+        workflow.nodes["fail_task"] = ParsedNode(mock.Mock(autospec=BaseMapper))
+        workflow.nodes["success_task"] = ParsedNode(mock.Mock(autospec=BaseMapper))
+        workflow.nodes["success_task"].set_is_ok(True)
+        workflow.nodes["fail_task"].set_is_error(True)
+        mapper = kill_mapper.KillMapper(
+            oozie_node=self.oozie_node, name="fail_task", trigger_rule=TriggerRule.DUMMY
+        )
+        mapper.on_parse_finish(workflow)
+        self.assertEqual(list(workflow.nodes.keys()), ["task", "success_task"])
+        self.assertEqual(workflow.relations, {Relation(from_task_id="task", to_task_id="success_task")})

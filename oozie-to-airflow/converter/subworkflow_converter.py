@@ -19,7 +19,7 @@ from typing import TextIO, Dict, Type, Set
 
 from converter.oozie_converter import OozieConverter, INDENT
 from converter.parsed_node import ParsedNode
-from converter.relation import Relation
+from converter.primitives import Relation
 from mappers.action_mapper import ActionMapper
 from mappers.base_mapper import BaseMapper
 
@@ -38,6 +38,7 @@ class OozieSubworkflowConverter(OozieConverter):
         user: str = None,
         start_days_ago: int = None,
         schedule_interval: str = None,
+        output_dag_name: str = None,
     ):
         OozieConverter.__init__(
             self,
@@ -49,6 +50,7 @@ class OozieSubworkflowConverter(OozieConverter):
             user=user,
             start_days_ago=start_days_ago,
             schedule_interval=schedule_interval,
+            output_dag_name=output_dag_name,
         )
 
     def write_dag(

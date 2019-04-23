@@ -48,10 +48,10 @@ class BaseMapper:
     @staticmethod
     def required_imports() -> Set[str]:
         """
-        Returns a list of strings that are the import statement that python will
+        Returns a set of strings that are the import statement that python will
         write to use.
 
-        Ex: returns ['from airflow.operators import bash_operator']
+        Ex: returns {'from airflow.operators import bash_operator']}
         """
         raise NotImplementedError("Not Implemented")
 
@@ -68,6 +68,18 @@ class BaseMapper:
         Returns task_id of last task in mapper
         """
         return self.name
+
+    def on_parse_node(self):
+        """
+        Called when processing a node.
+        """
+
+    def on_parse_finish(self, workflow):
+        """
+        Called when processing of all nodes is finished.
+
+        This is a good time to copy additional files, or to perform additional operations on the workflow.
+        """
 
     # pylint: disable=unused-argument,no-self-use
     def copy_extra_assets(self, input_directory_path: str, output_directory_path: str) -> None:

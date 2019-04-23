@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,6 +12,23 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+"""Maps Oozie end node to Airflow's DAG"""
+from typing import Set
+
+from mappers.base_mapper import BaseMapper
 
 
-/configuration.properties
+class EndMapper(BaseMapper):
+    @staticmethod
+    def required_imports() -> Set[str]:
+        return set()
+
+    def convert_to_text(self) -> str:
+        return ""
+
+    def on_parse_finish(self, workflow):
+        super().on_parse_finish(self)
+        del workflow.nodes[self.name]
+        workflow.relations -= {
+            relation for relation in workflow.relations if relation.to_task_id == self.name
+        }

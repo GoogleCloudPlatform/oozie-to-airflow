@@ -1,12 +1,13 @@
-apache-airflow==1.10.3
+apache-airflow==1.10.1 # pyup: ignore
 black==19.3b0
 flake8==3.7.7
 google-api-python-client==1.7.8
+j2cli==0.3.7
 Jinja2==2.10.1
-mypy==0.700
+mypy==0.701
 parameterized==0.7.0
 paramiko==2.4.2
-pre-commit==1.15.1
+pre-commit==1.15.2
 pylint==2.3.1
 pytest-cov==2.6.1
 safety==1.8.5
