@@ -32,5 +32,3 @@ hdfs dfs -put examples "/user/$(whoami)/"
 
 # run the MR task
 oozie job -config examples/apps/map-reduce/job.properties -run
-
-

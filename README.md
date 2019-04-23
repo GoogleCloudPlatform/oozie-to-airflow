@@ -42,7 +42,7 @@ You can check all commands of pre-commit framework at https://pre-commit.com/
 
 # Running Oozie 5.1.0 in Dataproc
 
-We prepared Dataproc [initialization action](https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/init-actions) 
+We prepared Dataproc [initialization action](https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/init-actions)
 that allows to run Oozie 5.1.0 on Dataproc.
 
 Please upload `dataproc/oozie-5.1.sh` to your GCS bucket and create cluster using following command:
