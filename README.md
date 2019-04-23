@@ -61,7 +61,7 @@ and Dataproc 1.3
 Once cluster is created, steps from `dataproc/example-map-reduce.job.sh` can be run on master node to execute
 Oozie's example Map-Reduce job.
 
-Oozie is serving web UI on port 11000. To enable it follow [official instructions](https://cloud.google.com/dataproc/docs/concepts/accessing/cluster-web-interfaces)
-on how to connect to the cluster.
+Oozie is serving web UI on port 11000. To enable access to it please follow [official instructions](https://cloud.google.com/dataproc/docs/concepts/accessing/cluster-web-interfaces)
+on how to connect to the cluster web interfaces.
 
-List of jobs with their statuses can be also shown by `oozie jobs` command.
+List of jobs with their statuses can be also shown by issuing `oozie jobs` command on master node.
