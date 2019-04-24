@@ -160,7 +160,7 @@ def parse_els(properties_file: Optional[str], prop_dict: Dict[str, str] = None):
                     else:
                         _convert_line(line, prop_dict)
         else:
-            logging.warning(f"The job.properties file is missing: {properties_file}")
+            logging.warning(f"The properties file is missing: {properties_file}")
     return prop_dict
 
 
