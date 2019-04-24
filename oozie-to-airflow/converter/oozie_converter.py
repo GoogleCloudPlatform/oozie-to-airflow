@@ -32,6 +32,7 @@ from converter.primitives import Relation
 from mappers.action_mapper import ActionMapper
 from mappers.base_mapper import BaseMapper
 from utils import el_utils
+from utils.constants import CONFIGURATION_PROPERTIES, JOB_PROPERTIES
 from utils.el_utils import comma_separated_string_to_list
 from utils.template_utils import render_template
 
@@ -70,8 +71,8 @@ class OozieConverter:
         self.start_days_ago = start_days_ago
         self.schedule_interval = schedule_interval
         self.dag_name = dag_name
-        self.configuration_properties_file = os.path.join(input_directory_path, "configuration.properties")
-        self.job_properties_file = os.path.join(input_directory_path, "job.properties")
+        self.configuration_properties_file = os.path.join(input_directory_path, CONFIGURATION_PROPERTIES)
+        self.job_properties_file = os.path.join(input_directory_path, JOB_PROPERTIES)
         self.output_dag_name = (
             os.path.join(output_directory_path, output_dag_name)
             if output_dag_name

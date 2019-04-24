@@ -16,9 +16,11 @@
 import argparse
 import os
 import sys
+import logging
 
 from converter.oozie_converter import OozieConverter
 from converter.mappers import ACTION_MAP, CONTROL_MAP
+from utils.constants import CONFIGURATION_PROPERTIES
 
 INDENT = 4
 
@@ -35,6 +37,23 @@ def main():
 
     if not dag_name:
         dag_name = os.path.basename(input_directory_path)
+
+    conf_path = os.path.join(input_directory_path, CONFIGURATION_PROPERTIES)
+    if not os.path.isfile(conf_path):
+        logging.warning(
+            f"""
+
+#################################### WARNING ###########################################
+
+The '{CONFIGURATION_PROPERTIES}' file was not detected in {input_directory_path}.
+It may be necessary to provide input parameters for the workflow.
+
+In case of any conversion errors make sure this configuration file is really not needed.
+Otherwise please provide it.
+
+########################################################################################
+        """
+        )
 
     os.makedirs(output_directory_path, exist_ok=True)
 
