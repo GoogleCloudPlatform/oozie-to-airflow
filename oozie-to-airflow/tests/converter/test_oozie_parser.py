@@ -468,6 +468,14 @@ class TestOozieExamples(unittest.TestCase):
             ),
             (
                 WorkflowTestCase(
+                    name="mapreduce",
+                    node_names={"mr_node"},
+                    relations=set(),
+                    params={"nameNode": "hdfs://localhost:8020/"},
+                ),
+            ),
+            (
+                WorkflowTestCase(
                     name="pig",
                     node_names={"pig_node"},
                     relations=set(),
