@@ -14,11 +14,12 @@
 # limitations under the License.
 """Class for Airflow relation"""
 from collections import OrderedDict
-from typing import Set, Optional, Dict, NamedTuple
+from typing import Set, Optional, Dict, NamedTuple, Any
 
 # Pylint and flake8 does not understand forward references
 # https://www.python.org/dev/peps/pep-0484/#forward-references
 from converter import parsed_node  # noqa: F401 pylint: disable=unused-import
+from utils.template_utils import render_template
 
 
 class Relation(NamedTuple):
@@ -55,6 +56,7 @@ class Workflow:  # pylint: disable=too-few-public-methods
             "from airflow.utils.trigger_rule import TriggerRule",
             "from o2a_libs.el_basic_functions import * ",
             "from o2a_libs.el_wf_functions import * ",
+            "from airflow.utils import dates",
         }
 
     def __repr__(self) -> str:
@@ -62,4 +64,26 @@ class Workflow:  # pylint: disable=too-few-public-methods
             f"Workflow(dag_name={self.dag_name}, input_directory_path={self.input_directory_path}, "
             f"output_directory_path={self.output_directory_path}, relations={self.relations}, "
             f"nodes={self.nodes.keys()}, dependencies={self.dependencies})"
+        )
+
+
+# This is a container for data, so it does not contain public methods intentionally.
+class Task:  # pylint: disable=too-few-public-methods
+    task_id: str
+    template_name: str
+    template_params: Dict[str, Any]
+
+    def __init__(self, task_id, template_name, template_params=None):
+        self.task_id = task_id
+        self.template_name = template_name
+        self.template_params = template_params or {}
+
+    @property
+    def rendered_template(self):
+        return render_template(template_name=self.template_name, **self.template_params)
+
+    def __repr__(self) -> str:
+        return (
+            f"Task(task_id={self.task_id}, template_name={self.template_name}, "
+            f"template_params={self.template_params})"
         )

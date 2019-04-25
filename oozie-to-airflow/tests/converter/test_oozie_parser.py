@@ -449,6 +449,21 @@ class TestOozieExamples(unittest.TestCase):
             ),
             (
                 WorkflowTestCase(
+                    name="fs",
+                    node_names={"chmod", "mkdir", "fs_node", "delete", "move", "touchz", "chgrp"},
+                    relations={
+                        Relation(from_task_id="fs_node", to_task_id="chgrp_fs_0_mkdir"),
+                        Relation(from_task_id="fs_node", to_task_id="delete_fs_0_mkdir"),
+                        Relation(from_task_id="fs_node", to_task_id="chmod_fs_0_mkdir"),
+                        Relation(from_task_id="fs_node", to_task_id="touchz"),
+                        Relation(from_task_id="fs_node", to_task_id="mkdir"),
+                        Relation(from_task_id="fs_node", to_task_id="move_fs_0_mkdir"),
+                    },
+                    params={"hostname": "AAAA@BBB", "nameNode": "hdfs://localhost:8020/"},
+                ),
+            ),
+            (
+                WorkflowTestCase(
                     name="pig",
                     node_names={"pig_node"},
                     relations=set(),

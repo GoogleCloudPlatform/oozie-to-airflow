@@ -16,7 +16,8 @@
 from typing import Dict, List, Tuple
 import xml.etree.ElementTree as ET
 
-from utils import xml_utils, el_utils
+from utils import xml_utils
+from utils.el_utils import normalize_path
 
 
 class PrepareMixin:
@@ -55,10 +56,7 @@ class PrepareMixin:
             # If there exists a prepare node, there will only be one, according
             # to oozie xml schema
             for node in prepare_nodes[0]:
-                node_path = el_utils.replace_el_with_var(node.attrib["path"], params=params, quote=False)
-                if "//" in node_path:
-                    node_path = node_path.split("//", maxsplit=1)[1]  # Removing the hdfs:// or similar part
-                node_path = "/" + node_path.split("/", maxsplit=1)[1]  # Removing the 'localhost:8082/' part
+                node_path = normalize_path(node.attrib["path"], params=params)
                 if node.tag == "delete":
                     delete_paths.append(node_path)
                 else:

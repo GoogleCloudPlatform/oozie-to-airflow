@@ -17,7 +17,9 @@ import logging
 import os
 import re
 from typing import Dict, List, Optional, Union
+from urllib.parse import urlparse, ParseResult
 
+from converter.exceptions import ParseException
 from o2a_libs import el_basic_functions
 
 FN_MATCH = re.compile(r"\${\s?(\w+)\(([\w\s,\'\"\-]*)\)\s?\}")
@@ -178,3 +180,15 @@ def comma_separated_string_to_list(line: str) -> Union[List[str], str]:
     """
     values = line.split(",")
     return values[0] if len(values) <= 1 else values
+
+
+def normalize_path(url, params, allow_no_schema=False):
+    url_with_var = replace_el_with_var(url, params=params, quote=False)
+    url_parts: ParseResult = urlparse(url_with_var)
+    allowed_schema = {"hdfs", ""} if allow_no_schema else {"hdfs"}
+    if url_parts.scheme not in allowed_schema:
+        raise ParseException(
+            f"Unknown path format. The URL should be provided in the following format: "
+            f"hdfs://localhost:9200/path. Current value: {url_with_var}"
+        )
+    return url_parts.path

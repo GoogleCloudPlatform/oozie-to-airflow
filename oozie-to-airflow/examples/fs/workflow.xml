@@ -1,0 +1,85 @@
+<!--
+  Copyright 2019 Google LLC
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+ -->
+
+<workflow-app xmlns="uri:oozie:workflow:1.0" name="fs-wf">
+    <start to="fs-node"/>
+    <fork name="fs-node">
+        <path start="mkdir"/>
+        <path start="delete"/>
+        <path start="move"/>
+        <path start="chmod"/>
+        <path start="touchz"/>
+        <path start="chgrp"/>
+    </fork>
+    <action name="mkdir">
+        <fs>
+            <mkdir path='${nameNode}/user/fs/examples/test-mkdir-1'/>
+        </fs>
+        <ok to="end"/>
+        <error to="fail"/>
+    </action>
+    <action name="delete">
+        <fs>
+            <mkdir path='${nameNode}/user/fs/examples/test-delete-1'/>
+            <delete path='${nameNode}/user/fs/examples/test-delete-1'/>
+        </fs>
+        <ok to="end"/>
+        <error to="fail"/>
+    </action>
+    <action name="move">
+        <fs>
+            <mkdir path='${nameNode}/user/fs/examples/test-move-1'/>
+            <move source='${nameNode}/user/fs/examples/test-move-1' target='/user/fs/examples/test-move-2' />
+        </fs>
+        <ok to="end"/>
+        <error to="fail"/>
+    </action>
+    <action name="chmod">
+        <fs>
+            <mkdir path='${nameNode}/user/fs/examples/test-chmod-1'/>
+            <mkdir path='${nameNode}/user/fs/examples/test-chmod-2'/>
+            <mkdir path='${nameNode}/user/fs/examples/test-chmod-3'/>
+            <mkdir path='${nameNode}/user/fs/examples/test-chmod-4'/>
+            <chmod path='${nameNode}/user/fs/examples/test-chmod-1' permissions='777' dir-files='false' />
+            <chmod path='${nameNode}/user/fs/examples/test-chmod-2' permissions='777' dir-files='true' />
+            <chmod path='${nameNode}/user/fs/examples/test-chmod-3' permissions='777' />
+            <chmod path='${nameNode}/user/fs/examples/test-chmod-4' permissions='777' dir-files='false' >
+                <recursive/>
+            </chmod>
+        </fs>
+        <ok to="end"/>
+        <error to="fail"/>
+    </action>
+    <action name="touchz">
+        <fs>
+            <touchz path='${nameNode}/user/fs/examples/test-touchz-1' />
+        </fs>
+        <ok to="end"/>
+        <error to="fail"/>
+    </action>
+    <action name="chgrp">
+        <fs>
+            <mkdir path='${nameNode}/user/fs/examples/test-chgrp-1'/>
+            <chgrp path='${nameNode}/user/fs/examples/test-chgrp-1' group='hadoop' />
+        </fs>
+        <ok to="end"/>
+        <error to="fail"/>
+    </action>
+    <kill name="fail">
+        <message>Fs workflow failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
+    </kill>
+    <end name="end"/>
+</workflow-app>

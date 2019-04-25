@@ -15,9 +15,15 @@
 """Tests EL utils"""
 import unittest
 import unittest.mock
+
+from parameterized import parameterized
+
+from converter.exceptions import ParseException
 from utils import el_utils
+from utils.el_utils import normalize_path
 
 
+# pylint: disable=too-many-public-methods
 class TestELUtils(unittest.TestCase):
     def test_strip_el(self):
         exp_func = 'concat("abc", "def")'
@@ -152,3 +158,56 @@ class TestELUtils(unittest.TestCase):
         params = {"test": "answer"}
         expected = {"test": "answer", "key": "value,value2"}
         self.assertEqual(expected, el_utils.parse_els(prop_file.name, params))
+
+    @parameterized.expand(
+        [
+            ("${nameNode}/examples/output-data/demo/pig-node", "/examples/output-data/demo/pig-node"),
+            ("${nameNode}/examples/output-data/demo/pig-node2", "/examples/output-data/demo/pig-node2"),
+            ("hdfs:///examples/output-data/demo/pig-node2", "/examples/output-data/demo/pig-node2"),
+        ]
+    )
+    def test_normalize_path_green_path(self, oozie_path, expected_result):
+        cluster = "my-cluster"
+        region = "europe-west3"
+        params = {"nameNode": "hdfs://localhost:8020", "dataproc_cluster": cluster, "gcp_region": region}
+        result = normalize_path(oozie_path, params)
+        self.assertEqual(expected_result, result)
+
+    @parameterized.expand(
+        [
+            ("${nameNode}/examples/output-data/demo/pig-node", "/examples/output-data/demo/pig-node"),
+            ("${nameNode}/examples/output-data/demo/pig-node2", "/examples/output-data/demo/pig-node2"),
+            ("hdfs:///examples/output-data/demo/pig-node2", "/examples/output-data/demo/pig-node2"),
+            ("/examples/output-data/demo/pig-node", "/examples/output-data/demo/pig-node"),
+        ]
+    )
+    def test_normalize_path_with_allow_no_schema(self, oozie_path, expected_result):
+        cluster = "my-cluster"
+        region = "europe-west3"
+        params = {"nameNode": "hdfs://localhost:8020", "dataproc_cluster": cluster, "gcp_region": region}
+        result = normalize_path(oozie_path, params, allow_no_schema=True)
+        self.assertEqual(expected_result, result)
+
+    @parameterized.expand(
+        [
+            ("${nameNodeAAA}/examples/output-data/demo/pig-node",),
+            ("/examples/output-data/demo/pig-node",),
+            ("http:///examples/output-data/demo/pig-node2",),
+        ]
+    )
+    def test_normalize_path_red_path(self, oozie_path):
+        cluster = "my-cluster"
+        region = "europe-west3"
+        params = {"nameNode": "hdfs://localhost:8020", "dataproc_cluster": cluster, "gcp_region": region}
+        with self.assertRaisesRegex(ParseException, "Unknown path format. "):
+            normalize_path(oozie_path, params)
+
+    @parameterized.expand(
+        [("http:///examples/output-data/demo/pig-node2",), ("ftp:///examples/output-data/demo/pig-node2",)]
+    )
+    def test_normalize_path_red_path_allowed_no_schema(self, oozie_path):
+        cluster = "my-cluster"
+        region = "europe-west3"
+        params = {"nameNode": "hdfs://localhost:8020", "dataproc_cluster": cluster, "gcp_region": region}
+        with self.assertRaisesRegex(ParseException, "Unknown path format. "):
+            normalize_path(oozie_path, params, allow_no_schema=True)
