@@ -405,8 +405,9 @@ class TestOozieExamples(unittest.TestCase):
             (
                 WorkflowTestCase(
                     name="decision",
-                    node_names={"fake_end", "fail", "decision_node"},
+                    node_names={"real_end", "fake_end", "fail", "decision_node"},
                     relations={
+                        Relation(from_task_id="decision_node", to_task_id="real_end"),
                         Relation(from_task_id="decision_node", to_task_id="fail"),
                         Relation(from_task_id="decision_node", to_task_id="fake_end"),
                     },
@@ -425,9 +426,12 @@ class TestOozieExamples(unittest.TestCase):
                         "mr_node",
                         "pig_node",
                         "streaming_node",
+                        "end",
                     },
                     relations={
                         Relation(from_task_id="cleanup_node", to_task_id="fork_node"),
+                        Relation(from_task_id="decision_node", to_task_id="end"),
+                        Relation(from_task_id="hdfs_node", to_task_id="end"),
                         Relation(from_task_id="decision_node", to_task_id="hdfs_node"),
                         Relation(from_task_id="fork_node", to_task_id="pig_node_prepare"),
                         Relation(from_task_id="fork_node", to_task_id="streaming_node"),

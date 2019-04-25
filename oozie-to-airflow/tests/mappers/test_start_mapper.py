@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Tests Kill Mapper"""
+"""Tests for the Start mapper."""
 import ast
 import unittest
 from unittest import mock
@@ -21,54 +21,40 @@ from airflow.utils.trigger_rule import TriggerRule
 
 from converter.parsed_node import ParsedNode
 from converter.primitives import Workflow, Relation
-from mappers import kill_mapper
 from mappers.base_mapper import BaseMapper
+from mappers.start_mapper import StartMapper
 
 
-class TestKillMapper(unittest.TestCase):
-
-    oozie_node = Element("dummy")
+class TestStartMapper(unittest.TestCase):
+    oozie_node = Element("start")
 
     def test_create_mapper(self):
-        mapper = kill_mapper.KillMapper(
-            oozie_node=self.oozie_node, name="test_id", trigger_rule=TriggerRule.DUMMY
-        )
+        mapper = StartMapper(oozie_node=self.oozie_node, name="test_id", trigger_rule=TriggerRule.DUMMY)
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
 
     def test_convert_to_text(self):
-        mapper = kill_mapper.KillMapper(
-            oozie_node=self.oozie_node, name="test_id", trigger_rule=TriggerRule.DUMMY
-        )
-        # Throws a syntax error if doesn't parse correctly
+        mapper = StartMapper(oozie_node=self.oozie_node, name="test_id", trigger_rule=TriggerRule.DUMMY)
         ast.parse(mapper.convert_to_text())
 
     # pylint: disable=no-self-use
     def test_required_imports(self):
-        imps = kill_mapper.KillMapper.required_imports()
+        imps = StartMapper.required_imports()
         imp_str = "\n".join(imps)
         ast.parse(imp_str)
 
     def test_on_parse_finish(self):
         workflow = Workflow(input_directory_path=None, output_directory_path=None, dag_name=None)
 
-        mapper = kill_mapper.KillMapper(
-            oozie_node=self.oozie_node, name="fail_task", trigger_rule=TriggerRule.DUMMY
-        )
+        mapper = StartMapper(oozie_node=self.oozie_node, name="first_task", trigger_rule=TriggerRule.DUMMY)
 
-        workflow.nodes["task"] = ParsedNode(mock.Mock(autospec=BaseMapper))
-        workflow.nodes["fail_task"] = ParsedNode(mapper)
-        workflow.nodes["success_task"] = ParsedNode(mock.Mock(autospec=BaseMapper))
-        workflow.nodes["success_task"].set_is_ok(True)
-        workflow.nodes["fail_task"].set_is_error(True)
+        workflow.nodes["first_task"] = ParsedNode(mock.Mock(autospec=BaseMapper))
+        workflow.nodes["second_task"] = ParsedNode(mapper)
 
-        workflow.relations = {
-            Relation(from_task_id="task", to_task_id="fail_task"),
-            Relation(from_task_id="task", to_task_id="success_task"),
-        }
+        workflow.relations = {Relation(from_task_id="first_task", to_task_id="second_task")}
 
         mapper.on_parse_finish(workflow)
 
-        self.assertEqual(set(workflow.nodes.keys()), {"task", "success_task"})
-        self.assertEqual(workflow.relations, {Relation(from_task_id="task", to_task_id="success_task")})
+        self.assertEqual(set(workflow.nodes.keys()), {"second_task"})
+        self.assertEqual(workflow.relations, set())
