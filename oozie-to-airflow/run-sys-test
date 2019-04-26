@@ -415,6 +415,11 @@ fi
 
 prepare_configuration
 
+if [[ "${PHASE}" == "prepare-configuration" ]]; then
+    # We only want to prepare configuration
+    exit 0
+fi
+
 if [[ "${PHASE}" == "convert" ]]; then
     convert
 elif [[ "${PHASE}" == "prepare-dataproc" ]]; then
