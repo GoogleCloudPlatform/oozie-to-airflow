@@ -33,19 +33,12 @@
 -->
 <workflow-app xmlns="uri:oozie:workflow:1.0" name="demo-wf">
 
-    <start to="cleanup-node"/>
-
-    <action name="cleanup-node">
-        <fs>
-            <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/demo"/>
-        </fs>
-        <ok to="fork-node"/>
-        <error to="fail"/>
-    </action>
+    <start to="fork-node"/>
 
     <fork name="fork-node">
         <path start="pig-node"/>
-        <path start="streaming-node"/>
+        <path start="subworkflow-node"/>
+        <path start="shell-node"/>
     </fork>
 
     <action name="pig-node">
@@ -53,7 +46,8 @@
             <resource-manager>${resourceManager}</resource-manager>
             <name-node>${nameNode}</name-node>
             <prepare>
-                <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/demo/pig-node"/>
+                <delete path="${nameNode}/user/pig/examples/test_pig_node/output-data"/>
+                <mkdir path="${nameNode}/user/pig/examples/test_pig_node/created-folder"/>
             </prepare>
             <configuration>
                 <property>
@@ -66,99 +60,74 @@
                 </property>
             </configuration>
             <script>id.pig</script>
-            <param>INPUT=/user/${wf:user()}/${examplesRoot}/input-data/text</param>
-            <param>OUTPUT=/user/${wf:user()}/${examplesRoot}/output-data/demo/pig-node</param>
+            <param>INPUT=/user/pig/examples/test_pig_node/input-data/test-data.txt</param>
+            <param>OUTPUT=/user/pig/examples/test_pig_node/output-data</param>
         </pig>
         <ok to="join-node"/>
         <error to="fail"/>
     </action>
 
-    <action name="streaming-node">
-        <map-reduce>
-            <resource-manager>${resourceManager}</resource-manager>
-            <name-node>${nameNode}</name-node>
-            <prepare>
-                <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/demo/streaming-node"/>
-            </prepare>
-            <streaming>
-                <mapper>${streamingMapper}</mapper>
-                <reducer>${streamingReducer}</reducer>
-            </streaming>
+    <action name="subworkflow-node">
+        <sub-workflow>
+            <app-path>${nameNode}/user/${wf:user()}/${examplesRoot}/mapreduce</app-path>
+            <propagate-configuration/>
             <configuration>
                 <property>
-                    <name>mapred.job.queue.name</name>
+                    <name>resourceManager</name>
+                    <value>${resourceManager}</value>
+                </property>
+                <property>
+                    <name>nameNode</name>
+                    <value>${nameNode}</value>
+                </property>
+                <property>
+                    <name>queueName</name>
                     <value>${queueName}</value>
                 </property>
-
                 <property>
-                    <name>mapred.input.dir</name>
-                    <value>/user/${wf:user()}/${examplesRoot}/input-data/text</value>
+                    <name>examplesRoot</name>
+                    <value>${examplesRoot}</value>
                 </property>
                 <property>
-                    <name>mapred.output.dir</name>
-                    <value>/user/${wf:user()}/${examplesRoot}/output-data/demo/streaming-node</value>
+                    <name>outputDir</name>
+                    <value>subwf</value>
                 </property>
             </configuration>
-        </map-reduce>
+        </sub-workflow>
         <ok to="join-node"/>
         <error to="fail"/>
     </action>
 
-    <join name="join-node" to="mr-node"/>
-
-
-    <action name="mr-node">
-        <map-reduce>
+    <action name="shell-node">
+        <shell xmlns="uri:oozie:shell-action:1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="uri:oozie:shell-action:1.0">
             <resource-manager>${resourceManager}</resource-manager>
             <name-node>${nameNode}</name-node>
             <prepare>
-                <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/demo/mr-node"/>
+                <delete path="${nameNode}/examples/output-data/demo/pig-node"/>
+                <mkdir path="${nameNode}/examples/input-data/demo/pig-node"/>
             </prepare>
             <configuration>
                 <property>
                     <name>mapred.job.queue.name</name>
                     <value>${queueName}</value>
                 </property>
-
-                <property>
-                    <name>mapred.mapper.class</name>
-                    <value>org.apache.oozie.example.DemoMapper</value>
-                </property>
-                <property>
-                    <name>mapred.mapoutput.key.class</name>
-                    <value>org.apache.hadoop.io.Text</value>
-                </property>
-                <property>
-                    <name>mapred.mapoutput.value.class</name>
-                    <value>org.apache.hadoop.io.IntWritable</value>
-                </property>
-                <property>
-                    <name>mapred.reducer.class</name>
-                    <value>org.apache.oozie.example.DemoReducer</value>
-                </property>
-                <property>
-                    <name>mapred.map.tasks</name>
-                    <value>1</value>
-                </property>
-                <property>
-                    <name>mapred.input.dir</name>
-                    <value>/user/${wf:user()}/${examplesRoot}/output-data/demo/pig-node,/user/${wf:user()}/${examplesRoot}/output-data/demo/streaming-node</value>
-                </property>
-                <property>
-                    <name>mapred.output.dir</name>
-                    <value>/user/${wf:user()}/${examplesRoot}/output-data/demo/mr-node</value>
-                </property>
             </configuration>
-        </map-reduce>
-        <ok to="decision-node"/>
+            <exec>java</exec>
+            <argument>-version</argument>
+            <capture-output/>
+        </shell>
+        <ok to="join-node"/>
         <error to="fail"/>
     </action>
+
+    <join name="join-node" to="decision-node"/>
 
     <decision name="decision-node">
         <switch>
             <!--
                "True" is generally not the predicate here, but it is
-                the only way that it will work with the current verison
+                the only way that it will work with the current version
             -->
             <case to="hdfs-node">True</case>
             <default to="end"/>
@@ -167,8 +136,7 @@
 
     <action name="hdfs-node">
         <fs>
-            <move source="${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/demo/mr-node"
-                  target="/user/${wf:user()}/${examplesRoot}/output-data/demo/final-data"/>
+            <delete path="${nameNode}/user/pig/examples/test_pig_node/output-data"/>
         </fs>
         <ok to="end"/>
         <error to="fail"/>
