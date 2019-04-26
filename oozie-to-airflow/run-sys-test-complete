@@ -19,7 +19,7 @@ _SHORT_OPTIONS="
 h a: p: C: L: b: c: m: r: z: A
 "
 
-_ALLOWED_PHASES=" convert prepare-dataproc prepare-composer test-composer all "
+_ALLOWED_PHASES=" prepare-configuration convert prepare-dataproc prepare-composer test-composer all "
 _ALLOWED_APPLICATIONS=" $(ls ${_MY_LINKED_DIR}/examples | xargs) "
 
 _LONG_OPTIONS="
