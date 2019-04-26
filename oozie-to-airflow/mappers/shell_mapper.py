@@ -68,3 +68,7 @@ class ShellMapper(ActionMapper, PrepareMixin):
     @staticmethod
     def required_imports() -> Set[str]:
         return {"from airflow.utils import dates", "from airflow.contrib.operators import dataproc_operator"}
+
+    @property
+    def first_task_id(self):
+        return "{task_id}_prepare".format(task_id=self.name)
