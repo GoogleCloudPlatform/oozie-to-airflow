@@ -44,7 +44,7 @@ FS_TAG_GROUP = "group"
 
 def prepare_mkdir_command(node: Element, params):
     path = normalize_path(node.attrib[FS_TAG_PATH], params)
-    command = "fs -mkdir {path}".format(path=shlex.quote(path))
+    command = "fs -mkdir -p {path}".format(path=shlex.quote(path))
     return command
 
 

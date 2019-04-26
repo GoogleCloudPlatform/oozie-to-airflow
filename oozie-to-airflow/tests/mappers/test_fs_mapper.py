@@ -32,11 +32,11 @@ class prepare_mkdir_commandTest(unittest.TestCase):
         [
             (
                 "<mkdir path='hdfs://localhost:8020/home/pig/test-fs/test-mkdir-1'/>",
-                "fs -mkdir /home/pig/test-fs/test-mkdir-1",
+                "fs -mkdir -p /home/pig/test-fs/test-mkdir-1",
             ),
             (
                 "<mkdir path='${nameNode}/home/pig/test-fs/DDD-mkdir-1'/>",
-                "fs -mkdir /home/pig/test-fs/DDD-mkdir-1",
+                "fs -mkdir -p /home/pig/test-fs/DDD-mkdir-1",
             ),
         ]
     )
