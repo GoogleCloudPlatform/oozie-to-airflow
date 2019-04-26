@@ -49,7 +49,7 @@ class TestParsedNode(unittest.TestCase):
         self.p_node.set_is_ok(True)
         self.p_node.set_is_error(False)
         self.p_node.update_trigger_rule()
-        self.assertEqual(TriggerRule.ONE_SUCCESS, self.p_node.mapper.trigger_rule)
+        self.assertEqual(TriggerRule.ALL_SUCCESS, self.p_node.mapper.trigger_rule)
 
     def test_update_trigger_rule_error(self):
         self.p_node.set_is_ok(False)
