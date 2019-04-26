@@ -109,6 +109,6 @@ class ParsedNode:
             # Sets to dummy, but does not warn user about it.
             self.mapper.trigger_rule = TriggerRule.DUMMY
         elif self.is_ok:
-            self.mapper.trigger_rule = TriggerRule.ONE_SUCCESS
+            self.mapper.trigger_rule = TriggerRule.ALL_SUCCESS
         else:
             self.mapper.trigger_rule = TriggerRule.ONE_FAILED
