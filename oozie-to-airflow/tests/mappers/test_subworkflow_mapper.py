@@ -34,7 +34,7 @@ class TestSubworkflowMapper(TestCase):
         "gcp_region": "europe-west3",
         "gcp_uri_prefix": "gs://test_bucket/dags",
         "nameNode": "hdfs://",
-        "oozie.wf.application.path": "hdfs:///user/pig/examples/test_pig_node",
+        "oozie.wf.application.path": "hdfs:///user/pig/examples/pi",
     }
 
     main_params = {

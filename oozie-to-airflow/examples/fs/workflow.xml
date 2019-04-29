@@ -26,60 +26,61 @@
     </fork>
     <action name="mkdir">
         <fs>
-            <mkdir path='${nameNode}/user/fs/examples/test-mkdir-1'/>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/apps/fstest-mkdir-1'/>
         </fs>
-        <ok to="end"/>
+        <ok to="join"/>
         <error to="fail"/>
     </action>
     <action name="delete">
         <fs>
-            <mkdir path='${nameNode}/user/fs/examples/test-delete-1'/>
-            <delete path='${nameNode}/user/fs/examples/test-delete-1'/>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/apps/fstest-delete-1'/>
+            <delete path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/apps/fstest-delete-1'/>
         </fs>
-        <ok to="end"/>
+        <ok to="join"/>
         <error to="fail"/>
     </action>
     <action name="move">
         <fs>
-            <mkdir path='${nameNode}/user/fs/examples/test-move-1'/>
-            <move source='${nameNode}/user/fs/examples/test-move-1' target='/user/fs/examples/test-move-2' />
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/apps/fstest-move-1'/>
+            <move source='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/apps/fstest-move-1' target='/user/fs/examples/test-move-2' />
         </fs>
-        <ok to="end"/>
+        <ok to="join"/>
         <error to="fail"/>
     </action>
     <action name="chmod">
         <fs>
-            <mkdir path='${nameNode}/user/fs/examples/test-chmod-1'/>
-            <mkdir path='${nameNode}/user/fs/examples/test-chmod-2'/>
-            <mkdir path='${nameNode}/user/fs/examples/test-chmod-3'/>
-            <mkdir path='${nameNode}/user/fs/examples/test-chmod-4'/>
-            <chmod path='${nameNode}/user/fs/examples/test-chmod-1' permissions='777' dir-files='false' />
-            <chmod path='${nameNode}/user/fs/examples/test-chmod-2' permissions='777' dir-files='true' />
-            <chmod path='${nameNode}/user/fs/examples/test-chmod-3' permissions='777' />
-            <chmod path='${nameNode}/user/fs/examples/test-chmod-4' permissions='777' dir-files='false' >
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/apps/fstest-chmod-1'/>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/apps/fstest-chmod-2'/>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/apps/fstest-chmod-3'/>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/apps/fstest-chmod-4'/>
+            <chmod path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/apps/fstest-chmod-1' permissions='777' dir-files='false' />
+            <chmod path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/apps/fstest-chmod-2' permissions='777' dir-files='true' />
+            <chmod path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/apps/fstest-chmod-3' permissions='777' />
+            <chmod path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/apps/fstest-chmod-4' permissions='777' dir-files='false' >
                 <recursive/>
             </chmod>
         </fs>
-        <ok to="end"/>
+        <ok to="join"/>
         <error to="fail"/>
     </action>
     <action name="touchz">
         <fs>
-            <touchz path='${nameNode}/user/fs/examples/test-touchz-1' />
+            <touchz path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/apps/fstest-touchz-1' />
         </fs>
-        <ok to="end"/>
+        <ok to="join"/>
         <error to="fail"/>
     </action>
     <action name="chgrp">
         <fs>
-            <mkdir path='${nameNode}/user/fs/examples/test-chgrp-1'/>
-            <chgrp path='${nameNode}/user/fs/examples/test-chgrp-1' group='hadoop' />
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/apps/fstest-chgrp-1'/>
+            <chgrp path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/apps/fstest-chgrp-1' group='hadoop' />
         </fs>
-        <ok to="end"/>
+        <ok to="join"/>
         <error to="fail"/>
     </action>
     <kill name="fail">
         <message>Fs workflow failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
     </kill>
+    <join name="join" to="end"/>
     <end name="end"/>
 </workflow-app>
