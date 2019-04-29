@@ -565,11 +565,6 @@ elif [[ "${PHASE}" == "prepare-dataproc" ]]; then
     fetch_dataproc_environment_info
     prepare_configuration
     prepare_dataproc
-elif [[ "${PHASE}" == "prepare-composer" ]]; then
-    fetch_dataproc_environment_info
-    fetch_composer_environment_info
-    prepare_configuration
-    prepare_composer
 elif [[ "${PHASE}" == "test-composer" ]]; then
     fetch_dataproc_environment_info
     fetch_composer_environment_info
