@@ -44,7 +44,10 @@ class TestSubworkflowMapper(TestCase):
         "dataproc_cluster": "cluster-o2a",
     }
 
-    def setUp(self):
+    SUBDAG_TEST_FILEPATH = "/tmp/subdag_pig.py"
+
+    @classmethod
+    def setUpClass(cls):
         # language=XML
         subworkflow_node_str = """
 <sub-workflow>
@@ -57,15 +60,17 @@ class TestSubworkflowMapper(TestCase):
         </property>
     </configuration>
 </sub-workflow>"""
-        self.subworkflow_node = ET.fromstring(subworkflow_node_str)
+        super(TestSubworkflowMapper, cls).setUpClass()
+        cls.subworkflow_node = ET.fromstring(subworkflow_node_str)
+
+    def tearDown(self) -> None:
+        with suppress(OSError):
+            os.remove(self.SUBDAG_TEST_FILEPATH)
 
     @mock.patch("utils.el_utils.parse_els")
     def test_create_mapper_jinja(self, parse_els):
         # Given
         parse_els.return_value = self.subworkflow_params
-        # Removing subdag
-        with suppress(OSError):
-            os.remove("/tmp/test.test_id.py")
         # When
         mapper = self._get_subwf_mapper()
 
@@ -77,15 +82,13 @@ class TestSubworkflowMapper(TestCase):
         self.assertEqual("subwf.tpl", mapper.template)
         # Propagate config node is present, should forward config properties
         self.assertEqual({"resourceManager": "localhost:8032"}, mapper.get_config_properties())
-        self.assertTrue(os.path.isfile("/tmp/subdag_test.py"))
+        self.assertTrue(os.path.isfile(self.SUBDAG_TEST_FILEPATH))
 
     @mock.patch("utils.el_utils.parse_els")
     def test_create_mapper_jinja_no_propagate(self, parse_els):
         # Given
         parse_els.return_value = self.subworkflow_params
-        # Removing subdag
-        with suppress(OSError):
-            os.remove("/tmp/subdag_test.py")
+        self.assertFalse(os.path.isfile(self.SUBDAG_TEST_FILEPATH))
         # Removing the propagate-configuration node
         propagate_configuration = self.subworkflow_node.find("propagate-configuration")
         self.subworkflow_node.remove(propagate_configuration)
@@ -101,7 +104,7 @@ class TestSubworkflowMapper(TestCase):
         self.assertEqual("subwf.tpl", mapper.template)
         # Propagate config node is missing, should NOT forward config properties
         self.assertEqual({}, mapper.get_config_properties())
-        self.assertTrue(os.path.isfile("/tmp/subdag_test.py"))
+        self.assertTrue(os.path.isfile(self.SUBDAG_TEST_FILEPATH))
 
     @mock.patch("utils.el_utils.parse_els")
     def test_convert_to_text(self, parse_els):
