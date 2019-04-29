@@ -595,7 +595,6 @@ The following phases are defined for the system tests:
    * Local filesystem: /home/<USER>/o2a/<APPLICATION> directory contains application to be uploaded to HDFS
    * Local filesystem: /home/<USER>/o2a/<APPLICATION>.properties file - generated properties used to run oozie job
    * HDFS: /user/${user.name}/examples/apps/<APPLICATION> - the application stored in HDFS
-* prepare-composer - prepares common files that need to be sent to composer
 * test-composer - runs tests on Composer instance
 * test-oozie - runs tests on Oozie in Hadoop cluster
 
