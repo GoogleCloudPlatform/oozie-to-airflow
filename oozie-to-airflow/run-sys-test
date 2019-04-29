@@ -462,7 +462,7 @@ function test_oozie {
     echo "You can run the following commands on dataproc cluster to see the job status"
     echo
     echo "oozie job -info <JOB_ID>"
-    echo "oozie job -logs <JOB_ID>"
+    echo "oozie job -log  <JOB_ID>"
     echo
     echo "Follow instructions of setting up the proxy in dataproc cluster console to observe the job"
     echo

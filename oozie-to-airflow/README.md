@@ -488,11 +488,11 @@ Cloud Composer:
     * sshtunnel==0.1.4
 
 Cloud Dataproc Cluster with Oozie
-* n1-standard-2, 2 vCPU, 7.50 GB memory
+* n1-standard-2, 4 vCPU, 20 GB memory (! Minimum 16 GB RAM needed)
 * primary disk size, 50 GB
 * Image 1.3.29-debian9
 * Hadoop version
-* Init action: [oozie-5.1.sh](dataproc\oozie-5.1.sh)
+* Init action: [oozie-5.1.sh](../dataproc/oozie-5.1.sh)
 
 ### Example apps
 
@@ -609,7 +609,7 @@ The following phases are defined for the system tests:
 
 The typical scenario to run the tests are:
 
-Running application via oozie:
+Running application via Oozie:
 ```
 ./run-sys-test --phase prepare-dataproc --application <APP> --cluster <CLUSTER>
 

@@ -43,7 +43,6 @@
                 <mkdir path="${nameNode}/user/${userName}/${examplesRoot}/apps/shell/test"/>
             </prepare>
             <configuration>
-
                 <property>
                     <name>mapred.job.queue.name</name>
                     <value>${queueName}</value>
