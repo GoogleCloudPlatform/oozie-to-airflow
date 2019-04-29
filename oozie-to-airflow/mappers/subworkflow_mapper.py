@@ -28,6 +28,7 @@ from utils import el_utils, xml_utils
 from utils.template_utils import render_template
 
 
+# pylint: disable=too-many-instance-attributes
 class SubworkflowMapper(ActionMapper):
     """
     Converts a Sub-workflow Oozie node to an Airflow task.
@@ -68,9 +69,10 @@ class SubworkflowMapper(ActionMapper):
     def _parse_oozie_node(self):
         app_path = self.oozie_node.find("app-path").text
         app_path = el_utils.replace_el_with_var(app_path, params=self.params, quote=False)
+        _, _, self.app_name = app_path.rpartition("/")
         # TODO: hacky: we should calculate it deriving from input_directory_path and comparing app-path
         # TODO: but for now we assume app is in "examples"
-        app_path = os.path.join(EXAMPLES_PATH, app_path.rsplit("/", 1)[1])
+        app_path = os.path.join(EXAMPLES_PATH, self.app_name)
         logging.info(f"Converting subworkflow from {app_path}")
         self._parse_config()
         converter = OozieSubworkflowConverter(
@@ -80,7 +82,7 @@ class SubworkflowMapper(ActionMapper):
             action_mapper=self.action_mapper,
             control_mapper=self.control_mapper,
             dag_name=f"{self.dag_name}.{self.task_id}",
-            output_dag_name="subdag_test.py",  # TODO: do not use hard-coded name for subdaag
+            output_dag_name=f"subdag_{self.app_name}.py",
         )
         converter.convert()
 
@@ -111,5 +113,5 @@ class SubworkflowMapper(ActionMapper):
             "from airflow.utils import dates",
             "from airflow.contrib.operators import dataproc_operator",
             "from airflow.operators.subdag_operator import SubDagOperator",
-            f"from subdag_test import sub_dag",
+            f"import subdag_{self.app_name}",
         }
