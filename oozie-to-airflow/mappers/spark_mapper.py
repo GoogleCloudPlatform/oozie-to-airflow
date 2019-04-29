@@ -214,8 +214,7 @@ class SparkMapper(ActionMapper, PrepareMixin):
         relations = self._get_relations()
         return render_template(template_name="action.tpl", tasks=tasks, relations=relations)
 
-    @staticmethod
-    def required_imports() -> Set[str]:
+    def required_imports(self) -> Set[str]:
         # Bash are for the potential prepare statement
         return {
             "from airflow.contrib.operators import dataproc_operator",

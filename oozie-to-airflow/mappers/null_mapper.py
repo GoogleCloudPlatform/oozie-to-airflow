@@ -32,6 +32,5 @@ class NullMapper(BaseMapper):
     def convert_to_airflow_op(self) -> None:
         return
 
-    @staticmethod
-    def required_imports() -> Set[str]:
+    def required_imports(self) -> Set[str]:
         return set()

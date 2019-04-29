@@ -91,6 +91,5 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
         if not output_directory_path:
             raise Exception("The output_directory_path should be set and is {}".format(output_directory_path))
 
-    @staticmethod
-    def required_imports() -> Set[str]:
+    def required_imports(self) -> Set[str]:
         return {"from airflow.utils import dates", "from airflow.contrib.operators import dataproc_operator"}
