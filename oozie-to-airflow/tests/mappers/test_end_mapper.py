@@ -70,15 +70,19 @@ class TestEndMapper(unittest.TestCase):
         workflow = Workflow(input_directory_path=None, output_directory_path=None, dag_name=None)
 
         mapper = end_mapper.EndMapper(
-            oozie_node=self.oozie_node, name="second_task", trigger_rule=TriggerRule.DUMMY
+            oozie_node=self.oozie_node, name="end_task", trigger_rule=TriggerRule.DUMMY
         )
 
         workflow.nodes["first_task"] = ParsedNode(mock.Mock(spec=DecisionMapper, last_task_id="first_task"))
-        workflow.nodes["second_task"] = ParsedNode(mapper)
+        workflow.nodes["second_task"] = ParsedNode(mock.Mock(spec=BaseMapper, last_task_id="second_task"))
+        workflow.nodes["end_task"] = ParsedNode(mapper)
 
-        workflow.relations = {Relation(from_task_id="first_task", to_task_id="second_task")}
+        workflow.relations = {
+            Relation(from_task_id="first_task", to_task_id="end_task"),
+            Relation(from_task_id="second_task", to_task_id="end_task"),
+        }
 
         mapper.on_parse_finish(workflow)
 
-        self.assertEqual(set(workflow.nodes.keys()), {"first_task", "second_task"})
-        self.assertEqual(workflow.relations, {Relation(from_task_id="first_task", to_task_id="second_task")})
+        self.assertEqual(set(workflow.nodes.keys()), {"first_task", "second_task", "end_task"})
+        self.assertEqual(workflow.relations, {Relation(from_task_id="first_task", to_task_id="end_task")})
