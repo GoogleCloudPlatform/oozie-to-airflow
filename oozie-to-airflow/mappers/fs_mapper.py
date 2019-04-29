@@ -143,8 +143,7 @@ class FsMapper(ActionMapper):
             relations=chain(self.tasks),
         )
 
-    @staticmethod
-    def required_imports() -> Set[str]:
+    def required_imports(self) -> Set[str]:
         return {
             "from airflow.operators import dummy_operator",
             "from airflow.operators import bash_operator",

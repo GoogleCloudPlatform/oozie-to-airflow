@@ -106,8 +106,7 @@ class SubworkflowMapper(ActionMapper):
     def convert_to_text(self):
         return render_template(template_name=self.template, **self.__dict__)
 
-    @staticmethod
-    def required_imports() -> Set[str]:
+    def required_imports(self) -> Set[str]:
         return {
             "from airflow.utils import dates",
             "from airflow.contrib.operators import dataproc_operator",

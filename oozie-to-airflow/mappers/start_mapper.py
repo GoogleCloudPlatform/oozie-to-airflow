@@ -19,8 +19,7 @@ from mappers.base_mapper import BaseMapper
 
 
 class StartMapper(BaseMapper):
-    @staticmethod
-    def required_imports() -> Set[str]:
+    def required_imports(self) -> Set[str]:
         return set()
 
     def convert_to_text(self) -> str:

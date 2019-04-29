@@ -36,9 +36,7 @@ class TestSSHMapper(unittest.TestCase):
         self.ssh_node = ET.fromstring(ssh_node_str)
 
     def test_create_mapper_no_jinja(self):
-        mapper = ssh_mapper.SSHMapper(
-            oozie_node=self.ssh_node, name="test_id", trigger_rule=TriggerRule.DUMMY
-        )
+        mapper = self._get_ssh_mapper()
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
@@ -52,9 +50,7 @@ class TestSSHMapper(unittest.TestCase):
         self.ssh_node.find("host").text = "${hostname}"
         params = {"hostname": "user@apache.org"}
 
-        mapper = ssh_mapper.SSHMapper(
-            oozie_node=self.ssh_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=params
-        )
+        mapper = self._get_ssh_mapper(params=params)
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
@@ -64,14 +60,18 @@ class TestSSHMapper(unittest.TestCase):
         self.assertEqual("'ls -l -a'", mapper.command)
 
     def test_convert_to_text(self):
-        mapper = ssh_mapper.SSHMapper(
-            oozie_node=self.ssh_node, name="test_id", trigger_rule=TriggerRule.DUMMY
-        )
+        mapper = self._get_ssh_mapper()
         # Throws a syntax error if doesn't parse correctly
         ast.parse(mapper.convert_to_text())
 
-    # pylint: disable=no-self-use
     def test_required_imports(self):
-        imps = ssh_mapper.SSHMapper.required_imports()
+        mapper = self._get_ssh_mapper()
+        imps = mapper.required_imports()
         imp_str = "\n".join(imps)
         ast.parse(imp_str)
+
+    def _get_ssh_mapper(self, params=None):
+        mapper = ssh_mapper.SSHMapper(
+            oozie_node=self.ssh_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=params
+        )
+        return mapper

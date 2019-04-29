@@ -74,9 +74,7 @@ class TestMapReduceMapper(unittest.TestCase):
         self.mapreduce_node = ET.fromstring(mapreduce_node_str)
 
     def test_create_mapper_no_jinja(self):
-        mapper = mapreduce_mapper.MapReduceMapper(
-            oozie_node=self.mapreduce_node, name="test_id", trigger_rule=TriggerRule.DUMMY
-        )
+        mapper = self._get_mapreduce_mapper()
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
@@ -102,9 +100,7 @@ class TestMapReduceMapper(unittest.TestCase):
         # test jinja templating
         params = {"nameNode": "hdfs://", "queueName": "myQueue", "examplesRoot": "examples"}
 
-        mapper = mapreduce_mapper.MapReduceMapper(
-            oozie_node=self.mapreduce_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=params
-        )
+        mapper = self._get_mapreduce_mapper(params=params)
 
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
@@ -144,8 +140,13 @@ class TestMapReduceMapper(unittest.TestCase):
         # Throws a syntax error if doesn't parse correctly
         ast.parse(mapper.convert_to_text())
 
-    # pylint: disable=no-self-use
     def test_required_imports(self):
-        imps = mapreduce_mapper.MapReduceMapper.required_imports()
+        mapper = self._get_mapreduce_mapper()
+        imps = mapper.required_imports()
         imp_str = "\n".join(imps)
         ast.parse(imp_str)
+
+    def _get_mapreduce_mapper(self, params=None):
+        return mapreduce_mapper.MapReduceMapper(
+            oozie_node=self.mapreduce_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=params
+        )

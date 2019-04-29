@@ -45,8 +45,7 @@ class BaseMapper:
         """
         raise NotImplementedError("Not Implemented")
 
-    @staticmethod
-    def required_imports() -> Set[str]:
+    def required_imports(self) -> Set[str]:
         """
         Returns a set of strings that are the import statement that python will
         write to use.

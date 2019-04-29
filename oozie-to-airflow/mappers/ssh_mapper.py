@@ -70,8 +70,7 @@ class SSHMapper(ActionMapper):
     def convert_to_text(self) -> str:
         return render_template(template_name=self.template, task_id=self.name, **self.__dict__)
 
-    @staticmethod
-    def required_imports() -> Set[str]:
+    def required_imports(self) -> Set[str]:
         return {
             "from airflow.utils import dates",
             "from airflow.contrib.operators import ssh_operator",
