@@ -72,6 +72,11 @@ function configure_hadoop() {
     --name 'hadoop.proxyuser.oozie.groups' --value '*' \
     --clobber
 
+  bdconfig set_property \
+    --configuration_file "/etc/hadoop/conf/capacity-scheduler.xml" \
+    --name 'yarn.scheduler.capacity.maximum-am-resource-percent' --value '0.5' \
+    --clobber
+
   # restart hadoop services
   for service in hadoop-hdfs-namenode hadoop-hdfs-secondarynamenode hadoop-yarn-resourcemanager; do
     if [[ $(systemctl list-unit-files | grep ${service}) != '' ]] && \

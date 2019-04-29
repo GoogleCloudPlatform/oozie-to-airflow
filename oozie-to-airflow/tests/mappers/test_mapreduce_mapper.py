@@ -33,19 +33,23 @@ class TestMapReduceMapper(unittest.TestCase):
     </prepare>
     <configuration>
         <property>
+            <name>mapred.mapper.new-api</name>
+            <value>true</value>
+        </property>
+        <property>
+            <name>mapred.reducer.new-api</name>
+            <value>true</value>
+        </property>
+        <property>
             <name>mapred.job.queue.name</name>
             <value>${queueName}</value>
         </property>
         <property>
-            <name>mapreduce.mapper.class</name>
+            <name>mapreduce.job.map.class</name>
             <value>WordCount$Map</value>
         </property>
         <property>
-            <name>mapreduce.reducer.class</name>
-            <value>WordCount$Reduce</value>
-        </property>
-        <property>
-            <name>mapreduce.combine.class</name>
+            <name>mapreduce.job.reduce.class</name>
             <value>WordCount$Reduce</value>
         </property>
         <property>
@@ -57,11 +61,11 @@ class TestMapReduceMapper(unittest.TestCase):
             <value>org.apache.hadoop.io.IntWritable</value>
         </property>
         <property>
-            <name>mapred.input.dir</name>
+            <name>mapreduce.input.fileinputformat.inputdir</name>
             <value>/user/mapred/${examplesRoot}/mapreduce/input</value>
         </property>
         <property>
-            <name>mapred.output.dir</name>
+            <name>mapreduce.output.fileoutputformat.outputdir</name>
             <value>/user/mapred/${examplesRoot}/mapreduce/output</value>
         </property>
     </configuration>
@@ -79,18 +83,19 @@ class TestMapReduceMapper(unittest.TestCase):
         self.assertEqual(self.mapreduce_node, mapper.oozie_node)
         self.assertEqual("hdfs://", mapper.name_node)
         self.assertEqual("${queueName}", mapper.properties["mapred.job.queue.name"])
-        self.assertEqual("WordCount$Map", mapper.properties["mapreduce.mapper.class"])
-        self.assertEqual("WordCount$Reduce", mapper.properties["mapreduce.reducer.class"])
-        self.assertEqual("WordCount$Reduce", mapper.properties["mapreduce.combine.class"])
+        self.assertEqual("WordCount$Map", mapper.properties["mapreduce.job.map.class"])
+        self.assertEqual("WordCount$Reduce", mapper.properties["mapreduce.job.reduce.class"])
         self.assertEqual("org.apache.hadoop.io.Text", mapper.properties["mapreduce.job.output.key.class"])
         self.assertEqual(
             "org.apache.hadoop.io.IntWritable", mapper.properties["mapreduce.job.output.value.class"]
         )
         self.assertEqual(
-            "/user/mapred/${examplesRoot}/mapreduce/input", mapper.properties["mapred.input.dir"]
+            "/user/mapred/${examplesRoot}/mapreduce/input",
+            mapper.properties["mapreduce.input.fileinputformat.inputdir"],
         )
         self.assertEqual(
-            "/user/mapred/${examplesRoot}/mapreduce/output", mapper.properties["mapred.output.dir"]
+            "/user/mapred/${examplesRoot}/mapreduce/output",
+            mapper.properties["mapreduce.output.fileoutputformat.outputdir"],
         )
 
     def test_create_mapper_jinja(self):
@@ -107,15 +112,20 @@ class TestMapReduceMapper(unittest.TestCase):
         self.assertEqual(self.mapreduce_node, mapper.oozie_node)
         self.assertEqual("hdfs://", mapper.name_node)
         self.assertEqual("myQueue", mapper.properties["mapred.job.queue.name"])
-        self.assertEqual("WordCount$Map", mapper.properties["mapreduce.mapper.class"])
-        self.assertEqual("WordCount$Reduce", mapper.properties["mapreduce.reducer.class"])
-        self.assertEqual("WordCount$Reduce", mapper.properties["mapreduce.combine.class"])
+        self.assertEqual("WordCount$Map", mapper.properties["mapreduce.job.map.class"])
+        self.assertEqual("WordCount$Reduce", mapper.properties["mapreduce.job.reduce.class"])
         self.assertEqual("org.apache.hadoop.io.Text", mapper.properties["mapreduce.job.output.key.class"])
         self.assertEqual(
             "org.apache.hadoop.io.IntWritable", mapper.properties["mapreduce.job.output.value.class"]
         )
-        self.assertEqual("/user/mapred/examples/mapreduce/input", mapper.properties["mapred.input.dir"])
-        self.assertEqual("/user/mapred/examples/mapreduce/output", mapper.properties["mapred.output.dir"])
+        self.assertEqual(
+            "/user/mapred/examples/mapreduce/input",
+            mapper.properties["mapreduce.input.fileinputformat.inputdir"],
+        )
+        self.assertEqual(
+            "/user/mapred/examples/mapreduce/output",
+            mapper.properties["mapreduce.output.fileoutputformat.outputdir"],
+        )
         # )
 
     def test_convert_to_text(self):
