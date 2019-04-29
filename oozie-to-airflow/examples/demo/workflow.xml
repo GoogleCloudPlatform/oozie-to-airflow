@@ -46,8 +46,8 @@
             <resource-manager>${resourceManager}</resource-manager>
             <name-node>${nameNode}</name-node>
             <prepare>
-                <delete path="${nameNode}/user/pig/examples/test_pig_node/output-data"/>
-                <mkdir path="${nameNode}/user/pig/examples/test_pig_node/created-folder"/>
+                <delete path="${nameNode}/user/${userName}/${examplesRoot}/apps/demo/pig/output-data"/>
+                <mkdir path="${nameNode}/user/${userName}/${examplesRoot}/apps/demo/pig/created-folder"/>
             </prepare>
             <configuration>
                 <property>
@@ -59,9 +59,9 @@
                     <value>false</value>
                 </property>
             </configuration>
-            <script>id.pig</script>
-            <param>INPUT=/user/pig/examples/test_pig_node/input-data/test-data.txt</param>
-            <param>OUTPUT=/user/pig/examples/test_pig_node/output-data</param>
+            <script>pig/id.pig</script>
+            <param>INPUT=/user/${userName}/${examplesRoot}/apps/demo/pig/input-data/test-data.txt</param>
+            <param>OUTPUT=/user/${userName}/${examplesRoot}/apps/demo/pig/output-data/</param>
         </pig>
         <ok to="join-node"/>
         <error to="fail"/>
@@ -69,7 +69,7 @@
 
     <action name="subworkflow-node">
         <sub-workflow>
-            <app-path>${nameNode}/user/${wf:user()}/${examplesRoot}/mapreduce</app-path>
+            <app-path>${nameNode}/user/${userName}/${examplesRoot}/apps/mapreduce</app-path>
             <propagate-configuration/>
             <configuration>
                 <property>
@@ -90,7 +90,7 @@
                 </property>
                 <property>
                     <name>outputDir</name>
-                    <value>subwf</value>
+                    <value>demosubw</value>
                 </property>
             </configuration>
         </sub-workflow>
@@ -104,8 +104,8 @@
             <resource-manager>${resourceManager}</resource-manager>
             <name-node>${nameNode}</name-node>
             <prepare>
-                <delete path="${nameNode}/examples/output-data/demo/pig-node"/>
-                <mkdir path="${nameNode}/examples/input-data/demo/pig-node"/>
+                <delete path="${nameNode}/user/${userName}/${examplesRoot}/apps/demo/shell/output-data"/>
+                <mkdir path="${nameNode}/user/${userName}/${examplesRoot}/apps/demo/shell/created-folder"/>
             </prepare>
             <configuration>
                 <property>
@@ -136,7 +136,7 @@
 
     <action name="hdfs-node">
         <fs>
-            <delete path="${nameNode}/user/pig/examples/test_pig_node/output-data"/>
+            <delete path="${nameNode}/user/${userName}/${examplesRoot}/apps/demo/shell/created-folder"/>
         </fs>
         <ok to="end"/>
         <error to="fail"/>

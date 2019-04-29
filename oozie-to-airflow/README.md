@@ -215,6 +215,9 @@ This is because if goes from A to C on ok, and B goes to C on error, C's trigger
 will have to be set to `DUMMY`, but this means that if A goes to error, and B goes to ok
 C will then execute incorrectly.
 
+This limitation is temporary and will be removed in a future version of Oozie-2-Airflow converter.
+
+
 #### EL Functions
 
 As of now, a very minimal set of [Oozie EL](https://oozie.apache.org/docs/4.0.1/WorkflowFunctionalSpec.html#a4.2_Expression_Language_Functions)
@@ -489,11 +492,11 @@ Cloud Dataproc Cluster with Oozie
 * primary disk size, 50 GB
 * Image 1.3.29-debian9
 * Hadoop version
-* Init action: TODO
+* Init action: [oozie-5.1.sh](dataproc\oozie-5.1.sh)
 
 ### Example apps
 
-This folder contains example applications that can be run to run both Composer and Ooozie jobs for the apps
+This folder contains example applications that can be run to run both Composer and Oozie jobs for the apps
 
 Structure of the application folder:
 
@@ -503,28 +506,23 @@ Structure of the application folder:
              |- job.properties  - job properties that are used to run the job
              |- assets          - folder with extra assets that should be copied to application folder in HDFS
              |- configuration.template.properties - template of configuration values used during conversion
-             |- configuration.properties - generated properites for configuration values
+             |- configuration.properties - generated properties for configuration values
 ```
 
-### Running the tests
+### Running the system tests
 
-We can run examples defined in examples folder to run system tests. The system tests use a real
-Dataproc Cluster, Composer and Oozie run in Dataproc cluster (in the future) to run the tests automatically.
-
-Each test consists of several phases:
-
-* convert - converts workflow application of Oozie to an Airflow DAG
-* prepare-dataproc - prepares Dataproc by creating all necessary Hadoop file structure
-* prepare-composer - prepares Composer by copying reusable libraries and scripts to Airflow's bucket
-* test-composer - runs tests: converted files are copied to Composer bucket and DAG is triggered
-
-By default all phases of test are executed but you can choose to execute only one by using `-p` flag.
+We can run examples defined in examples folder as system tests. The system tests use an existing
+Composer, Dataproc cluster and Oozie run in the Dataproc cluster to prepare HDFS application folder structure
+and trigger the tests automatically.
 
 You can run the tests using this command:
 
-`./run-sys-tests -a <APPLICATION> `
+`./run-sys-tests --application <APPLICATION> --phase <PHASE>`
 
-When you run it with `--help` you can see all the options. You can setup autocomplete
+Default phase is convert - it only converts the oozie workflow to Airflow DAG without running the tests
+on either Oozie nor Composer
+
+When you run the script with `--help` you can see all the options. You can setup autocomplete
 with `-A` option - this way you do not have to remember all the options.
 
 Current options:
@@ -543,7 +541,7 @@ Flags:
         Application (from examples dir) to run the tests on. Must be specified unless -S or -A are specified.
 
 -p, --phase <PHASE>
-        Phase of the test to run. One of [ convert prepare-dataproc prepare-composer test-composer test-oozie all ]. Defaults to convert.
+        Phase of the test to run. One of [ convert prepare-dataproc prepare-composer test-composer test-oozie ]. Defaults to convert.
 
 -C, --composer-name <COMPOSER_NAME>
         Composer instance used to run the operations on. Defaults to o2a-integration
@@ -574,9 +572,11 @@ Optional commands to execute:
         Sets up autocomplete for run-sys-tests
 ```
 
-### Running the tests subsequently
+### Re-running the tests
 
-The latest parameters used are stored and cached locally in .ENVIRONMENT_NAME files:
+You do not need to specify the parameters once you run the script with your chosen flags.
+The latest parameters used are stored and cached locally in .ENVIRONMENT_NAME files and used next time
+when you run the script:
 
     .COMPOSER_DAG_BUCKET
     .COMPOSER_LOCATION
@@ -586,18 +586,53 @@ The latest parameters used are stored and cached locally in .ENVIRONMENT_NAME fi
     .LOCAL_APP_NAME
     .PHASE
 
-### Phases of the tests
+
+### Test phases
+
 The following phases are defined for the system tests:
 
-* prepare-configuration - prepares configuration based on passed dataproc/composer parameters
+* prepare-configuration - prepares configuration based on passed Dataproc/Composer parameters
+
 * convert - converts the example application workflow to DAG and stores it in output/<APPLICATION> directory
-* prepare-dataproc - prepares dataproc cluster to execute both Composer and Oozie jobs. The preparation is:
-   * Local filesystem: /home/<USER>/o2a/<APPLICATION> directory contains application to be uploaded to HDFS
-   * Local filesystem: /home/<USER>/o2a/<APPLICATION>.properties file - generated properties used to run oozie job
-   * HDFS: /user/${user.name}/examples/apps/<APPLICATION> - the application stored in HDFS
+
+* prepare-dataproc - prepares Dataproc cluster to execute both Composer and Oozie jobs. The preparation is:
+
+   * Local filesystem: `${HOME}/o2a/<APPLICATION>` directory contains application to be uploaded to HDFS
+
+   * Local filesystem: `${HOME}/o2a/<APPLICATION>.properties` property file to run the oozie job
+
+   * HDFS: /user/${user.name}/examples/apps/<APPLICATION> - the application is stored in this HDFS directory
+
 * test-composer - runs tests on Composer instance
+
 * test-oozie - runs tests on Oozie in Hadoop cluster
 
-# Running all example conversions
+The typical scenario to run the tests are:
 
-All example conversions can by run via the `./run-all-conversions` script. It is also executed during automated tests.
+Running application via oozie:
+```
+./run-sys-test --phase prepare-dataproc --application <APP> --cluster <CLUSTER>
+
+./run-sys-test --phase test-oozie
+```
+
+Running application via composer:
+```
+./run-sys-test --phase prepare-dataproc --application <APP> --cluster <CLUSTER>
+
+./run-sys-test --phase test-composer
+```
+
+### Running sub-workflows
+
+In order to run sub-workflows you need to have the sub-workflow application already present in HDFS,
+therefore you need to run at least  `./run-sys-test --phase prepare-dataproc --application <SUBWORKFLOW_APP>`
+
+For example in case of the demo application, you need to run at least once
+`./run-sys-test --phase prepare-dataproc --application mapreduce` because mapreduce is used as sub-workflow
+in the demo application.
+
+### Running all example conversions
+
+All example conversions can by run via the `./run-all-conversions` script. It is also executed during
+automated tests.
