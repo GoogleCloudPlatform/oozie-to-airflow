@@ -38,11 +38,12 @@
                xsi:schemaLocation="uri:oozie:shell-action:1.0 ">
             <resource-manager>${resourceManager}</resource-manager>
             <name-node>${nameNode}</name-node>
-            <prepare>
-                <delete path="${nameNode}/examples/output-data/demo/pig-node"/>
-                <mkdir path="${nameNode}/examples/input-data/demo/pig-node"/>
+            <prepare> <!-- TODO: replace userName with wf:user when we have it implemented -->
+                <delete path="${nameNode}/user/${userName}/${examplesRoot}/apps/shell/test"/>
+                <mkdir path="${nameNode}/user/${userName}/${examplesRoot}/apps/shell/test"/>
             </prepare>
             <configuration>
+
                 <property>
                     <name>mapred.job.queue.name</name>
                     <value>${queueName}</value>

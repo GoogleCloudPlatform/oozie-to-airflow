@@ -491,6 +491,20 @@ Cloud Dataproc Cluster with Oozie
 * Hadoop version
 * Init action: TODO
 
+### Example apps
+
+This folder contains example applications that can be run to run both Composer and Ooozie jobs for the apps
+
+Structure of the application folder:
+
+```
+<APPLICATION>/
+             |- workflow.xml    - Oozie workflow xml (1.0 schema)
+             |- job.properties  - job properties that are used to run the job
+             |- assets          - folder with extra assets that should be copied to application folder in HDFS
+             |- configuration.template.properties - template of configuration values used during conversion
+             |- configuration.properties - generated properites for configuration values
+```
 
 ### Running the tests
 
@@ -510,14 +524,13 @@ You can run the tests using this command:
 
 `./run-sys-tests -a <APPLICATION> `
 
-
 When you run it with `--help` you can see all the options. You can setup autocomplete
 with `-A` option - this way you do not have to remember all the options.
 
 Current options:
 
-```bash
-Usage: run-sys-test [FLAGS]
+```
+Usage: run-sys-test [FLAGS] [-A|-S]
 
 Executes prepare or run phase for integration testing of O2A converter.
 
@@ -526,11 +539,11 @@ Flags:
 -h, --help
         Shows this help message.
 
--p, --phase <PHASE>
-        Phase of the test to run. One of [ convert prepare-dataproc prepare-composer test-composer all ]. Defaults to all.
-
 -a, --application <APPLICATION>
-        Application (from examples dir) to run the tests on. Defaults to
+        Application (from examples dir) to run the tests on. Must be specified unless -S or -A are specified.
+
+-p, --phase <PHASE>
+        Phase of the test to run. One of [ convert prepare-dataproc prepare-composer test-composer test-oozie all ]. Defaults to convert.
 
 -C, --composer-name <COMPOSER_NAME>
         Composer instance used to run the operations on. Defaults to o2a-integration
@@ -539,23 +552,52 @@ Flags:
         Composer locations. Defaults to europe-west1
 
 -c, --cluster <CLUSTER>
-        Cluster used to run the operations on. Defaults to oozie-o2a-2cpu
+        Cluster used to run the operations on. Defaults to oozie-51
 
 -b, --bucket <BUCKET>
-        Airflow Composer DAG bucket used. Defaults to europe-west1-o2a-integratio-f690ede2-bucket
-
--m, --master <MASTER>
-        Cluster master used to run most operations on. Defaults to <CLUSTER_NAME>-m
+        Airflow Composer DAG bucket used. Defaults to bucket that is used by Composer.
 
 -r, --region <REGION>
         GCP Region where the cluster is located. Defaults to europe-west3
 
--z, --zone <ZONE>
-        GCP Zone where the master is located. Defaults to europe-west3-c
+-v, --verbose
+        Add even more verbosity when running the script.
+
+
+Optional commands to execute:
+
+
+-S, --ssh-to-cluster-master
+        SSH to dataproc's cluster master. Arguments after -- are passed to gcloud ssh command as extra args.
 
 -A, --setup-autocomplete
         Sets up autocomplete for run-sys-tests
 ```
+
+### Running the tests subsequently
+
+The latest parameters used are stored and cached locally in .ENVIRONMENT_NAME files:
+
+    .COMPOSER_DAG_BUCKET
+    .COMPOSER_LOCATION
+    .COMPOSER_NAME
+    .DATAPROC_CLUSTER_NAME
+    .GCP_REGION
+    .LOCAL_APP_NAME
+    .PHASE
+
+### Phases of the tests
+The following phases are defined for the system tests:
+
+* prepare-configuration - prepares configuration based on passed dataproc/composer parameters
+* convert - converts the example application workflow to DAG and stores it in output/<APPLICATION> directory
+* prepare-dataproc - prepares dataproc cluster to execute both Composer and Oozie jobs. The preparation is:
+   * Local filesystem: /home/<USER>/o2a/<APPLICATION> directory contains application to be uploaded to HDFS
+   * Local filesystem: /home/<USER>/o2a/<APPLICATION>.properties file - generated properties used to run oozie job
+   * HDFS: /user/${user.name}/examples/apps/<APPLICATION> - the application stored in HDFS
+* prepare-composer - prepares common files that need to be sent to composer
+* test-composer - runs tests on Composer instance
+* test-oozie - runs tests on Oozie in Hadoop cluster
 
 # Running all example conversions
 
