@@ -52,7 +52,7 @@ LOCAL_APP_NAME=$(read_from_file LOCAL_APP_NAME)
 export LOCAL_APP_NAME=${LOCAL_APP_NAME:=}
 
 PHASE=$(read_from_file PHASE)
-export PHASE=${PHASE:=all}
+export PHASE=${PHASE:=convert}
 
 DATAPROC_USER=$(read_from_file DATAPROC_USER)
 export DATAPROC_USER=${DATAPROC_USER:=${USER:=example_user}}
@@ -125,8 +125,8 @@ for example application: ${LOCAL_APP_NAME}"
 
 function prepare_composer {
     header "Prepares Composer by copying reusable library files"
-    gsutil cp "${LOCAL_SCRIPTS_DIR}/*" "gs://${COMPOSER_DAG_BUCKET}/data/"
-    gsutil cp "${LOCAL_O2A_LIBS_DIR}/*" "gs://${COMPOSER_DAG_BUCKET}/dags/o2a_libs/"
+    gsutil cp -r "${LOCAL_SCRIPTS_DIR}/*" "gs://${COMPOSER_DAG_BUCKET}/data/"
+    gsutil cp -r "${LOCAL_O2A_LIBS_DIR}/*" "gs://${COMPOSER_DAG_BUCKET}/dags/o2a_libs/"
     footer
 }
 
@@ -444,7 +444,7 @@ function convert {
 
 function test_composer {
     header "Triggers example application on Composer: ${LOCAL_APP_NAME}"
-    gsutil cp "${LOCAL_OUTPUT_DIR}/*" "gs://${COMPOSER_DAG_BUCKET}/dags/"
+    gsutil cp -r "${LOCAL_OUTPUT_DIR}/*" "gs://${COMPOSER_DAG_BUCKET}/dags/"
 
     gcloud composer environments run "${COMPOSER_NAME}" --location "${COMPOSER_LOCATION}" list_dags
     gcloud composer environments run "${COMPOSER_NAME}" --location "${COMPOSER_LOCATION}" trigger_dag\
@@ -574,15 +574,6 @@ elif [[ "${PHASE}" == "test-composer" ]]; then
     test_composer
 elif [[ "${PHASE}" == "test-oozie" ]]; then
     fetch_dataproc_environment_info
-    test_oozie
-elif [[ "${PHASE}" == "all" ]]; then
-    fetch_dataproc_environment_info
-    fetch_composer_environment_info
-    prepare_configuration
-    convert
-    prepare_dataproc
-    prepare_composer
-    test_composer
     test_oozie
 fi
 

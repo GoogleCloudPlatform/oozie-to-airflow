@@ -22,7 +22,7 @@
 
 {{ task_id }} = dataproc_operator.DataProcHadoopOperator(
     main_class=PARAMS['hadoop_main_class'],
-    arguments=['{{ properties['mapred.input.dir'] }}', '{{ properties['mapred.output.dir'] }}'],
+    arguments=['{{ properties['mapreduce.input.fileinputformat.inputdir'] }}', '{{ properties['mapreduce.output.fileoutputformat.outputdir'] }}'],
     {% if hdfs_files %}
     files=["{{ hdfs_files }}"],
     {% endif %}

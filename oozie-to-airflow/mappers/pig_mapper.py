@@ -103,6 +103,7 @@ class PigMapper(ActionMapper, PrepareMixin):
         self._copy_pig_script_with_path_injection(destination_pig_file_path, source_pig_file_path)
 
     def _copy_pig_script_with_path_injection(self, destination_pig_file_path, source_pig_file_path):
+        os.makedirs(os.path.dirname(destination_pig_file_path), exist_ok=True)
         with open(destination_pig_file_path, "w") as destination_pig_file:
             with open(source_pig_file_path, "r") as source_pig_file:
                 pig_script = source_pig_file.read()
