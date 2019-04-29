@@ -49,12 +49,15 @@ We prepared Dataproc [initialization action](https://cloud.google.com/dataproc/d
 that allows to run Oozie 5.1.0 on Dataproc.
 
 Please upload `dataproc/oozie-5.1.sh` to your GCS bucket and create cluster using following command:
+
+Note that you need at least 20GB RAM to run Oozie jobs on the cluster. The custom machine type below has enough RAM
+to handle oozie.
+
 ```bash
-gcloud dataproc clusters create <CLUSTER_NAME> \
-  --single-node \
-  --image-version 1.3-debian9 \
-  --initialization-actions <PATH_TO_INIT_ACTION_ON_YOUR_GCS> \
-  --initialization-action-timeout=30m
+gcloud dataproc clusters create <CLUSTER_NAME> --region europe-west1 --subnet default --zone "" \
+     --single-node --master-machine-type custom-4-20480 --master-boot-disk-size 500 \
+     --image-version 1.3-deb9 --project polidea-airflow --initialization-actions 'gs://<BUCKET>/<FOLDER>/oozie-5.1.sh' \
+     --initialization-action-timeout=30m
 ```
 **note 1:** it might take ~20 minutes to create the cluster
 

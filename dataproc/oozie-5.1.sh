@@ -59,6 +59,9 @@ function configure_oozie() {
 }
 
 function configure_hadoop() {
+  # Remove jackson jars specific for pig so that the main hadoop ones are used instead
+  sudo rm -f /usr/local/lib/oozie/share/lib/pig/jackson*
+
   hdfs dfs -mkdir -p /user/oozie/
   hadoop fs -put -f /usr/local/lib/oozie/share /user/oozie/
 
@@ -73,9 +76,30 @@ function configure_hadoop() {
     --clobber
 
   bdconfig set_property \
-    --configuration_file "/etc/hadoop/conf/capacity-scheduler.xml" \
-    --name 'yarn.scheduler.capacity.maximum-am-resource-percent' --value '0.5' \
+    --configuration_file "/etc/hadoop/conf/mapred-site.xml" \
+    --name 'yarn.app.mapreduce.am.resource.mb' --value '1024' \
     --clobber
+
+  bdconfig set_property \
+    --configuration_file "/etc/hadoop/conf/mapred-site.xml" \
+    --name 'mapreduce.map.java.opts' --value '-Xmx777m' \
+    --clobber
+
+  bdconfig set_property \
+    --configuration_file "/etc/hadoop/conf/mapred-site.xml" \
+    --name 'mapreduce.reduce.java.opts' --value '-Xmx777m' \
+    --clobber
+
+  bdconfig set_property \
+    --configuration_file "/etc/hadoop/conf/mapred-site.xml" \
+    --name 'mapreduce.map.memory.mb' --value '1024' \
+    --clobber
+
+  bdconfig set_property \
+    --configuration_file "/etc/hadoop/conf/mapred-site.xml" \
+    --name 'mapreduce.reduce.memory.mb' --value '1024' \
+    --clobber
+
 
   # restart hadoop services
   for service in hadoop-hdfs-namenode hadoop-hdfs-secondarynamenode hadoop-yarn-resourcemanager; do
@@ -84,6 +108,7 @@ function configure_hadoop() {
       systemctl restart ${service}
     fi
   done
+
 }
 
 function create_executables() {
