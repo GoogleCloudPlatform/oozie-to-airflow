@@ -40,43 +40,47 @@
         <map-reduce>
             <name-node>${nameNode}</name-node>
             <prepare>
-                <delete path="${nameNode}/user/mapreduce/${examplesRoot}/mapreduce/${outputDir}"/>
+                <delete path="${nameNode}/user/${userName}/${examplesRoot}/apps/mapreduce/${outputDir}"/>
             </prepare>
             <configuration>
+                <property>
+                    <name>mapred.mapper.new-api</name>
+                    <value>true</value>
+                </property>
+                <property>
+                    <name>mapred.reducer.new-api</name>
+                    <value>true</value>
+                </property>
                 <property>
                     <name>mapred.job.queue.name</name>
                     <value>${queueName}</value>
                 </property>
                 <property>
-                    <name>mapreduce.mapper.class</name>
+                    <name>mapreduce.job.map.class</name>
                     <value>WordCount$Map</value>
                 </property>
                 <property>
-                    <name>mapreduce.reducer.class</name>
-                    <value>WordCount$Reduce</value>
-                </property>
-                <property>
-                    <name>mapreduce.combine.class</name>
+                    <name>mapreduce.job.reduce.class</name>
                     <value>WordCount$Reduce</value>
                 </property>
                 <property>
                     <name>mapreduce.job.output.key.class</name>
                     <value>org.apache.hadoop.io.Text</value>
                 </property>
-                <property>
+                    <property>
                     <name>mapreduce.job.output.value.class</name>
                     <value>org.apache.hadoop.io.IntWritable</value>
                 </property>
                 <property>
-                    <name>mapred.input.dir</name>
-                    <value>/user/mapreduce/${examplesRoot}/mapreduce/input</value>
+                    <name>mapreduce.input.fileinputformat.inputdir</name>
+                    <value>/user/${userName}/${examplesRoot}/apps/mapreduce/input</value>
                 </property>
                 <property>
-                    <name>mapred.output.dir</name>
-                    <value>/user/mapreduce/${examplesRoot}/mapreduce/output</value>
+                    <name>mapreduce.output.fileoutputformat.outputdir</name>
+                    <value>/user/${userName}/${examplesRoot}/apps/mapreduce/${outputDir}</value>
                 </property>
             </configuration>
-            <file>/user/mapreduce/${examplesRoot}/mapreduce/lib/wordcount.jar</file>
+            <file>/user/${userName}/${examplesRoot}/apps/mapreduce/lib/wordcount.jar</file>
         </map-reduce>
         <ok to="end"/>
         <error to="fail"/>

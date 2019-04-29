@@ -9,3 +9,10 @@ __pycache__
 
 .mypy_cache
 /oozie-to-airflow/output
+/oozie-to-airflow/.DATAPROC_CLUSTER_NAME
+/oozie-to-airflow/.GCP_REGION
+/oozie-to-airflow/.PHASE
+/oozie-to-airflow/.COMPOSER_LOCATION
+/oozie-to-airflow/.LOCAL_APP_NAME
+/oozie-to-airflow/.COMPOSER_DAG_BUCKET
+/oozie-to-airflow/.COMPOSER_NAME

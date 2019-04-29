@@ -160,7 +160,7 @@ class OozieConverter:
             file.write(textwrap.indent(node.mapper.convert_to_text(), indent * " "))
             logging.info(f"Wrote tasks corresponding to the action named: {node.mapper.name}")
             node.mapper.copy_extra_assets(
-                input_directory_path=self.input_directory_path,
+                input_directory_path=os.path.join(self.input_directory_path, "assets"),
                 output_directory_path=self.output_directory_path,
             )
 
