@@ -58,9 +58,7 @@ class TestPigMapper(unittest.TestCase):
 
     def test_create_mapper_no_jinja(self):
         params = {"nameNode": "hdfs://"}
-        mapper = pig_mapper.PigMapper(
-            oozie_node=self.pig_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=params
-        )
+        mapper = self._get_pig_mapper(params=params)
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
@@ -87,9 +85,7 @@ class TestPigMapper(unittest.TestCase):
             "scriptName": "id_el.pig",
         }
 
-        mapper = pig_mapper.PigMapper(
-            oozie_node=self.pig_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=params
-        )
+        mapper = self._get_pig_mapper(params=params)
 
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
@@ -105,24 +101,25 @@ class TestPigMapper(unittest.TestCase):
         )
 
     def test_convert_to_text(self):
-        mapper = pig_mapper.PigMapper(
-            oozie_node=self.pig_node,
-            name="test_id",
-            trigger_rule=TriggerRule.DUMMY,
-            params={"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3", "nameNode": "hdfs://"},
-        )
+        params = {"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3", "nameNode": "hdfs://"}
+        mapper = self._get_pig_mapper(params=params)
         # Throws a syntax error if doesn't parse correctly
         ast.parse(mapper.convert_to_text())
 
-    # pylint: disable=no-self-use
+    def test_first_task_id(self):
+        params = {"nameNode": "hdfs://"}
+        mapper = self._get_pig_mapper(params=params)
+        self.assertEqual(mapper.first_task_id, "test_id_prepare")
+
     def test_required_imports(self):
-        imps = pig_mapper.PigMapper.required_imports()
+        params = {"nameNode": "hdfs://"}
+        mapper = self._get_pig_mapper(params=params)
+        imps = mapper.required_imports()
         imp_str = "\n".join(imps)
         ast.parse(imp_str)
 
-    def test_first_task_id(self):
-        params = {"nameNode": "hdfs://"}
+    def _get_pig_mapper(self, params=None):
         mapper = pig_mapper.PigMapper(
             oozie_node=self.pig_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=params
         )
-        self.assertEqual(mapper.first_task_id, "test_id_prepare")
+        return mapper

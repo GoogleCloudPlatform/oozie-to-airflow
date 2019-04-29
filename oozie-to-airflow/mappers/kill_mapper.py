@@ -24,8 +24,7 @@ class KillMapper(BaseMapper):
     def convert_to_text(self) -> str:
         return render_template(template_name="kill.tpl", task_id=self.name, trigger_rule=self.trigger_rule)
 
-    @staticmethod
-    def required_imports() -> Set[str]:
+    def required_imports(self) -> Set[str]:
         return {"from airflow.operators import bash_operator"}
 
     def on_parse_finish(self, workflow: Workflow):

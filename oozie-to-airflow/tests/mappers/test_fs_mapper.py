@@ -164,7 +164,7 @@ class FsMapperSingleTestCase(unittest.TestCase):
             </fs>"""
         self.node = ET.fromstring(node_str)
 
-        self.mapper = fs_mapper.FsMapper(oozie_node=self.node, name="test_id", trigger_rule=TriggerRule.DUMMY)
+        self.mapper = _get_fs_mapper(oozie_node=self.node)
         self.mapper.on_parse_node()
 
     def test_convert_to_text(self):
@@ -172,7 +172,7 @@ class FsMapperSingleTestCase(unittest.TestCase):
         self.assertIsNotNone(ast.parse(self.mapper.convert_to_text()))
 
     def test_required_imports(self):
-        imps = fs_mapper.FsMapper.required_imports()
+        imps = self.mapper.required_imports()
         imp_str = "\n".join(imps)
         self.assertIsNotNone(ast.parse(imp_str))
 
@@ -186,7 +186,7 @@ class FsMapperSingleTestCase(unittest.TestCase):
 class FsMapperEmptyTestCase(unittest.TestCase):
     def setUp(self):
         self.node = ET.Element("fs")
-        self.mapper = fs_mapper.FsMapper(oozie_node=self.node, name="test_id", trigger_rule=TriggerRule.DUMMY)
+        self.mapper = _get_fs_mapper(oozie_node=self.node)
         self.mapper.on_parse_node()
 
     def test_convert_to_text(self):
@@ -194,7 +194,7 @@ class FsMapperEmptyTestCase(unittest.TestCase):
         self.assertIsNotNone(ast.parse(self.mapper.convert_to_text()))
 
     def test_required_imports(self):
-        imps = fs_mapper.FsMapper.required_imports()
+        imps = self.mapper.required_imports()
         imp_str = "\n".join(imps)
         self.assertIsNotNone(ast.parse(imp_str))
 
@@ -247,7 +247,7 @@ class FsMapperComplexTestCase(unittest.TestCase):
             </fs>"""
         self.node = ET.fromstring(node_str)
 
-        self.mapper = fs_mapper.FsMapper(oozie_node=self.node, name="test_id", trigger_rule=TriggerRule.DUMMY)
+        self.mapper = _get_fs_mapper(oozie_node=self.node)
         self.mapper.on_parse_node()
 
     def test_convert_to_text(self):
@@ -255,7 +255,7 @@ class FsMapperComplexTestCase(unittest.TestCase):
         self.assertIsNotNone(ast.parse(self.mapper.convert_to_text()))
 
     def test_required_imports(self):
-        imps = fs_mapper.FsMapper.required_imports()
+        imps = self.mapper.required_imports()
         imp_str = "\n".join(imps)
         self.assertIsNotNone(ast.parse(imp_str))
 
@@ -264,3 +264,7 @@ class FsMapperComplexTestCase(unittest.TestCase):
 
     def test_get_last_task_id(self):
         self.assertEqual(self.mapper.last_task_id, "test_id_fs_17_chgrp")
+
+
+def _get_fs_mapper(oozie_node):
+    return fs_mapper.FsMapper(oozie_node=oozie_node, name="test_id", trigger_rule=TriggerRule.DUMMY)

@@ -65,8 +65,7 @@ class ShellMapper(ActionMapper, PrepareMixin):
             template_name=self.template, prepare_command=prepare_command, task_id=self.name, **self.__dict__
         )
 
-    @staticmethod
-    def required_imports() -> Set[str]:
+    def required_imports(self) -> Set[str]:
         return {"from airflow.utils import dates", "from airflow.contrib.operators import dataproc_operator"}
 
     @property

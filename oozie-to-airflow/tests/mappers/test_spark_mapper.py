@@ -90,9 +90,7 @@ EXAMPLE_PARAMS = {
 class TestSparkMapperWithPrepare(unittest.TestCase):
     def test_create_mapper(self):
         spark_node = ET.fromstring(EXAMPLE_XML_WITH_PREPARE)
-        mapper = spark_mapper.SparkMapper(
-            oozie_node=spark_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=EXAMPLE_PARAMS
-        )
+        mapper = self._get_spark_mapper(spark_node)
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
@@ -101,9 +99,7 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
     @mock.patch.object(spark_mapper, "render_template", wraps=render_template)
     def test_convert_to_text_with_prepare_node(self, render_template_mock):
         spark_node = ET.fromstring(EXAMPLE_XML_WITH_PREPARE)
-        mapper = spark_mapper.SparkMapper(
-            oozie_node=spark_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=EXAMPLE_PARAMS
-        )
+        mapper = self._get_spark_mapper(spark_node)
         mapper.on_parse_node()
 
         res = mapper.convert_to_text()
@@ -146,9 +142,7 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
     @mock.patch.object(spark_mapper, "render_template", wraps=render_template)
     def test_convert_to_text_without_prepare_node(self, render_template_mock):
         spark_node = ET.fromstring(EXAMPLE_XML_WITHOUT_PREPARE)
-        mapper = spark_mapper.SparkMapper(
-            oozie_node=spark_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=EXAMPLE_PARAMS
-        )
+        mapper = self._get_spark_mapper(spark_node)
         mapper.on_parse_node()
 
         res = mapper.convert_to_text()
@@ -212,9 +206,7 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
         spark_node = ET.fromstring(EXAMPLE_XML_WITHOUT_PREPARE)
         spark_opts_node = find_nodes_by_tag(spark_node, spark_mapper.SPARK_TAG_OPTS)[0]
         spark_opts_node.text = spark_opts
-        mapper = spark_mapper.SparkMapper(
-            oozie_node=spark_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=EXAMPLE_PARAMS
-        )
+        mapper = self._get_spark_mapper(spark_node)
         mapper.on_parse_node()
 
         res = mapper.convert_to_text()
@@ -225,8 +217,16 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
         self.assertTrue(ast.parse(res))
         self.assertEqual(tasks[0].template_params["dataproc_spark_properties"], properties)
 
-    # pylint: disable=no-self-use
     def test_required_imports(self):
-        imps = spark_mapper.SparkMapper.required_imports()
+        spark_node = ET.fromstring(EXAMPLE_XML_WITHOUT_PREPARE)
+        mapper = self._get_spark_mapper(spark_node)
+        imps = mapper.required_imports()
         imp_str = "\n".join(imps)
         ast.parse(imp_str)
+
+    @staticmethod
+    def _get_spark_mapper(spark_node):
+        mapper = spark_mapper.SparkMapper(
+            oozie_node=spark_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=EXAMPLE_PARAMS
+        )
+        return mapper

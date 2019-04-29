@@ -52,9 +52,7 @@ class TestShellMapper(unittest.TestCase):
         self.shell_node = ET.fromstring(shell_node_str)
 
     def test_create_mapper_no_jinja(self):
-        mapper = shell_mapper.ShellMapper(
-            oozie_node=self.shell_node, name="test_id", trigger_rule=TriggerRule.DUMMY
-        )
+        mapper = self._get_shell_mapper(params=None)
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
@@ -75,9 +73,7 @@ class TestShellMapper(unittest.TestCase):
             "examplesRoot": "examples",
         }
 
-        mapper = shell_mapper.ShellMapper(
-            oozie_node=self.shell_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=params
-        )
+        mapper = self._get_shell_mapper(params=params)
 
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
@@ -89,21 +85,23 @@ class TestShellMapper(unittest.TestCase):
         self.assertEqual("echo arg1 arg2", mapper.bash_command)
 
     def test_convert_to_text(self):
-        mapper = shell_mapper.ShellMapper(
-            oozie_node=self.shell_node,
-            name="test_id",
-            trigger_rule=TriggerRule.DUMMY,
-            params={
-                "dataproc_cluster": "my-cluster",
-                "gcp_region": "europe-west3",
-                "nameNode": "hdfs://localhost:9020/",
-            },
-        )
+        params = {
+            "dataproc_cluster": "my-cluster",
+            "gcp_region": "europe-west3",
+            "nameNode": "hdfs://localhost:9020/",
+        }
+        mapper = self._get_shell_mapper(params=params)
         # Throws a syntax error if doesn't parse correctly
         ast.parse(mapper.convert_to_text())
 
-    # pylint: disable=no-self-use
     def test_required_imports(self):
-        imps = shell_mapper.ShellMapper.required_imports()
+        params = {"nameNode": "hdfs://localhost:9020/"}
+        mapper = self._get_shell_mapper(params=params)
+        imps = mapper.required_imports()
         imp_str = "\n".join(imps)
         ast.parse(imp_str)
+
+    def _get_shell_mapper(self, params):
+        return shell_mapper.ShellMapper(
+            oozie_node=self.shell_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=params
+        )

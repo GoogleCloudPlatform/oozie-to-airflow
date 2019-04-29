@@ -36,9 +36,7 @@ class TestDecisionMapper(unittest.TestCase):
         self.decision_node = ET.fromstring(decision_node_str)
 
     def test_create_mapper(self):
-        mapper = decision_mapper.DecisionMapper(
-            oozie_node=self.decision_node, name="test_id", trigger_rule=TriggerRule.DUMMY
-        )
+        mapper = self._get_decision_mapper()
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
@@ -50,14 +48,17 @@ class TestDecisionMapper(unittest.TestCase):
         # TODO
         # decision mapper does not have the required EL parsing to correctly get
         # parsed, so once that is finished need to redo tests.
-        mapper = decision_mapper.DecisionMapper(
-            oozie_node=self.decision_node, name="test_id", trigger_rule=TriggerRule.DUMMY
-        )
+        mapper = self._get_decision_mapper()
         res = mapper.convert_to_text()
         ast.parse(res)
 
-    # pylint: disable=no-self-use
     def test_required_imports(self):
-        imps = decision_mapper.DecisionMapper.required_imports()
+        mapper = self._get_decision_mapper()
+        imps = mapper.required_imports()
         imp_str = "\n".join(imps)
         ast.parse(imp_str)
+
+    def _get_decision_mapper(self):
+        return decision_mapper.DecisionMapper(
+            oozie_node=self.decision_node, name="test_id", trigger_rule=TriggerRule.DUMMY
+        )

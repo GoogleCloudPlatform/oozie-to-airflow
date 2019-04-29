@@ -30,32 +30,20 @@ class TestKillMapper(unittest.TestCase):
     oozie_node = Element("dummy")
 
     def test_create_mapper(self):
-        mapper = kill_mapper.KillMapper(
-            oozie_node=self.oozie_node, name="test_id", trigger_rule=TriggerRule.DUMMY
-        )
+        mapper = self._get_kill_mapper()
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
 
     def test_convert_to_text(self):
-        mapper = kill_mapper.KillMapper(
-            oozie_node=self.oozie_node, name="test_id", trigger_rule=TriggerRule.DUMMY
-        )
+        mapper = self._get_kill_mapper()
         # Throws a syntax error if doesn't parse correctly
         ast.parse(mapper.convert_to_text())
-
-    # pylint: disable=no-self-use
-    def test_required_imports(self):
-        imps = kill_mapper.KillMapper.required_imports()
-        imp_str = "\n".join(imps)
-        ast.parse(imp_str)
 
     def test_on_parse_finish(self):
         workflow = Workflow(input_directory_path=None, output_directory_path=None, dag_name=None)
 
-        mapper = kill_mapper.KillMapper(
-            oozie_node=self.oozie_node, name="fail_task", trigger_rule=TriggerRule.DUMMY
-        )
+        mapper = self._get_kill_mapper(name="fail_task")
 
         workflow.nodes["task"] = ParsedNode(mock.Mock(autospec=BaseMapper))
         workflow.nodes["fail_task"] = ParsedNode(mapper)
@@ -72,3 +60,12 @@ class TestKillMapper(unittest.TestCase):
 
         self.assertEqual(set(workflow.nodes.keys()), {"task", "success_task"})
         self.assertEqual(workflow.relations, {Relation(from_task_id="task", to_task_id="success_task")})
+
+    def test_required_imports(self):
+        mapper = self._get_kill_mapper()
+        imps = mapper.required_imports()
+        imp_str = "\n".join(imps)
+        ast.parse(imp_str)
+
+    def _get_kill_mapper(self, name="test_id"):
+        return kill_mapper.KillMapper(oozie_node=self.oozie_node, name=name, trigger_rule=TriggerRule.DUMMY)

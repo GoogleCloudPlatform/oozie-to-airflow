@@ -67,17 +67,7 @@ class TestSubworkflowMapper(TestCase):
         with suppress(OSError):
             os.remove("/tmp/test.test_id.py")
         # When
-        mapper = subworkflow_mapper.SubworkflowMapper(
-            oozie_node=self.subworkflow_node,
-            name="test_id",
-            dag_name="test",
-            input_directory_path=EXAMPLE_SUBWORKFLOW_PATH,
-            output_directory_path="/tmp",
-            action_mapper=ACTION_MAP,
-            control_mapper=CONTROL_MAP,
-            trigger_rule=TriggerRule.DUMMY,
-            params=self.main_params,
-        )
+        mapper = self._get_subwf_mapper()
 
         # Then
         self.assertEqual("test_id", mapper.task_id)
@@ -101,17 +91,7 @@ class TestSubworkflowMapper(TestCase):
         self.subworkflow_node.remove(propagate_configuration)
 
         # When
-        mapper = subworkflow_mapper.SubworkflowMapper(
-            oozie_node=self.subworkflow_node,
-            name="test_id",
-            dag_name="test",
-            input_directory_path=EXAMPLE_SUBWORKFLOW_PATH,
-            output_directory_path="/tmp",
-            action_mapper=ACTION_MAP,
-            control_mapper=CONTROL_MAP,
-            trigger_rule=TriggerRule.DUMMY,
-            params=self.main_params,
-        )
+        mapper = self._get_subwf_mapper()
 
         # Then
         self.assertEqual("test_id", mapper.task_id)
@@ -128,24 +108,27 @@ class TestSubworkflowMapper(TestCase):
         # Given
         parse_els.return_value = self.subworkflow_params
         # When
-        mapper = subworkflow_mapper.SubworkflowMapper(
-            input_directory_path=EXAMPLE_SUBWORKFLOW_PATH,
-            output_directory_path="/tmp",
-            oozie_node=self.subworkflow_node,
-            name="test_id",
-            dag_name="test",
-            trigger_rule=TriggerRule.DUMMY,
-            params=self.main_params,
-            action_mapper=ACTION_MAP,
-            control_mapper=CONTROL_MAP,
-        )
+        mapper = self._get_subwf_mapper()
 
         # Then
         # Throws a syntax error if doesn't parse correctly
         ast.parse(mapper.convert_to_text())
 
-    # pylint: disable=no-self-use
     def test_required_imports(self):
-        imps = subworkflow_mapper.SubworkflowMapper.required_imports()
+        mapper = self._get_subwf_mapper()
+        imps = mapper.required_imports()
         imp_str = "\n".join(imps)
         ast.parse(imp_str)
+
+    def _get_subwf_mapper(self):
+        return subworkflow_mapper.SubworkflowMapper(
+            input_directory_path=EXAMPLE_SUBWORKFLOW_PATH,
+            output_directory_path="/tmp",
+            oozie_node=self.subworkflow_node,
+            name="test_id",
+            dag_name="test",
+            action_mapper=ACTION_MAP,
+            trigger_rule=TriggerRule.DUMMY,
+            control_mapper=CONTROL_MAP,
+            params=self.main_params,
+        )

@@ -91,8 +91,7 @@ class DecisionMapper(BaseMapper):
             case_dict=self.case_dict.items(),
         )
 
-    @staticmethod
-    def required_imports() -> Set[str]:
+    def required_imports(self) -> Set[str]:
         return {
             "from airflow.operators import python_operator",
             "from airflow.utils import dates",
