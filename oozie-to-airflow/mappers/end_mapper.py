@@ -29,6 +29,9 @@ class EndMapper(DummyMapper):
 
         if not decision_node_ids.intersection(upstream_task_ids):
             del workflow.nodes[self.name]
-            workflow.relations -= {
-                relation for relation in workflow.relations if relation.to_task_id == self.name
-            }
+
+        workflow.relations -= {
+            relation
+            for relation in workflow.relations
+            if relation.to_task_id == self.name and relation.from_task_id not in decision_node_ids
+        }
