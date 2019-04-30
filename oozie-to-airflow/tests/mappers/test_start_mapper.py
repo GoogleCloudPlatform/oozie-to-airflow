@@ -36,7 +36,7 @@ class TestStartMapper(unittest.TestCase):
 
     def test_convert_to_text(self):
         mapper = StartMapper(oozie_node=self.oozie_node, name="test_id", trigger_rule=TriggerRule.DUMMY)
-        ast.parse(mapper.convert_to_text())
+        self.assertEqual("", mapper.convert_to_text())
 
     # pylint: disable=no-self-use
     def test_required_imports(self):

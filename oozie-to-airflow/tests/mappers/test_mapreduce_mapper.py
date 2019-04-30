@@ -15,10 +15,12 @@
 """Tests for the MapReduce mapper"""
 import ast
 import unittest
+from unittest import mock
 from xml.etree import ElementTree as ET
 
 from airflow.utils.trigger_rule import TriggerRule
 
+from converter.primitives import Task, Relation
 from mappers import mapreduce_mapper
 
 
@@ -126,9 +128,9 @@ class TestMapReduceMapper(unittest.TestCase):
             "/user/mapred/examples/mapreduce/output",
             mapper.properties["mapreduce.output.fileoutputformat.outputdir"],
         )
-        # )
 
-    def test_convert_to_text(self):
+    @mock.patch("mappers.mapreduce_mapper.render_template", return_value="RETURN")
+    def test_convert_to_text(self, render_template_mock):
         mapper = mapreduce_mapper.MapReduceMapper(
             oozie_node=self.mapreduce_node,
             name="test_id",
@@ -141,8 +143,53 @@ class TestMapReduceMapper(unittest.TestCase):
                 "hadoop_main_class": "WordCount",
             },
         )
-        # Throws a syntax error if doesn't parse correctly
-        ast.parse(mapper.convert_to_text())
+        mapper.on_parse_node()
+
+        res = mapper.convert_to_text()
+        self.assertEqual(res, "RETURN")
+
+        _, kwargs = render_template_mock.call_args
+        tasks = kwargs["tasks"]
+        relations = kwargs["relations"]
+
+        self.assertEqual(kwargs["template_name"], "action.tpl")
+        self.assertEqual(
+            tasks,
+            [
+                Task(
+                    task_id="test_id_prepare",
+                    template_name="prepare.tpl",
+                    template_params={
+                        "prepare_command": "$DAGS_FOLDER/../data/prepare.sh -c my-cluster "
+                        '-r europe-west3 -d "/examples/mapreduce/output"'
+                    },
+                ),
+                Task(
+                    task_id="test_id",
+                    template_name="mapreduce.tpl",
+                    template_params={
+                        "trigger_rule": "dummy",
+                        "properties": {
+                            "mapred.mapper.new-api": "true",
+                            "mapred.reducer.new-api": "true",
+                            "mapred.job.queue.name": "${queueName}",
+                            "mapreduce.job.map.class": "WordCount$Map",
+                            "mapreduce.job.reduce.class": "WordCount$Reduce",
+                            "mapreduce.job.output.key.class": "org.apache.hadoop.io.Text",
+                            "mapreduce.job.output.value.class": "org.apache.hadoop.io.IntWritable",
+                            "mapreduce.input.fileinputformat.inputdir": "/user/mapred/${examplesRoot}"
+                            "/mapreduce/input",
+                            "mapreduce.output.fileoutputformat.outputdir": "/user/mapred/${examplesRoot}"
+                            "/mapreduce/output",
+                        },
+                        "params_dict": {},
+                        "hdfs_files": [],
+                        "hdfs_archives": [],
+                    },
+                ),
+            ],
+        )
+        self.assertEqual(relations, [Relation(from_task_id="test_id_prepare", to_task_id="test_id")])
 
     # pylint: disable=no-self-use
     def test_required_imports(self):

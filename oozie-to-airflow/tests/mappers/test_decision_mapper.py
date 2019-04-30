@@ -15,9 +15,13 @@
 """Tests decision_mapper"""
 import ast
 import unittest
+from unittest import mock
+from collections import OrderedDict
 
 from xml.etree import ElementTree as ET
 from airflow.utils.trigger_rule import TriggerRule
+
+from converter.primitives import Task
 from mappers import decision_mapper
 
 
@@ -46,15 +50,39 @@ class TestDecisionMapper(unittest.TestCase):
         # test conversion from Oozie EL to Jinja
         self.assertEqual("first_not_null('', '')", next(iter(mapper.case_dict)))
 
-    def test_convert_to_text(self):
+    @mock.patch("mappers.decision_mapper.render_template", return_value="RETURN")
+    def test_convert_to_text(self, render_template_mock):
         # TODO
         # decision mapper does not have the required EL parsing to correctly get
         # parsed, so once that is finished need to redo tests.
         mapper = decision_mapper.DecisionMapper(
             oozie_node=self.decision_node, name="test_id", trigger_rule=TriggerRule.DUMMY
         )
+
         res = mapper.convert_to_text()
-        ast.parse(res)
+        self.assertEqual(res, "RETURN")
+
+        _, kwargs = render_template_mock.call_args
+        tasks = kwargs["tasks"]
+        relations = kwargs["relations"]
+
+        self.assertEqual(kwargs["template_name"], "action.tpl")
+        self.assertEqual(
+            tasks,
+            [
+                Task(
+                    task_id="test_id",
+                    template_name="decision.tpl",
+                    template_params={
+                        "trigger_rule": "dummy",
+                        "case_dict": OrderedDict(
+                            [("first_not_null('', '')", "task1"), ("'True'", "task2"), ("default", "task3")]
+                        ),
+                    },
+                )
+            ],
+        )
+        self.assertEqual(relations, [])
 
     # pylint: disable=no-self-use
     def test_required_imports(self):

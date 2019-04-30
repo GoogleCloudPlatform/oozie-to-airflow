@@ -438,7 +438,7 @@ class TestOozieExamples(unittest.TestCase):
                         Relation(from_task_id="shell_node", to_task_id="join_node"),
                         Relation(from_task_id="subworkflow_node", to_task_id="join_node"),
                     },
-                    params={"nameNode": "hdfs://"},
+                    params={"nameNode": "hdfs://", "dataproc_cluster": "AAA"},
                 ),
             ),
             (
