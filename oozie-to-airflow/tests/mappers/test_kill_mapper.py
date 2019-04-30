@@ -20,7 +20,7 @@ from xml.etree.ElementTree import Element
 from airflow.utils.trigger_rule import TriggerRule
 
 from converter.parsed_node import ParsedNode
-from converter.primitives import Workflow, Relation
+from converter.primitives import Workflow, Relation, Task
 from mappers import kill_mapper
 from mappers.base_mapper import BaseMapper
 
@@ -35,10 +35,25 @@ class TestKillMapper(unittest.TestCase):
         self.assertEqual("test_id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
 
-    def test_convert_to_text(self):
-        mapper = self._get_kill_mapper()
-        # Throws a syntax error if doesn't parse correctly
-        ast.parse(mapper.convert_to_text())
+    @mock.patch("mappers.kill_mapper.render_template", return_value="RETURN")
+    def test_convert_to_text(self, render_template_mock):
+        mapper = kill_mapper.KillMapper(
+            oozie_node=self.oozie_node, name="test_id", trigger_rule=TriggerRule.DUMMY
+        )
+
+        res = mapper.convert_to_text()
+        self.assertEqual(res, "RETURN")
+
+        _, kwargs = render_template_mock.call_args
+        tasks = kwargs["tasks"]
+        relations = kwargs["relations"]
+
+        self.assertEqual(kwargs["template_name"], "action.tpl")
+        self.assertEqual(
+            tasks,
+            [Task(task_id="test_id", template_name="kill.tpl", template_params={"trigger_rule": "dummy"})],
+        )
+        self.assertEqual(relations, [])
 
     def test_on_parse_finish(self):
         workflow = Workflow(input_directory_path=None, output_directory_path=None, dag_name=None)
