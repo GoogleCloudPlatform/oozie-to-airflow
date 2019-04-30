@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Maps Shell action into Airflow's DAG"""
+import shlex
 from typing import Dict, Set
 
 import xml.etree.ElementTree as ET
@@ -59,6 +60,7 @@ class ShellMapper(ActionMapper, PrepareMixin):
         arg_nodes = self.oozie_node.findall("argument")
         cmd = " ".join([cmd_node.text] + [x.text for x in arg_nodes])
         self.bash_command = el_utils.convert_el_to_jinja(cmd, quote=False)
+        self.pig_command = f"sh {shlex.quote(self.bash_command)}"
 
     def convert_to_text(self) -> str:
         prepare_command = self.get_prepare_command(self.oozie_node, self.params)
@@ -71,7 +73,7 @@ class ShellMapper(ActionMapper, PrepareMixin):
             Task(
                 task_id=self.name,
                 template_name="shell.tpl",
-                template_params=dict(bash_command=self.bash_command),
+                template_params=dict(pig_command=self.pig_command),
             ),
         ]
         relations = [Relation(from_task_id=self.name + "_prepare", to_task_id=self.name)]

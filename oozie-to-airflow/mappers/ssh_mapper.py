@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Maps SSH Oozie node to Airflow's DAG"""
+import shlex
 from typing import Dict, Set, List
 from xml.etree.ElementTree import Element
 
@@ -52,7 +53,10 @@ class SSHMapper(ActionMapper):
         arg_nodes = self.oozie_node.findall("args")
         if cmd_node is None or not cmd_node.text:
             raise Exception("Missing or empty command node in SSH action {}".format(self.oozie_node))
-        cmd = " ".join([cmd_node.text] + [x.text if x.text else "" for x in arg_nodes])
+        cmd = cmd_node.text
+        args = (x.text if x.text else "" for x in arg_nodes)
+        cmd = " ".join(shlex.quote(x) for x in [cmd, *args])
+
         self.command = el_utils.convert_el_to_jinja(cmd, quote=True)
         host = self.oozie_node.find("host")
         if host is None:
