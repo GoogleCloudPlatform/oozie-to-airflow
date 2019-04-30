@@ -62,15 +62,18 @@ The program targets Apache Airflow >= 1.10 and Apache Oozie 1.0 XML schema.
   * [Shell Example](#shell-example)
     * [Output](#output-6)
     * [Current limitations](#current-limitations-6)
-  * [Sub\-workflow Example](#sub-workflow-example)
+  * [Spark Example](#spark-example)
     * [Output](#output-7)
     * [Current limitations](#current-limitations-7)
-  * [Decision Example](#decision-example)
+  * [Sub\-workflow Example](#sub-workflow-example)
     * [Output](#output-8)
     * [Current limitations](#current-limitations-8)
-  * [EL Example](#el-example)
+  * [Decision Example](#decision-example)
     * [Output](#output-9)
     * [Current limitations](#current-limitations-9)
+  * [EL Example](#el-example)
+    * [Output](#output-10)
+    * [Current limitations](#current-limitations-10)
 * [Unit Tests](#unit-tests)
 * [System Tests](#system-tests)
   * [System test environment](#system-test-environment)
@@ -535,6 +538,41 @@ From the [Oozie documentation](https://oozie.apache.org/docs/5.1.0/DG_ShellActio
 using the configuration elements.
 
 Currently there is no way specify the shell launcher configuration (it is ignored).
+
+## Spark Example
+
+The Shell example can be run as:
+
+`python o2a.py -i examples/spark -o output/spark`
+
+Make sure to first copy `/examples/spark/configuration.template.properties`, rename it as
+`configuration.properties` and fill in with configuration data.
+
+### Output
+In this example the output will appear in `/output/spark/spark.py`.
+
+The converted DAG uses the `DataProcSparkOperator` in Airflow.
+
+### Current limitations
+
+**1. Ony tasks written in Java are supported**
+
+From the [Oozie documentation](https://oozie.apache.org/docs/5.1.0/DG_ShellActionExtension.html):
+> The jar element indicates a comma separated list of jars or python files.
+
+The solution was tested with only a single Jar file.
+
+**2. No Spark launcher configuration**
+
+From the [Oozie documentation](https://oozie.apache.org/docs/5.1.0/DG_SparkActionExtension.html):
+> Shell launcher configuration can be specified with a file, using the job-xml element, and inline,
+using the configuration elements.
+
+Currently there is no way to specify the Spark launcher configuration (it is ignored).
+
+**3. Not all elements are supported**
+
+The following elements are not supported: `job-tracker`, `name-node`, `master`, `mode`.
 
 ## Sub-workflow Example
 
