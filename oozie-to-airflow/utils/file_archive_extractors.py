@@ -57,8 +57,8 @@ class FileExtractor:
     """ Extracts all file paths from an Oozie node """
 
     def __init__(self, oozie_node: Element, params: Dict[str, str]):
-        self.files: str = ""
-        self.hdfs_files: str = ""
+        self.files: List[str] = []
+        self.hdfs_files: List[str] = []
         self.file_path_processor = HdfsPathProcessor(params=params)
         self.oozie_node = oozie_node
         self.params = params
@@ -81,12 +81,8 @@ class FileExtractor:
         """
         self.file_path_processor.check_path_for_comma(oozie_file_path)
         split_by_hash_sign(oozie_file_path)
-        self.files = "{},{}".format(self.files, oozie_file_path) if self.files else oozie_file_path
-        self.hdfs_files = (
-            self.hdfs_files + "," + self.file_path_processor.preprocess_path_to_hdfs(oozie_file_path)
-            if self.hdfs_files
-            else self.file_path_processor.preprocess_path_to_hdfs(oozie_file_path)
-        )
+        self.files.append(oozie_file_path)
+        self.hdfs_files.append(self.file_path_processor.preprocess_path_to_hdfs(oozie_file_path))
 
 
 class ArchiveExtractor:
@@ -95,8 +91,8 @@ class ArchiveExtractor:
     ALLOWED_EXTENSIONS = [".zip", ".gz", ".tar.gz", ".tar", ".jar"]
 
     def __init__(self, oozie_node: Element, params: Dict[str, str]):
-        self.archives: str = ""
-        self.hdfs_archives: str = ""
+        self.archives: List[str] = []
+        self.hdfs_archives: List[str] = []
         self.archive_path_processor = HdfsPathProcessor(params=params)
         self.oozie_node = oozie_node
         self.params = params
@@ -131,11 +127,5 @@ class ArchiveExtractor:
     def add_archive(self, oozie_archive_path: str):
         self.archive_path_processor.check_path_for_comma(oozie_archive_path)
         self._check_archive_extensions(oozie_archive_path)
-        self.archives = (
-            "{},{}".format(self.archives, oozie_archive_path) if self.archives else oozie_archive_path
-        )
-        self.hdfs_archives = (
-            self.hdfs_archives + "," + self.archive_path_processor.preprocess_path_to_hdfs(oozie_archive_path)
-            if self.hdfs_archives
-            else self.archive_path_processor.preprocess_path_to_hdfs(oozie_archive_path)
-        )
+        self.archives.append(oozie_archive_path)
+        self.hdfs_archives.append(self.archive_path_processor.preprocess_path_to_hdfs(oozie_archive_path))

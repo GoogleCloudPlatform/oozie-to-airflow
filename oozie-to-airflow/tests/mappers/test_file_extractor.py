@@ -33,8 +33,8 @@ class TestFileExtractor(unittest.TestCase):
         # When
         file_extractor.add_file("test_file")
         # Then
-        self.assertEqual(file_extractor.files, "test_file")
-        self.assertEqual(file_extractor.hdfs_files, "hdfs:///user/pig/examples/pig_test_node/test_file")
+        self.assertEqual(file_extractor.files, ["test_file"])
+        self.assertEqual(file_extractor.hdfs_files, ["hdfs:///user/pig/examples/pig_test_node/test_file"])
 
     def test_add_absolute_file(self):
         # Given
@@ -42,8 +42,8 @@ class TestFileExtractor(unittest.TestCase):
         # When
         file_extractor.add_file("/test_file")
         # Then
-        self.assertEqual(file_extractor.files, "/test_file")
-        self.assertEqual(file_extractor.hdfs_files, "hdfs:///test_file")
+        self.assertEqual(file_extractor.files, ["/test_file"])
+        self.assertEqual(file_extractor.hdfs_files, ["hdfs:///test_file"])
 
     def test_add_multiple_files(self):
         # Given
@@ -53,10 +53,10 @@ class TestFileExtractor(unittest.TestCase):
         file_extractor.add_file("test_file2")
         file_extractor.add_file("/test_file3")
         # Then
-        self.assertEqual(file_extractor.files, "/test_file,test_file2,/test_file3")
+        self.assertEqual(file_extractor.files, ["/test_file", "test_file2", "/test_file3"])
         self.assertEqual(
             file_extractor.hdfs_files,
-            "hdfs:///test_file," "hdfs:///user/pig/examples/pig_test_node/test_file2," "hdfs:///test_file3",
+            ["hdfs:///test_file", "hdfs:///user/pig/examples/pig_test_node/test_file2", "hdfs:///test_file3"],
         )
 
     def test_add_hash_files(self):
@@ -67,12 +67,16 @@ class TestFileExtractor(unittest.TestCase):
         file_extractor.add_file("test_file2#test_link")
         file_extractor.add_file("/test_file3")
         # Then
-        self.assertEqual(file_extractor.files, "/test_file#test3_link,test_file2#test_link,/test_file3")
+        self.assertEqual(
+            file_extractor.files, ["/test_file#test3_link", "test_file2#test_link", "/test_file3"]
+        )
         self.assertEqual(
             file_extractor.hdfs_files,
-            "hdfs:///test_file#test3_link,"
-            "hdfs:///user/pig/examples/pig_test_node/test_file2#test_link,"
-            "hdfs:///test_file3",
+            [
+                "hdfs:///test_file#test3_link",
+                "hdfs:///user/pig/examples/pig_test_node/test_file2#test_link",
+                "hdfs:///test_file3",
+            ],
         )
 
     def test_add_file_extra_hash(self):
@@ -103,8 +107,10 @@ class TestFileExtractor(unittest.TestCase):
         file_extractor.parse_node()
         # Then
         self.assertEqual(
-            "hdfs:///path/with/el/value1,"
-            "hdfs:///path/with/el/value2,"
-            "hdfs:///path/with/two/els/value1/value2",
             file_extractor.hdfs_files,
+            [
+                "hdfs:///path/with/el/value1",
+                "hdfs:///path/with/el/value2",
+                "hdfs:///path/with/two/els/value1/value2",
+            ],
         )
