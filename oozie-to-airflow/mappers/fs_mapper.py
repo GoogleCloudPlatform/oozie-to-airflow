@@ -136,10 +136,10 @@ class FsMapper(ActionMapper):
 
     def convert_to_text(self):
         return render_template(
-            template_name="fs.tpl",
+            template_name="action.tpl",
             task_id=self.name,
             trigger_rule=self.trigger_rule,
-            sub_ops=self.tasks,
+            tasks=self.tasks,
             relations=chain(self.tasks),
         )
 
