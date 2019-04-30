@@ -13,16 +13,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Kill mapper - maps the workflow end"""
-from typing import Set
+from typing import Set, List
 
-from converter.primitives import Workflow
+from converter.primitives import Workflow, Task, Relation
 from mappers.base_mapper import BaseMapper
 from utils.template_utils import render_template
 
 
 class KillMapper(BaseMapper):
+    """
+    Converts a Kill Oozie node to an Airflow task.
+    """
+
     def convert_to_text(self) -> str:
-        return render_template(template_name="kill.tpl", task_id=self.name, trigger_rule=self.trigger_rule)
+        tasks = [
+            Task(
+                task_id=self.name,
+                template_name="kill.tpl",
+                template_params=dict(trigger_rule=self.trigger_rule),
+            )
+        ]
+        relations: List[Relation] = []
+        return render_template(template_name="action.tpl", tasks=tasks, relations=relations)
 
     @staticmethod
     def required_imports() -> Set[str]:

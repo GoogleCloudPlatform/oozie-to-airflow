@@ -19,6 +19,7 @@ import xml.etree.ElementTree as ET
 
 from airflow.utils.trigger_rule import TriggerRule
 
+from converter.primitives import Task, Relation
 from mappers.action_mapper import ActionMapper
 from mappers.prepare_mixin import PrepareMixin
 from utils import el_utils
@@ -61,9 +62,20 @@ class ShellMapper(ActionMapper, PrepareMixin):
 
     def convert_to_text(self) -> str:
         prepare_command = self.get_prepare_command(self.oozie_node, self.params)
-        return render_template(
-            template_name=self.template, prepare_command=prepare_command, task_id=self.name, **self.__dict__
-        )
+        tasks = [
+            Task(
+                task_id=self.name + "_prepare",
+                template_name="prepare.tpl",
+                template_params=dict(prepare_command=prepare_command),
+            ),
+            Task(
+                task_id=self.name,
+                template_name="shell.tpl",
+                template_params=dict(bash_command=self.bash_command),
+            ),
+        ]
+        relations = [Relation(from_task_id=self.name + "_prepare", to_task_id=self.name)]
+        return render_template(template_name="action.tpl", tasks=tasks, relations=relations)
 
     @staticmethod
     def required_imports() -> Set[str]:
