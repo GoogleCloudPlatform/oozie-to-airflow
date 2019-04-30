@@ -14,13 +14,15 @@
 # limitations under the License.
 """Main entry point for the Oozie to Airflow converter"""
 import argparse
+import logging
 import os
 import sys
-import logging
+import subprocess
+from subprocess import CalledProcessError
 
-from converter.oozie_converter import OozieConverter
 from converter.mappers import ACTION_MAP, CONTROL_MAP
-from utils.constants import CONFIGURATION_PROPERTIES
+from converter.oozie_converter import OozieConverter
+from utils.constants import CONFIGURATION_PROPERTIES, WORKFLOW_XML
 
 INDENT = 4
 
@@ -54,6 +56,12 @@ Otherwise please provide it.
 ########################################################################################
         """
         )
+
+    try:
+        subprocess.check_call(["./validate-workflows", f"{input_directory_path}/{WORKFLOW_XML}"])
+    except CalledProcessError:
+        logging.error("Workflow failed schema validation. Please correct the workflow XML and try again.")
+        exit(1)
 
     os.makedirs(output_directory_path, exist_ok=True)
 
