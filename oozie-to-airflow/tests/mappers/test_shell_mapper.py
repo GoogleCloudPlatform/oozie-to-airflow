@@ -15,10 +15,12 @@
 """Tests shell mapper"""
 import ast
 import unittest
+from unittest import mock
 from xml.etree import ElementTree as ET
 
 from airflow.utils.trigger_rule import TriggerRule
 
+from converter.primitives import Task, Relation
 from mappers import shell_mapper
 
 
@@ -88,7 +90,8 @@ class TestShellMapper(unittest.TestCase):
         self.assertEqual("myQueue", mapper.properties["mapred.job.queue.name"])
         self.assertEqual("echo arg1 arg2", mapper.bash_command)
 
-    def test_convert_to_text(self):
+    @mock.patch("mappers.shell_mapper.render_template", return_value="RETURN")
+    def test_convert_to_text(self, render_template_mock):
         mapper = shell_mapper.ShellMapper(
             oozie_node=self.shell_node,
             name="test_id",
@@ -99,8 +102,35 @@ class TestShellMapper(unittest.TestCase):
                 "nameNode": "hdfs://localhost:9020/",
             },
         )
-        # Throws a syntax error if doesn't parse correctly
-        ast.parse(mapper.convert_to_text())
+        res = mapper.convert_to_text()
+        self.assertEqual(res, "RETURN")
+
+        _, kwargs = render_template_mock.call_args
+        tasks = kwargs["tasks"]
+        relations = kwargs["relations"]
+
+        self.assertEqual(kwargs["template_name"], "action.tpl")
+        self.assertEqual(
+            tasks,
+            [
+                Task(
+                    task_id="test_id_prepare",
+                    template_name="prepare.tpl",
+                    template_params={
+                        "prepare_command": "$DAGS_FOLDER/../data/prepare.sh -c my-cluster -r europe-west3 "
+                        '-d "//examples/output-data/demo/pig-node //examples/output-data'
+                        '/demo/pig-node2" -m "//examples/input-data/demo/pig-node '
+                        '//examples/input-data/demo/pig-node2"'
+                    },
+                ),
+                Task(
+                    task_id="test_id",
+                    template_name="shell.tpl",
+                    template_params={"pig_command": "sh 'echo arg1 arg2'"},
+                ),
+            ],
+        )
+        self.assertEqual(relations, [Relation(from_task_id="test_id_prepare", to_task_id="test_id")])
 
     # pylint: disable=no-self-use
     def test_required_imports(self):

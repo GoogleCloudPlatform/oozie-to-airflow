@@ -67,9 +67,16 @@ class Workflow:  # pylint: disable=too-few-public-methods
             f"nodes={self.nodes.keys()}, dependencies={self.dependencies})"
         )
 
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.__dict__ == other.__dict__
+        return False
+
 
 # This is a container for data, so it does not contain public methods intentionally.
 class Task:  # pylint: disable=too-few-public-methods
+    """Class for Airflow Task"""
+
     task_id: str
     template_name: str
     template_params: Dict[str, Any]
@@ -88,3 +95,8 @@ class Task:  # pylint: disable=too-few-public-methods
             f'Task(task_id="{self.task_id}", template_name="{self.template_name}", '
             f"template_params={self.template_params})"
         )
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.__dict__ == other.__dict__
+        return False

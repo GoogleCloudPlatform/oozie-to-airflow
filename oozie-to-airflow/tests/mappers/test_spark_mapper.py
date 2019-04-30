@@ -21,8 +21,8 @@ from xml.etree import ElementTree as ET
 from parameterized import parameterized
 from airflow.utils.trigger_rule import TriggerRule
 
+from converter.primitives import Task, Relation
 from mappers import spark_mapper
-from utils.template_utils import render_template
 from utils.xml_utils import find_nodes_by_tag
 
 EXAMPLE_PARAMS = {"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3", "nameNode": "hdfs://"}
@@ -91,7 +91,7 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(spark_node, mapper.oozie_node)
 
-    @mock.patch.object(spark_mapper, "render_template", wraps=render_template)
+    @mock.patch("mappers.spark_mapper.render_template")
     def test_convert_to_text_with_prepare_node(self, render_template_mock):
         spark_node = ET.fromstring(EXAMPLE_XML_WITH_PREPARE)
         mapper = spark_mapper.SparkMapper(
@@ -99,44 +99,49 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
         )
         mapper.on_parse_node()
 
-        res = mapper.convert_to_text()
+        mapper.convert_to_text()
 
         _, kwargs = render_template_mock.call_args
         tasks = kwargs["tasks"]
         relations = kwargs["relations"]
 
-        self.assertTrue(ast.parse(res))
         self.assertEqual(kwargs["template_name"], "action.tpl")
         self.assertEqual(
-            tasks[0].template_params,
-            {
-                "prepare_command": "$DAGS_FOLDER/../data/prepare.sh -c my-cluster -r europe-west3 "
-                '-d "/tmp/d_path" -m "/tmp/mk_path"'
-            },
+            tasks,
+            [
+                Task(
+                    task_id="test_id_prepare",
+                    template_name="prepare.tpl",
+                    template_params={
+                        "prepare_command": "$DAGS_FOLDER/../data/prepare.sh -c my-cluster -r europe-west3 "
+                        '-d "/tmp/d_path" -m "/tmp/mk_path"'
+                    },
+                ),
+                Task(
+                    task_id="test_id",
+                    template_name="spark.tpl",
+                    template_params={
+                        "main_jar": None,
+                        "main_class": "org.apache.spark.examples.mllib.JavaALS",
+                        "arguments": ["inputpath=hdfs:///input/file.txt", "value=2"],
+                        "archives": [],
+                        "files": [],
+                        "job_name": "Spark Examples",
+                        "dataproc_spark_properties": {
+                            "mapred.compress.map.output": "true",
+                            "spark.executor.extraJavaOptions": "-XX:+HeapDumpOnOutOfMemoryError "
+                            "-XX:HeapDumpPath=/tmp",
+                        },
+                        "dataproc_spark_jars": ["/lib/spark-examples_2.10-1.1.0.jar"],
+                        "trigger_rule": "dummy",
+                    },
+                ),
+            ],
         )
-        self.assertEqual(
-            tasks[1].template_params,
-            {
-                "archives": [],
-                "arguments": ["inputpath=hdfs:///input/file.txt", "value=2"],
-                "dataproc_spark_jars": ["/lib/spark-examples_2.10-1.1.0.jar"],
-                "dataproc_spark_properties": {
-                    "mapred.compress.map.output": "true",
-                    "spark.executor.extraJavaOptions": "-XX:+HeapDumpOnOutOfMemoryError "
-                    "-XX:HeapDumpPath=/tmp",
-                },
-                "files": [],
-                "job_name": "Spark Examples",
-                "main_class": "org.apache.spark.examples.mllib.JavaALS",
-                "main_jar": None,
-                "trigger_rule": "dummy",
-            },
-        )
-        self.assertEqual(len(relations), 1)
-        self.assertEqual(relations[0].from_task_id, "test_id_prepare")
-        self.assertEqual(relations[0].to_task_id, "test_id")
 
-    @mock.patch.object(spark_mapper, "render_template", wraps=render_template)
+        self.assertEqual(relations, [Relation(from_task_id="test_id_prepare", to_task_id="test_id")])
+
+    @mock.patch("mappers.spark_mapper.render_template", return_value="RETURN")
     def test_convert_to_text_without_prepare_node(self, render_template_mock):
         spark_node = ET.fromstring(EXAMPLE_XML_WITHOUT_PREPARE)
         mapper = spark_mapper.SparkMapper(
@@ -145,32 +150,38 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
         mapper.on_parse_node()
 
         res = mapper.convert_to_text()
+        self.assertEqual(res, "RETURN")
 
         _, kwargs = render_template_mock.call_args
         tasks = kwargs["tasks"]
         relations = kwargs["relations"]
 
-        self.assertTrue(ast.parse(res))
         self.assertEqual(kwargs["template_name"], "action.tpl")
         self.assertEqual(
-            tasks[0].template_params,
-            {
-                "archives": [],
-                "arguments": ["inputpath=hdfs:///input/file.txt", "value=2"],
-                "dataproc_spark_jars": ["/lib/spark-examples_2.10-1.1.0.jar"],
-                "dataproc_spark_properties": {
-                    "mapred.compress.map.output": "true",
-                    "spark.executor.extraJavaOptions": "-XX:+HeapDumpOnOutOfMemoryError "
-                    "-XX:HeapDumpPath=/tmp",
-                },
-                "files": [],
-                "job_name": "Spark Examples",
-                "main_class": "org.apache.spark.examples.mllib.JavaALS",
-                "main_jar": None,
-                "trigger_rule": "dummy",
-            },
+            tasks,
+            [
+                Task(
+                    task_id="test_id",
+                    template_name="spark.tpl",
+                    template_params={
+                        "main_jar": None,
+                        "main_class": "org.apache.spark.examples.mllib.JavaALS",
+                        "arguments": ["inputpath=hdfs:///input/file.txt", "value=2"],
+                        "archives": [],
+                        "files": [],
+                        "job_name": "Spark Examples",
+                        "dataproc_spark_properties": {
+                            "mapred.compress.map.output": "true",
+                            "spark.executor.extraJavaOptions": "-XX:+HeapDumpOnOutOfMemoryError "
+                            "-XX:HeapDumpPath=/tmp",
+                        },
+                        "dataproc_spark_jars": ["/lib/spark-examples_2.10-1.1.0.jar"],
+                        "trigger_rule": "dummy",
+                    },
+                )
+            ],
         )
-        self.assertEqual(len(relations), 0)
+        self.assertEqual(relations, [])
 
     @parameterized.expand(
         [
@@ -196,7 +207,7 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
             ),
         ]
     )
-    @mock.patch.object(spark_mapper, "render_template", wraps=render_template)
+    @mock.patch("mappers.spark_mapper.render_template")
     def test_convert_to_text_parse_spark_opts(self, spark_opts, properties, render_template_mock):
         spark_node = ET.fromstring(EXAMPLE_XML_WITHOUT_PREPARE)
         spark_opts_node = find_nodes_by_tag(spark_node, spark_mapper.SPARK_TAG_OPTS)[0]
@@ -206,12 +217,11 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
         )
         mapper.on_parse_node()
 
-        res = mapper.convert_to_text()
+        mapper.convert_to_text()
 
         _, kwargs = render_template_mock.call_args
         tasks = kwargs["tasks"]
 
-        self.assertTrue(ast.parse(res))
         self.assertEqual(tasks[0].template_params["dataproc_spark_properties"], properties)
 
     # pylint: disable=no-self-use

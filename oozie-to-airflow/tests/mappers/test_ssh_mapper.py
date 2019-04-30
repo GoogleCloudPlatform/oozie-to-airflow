@@ -15,9 +15,12 @@
 """Tests for SSH mapper"""
 import ast
 import unittest
+from unittest import mock
 
 from xml.etree import ElementTree as ET
 from airflow.utils.trigger_rule import TriggerRule
+
+from converter.primitives import Task
 from mappers import ssh_mapper
 
 
@@ -63,12 +66,37 @@ class TestSSHMapper(unittest.TestCase):
         self.assertEqual("apache.org", mapper.host)
         self.assertEqual("'ls -l -a'", mapper.command)
 
-    def test_convert_to_text(self):
+    @mock.patch("mappers.ssh_mapper.render_template", return_value="RETURN")
+    def test_convert_to_text(self, render_template_mock):
         mapper = ssh_mapper.SSHMapper(
             oozie_node=self.ssh_node, name="test_id", trigger_rule=TriggerRule.DUMMY
         )
-        # Throws a syntax error if doesn't parse correctly
-        ast.parse(mapper.convert_to_text())
+
+        res = mapper.convert_to_text()
+        self.assertEqual(res, "RETURN")
+
+        _, kwargs = render_template_mock.call_args
+        tasks = kwargs["tasks"]
+        relations = kwargs["relations"]
+
+        self.assertEqual(kwargs["template_name"], "action.tpl")
+        self.assertEqual(
+            tasks,
+            [
+                Task(
+                    task_id="test_id",
+                    template_name="ssh.tpl",
+                    template_params={
+                        "params": {},
+                        "trigger_rule": "dummy",
+                        "command": "'ls -l -a'",
+                        "user": "user",
+                        "host": "apache.org",
+                    },
+                )
+            ],
+        )
+        self.assertEqual(relations, [])
 
     # pylint: disable=no-self-use
     def test_required_imports(self):
