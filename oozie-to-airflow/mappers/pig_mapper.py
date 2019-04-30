@@ -92,9 +92,9 @@ class PigMapper(ActionMapper, PrepareMixin):
     def _add_symlinks(self, destination_pig_file):
         destination_pig_file.write("set mapred.create.symlink yes;\n")
         if self.files:
-            destination_pig_file.write("set mapred.cache.file {};\n".format(self.hdfs_files))
+            destination_pig_file.write("set mapred.cache.file {};\n".format(",".join(self.hdfs_files)))
         if self.archives:
-            destination_pig_file.write("set mapred.cache.archives {};\n".format(self.hdfs_archives))
+            destination_pig_file.write("set mapred.cache.archives {};\n".format(",".join(self.hdfs_archives)))
 
     def copy_extra_assets(self, input_directory_path: str, output_directory_path: str):
         self._validate_paths(input_directory_path, output_directory_path)

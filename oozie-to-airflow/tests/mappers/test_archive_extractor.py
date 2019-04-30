@@ -33,9 +33,9 @@ class TestArchiveExtractor(unittest.TestCase):
         # When
         archive_extractor.add_archive("test_archive.zip")
         # Then
-        self.assertEqual(archive_extractor.archives, "test_archive.zip")
+        self.assertEqual(archive_extractor.archives, ["test_archive.zip"])
         self.assertEqual(
-            archive_extractor.hdfs_archives, "hdfs:///user/pig/examples/pig_test_node/test_archive.zip"
+            archive_extractor.hdfs_archives, ["hdfs:///user/pig/examples/pig_test_node/test_archive.zip"]
         )
 
     def test_add_absolute_archive(self):
@@ -44,8 +44,8 @@ class TestArchiveExtractor(unittest.TestCase):
         # When
         archive_extractor.add_archive("/test_archive.zip")
         # Then
-        self.assertEqual(archive_extractor.archives, "/test_archive.zip")
-        self.assertEqual(archive_extractor.hdfs_archives, "hdfs:///test_archive.zip")
+        self.assertEqual(archive_extractor.archives, ["/test_archive.zip"])
+        self.assertEqual(archive_extractor.hdfs_archives, ["hdfs:///test_archive.zip"])
 
     def test_add_multiple_archives(self):
         # Given
@@ -56,13 +56,15 @@ class TestArchiveExtractor(unittest.TestCase):
         archive_extractor.add_archive("/test_archive3.tar.gz")
         # Then
         self.assertEqual(
-            archive_extractor.archives, "/test_archive.zip,test_archive2.tar,/test_archive3.tar.gz"
+            archive_extractor.archives, ["/test_archive.zip", "test_archive2.tar", "/test_archive3.tar.gz"]
         )
         self.assertEqual(
             archive_extractor.hdfs_archives,
-            "hdfs:///test_archive.zip,"
-            "hdfs:///user/pig/examples/pig_test_node/test_archive2.tar,"
-            "hdfs:///test_archive3.tar.gz",
+            [
+                "hdfs:///test_archive.zip",
+                "hdfs:///user/pig/examples/pig_test_node/test_archive2.tar",
+                "hdfs:///test_archive3.tar.gz",
+            ],
         )
 
     def test_add_hash_archives(self):
@@ -75,13 +77,15 @@ class TestArchiveExtractor(unittest.TestCase):
         # Then
         self.assertEqual(
             archive_extractor.archives,
-            "/test_archive.zip#test3_link,test_archive2.tar#test_link,/test_archive3.tar.gz",
+            ["/test_archive.zip#test3_link", "test_archive2.tar#test_link", "/test_archive3.tar.gz"],
         )
         self.assertEqual(
             archive_extractor.hdfs_archives,
-            "hdfs:///test_archive.zip#test3_link,"
-            "hdfs:///user/pig/examples/pig_test_node/test_archive2.tar#test_link,"
-            "hdfs:///test_archive3.tar.gz",
+            [
+                "hdfs:///test_archive.zip#test3_link",
+                "hdfs:///user/pig/examples/pig_test_node/test_archive2.tar#test_link",
+                "hdfs:///test_archive3.tar.gz",
+            ],
         )
 
     def test_add_archive_extra_hash(self):
@@ -112,8 +116,10 @@ class TestArchiveExtractor(unittest.TestCase):
         archive_extractor.parse_node()
         # Then
         self.assertEqual(
-            "hdfs:///path/with/el/value1.tar,"
-            "hdfs:///path/with/el/value2.tar,"
-            "hdfs:///path/with/two/els/value1/value2.tar",
+            [
+                "hdfs:///path/with/el/value1.tar",
+                "hdfs:///path/with/el/value2.tar",
+                "hdfs:///path/with/two/els/value1/value2.tar",
+            ],
             archive_extractor.hdfs_archives,
         )

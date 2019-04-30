@@ -24,10 +24,10 @@
     main_class=PARAMS['hadoop_main_class'],
     arguments=['{{ properties['mapreduce.input.fileinputformat.inputdir'] }}', '{{ properties['mapreduce.output.fileoutputformat.outputdir'] }}'],
     {% if hdfs_files %}
-    files=["{{ hdfs_files }}"],
+    files={{ hdfs_files | tojson }},
     {% endif %}
     {% if hdfs_archives %}
-    archives=["{{ hdfs_archives }}"],
+    archives={{ hdfs_archives | tojson }},
     {% endif %}
     cluster_name=PARAMS['dataproc_cluster'],
     task_id='{{ task_id }}',
