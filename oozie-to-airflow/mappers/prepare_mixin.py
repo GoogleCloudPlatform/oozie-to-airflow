@@ -23,6 +23,10 @@ from utils.el_utils import normalize_path
 class PrepareMixin:
     """Mixin used to add Prepare node capability to a node"""
 
+    @staticmethod
+    def has_prepare(oozie_node):
+        return bool(xml_utils.find_nodes_by_tag(oozie_node, "prepare"))
+
     def get_prepare_command(self, oozie_node: ET.Element, params: Dict[str, str]):
         # In BashOperator in Composer we can't read from $DAGS_FOLDER (~/dags) - permission denied.
         # However we can read from ~/data -> /home/airflow/gcs/data.
