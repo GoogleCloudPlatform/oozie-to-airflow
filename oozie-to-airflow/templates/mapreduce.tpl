@@ -15,8 +15,13 @@
  #}
 
 {{ task_id }} = dataproc_operator.DataProcHadoopOperator(
+    task_id={{ task_id | tojson }},
+    trigger_rule={{ trigger_rule }},
     main_class=PARAMS['hadoop_main_class'],
-    arguments=['{{ properties['mapreduce.input.fileinputformat.inputdir'] }}', '{{ properties['mapreduce.output.fileoutputformat.outputdir'] }}'],
+    arguments=[
+        {{ properties['mapreduce.input.fileinputformat.inputdir'] | tojson }},
+        {{ properties['mapreduce.output.fileoutputformat.outputdir'] | tojson }}
+    ],
     {% if hdfs_files %}
     files={{ hdfs_files | tojson }},
     {% endif %}
@@ -24,11 +29,9 @@
     archives={{ hdfs_archives | tojson }},
     {% endif %}
     cluster_name=PARAMS['dataproc_cluster'],
-    task_id='{{ task_id }}',
-    trigger_rule='{{ trigger_rule }}',
     dataproc_hadoop_properties={{ properties }},
     dataproc_hadoop_jars=PARAMS['hadoop_jars'],
     gcp_conn_id=PARAMS['gcp_conn_id'],
     region=PARAMS['gcp_region'],
-    dataproc_job_id='{{ task_id }}'
+    dataproc_job_id={{ task_id | tojson }}
 )
