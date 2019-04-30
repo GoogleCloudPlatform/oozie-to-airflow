@@ -85,6 +85,6 @@ class Task:  # pylint: disable=too-few-public-methods
 
     def __repr__(self) -> str:
         return (
-            f"Task(task_id={self.task_id}, template_name={self.template_name}, "
+            f'Task(task_id="{self.task_id}", template_name="{self.template_name}", '
             f"template_params={self.template_params})"
         )
