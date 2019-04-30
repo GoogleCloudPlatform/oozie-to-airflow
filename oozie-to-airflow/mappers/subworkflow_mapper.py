@@ -20,6 +20,7 @@ from xml.etree.ElementTree import Element
 
 from airflow.utils.trigger_rule import TriggerRule
 
+from converter.primitives import Task
 from converter.subworkflow_converter import OozieSubworkflowConverter
 from mappers.action_mapper import ActionMapper
 from mappers.base_mapper import BaseMapper
@@ -104,7 +105,15 @@ class SubworkflowMapper(ActionMapper):
                     self.properties[name] = value
 
     def convert_to_text(self):
-        return render_template(template_name=self.template, **self.__dict__)
+        tasks = [
+            Task(
+                task_id=self.name,
+                template_name=self.template,
+                template_params=dict(trigger_rule=self.trigger_rule),
+            )
+        ]
+        relations = []
+        return render_template(template_name="action.tpl", tasks=tasks, relations=relations)
 
     @staticmethod
     def required_imports() -> Set[str]:
