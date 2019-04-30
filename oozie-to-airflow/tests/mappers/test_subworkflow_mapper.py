@@ -22,6 +22,7 @@ from xml.etree import ElementTree as ET
 from airflow.utils.trigger_rule import TriggerRule
 
 from converter.mappers import CONTROL_MAP, ACTION_MAP
+from converter.primitives import Task
 from mappers import subworkflow_mapper
 from tests.utils.test_paths import EXAMPLE_SUBWORKFLOW_PATH
 
@@ -106,16 +107,33 @@ class TestSubworkflowMapper(TestCase):
         self.assertEqual({}, mapper.get_config_properties())
         self.assertTrue(os.path.isfile(self.SUBDAG_TEST_FILEPATH))
 
+    @mock.patch("mappers.subworkflow_mapper.render_template", return_value="RETURN")
     @mock.patch("utils.el_utils.parse_els")
-    def test_convert_to_text(self, parse_els):
+    def test_convert_to_text(self, parse_els_mock, render_template_mock):
         # Given
-        parse_els.return_value = self.subworkflow_params
+        parse_els_mock.return_value = self.subworkflow_params
         # When
         mapper = self._get_subwf_mapper()
 
-        # Then
-        # Throws a syntax error if doesn't parse correctly
-        ast.parse(mapper.convert_to_text())
+        res = mapper.convert_to_text()
+        self.assertEqual(res, "RETURN")
+
+        _, kwargs = render_template_mock.call_args
+        tasks = kwargs["tasks"]
+        relations = kwargs["relations"]
+
+        self.assertEqual(kwargs["template_name"], "action.tpl")
+        self.assertEqual(
+            tasks,
+            [
+                Task(
+                    task_id="test_id",
+                    template_name="subwf.tpl",
+                    template_params={"trigger_rule": "dummy", "app_name": "pig"},
+                )
+            ],
+        )
+        self.assertEqual(relations, [])
 
     def test_required_imports(self):
         mapper = self._get_subwf_mapper()
