@@ -15,6 +15,6 @@
  #}
 
 {{ task_id }} = bash_operator.BashOperator(
-    task_id='{{ task_id }}',
-    bash_command={{ prepare_command | tojson }}
+    task_id={{ task_id | tojson }},
+    bash_command={{ prepare_command | tojson }},
 )

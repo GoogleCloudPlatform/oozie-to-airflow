@@ -15,6 +15,6 @@
  #}
 
 {{ task_id }} = dummy_operator.DummyOperator(
-    task_id='{{ task_id }}',
-    trigger_rule='{{ trigger_rule }}'
+    task_id={{ task_id | tojson }},
+    trigger_rule={{ trigger_rule }}
 )

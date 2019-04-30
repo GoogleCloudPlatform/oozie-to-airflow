@@ -14,6 +14,10 @@
   limitations under the License.
  #}
 {{ task_id }} = bash_operator.BashOperator(
-    bash_command="gcloud dataproc jobs submit pig --cluster={dataproc_cluster} --region={gcp_region} --execute {bash_command}".format(dataproc_cluster=PARAMS['dataproc_cluster'], gcp_region=PARAMS['gcp_region'], bash_command=shlex.quote("{{ pig_command }}")),
-    task_id='{{ task_id }}',
+    task_id={{ task_id |tojson }},
+    bash_command="gcloud dataproc jobs submit pig --cluster={dataproc_cluster} --region={gcp_region} --execute {pig_command}".format(
+        dataproc_cluster=PARAMS['dataproc_cluster'],
+        gcp_region=PARAMS['gcp_region'],
+        pig_command=shlex.quote({{ pig_command | tojson }})
+    )
 )
