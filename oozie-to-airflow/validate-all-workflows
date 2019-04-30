@@ -16,44 +16,4 @@ set -euo pipefail
 MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 ALL_WORKFLOWS=$(find ${MY_DIR} -name 'workflow.xml')
 
-FAILED_WORKFLOWS=""
-VERBOSE=${VERBOSE:=""}
-XMLLINT_EXTRA_PARAMS=""
-
-if [[ "${VERBOSE}" != "" ]]; then
-    XMLLINT_EXTRA_PARAMS="--load-trace"
-fi
-
-for WORKFLOW in ${ALL_WORKFLOWS}
-do
-    echo
-    echo "Validating ${WORKFLOW}"
-    echo
-    set +e
-    # Note - if you add new actions add the schema for this action to "all-schemas-1.0.xsd"
-    xmllint --noout ${XMLLINT_EXTRA_PARAMS} --schema ${MY_DIR}/schema/all-schemas-1.0.xsd ${WORKFLOW}
-    ERR=$?
-    set -e
-    if [[ ${ERR} != "0" ]]; then
-        FAILED_WORKFLOWS="${FAILED_WORKFLOWS} ${WORKFLOW}"
-    fi
-done
-
-
-if [[ "${FAILED_WORKFLOWS}" != "" ]]; then
-    echo
-    echo
-    echo "Some workflows failed validation:"
-    echo
-    for WORKFLOW in ${FAILED_WORKFLOWS}
-    do
-        echo "${WORKFLOW}"
-    done
-    echo
-    echo
-    exit 1
-else
-    echo
-    echo "All workflows validated properly"
-    echo
-fi
+${MY_DIR}/validate-workflows ${ALL_WORKFLOWS}

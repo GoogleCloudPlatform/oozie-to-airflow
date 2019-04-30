@@ -16,3 +16,4 @@
 
 CONFIGURATION_PROPERTIES = "configuration.properties"
 JOB_PROPERTIES = "job.properties"
+WORKFLOW_XML = "workflow.xml"
