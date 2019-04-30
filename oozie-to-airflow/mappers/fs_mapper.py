@@ -128,7 +128,7 @@ class FsMapper(ActionMapper):
                 Task(
                     task_id=self.name,
                     template_name="dummy.tpl",
-                    template_params=dict(task_id=self.name, trigger_rule=self.trigger_rule),
+                    template_params=dict(trigger_rule=self.trigger_rule),
                 )
             ]
 
@@ -170,8 +170,4 @@ class FsMapper(ActionMapper):
 
         pig_command = mapper_fn(node, self.params)
 
-        return Task(
-            task_id=task_id,
-            template_name="fs_op.tpl",
-            template_params=dict(task_id=task_id, pig_command=pig_command),
-        )
+        return Task(task_id=task_id, template_name="fs_op.tpl", template_params=dict(pig_command=pig_command))

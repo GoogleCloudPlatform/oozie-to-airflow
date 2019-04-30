@@ -81,7 +81,7 @@ class Task:  # pylint: disable=too-few-public-methods
 
     @property
     def rendered_template(self):
-        return render_template(template_name=self.template_name, **self.template_params)
+        return render_template(template_name=self.template_name, task_id=self.task_id, **self.template_params)
 
     def __repr__(self) -> str:
         return (
