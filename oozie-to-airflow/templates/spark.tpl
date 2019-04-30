@@ -15,31 +15,18 @@
  #}
 
 
-{{ task_id }} = spark_submit_operator.SparkSubmitOperator(
-    task_id = '{{ task_id }}',
-    trigger_rule = '{{ trigger_rule }}',
-    params=PARAMS,
-    # Spark specific
-    name = {{ spark_name }},
-    application = {{ application }},
-    conf = {{ conf }},
-    conn_id = 'spark_default',
-    files = {{ files }},
-    py_files = {{ py_files }},
-    jars = {{ jars }},
-    java_class = {{ java_class }},
-    packages = {{ packages }},
-    exclude_packages = {{ exclude_packages }},
-    repositories = {{ repositories }},
-    total_executor_cores = {{ total_executor_cores }},
-    executor_cores = {{ executor_cores }},
-    executor_memory = {{ executor_memory }},
-    driver_memory = {{ driver_memory }},
-    keytab = {{ keytab }},
-    principal = {{ principal }},
-    num_executors = {{ num_executors }},
-    application_args = {{ application_args }},
-    verbose = {{ verbose }},
-    env_vars = {{ env_vars }},
-    driver_classpath = {{ driver_classpath }},
+{{ task_id }} = dataproc_operator.DataProcSparkOperator(
+    task_id={{ task_id | tojson }},
+    {% if main_jar %}main_jar={{ main_jar | tojson }},{% endif %}
+    {% if main_class %}main_class={{ main_class | tojson }},{% endif %}
+    arguments={{ arguments | tojson }},
+    {% if archives %}archives={{ archives | tojson }},{% endif %}
+    {% if files %}files={{ files | tojson }},{% endif %}
+    job_name={{ job_name | tojson }},
+    cluster_name=PARAMS['dataproc_cluster'],
+    {% if dataproc_spark_jars %}dataproc_spark_jars={{ dataproc_spark_jars | tojson }},{% endif %}
+    {% if dataproc_spark_properties %}dataproc_spark_properties={{ dataproc_spark_properties | tojson }},{% endif %}
+    gcp_conn_id=PARAMS['gcp_conn_id'],
+    region=PARAMS['gcp_region'],
+    trigger_rule={{ trigger_rule | tojson }},
 )
