@@ -14,11 +14,6 @@
   limitations under the License.
  #}
 
-{{ task_id }}_prepare = bash_operator.BashOperator(
-    task_id='{{ task_id }}_prepare',
-    bash_command='{{ prepare_command }}'
-)
-
 {{ task_id }} = dataproc_operator.DataProcPigOperator(
     query_uri='{}/{}'.format(PARAMS['gcp_uri_prefix'], '{{ script_file_name }}'),
     task_id='{{ task_id }}',
@@ -30,7 +25,3 @@
     region=PARAMS['gcp_region'],
     dataproc_job_id='{{ task_id }}'
 )
-
-{% with relation=relations %}
-{% include "relations.tpl" %}
-{% endwith %}

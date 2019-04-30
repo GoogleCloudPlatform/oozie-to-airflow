@@ -14,12 +14,6 @@
   limitations under the License.
  #}
 
-
-{{ task_id }}_prepare = bash_operator.BashOperator(
-    task_id='{{ task_id }}_prepare',
-    bash_command='{{ prepare_command }}'
-)
-
 {{ task_id }} = dataproc_operator.DataProcHadoopOperator(
     main_class=PARAMS['hadoop_main_class'],
     arguments=['{{ properties['mapreduce.input.fileinputformat.inputdir'] }}', '{{ properties['mapreduce.output.fileoutputformat.outputdir'] }}'],
@@ -38,7 +32,3 @@
     region=PARAMS['gcp_region'],
     dataproc_job_id='{{ task_id }}'
 )
-
-{% with relation=relations %}
-{% include "relations.tpl" %}
-{% endwith %}

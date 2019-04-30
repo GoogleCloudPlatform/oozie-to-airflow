@@ -14,11 +14,12 @@
 # limitations under the License.
 """Maps decision node to Airflow's DAG"""
 import collections
-from typing import Dict, Set
+from typing import Dict, Set, List
 from xml.etree.ElementTree import Element
 
 from airflow.utils.trigger_rule import TriggerRule
 
+from converter.primitives import Task, Relation
 from mappers.base_mapper import BaseMapper
 from utils.el_utils import convert_el_to_jinja
 from utils.template_utils import render_template
@@ -84,12 +85,16 @@ class DecisionMapper(BaseMapper):
                 self.case_dict["default"] = case.attrib["to"]
 
     def convert_to_text(self) -> str:
-        return render_template(
-            template_name="decision.tpl",
-            task_id=self.name,
-            trigger_rule=self.trigger_rule,
-            case_dict=self.case_dict.items(),
-        )
+        tasks = [
+            Task(
+                task_id=self.name,
+                template_name="decision.tpl",
+                template_params=dict(trigger_rule=self.trigger_rule, case_dict=self.case_dict),
+            )
+        ]
+        relations: List[Relation] = []
+
+        return render_template(template_name="action.tpl", tasks=tasks, relations=relations)
 
     def required_imports(self) -> Set[str]:
         return {
