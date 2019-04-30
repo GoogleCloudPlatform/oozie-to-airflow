@@ -14,26 +14,40 @@
 # limitations under the License.
 """Maps Spark action to Airflow Dag"""
 from typing import Dict, Set, List
-
 import xml.etree.ElementTree as ET
 
 from airflow.utils.trigger_rule import TriggerRule
 
-
+from converter.exceptions import ParseException
+from converter.primitives import Relation, Task
 from mappers.action_mapper import ActionMapper
+from mappers.prepare_mixin import PrepareMixin
 from utils import xml_utils, el_utils
-
+from utils.file_archive_extractors import FileExtractor, ArchiveExtractor
 from utils.template_utils import render_template
 
 
 # pylint: disable=too-many-instance-attributes
-class SparkMapper(ActionMapper):
+SPARK_TAG_VALUE = "value"
+SPARK_TAG_NAME = "name"
+SPARK_TAG_ARGS = "arg"
+SPARK_TAG_OPTS = "spark-opts"
+SPARK_TAG_CONFIGURATION = "configuration"
+SPARK_TAG_JOB_XML = "job-xml"
+SPARK_TAG_JOB_NAME = "name"
+SPARK_TAG_CLASS = "class"
+SPARK_TAG_JAR = "jar"
+
+
+class SparkMapper(ActionMapper, PrepareMixin):
     """Maps Spark Action"""
 
-    delete_paths: List[str]
-    mkdir_paths: List[str]
     application_args: List[str]
     conf: Dict[str, str]
+    hdfs_archives: List[str]
+    hdfs_files: List[str]
+    dataproc_jars: List[str]
+    jars: List[str]
 
     def __init__(
         self,
@@ -45,81 +59,57 @@ class SparkMapper(ActionMapper):
         **kwargs,
     ):
         ActionMapper.__init__(self, oozie_node, name, trigger_rule, **kwargs)
-        if params is None:
-            params = {}
         self.template = template
-        self.params = params
+        self.params = params or {}
         self.trigger_rule = trigger_rule
-        self._parse_oozie_node(oozie_node)
-
-    def _parse_oozie_node(self, oozie_node: ET.Element):
-        """
-        Property values specified in the configuration element override
-        values specified in the job-xml file.
-        """
-        self.application = ""
-        self.conf = {}
-        self.conn_id = "spark_default"
-        self.files = None
-        self.py_files = None
-        self.driver_classpath = None
-        self.jars = None
-        self.java_class = None
-        self.packages = None
-        self.exclude_packages = None
-        self.repositories = None
-        self.total_executor_cores = None
-        self.executor_cores = None
-        self.executor_memory = None
-        self.driver_memory = None
-        self.keytab = None
-        self.principal = None
-        self.spark_name = "airflow-spark"
-        self.num_executors = None
+        self.java_class = ""
+        self.java_jar = ""
+        self.job_name = None
+        self.jars = []
+        self.properties = {}
         self.application_args = []
-        self.env_vars = None
-        self.verbose = False
+        self.file_extractor = FileExtractor(oozie_node=oozie_node, params=self.params)
+        self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, params=self.params)
+        self.prepare_command = None
+        self.hdfs_files = []
+        self.hdfs_archives = []
+        self.dataproc_jars = []
 
-        # Prepare nodes
-        self.delete_paths = []
-        self.mkdir_paths = []
+    def on_parse_node(self):
 
-        prepare_nodes = xml_utils.find_nodes_by_tag(oozie_node, "prepare")
+        if self.has_prepare:
+            self.prepare_command = self.get_prepare_command(oozie_node=self.oozie_node, params=self.params)
 
-        if prepare_nodes:
-            # If there exists a prepare node, there will only be one, according
-            # to oozie xml schema
-            self.delete_paths, self.mkdir_paths = self.parse_prepare_node(prepare_nodes[0])
+        _, self.hdfs_files = self.file_extractor.parse_node()
+        _, self.hdfs_archives = self.archive_extractor.parse_node()
 
-        # master url, deploy mode,
-        self.application = self.test_and_set(oozie_node, "jar", "''", params=self.params, quote=True)
-        self.spark_name = self.test_and_set(
-            oozie_node, "name", "'airflow-spark'", params=self.params, quote=True
-        )
-        self.java_class = self.test_and_set(oozie_node, "class", None, params=self.params, quote=True)
+        self.java_jar = self._get_or_default(self.oozie_node, SPARK_TAG_JAR, None, params=self.params)
+        self.java_class = self._get_or_default(self.oozie_node, SPARK_TAG_CLASS, None, params=self.params)
+        if self.java_class and self.java_jar:
+            self.dataproc_jars = [self.java_jar]
+            self.java_jar = None
+        self.job_name = self._get_or_default(self.oozie_node, SPARK_TAG_JOB_NAME, None, params=self.params)
 
-        config_node = xml_utils.find_nodes_by_tag(oozie_node, "configuration")
-        job_xml = xml_utils.find_nodes_by_tag(oozie_node, "job-xml")
+        job_xml_nodes = xml_utils.find_nodes_by_tag(self.oozie_node, SPARK_TAG_JOB_XML)
 
-        for xml_file in job_xml:
+        for xml_file in job_xml_nodes:
             tree = ET.parse(xml_file.text)
-            self.conf = {**self.conf, **self.parse_spark_config(tree.getroot())}
+            self.properties.update(self._parse_config_node(tree.getroot()))
 
-        if config_node:
-            self.conf = {**self.conf, **self.parse_spark_config(config_node[0])}
+        config_nodes = xml_utils.find_nodes_by_tag(self.oozie_node, SPARK_TAG_CONFIGURATION)
+        if config_nodes:
+            self.properties.update(self._parse_config_node(config_nodes[0]))
 
-        spark_opts = xml_utils.find_nodes_by_tag(oozie_node, "spark-opts")
+        spark_opts = xml_utils.find_nodes_by_tag(self.oozie_node, SPARK_TAG_OPTS)
         if spark_opts:
-            self.update_class_spark_opts(spark_opts[0])
+            self.properties.update(self._parse_spark_opts(spark_opts[0]))
 
-        app_args = xml_utils.find_nodes_by_tag(oozie_node, "arg")
+        app_args = xml_utils.find_nodes_by_tag(self.oozie_node, SPARK_TAG_ARGS)
         for arg in app_args:
             self.application_args.append(el_utils.replace_el_with_var(arg.text, self.params, quote=False))
 
     @staticmethod
-    def test_and_set(
-        root: ET.Element, tag: str, default: str = None, params: Dict[str, str] = None, quote: bool = False
-    ):
+    def _get_or_default(root: ET.Element, tag: str, default: str = None, params: Dict[str, str] = None):
         """
         If a node exists in the oozie_node with the tag specified in tag, it
         will attempt to replace the EL (if it exists) with the corresponding
@@ -127,108 +117,112 @@ class SparkMapper(ActionMapper):
         tag is not found under oozie_node, then return default. If there are
         more than one with the specified tag, it uses the first one found.
         """
-        if params is None:
-            params = {}
         var = xml_utils.find_nodes_by_tag(root, tag)
 
         if var:
             # Only check the first one
-            return el_utils.replace_el_with_var(var[0].text, params=params, quote=quote)
+            return el_utils.replace_el_with_var(var[0].text, params=params, quote=False)
         return default
 
     @staticmethod
-    def parse_spark_config(config_node: ET.Element) -> Dict[str, str]:
+    def _parse_config_node(config_node: ET.Element) -> Dict[str, str]:
         conf_dict = {}
         for prop in config_node:
-            name_node = prop.find("name")
-            value_node = prop.find("value")
+            name_node = prop.find(SPARK_TAG_NAME)
+            value_node = prop.find(SPARK_TAG_VALUE)
             if name_node is not None and name_node.text and value_node is not None and value_node.text:
                 conf_dict[name_node.text] = value_node.text
         return conf_dict
 
-    def update_class_spark_opts(self, spark_opts_node: ET.Element):
+    @staticmethod
+    def _parse_spark_opts(spark_opts_node: ET.Element):
         """
         Some examples of the spark-opts element:
-
-        '--conf key=value'
-        '--conf key1=value1 value2'
-        '--conf key1="value1 value2"'
-        '--conf key1=value1 key2="value2 value3"'
-        '--conf key=value --verbose --properties-file user.properties'
+        --conf key1=value
+        --conf key2="value1 value2"
         """
+        conf = {}
         if spark_opts_node.text:
             spark_opts = spark_opts_node.text.split("--")[1:]
         else:
-            raise Exception("Spark opts node has no text: {}".format(spark_opts_node))
+            raise ParseException("Spark opts node has no text: {}".format(spark_opts_node))
         clean_opts = [opt.strip() for opt in spark_opts]
         clean_opts_split = [opt.split(maxsplit=1) for opt in clean_opts]
-
-        if ["verbose"] in clean_opts_split:
-            self.__dict__["verbose"] = True
-            clean_opts_split.remove(["verbose"])
 
         for spark_opt in clean_opts_split:
             # Can have multiple "--conf" in spark_opts
             if spark_opt[0] == "conf":
-                # Splits key1=value1 into [key1, value1]
-                conf_val = spark_opt[1].split("=", maxsplit=1)
-                self.conf[conf_val[0]] = conf_val[1]
-            else:
-                self.__dict__[spark_opt[0]] = "'" + " ".join(spark_opt[1:]) + "'"
+                key, _, value = spark_opt[1].partition("=")
+                # Value is required
+                if not value:
+                    raise ParseException(
+                        f"Incorrect parameter format. Expected format: key=value. Current value: {spark_opt}"
+                    )
+                # Delete surrounding quotes
+                if len(value) > 2 and value[0] in ["'", '"'] and value:
+                    value = value[1:-1]
+                conf[key] = value
 
-    @staticmethod
-    def parse_prepare_node(prepare_node: ET.Element):
+        return conf
+
+    def _get_tasks(self):
         """
-        <prepare>
-            <delete path="[PATH]"/>
-            ...
-            <mkdir path="[PATH]"/>
-            ...
-        </prepare>
+        Returns the list of Airflow tasks that are the result of mapping
+
+        :return: list of Airflow tasks
         """
-        delete_paths = []
-        mkdir_paths = []
-        for node in prepare_node:
-            node_path = el_utils.convert_el_to_jinja(node.attrib["path"], quote=False)
-            if node.tag == "delete":
-                delete_paths.append(node_path)
-            else:
-                mkdir_paths.append(node_path)
-        return delete_paths, mkdir_paths
+        action_task = Task(
+            task_id=self.name,
+            template_name="spark.tpl",
+            template_params=dict(
+                main_jar=self.java_jar,
+                main_class=self.java_class,
+                arguments=self.application_args,
+                archives=self.hdfs_archives,
+                files=self.hdfs_files,
+                job_name=self.job_name,
+                dataproc_spark_properties=self.properties,
+                dataproc_spark_jars=self.dataproc_jars,
+                trigger_rule=self.trigger_rule,
+            ),
+        )
+
+        if not self.has_prepare(self.oozie_node):
+            return [action_task]
+
+        prepare_task = Task(
+            task_id=self.name + "_prepare",
+            template_name="prepare.tpl",
+            template_params=dict(prepare_command=self.prepare_command),
+        )
+        return [prepare_task, action_task]
+
+    def _get_relations(self):
+        """
+        Returns the list of Airflow relations that are the result of mapping
+
+        :return: list of relations
+        """
+        return (
+            [Relation(from_task_id=self.name + "_prepare", to_task_id=self.name)]
+            if self.has_prepare(self.oozie_node)
+            else []
+        )
 
     def convert_to_text(self):
-        """Converts subworkflow to text"""
-        op_text = render_template(template_name=self.template, task_id=self.name, **self.__dict__)
-
-        # If we have found a prepare node, we must reorder nodes.
-        if self.delete_paths or self.mkdir_paths:
-            prep_text = render_template(
-                template_name="prepare.tpl",
-                task_id=self.name + "_reorder",
-                trigger_rule=self.trigger_rule,
-                delete_paths=self.delete_paths,
-                mkdir_paths=self.mkdir_paths,
-            )
-            return op_text + prep_text
-        return op_text
+        tasks = self._get_tasks()
+        relations = self._get_relations()
+        return render_template(template_name="action.tpl", tasks=tasks, relations=relations)
 
     @staticmethod
     def required_imports() -> Set[str]:
-        # Dummy and Bash are for the potential prepare statement
+        # Bash are for the potential prepare statement
         return {
-            "from airflow.contrib.operators import spark_submit_operator",
+            "from airflow.contrib.operators import dataproc_operator",
             "from airflow.operators import bash_operator",
             "from airflow.operators import dummy_operator",
         }
 
     @property
     def first_task_id(self):
-        # If the prepare node has been parsed then we reconfigure the execution
-        # path of Airflow by adding delete/mkdir bash nodes before the actual
-        # spark node executes.
-        if self.has_prepare:
-            return "{task_id}_reorder".format(task_id=self.name)
-        return self.name
-
-    def has_prepare(self) -> bool:
-        return bool(self.delete_paths or self.mkdir_paths)
+        return self._get_tasks()[0].task_id

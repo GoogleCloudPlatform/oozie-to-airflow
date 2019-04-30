@@ -493,7 +493,10 @@ class TestOozieExamples(unittest.TestCase):
             ),
             (
                 WorkflowTestCase(
-                    name="spark", node_names={"spark_node"}, relations=set(), params={"nameNode": "hdfs://"}
+                    name="spark",
+                    node_names={"spark_node"},
+                    relations=set(),
+                    params={"dataproc_cluster": "A", "gcp_region": "B", "nameNode": "hdfs://"},
                 ),
             ),
             (
