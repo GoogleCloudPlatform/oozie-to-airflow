@@ -13,6 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """XML parsing utilities"""
+from typing import List, cast
+from xml.etree import ElementTree as ET
 
 
 class NoNodeFoundException(Exception):
@@ -23,7 +25,7 @@ class MultipleNodeFoundException(Exception):
     pass
 
 
-def find_node_by_name(root, name):
+def find_node_by_name(root, name) -> ET.Element:
     """
     Find a node with an attribute 'name' the same as the passed in parameter
     name. Since we are refining by name there should only be one (1) node with
@@ -43,15 +45,15 @@ def find_node_by_name(root, name):
     return node[0]
 
 
-def find_nodes_by_tag(root, tag):
+def find_nodes_by_tag(root, tag) -> List[ET.Element]:
     """
     Returns a list of XML nodes that have the tag provided. In this case
     only direct descendants under the root node are checked for the tag.
     """
-    return root.findall("." + tag)
+    return cast(List[ET.Element], root.findall("." + tag))
 
 
-def find_nodes_by_attribute(root, attr, val, tag=None):
+def find_nodes_by_attribute(root, attr, val, tag=None) -> List[ET.Element]:
     """
     Finds node with the attribute `attr` matching `val`. An optional tag can be
     specified which will narrow down the search space to only the tag passed in.
@@ -62,7 +64,7 @@ def find_nodes_by_attribute(root, attr, val, tag=None):
     :param tag: Optional, can decrease the search space even more.
     :return: List of matching XML nodes.
     """
-    matching_nodes = []
+    matching_nodes: List[ET.Element] = []
     search_space = find_nodes_by_tag(root, tag) if tag else root
 
     for node in search_space:
