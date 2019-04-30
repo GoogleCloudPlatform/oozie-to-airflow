@@ -32,7 +32,7 @@ def {{ task_id }}_decision():
 
 
 {{ task_id }} = python_operator.BranchPythonOperator(
-    python_callable={{task_id}}_decision,
-    task_id='{{task_id}}',
-    trigger_rule='{{trigger_rule}}',
+    task_id={{ task_id | tojson }},
+    trigger_rule={{ trigger_rule | tojson }},
+    python_callable={{ task_id }}_decision,
 )
