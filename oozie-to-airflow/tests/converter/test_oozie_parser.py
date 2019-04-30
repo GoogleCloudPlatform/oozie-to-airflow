@@ -235,8 +235,8 @@ class TestOozieParser(unittest.TestCase):
         self.assertEqual("fail1", p_op.get_error_downstream_name())
         for depend in p_op.mapper.required_imports():
             self.assertIn(depend, self.parser.workflow.dependencies)
-        self.assertEqual("myNameNode/test_dir/test.txt#test_link.txt", p_op.mapper.hdfs_files)
-        self.assertEqual("myNameNode/test_dir/test2.zip#test_zip_dir", p_op.mapper.hdfs_archives)
+        self.assertEqual(["myNameNode/test_dir/test.txt#test_link.txt"], p_op.mapper.hdfs_files)
+        self.assertEqual(["myNameNode/test_dir/test2.zip#test_zip_dir"], p_op.mapper.hdfs_archives)
 
     @mock.patch("mappers.dummy_mapper.DummyMapper.on_parse_node", wraps=None)
     def test_parse_action_node_unknown(self, on_parse_node_mock):
