@@ -13,8 +13,8 @@
   See the License for the specific language governing permissions and
   limitations under the License.
  #}
-{% for op in sub_ops %}
-{{ op.rendered_template }}
+{% for task in tasks %}
+{{ task.rendered_template }}
 {% endfor %}
 {% with relations=relations %}
     {% include "relations.tpl" %}
