@@ -13,11 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Maps SSH Oozie node to Airflow's DAG"""
-from typing import Dict, Set
+from typing import Dict, Set, List
 from xml.etree.ElementTree import Element
 
 from airflow.utils.trigger_rule import TriggerRule
 
+from converter.primitives import Task, Relation
 from mappers.action_mapper import ActionMapper
 from utils import el_utils
 
@@ -68,7 +69,21 @@ class SSHMapper(ActionMapper):
         self.host = user_host[1]
 
     def convert_to_text(self) -> str:
-        return render_template(template_name=self.template, task_id=self.name, **self.__dict__)
+        tasks = [
+            Task(
+                task_id=self.name,
+                template_name="ssh.tpl",
+                template_params=dict(
+                    params=self.params,
+                    trigger_rule=self.trigger_rule,
+                    command=self.command,
+                    user=self.user,
+                    host=self.host,
+                ),
+            )
+        ]
+        relations: List[Relation] = []
+        return render_template(template_name="action.tpl", tasks=tasks, relations=relations)
 
     def required_imports(self) -> Set[str]:
         return {

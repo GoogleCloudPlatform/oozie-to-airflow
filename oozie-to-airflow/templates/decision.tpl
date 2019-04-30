@@ -15,7 +15,7 @@
  #}
 
 def {{ task_id }}_decision():
-{% for key, val in case_dict -%}
+{% for key, val in case_dict.items() -%}
 {%- if loop.first %}
     if {{ key }}:
         return "{{ val }}"
