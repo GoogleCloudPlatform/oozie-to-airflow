@@ -15,6 +15,6 @@
  #}
 
 {{ task_id }} = SubDagOperator(
-    subdag=subdag_{{ app_name }}.sub_dag(dag.dag_id, '{{ task_id }}', dag.start_date, dag.schedule_interval),
-    task_id='{{ task_id }}',
+    task_id={{ task_id | tojson }},
+    subdag=subdag_{{ app_name }}.sub_dag(dag.dag_id, {{ task_id | tojson }}, dag.start_date, dag.schedule_interval),
 )
