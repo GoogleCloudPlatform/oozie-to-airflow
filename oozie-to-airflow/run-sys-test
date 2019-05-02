@@ -85,6 +85,8 @@ function prepare_configuration {
               -e DATAPROC_CLUSTER_NAME \
               -e GCP_REGION \
               -e COMPOSER_DAG_BUCKET \
+              -e DATAPROC_USER \
+              -e LOCAL_APP_NAME \
               -o ${LOCAL_CONFIGURATION_PROPERTIES}
     fi
 }

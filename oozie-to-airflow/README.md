@@ -629,7 +629,7 @@ In order to run sub-workflows you need to have the sub-workflow application alre
 therefore you need to run at least  `./run-sys-test --phase prepare-dataproc --application <SUBWORKFLOW_APP>`
 
 For example in case of the demo application, you need to run at least once
-`./run-sys-test --phase prepare-dataproc --application mapreduce` because mapreduce is used as sub-workflow
+`./run-sys-test --phase prepare-dataproc --application childwf` because `childwf` is used as sub-workflow
 in the demo application.
 
 ### Running all example conversions
