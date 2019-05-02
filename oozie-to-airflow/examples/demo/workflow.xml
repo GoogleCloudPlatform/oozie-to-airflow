@@ -69,7 +69,7 @@
 
     <action name="subworkflow-node">
         <sub-workflow>
-            <app-path>${nameNode}/user/${userName}/${examplesRoot}/apps/mapreduce</app-path>
+            <app-path>${nameNode}/user/${userName}/${examplesRoot}/apps/childwf</app-path>
             <propagate-configuration/>
             <configuration>
                 <property>
