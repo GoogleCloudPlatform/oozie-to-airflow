@@ -42,8 +42,8 @@
             <resource-manager>${resourceManager}</resource-manager>
             <name-node>${nameNode}</name-node>
             <prepare>
-                <delete path="${nameNode}/user/${userName}/${examplesRoot}/apps/shell/test"/>
-                <mkdir path="${nameNode}/user/${userName}/${examplesRoot}/apps/shell/test"/>
+                <delete path="${nameNode}/user/${userName}/${examplesRoot}/apps/childwf/shell/test"/>
+                <mkdir path="${nameNode}/user/${userName}/${examplesRoot}/apps/childwf/shell/test"/>
             </prepare>
             <configuration>
                 <property>
