@@ -7,7 +7,7 @@ Jinja2==2.10.1
 mypy==0.701
 parameterized==0.7.0
 paramiko==2.4.2
-pre-commit==1.15.2
+pre-commit==1.16.0
 pylint==2.3.1
 pytest-cov==2.7.1
 safety==1.8.5
