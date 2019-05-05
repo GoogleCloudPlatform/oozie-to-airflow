@@ -22,6 +22,7 @@ from subprocess import CalledProcessError
 
 from converter.mappers import ACTION_MAP, CONTROL_MAP
 from converter.oozie_converter import OozieConverter
+from converter.constants import HDFS_FOLDER
 from utils.constants import CONFIGURATION_PROPERTIES, WORKFLOW_XML
 
 INDENT = 4
@@ -58,7 +59,9 @@ Otherwise please provide it.
         )
 
     try:
-        subprocess.check_call(["./validate-workflows", f"{input_directory_path}/{WORKFLOW_XML}"])
+        subprocess.check_call(
+            ["./validate-workflows", f"{input_directory_path}/{HDFS_FOLDER}/{WORKFLOW_XML}"]
+        )
     except CalledProcessError:
         logging.error("Workflow failed schema validation. Please correct the workflow XML and try again.")
         exit(1)
