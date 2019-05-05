@@ -14,7 +14,7 @@
   limitations under the License.
  -->
 
-## Oozie to Airflow
+# Oozie to Airflow
 
 An effort by the Cloud Composer team to create tool to easily convert between
 [Apache Oozie](http://oozie.apache.org/) workflows and [Apache Airflow](https://airflow.apache.org)
@@ -22,7 +22,68 @@ workflows.
 
 The program targets Apache Airflow >= 1.10 and Apache Oozie 1.0 XML schema.
 
-### Background
+# Table of Contents
+
+* [Oozie to Airflow](#oozie-to-airflow)
+  * [Background](#background)
+* [Running the Program](#running-the-program)
+  * [Required Python Dependencies](#required-python-dependencies)
+  * [Running the conversion](#running-the-conversion)
+  * [Structure of the application folder](#structure-of-the-application-folder)
+* [Supported Oozie features](#supported-oozie-features)
+  * [Control nodes](#control-nodes)
+    * [Fork](#fork)
+    * [Join](#join)
+    * [Decision](#decision)
+    * [Start](#start)
+    * [End](#end)
+    * [Kill](#kill)
+  * [Known Limitations](#known-limitations)
+  * [EL Functions](#el-functions)
+* [Examples](#examples)
+  * [Demo Example](#demo-example)
+    * [Current limitations](#current-limitations)
+    * [Output](#output)
+  * [Childwf Example](#childwf-example)
+    * [Output](#output-1)
+    * [Current limitations](#current-limitations-1)
+  * [SSH Example](#ssh-example)
+    * [Output](#output-2)
+    * [Current limitations](#current-limitations-2)
+  * [MapReduce Example](#mapreduce-example)
+    * [Output](#output-3)
+    * [Current limitations](#current-limitations-3)
+  * [FS Example](#fs-example)
+    * [Output](#output-4)
+    * [Current limitations](#current-limitations-4)
+  * [Pig Example](#pig-example)
+    * [Output](#output-5)
+    * [Current limitations](#current-limitations-5)
+  * [Shell Example](#shell-example)
+    * [Output](#output-6)
+    * [Current limitations](#current-limitations-6)
+  * [Sub\-workflow Example](#sub-workflow-example)
+    * [Output](#output-7)
+    * [Current limitations](#current-limitations-7)
+  * [Decision Example](#decision-example)
+    * [Output](#output-8)
+    * [Current limitations](#current-limitations-8)
+  * [EL Example](#el-example)
+    * [Output](#output-9)
+    * [Current limitations](#current-limitations-9)
+* [Unit Tests](#unit-tests)
+* [System Tests](#system-tests)
+  * [System test environment](#system-test-environment)
+    * [Running the system tests](#running-the-system-tests)
+    * [Re\-running the system tests](#re-running-the-system-tests)
+    * [Test phases](#test-phases)
+    * [Test scenarios](#test-scenarios)
+    * [Running sub\-workflows](#running-sub-workflows)
+    * [Running all example conversions](#running-all-example-conversions)
+
+Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go)
+
+## Background
 Apache Airflow is a workflow management system developed by AirBnB in 2014.
 It is a platform to programmatically author, schedule, and monitor workflows.
 Airflow workflows are designed as [Directed Acyclic Graphs](https://airflow.apache.org/tutorial.html#example-pipeline-definition)
@@ -40,115 +101,9 @@ There are a few differences noted below:
 | Oozie   | XML    | Action Node | Control Node                    | Subworkflow    | EL functions/Properties file | URL based callbacks |
 | Airflow | Python | Operators   | Trigger Rules, set_downstream() | SubDag         | jinja2 and macros            | Callbacks/Emails    |
 
-### Oozie Control Nodes
-#### Fork
+# Running the Program
 
-A [fork node](https://oozie.apache.org/docs/3.2.0-incubating/WorkflowFunctionalSpec.html#a3.1.5_Fork_and_Join_Control_Nodes)
-splits the path of execution into multiple concurrent paths of execution.
-
-#### Join
-
-A [join node](https://oozie.apache.org/docs/3.2.0-incubating/WorkflowFunctionalSpec.html#a3.1.5_Fork_and_Join_Control_Nodes)
-waits until every concurrent execution of the previous fork node arrives to it. The fork and join nodes must be used in pairs. The join node
-assumes concurrent execution paths are children of the same fork node.
-~~~~
-<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.1">
-    ...
-    <fork name="[FORK-NODE-NAME]">
-        <path start="[NODE-NAME]" />
-        ...
-        <path start="[NODE-NAME]" />
-    </fork>
-    ...
-    <join name="[JOIN-NODE-NAME]" to="[NODE-NAME]" />
-    ...
-</workflow-app>
-~~~~
-#### Decision
-
-A [decision node](https://oozie.apache.org/docs/3.2.0-incubating/WorkflowFunctionalSpec.html#a3.1.4_Decision_Control_Node)
-enables a workflow to make a selection on the execution path to follow.
-
-The behavior of a decision node can be seen as a switch-case statement.
-
-A decision node consists of a list of predicates-transition pairs plus a default transition. Predicates are evaluated in order or appearance until one of them evaluates to true and the corresponding transition is taken. If none of the predicates evaluates to true the default transition is taken.
-
-Predicates are JSP Expression Language (EL) expressions (refer to section 4.2 of this document) that resolve into a boolean value, true or false . For example:
-`${fs:fileSize('/usr/foo/myinputdir') gt 10 * GB}`
-
-~~~~
-<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.1">
-    ...
-    <decision name="[NODE-NAME]">
-        <switch>
-            <case to="[NODE_NAME]">[PREDICATE]</case>
-            ...
-            <case to="[NODE_NAME]">[PREDICATE]</case>
-            <default to="[NODE_NAME]"/>
-        </switch>
-    </decision>
-    ...
-</workflow-app>
-~~~~
-#### Start
-
-The [start node](https://oozie.apache.org/docs/3.2.0-incubating/WorkflowFunctionalSpec.html#a3.1.1_Start_Control_Node)
-is the entry point for a workflow job, it indicates the first workflow node the workflow job must transition to.
-
-When a workflow is started, it automatically transitions to the node specified in the start .
-
-A workflow definition must have one start node.
-
-~~~~
-<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.1">
-  ...
-  <start to="[NODE-NAME]"/>
-  ...
-</workflow-app>
-~~~~
-#### End
-
-The [end node](https://oozie.apache.org/docs/3.2.0-incubating/WorkflowFunctionalSpec.html#a3.1.2_End_Control_Node)
-is the end for a workflow job, it indicates that the workflow job has completed successfully.
-
-When a workflow job reaches the end it finishes successfully (SUCCEEDED).
-
-If one or more actions started by the workflow job are executing when the end node is reached, the actions will be killed. In this scenario the workflow job is still considered as successfully run.
-
-A workflow definition must have one end node.
-
-~~~~
-<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.1">
-    ...
-    <end name="[NODE-NAME]"/>
-    ...
-</workflow-app>
-~~~~
-
-#### Kill
-
-The [kill node](https://oozie.apache.org/docs/3.2.0-incubating/WorkflowFunctionalSpec.html#a3.1.3_Kill_Control_Node)
-allows a workflow job to exit with an error.
-
-When a workflow job reaches the kill it finishes in error (KILLED).
-
-If one or more actions started by the workflow job are executing when the kill node is reached, the actions will be killed.
-
-A workflow definition may have zero or more kill nodes.
-
-~~~~
-<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.1">
-    ...
-    <kill name="[NODE-NAME]">
-        <message>[MESSAGE-TO-LOG]</message>
-    </kill>
-    ...
-</workflow-app>
-~~~~
-
-## Running the Program
-
-#### Required Python Dependencies
+## Required Python Dependencies
 * Python > 3.6
 * See [requirements.txt](../requirements.txt)
 
@@ -162,8 +117,10 @@ $ chmod +x init.sh
 $ ./init.sh
 ```
 
+## Running the conversion
+
 You can run the program (minimally) by calling:
-`python o2a.py -i <INPUT_WORKFLOW_FOLDER_PATH> -o <OUTPUT_FOLDER_PATH>`
+`python o2a.py -i <INPUT_APPLICATION_FOLDER> -o <OUTPUT_FOLDER_PATH>`
 
 Example:
 `python o2a.py -i examples/demo -o output/demo`
@@ -193,7 +150,131 @@ optional arguments:
                         Desired DAG schedule interval as number of days
 ```
 
-#### Known Limitations
+## Structure of the application folder
+
+The application folder has to follow the structure defined as follows:
+
+```
+<APPLICATION>/
+             |- job.properties        - job properties that are used to run the job
+             |- hdfs                  - folder with application - should be copied to HDFS
+             |     |- workflow.xml    - Oozie workflow xml (1.0 schema)
+             |     |- ...             - additional folders required to be copied to HDFS
+             |- configuration.template.properties - template of configuration values used during conversion
+             |- configuration.properties          - generated properties for configuration values
+```
+
+
+# Supported Oozie features
+
+## Control nodes
+### Fork
+
+A [fork node](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a3.1.5_Fork_and_Join_Control_Nodes)
+splits the path of execution into multiple concurrent paths of execution.
+
+### Join
+
+A [join node](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a3.1.5_Fork_and_Join_Control_Nodes)
+waits until every concurrent execution of the previous fork node arrives to it. The fork and join nodes must be used in pairs. The join node
+assumes concurrent execution paths are children of the same fork node.
+~~~~
+<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.1">
+    ...
+    <fork name="[FORK-NODE-NAME]">
+        <path start="[NODE-NAME]" />
+        ...
+        <path start="[NODE-NAME]" />
+    </fork>
+    ...
+    <join name="[JOIN-NODE-NAME]" to="[NODE-NAME]" />
+    ...
+</workflow-app>
+~~~~
+
+### Decision
+
+A [decision node](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a3.1.4_Decision_Control_Node)
+enables a workflow to make a selection on the execution path to follow.
+
+The behavior of a decision node can be seen as a switch-case statement.
+
+A decision node consists of a list of predicates-transition pairs plus a default transition. Predicates are evaluated in order or appearance until one of them evaluates to true and the corresponding transition is taken. If none of the predicates evaluates to true the default transition is taken.
+
+Predicates are JSP Expression Language (EL) expressions (refer to section 4.2 of this document) that resolve into a boolean value, true or false . For example:
+`${fs:fileSize('/usr/foo/myinputdir') gt 10 * GB}`
+
+~~~~
+<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.1">
+    ...
+    <decision name="[NODE-NAME]">
+        <switch>
+            <case to="[NODE_NAME]">[PREDICATE]</case>
+            ...
+            <case to="[NODE_NAME]">[PREDICATE]</case>
+            <default to="[NODE_NAME]"/>
+        </switch>
+    </decision>
+    ...
+</workflow-app>
+~~~~
+### Start
+
+The [start node](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a3.1.1_Start_Control_Node)
+is the entry point for a workflow job, it indicates the first workflow node the workflow job must transition to.
+
+When a workflow is started, it automatically transitions to the node specified in the start .
+
+A workflow definition must have one start node.
+
+~~~~
+<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.1">
+  ...
+  <start to="[NODE-NAME]"/>
+  ...
+</workflow-app>
+~~~~
+### End
+
+The [end node](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a3.1.2_End_Control_Node)
+is the end for a workflow job, it indicates that the workflow job has completed successfully.
+
+When a workflow job reaches the end it finishes successfully (SUCCEEDED).
+
+If one or more actions started by the workflow job are executing when the end node is reached, the actions will be killed. In this scenario the workflow job is still considered as successfully run.
+
+A workflow definition must have one end node.
+
+~~~~
+<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.1">
+    ...
+    <end name="[NODE-NAME]"/>
+    ...
+</workflow-app>
+~~~~
+
+### Kill
+
+The [kill node](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a3.1.3_Kill_Control_Node)
+allows a workflow job to exit with an error.
+
+When a workflow job reaches the kill it finishes in error (KILLED).
+
+If one or more actions started by the workflow job are executing when the kill node is reached, the actions will be killed.
+
+A workflow definition may have zero or more kill nodes.
+
+~~~~
+<workflow-app name="[WF-DEF-NAME]" xmlns="uri:oozie:workflow:0.1">
+    ...
+    <kill name="[NODE-NAME]">
+        <message>[MESSAGE-TO-LOG]</message>
+    </kill>
+    ...
+</workflow-app>
+~~~~
+
+## Known Limitations
 
 The goal of this program is to mimic both the actions and control flow
 that is outlined by the Oozie workflow file. Unfortunately there are some
@@ -218,7 +299,7 @@ C will then execute incorrectly.
 This limitation is temporary and will be removed in a future version of Oozie-2-Airflow converter.
 
 
-#### EL Functions
+## EL Functions
 
 As of now, a very minimal set of [Oozie EL](https://oozie.apache.org/docs/4.0.1/WorkflowFunctionalSpec.html#a4.2_Expression_Language_Functions)
 functions are supported. The way they work is that there exists a
@@ -230,7 +311,7 @@ order to use EL function mapping, the folder `o2a_libs` should
 be copied over to the Airflow DAG folder. This should then be picked up and
 parsed by the Airflow workers and then available to all DAGs.
 
-## Examples
+# Examples
 
 All examples can be found in the `examples/` directory.
 
@@ -243,7 +324,7 @@ All examples can be found in the `examples/` directory.
 * [Decision](#decision-example)
 * [EL](#el-example)
 
-### Demo Example
+## Demo Example
 
 The demo example contains several action and control nodes. The control
 nodes are `fork`, `join`, `decision`, `start`, `end`, and `kill`. As far as action
@@ -261,19 +342,40 @@ The demo can be run as:
 
 This will parse and write to an output file in the `output/demo` directory.
 
-**Note:** The decision node is not fully functional as there is not currently
+### Current limitations
+
+The decision node is not fully functional as there is not currently
 support for all EL functions. So in order for it to run in Airflow you must
 edit the Python output file and change the decision node expression.
 
+### Output
+In this example the output will appear in `/output/ssh/test_demo_dag.py`.
+Additionally subworkflow is generated in  `/output/ssh/subdag_test.py`.
 
-### SSH Example
+## Childwf Example
+
+The childwf example is sub-workflow for the `demo` example. It can be run as:
+
+`python o2a.py -i examples/childwf -o output/childwf`
+
+Make sure to first copy `examples/subwf/configuration.template.properties`, rename it as
+`configuration.properties` and fill in with configuration data.
+
+### Output
+In this example the output will appear in `output/childwf/test_childwf_dag.py`.
+
+### Current limitations
+
+No known limitations.
+
+## SSH Example
 
 The ssh example can be run as:
 
 `python o2a.py -i examples/ssh -o output/ssh`
 
 This will convert the specified Oozie XML and write the output into the
-specified output directory, in this case `output/ssh/ssh.py`.
+specified output directory, in this case `output/ssh/test_ssh_dag.py`.
 
 There are some differences between Apache Oozie and Apache Airflow as far as the SSH specification goes.
 In Airflow you will have to add/edit an SSH-specific connection that contains
@@ -299,21 +401,30 @@ edit connections so you must add one like:
 
 More information can be found in [Airflow's documentation](https://airflow.apache.org/cli.html#connections).
 
-### MapReduce Example
+### Output
+In this example the output will appear in `/output/ssh/test_ssh_dag.py`.
+
+The converted DAG uses the `SSHOperator` in Airflow.
+
+### Current limitations
+
+No known limitations.
+
+## MapReduce Example
 
 The MapReduce example can be run as:
 
 `python o2a.py -i examples/mapreduce -o output/mapreduce`
 
-Make sure to first copy `/examples/mapreduce/configuration.template.properties`, rename it as
+Make sure to first copy `examples/mapreduce/configuration.template.properties`, rename it as
 `configuration.properties` and fill in with configuration data.
 
-##### Output
-In this example the output will appear in `/output/mapreduce/mapreduce.py`.
+### Output
+In this example the output will appear in `/output/mapreduce/test_mapreduce_dag.py`.
 
 The converted DAG uses the `DataProcHadoopOperator` in Airflow.
 
-#### Current limitations
+### Current limitations
 
 **1. Exit status not available**
 
@@ -342,22 +453,39 @@ inline action configuration, i.e. using the `<configuration>` tag in the workflo
 
 Streaming and pipes are currently not supported.
 
+## FS Example
 
-### Pig Example
+The FS example can be run as:
+
+`python o2a.py -i examples/fs -o output/fs`
+
+Make sure to first copy `examples/fs/configuration.template.properties`, rename it as
+`configuration.properties` and fill in with configuration data.
+
+### Output
+In this example the output will appear in `/output/fs/test_fs_dag.py`.
+
+The converted DAG uses the `BashOperator` in Airflow.
+
+### Current limitations
+
+Not all FS operations are currently idempotent. This will be fixed.
+
+## Pig Example
 
 The Pig example can be run as:
 
 `python o2a.py -i examples/pig -o output/pig`
 
-Make sure to first copy `/examples/pig/configuration.template.properties`, rename it as
+Make sure to first copy `examples/pig/configuration.template.properties`, rename it as
 `configuration.properties` and fill in with configuration data.
 
-##### Output
-In this example the output will appear in `/output/pig/pig.py`.
+### Output
+In this example the output will appear in `output/pig/test_pig_dag.py`.
 
 The converted DAG uses the `DataProcPigOperator` in Airflow.
 
-#### Current limitations
+### Current limitations
 
 **1. Configuration options**
 
@@ -372,24 +500,23 @@ From the [Oozie documentation](https://oozie.apache.org/docs/5.1.0/WorkflowFunct
 Currently the only supported way of configuring the pig action is with the
 inline action configuration, i.e. using the `<configuration>` tag in the workflow's XML file definition.
 
-
-### Shell Example
+## Shell Example
 
 The Shell example can be run as:
 
 `python o2a.py -i examples/shell -o output/shell`
 
-Make sure to first copy `/examples/shell/configuration.template.properties`, rename it as
+Make sure to first copy `examples/shell/configuration.template.properties`, rename it as
 `configuration.properties` and fill in with configuration data.
 
-##### Output
-In this example the output will appear in `/output/shell/shell.py`.
+### Output
+In this example the output will appear in `output/shell/test_shell_dag.py`.
 
 The converted DAG uses the `BashOperator` in Airflow, which executes the desired shell
 action with Pig by invoking `gcloud dataproc jobs submit pig --cluster=<cluster> --region=<region>
 --execute 'sh <action> <args>'`.
 
-#### Current limitations
+### Current limitations
 
 **1. Exit status not available**
 
@@ -409,40 +536,47 @@ using the configuration elements.
 
 Currently there is no way specify the shell launcher configuration (it is ignored).
 
-
-### Sub-workflow Example
+## Sub-workflow Example
 
 The Sub-workflow example can be run as:
 
 `python o2a.py -i examples/subwf -o output/subwf`
 
-Make sure to first copy `/examples/subwf/configuration.template.properties`, rename it as
+Make sure to first copy `examples/subwf/configuration.template.properties`, rename it as
 `configuration.properties` and fill in with configuration data.
 
-##### Output
-In this example the output will appear in `/output/subwf/subwf.py`.
+### Output
+In this example the output will appear in `output/subwf/test_subwf_dag.py`.
 Additionally, a `subdag_test.py` (name to be changed soon) file is generated in the same directory,
 which contains the factory method `sub_dag()` returning the actual Airflow subdag.
 
 The converted DAG uses the `SubDagOperator` in Airflow.
 
+### Current limitations
 
-### Decision Example
+Currently generated name of the sub-workflow is fixed which means that only one subworkflow is supported
+per DAG folder. This will be fixed soon.
+
+## Decision Example
 
 The decision example can be run as:
 
 `python o2a.py -i examples/decision -o output/decision`
 
-Make sure to first copy `/examples/decision/configuration.template.properties`, rename it as
+Make sure to first copy `examples/decision/configuration.template.properties`, rename it as
 `configuration.properties` and fill in with configuration data.
 
-##### Output
-In this example the output will appear in `/output/decision/decision.py`.
+### Output
+In this example the output will appear in `output/decision/test_decision_dag.py`.
 
 The converted DAG uses the `BranchPythonOperator` in Airflow.
 
+### Current limitations
 
-### EL Example
+Decision example is not yet fully functional as EL functions are not yet fully implemented so condition is
+hard-coded for now. Once EL functions are implemented, the condition in the example will be updated.
+
+## EL Example
 
 The Oozie Expression Language (EL) example can be run as:
 `python o2a.py -i examples/el -o output/el`
@@ -455,29 +589,26 @@ folder.
 Please keep in mind that as of the current version only a single EL variable
 or single EL function. Variable/function chaining is not currently supported.
 
-## Running Tests
+### Output
+In this example the output will appear in `output/el/test_el_dag.py`.
+
+### Current limitations
+
+Decision example is not yet fully functional as EL functions are not yet fully implemented so condition is
+hard-coded for now. Once EL functions are implemented, the condition in the example will be updated.
+
+# Unit Tests
 
 Currently, the test directory is set up in a such a way that the folders in `tests/` directory mirrors the structure of the `oozie-to-airflow` directory. For example, if we have `oozie-to-airflow/o2a_libs/helper_functions.py` the tests for that file would be in `tests/o2a_libs/test_helper_functions.py`.
 
-There are several ways to tests for the various different tests that you want to run.
+Unit tests are run automatically in Travis CI and when using pre commit hooks (see [README.md](../README.md))
 
-To run all the tests in a given directory call the below command:
-
-```
-python -m unittest discover /path/to/tests/directory/
-```
-
-To run all the tests in a given file call the below command:
-```
-python -m unittest /path/to/test/file.py
-```
-
-## System Tests
+# System Tests
 
 Oozie to Airflow has a set of system tests that test end-2-end functionality of conversion and execution
 of workflows using Cloud Dataproc and Cloud Composer.
 
-### System test environment
+## System test environment
 
 Cloud Composer:
 * composer-1.5.0-airflow-1.10.1
@@ -494,20 +625,6 @@ Cloud Dataproc Cluster with Oozie
 * Hadoop version
 * Init action: [oozie-5.1.sh](../dataproc/oozie-5.1.sh)
 
-### Example apps
-
-This folder contains example applications that can be run to run both Composer and Oozie jobs for the apps
-
-Structure of the application folder:
-
-```
-<APPLICATION>/
-             |- workflow.xml    - Oozie workflow xml (1.0 schema)
-             |- job.properties  - job properties that are used to run the job
-             |- assets          - folder with extra assets that should be copied to application folder in HDFS
-             |- configuration.template.properties - template of configuration values used during conversion
-             |- configuration.properties - generated properties for configuration values
-```
 
 ### Running the system tests
 
@@ -572,7 +689,7 @@ Optional commands to execute:
         Sets up autocomplete for run-sys-tests
 ```
 
-### Re-running the tests
+### Re-running the system tests
 
 You do not need to specify the parameters once you run the script with your chosen flags.
 The latest parameters used are stored and cached locally in .ENVIRONMENT_NAME files and used next time
@@ -591,11 +708,11 @@ when you run the script:
 
 The following phases are defined for the system tests:
 
-* prepare-configuration - prepares configuration based on passed Dataproc/Composer parameters
+* **prepare-configuration** - prepares configuration based on passed Dataproc/Composer parameters
 
-* convert - converts the example application workflow to DAG and stores it in output/<APPLICATION> directory
+* **convert** - converts the example application workflow to DAG and stores it in output/<APPLICATION> directory
 
-* prepare-dataproc - prepares Dataproc cluster to execute both Composer and Oozie jobs. The preparation is:
+* **prepare-dataproc** - prepares Dataproc cluster to execute both Composer and Oozie jobs. The preparation is:
 
    * Local filesystem: `${HOME}/o2a/<APPLICATION>` directory contains application to be uploaded to HDFS
 
@@ -603,9 +720,11 @@ The following phases are defined for the system tests:
 
    * HDFS: /user/${user.name}/examples/apps/<APPLICATION> - the application is stored in this HDFS directory
 
-* test-composer - runs tests on Composer instance
+* **test-composer** - runs tests on Composer instance
 
-* test-oozie - runs tests on Oozie in Hadoop cluster
+* **test-oozie** - runs tests on Oozie in Hadoop cluster
+
+### Test scenarios
 
 The typical scenario to run the tests are:
 
