@@ -59,7 +59,7 @@ def prepare_move_command(node: Element, params):
     source = normalize_path(node.attrib[FS_TAG_SOURCE], params)
     target = normalize_path(node.attrib[FS_TAG_TARGET], params, allow_no_schema=True)
 
-    command = "fs -mv {source} {target}".format(source=source, target=target)
+    command = "fs -mv {source} {target}".format(source=shlex.quote(source), target=shlex.quote(target))
     return command
 
 
