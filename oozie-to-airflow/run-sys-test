@@ -470,12 +470,15 @@ function test_composer {
 
 function test_oozie {
     header "Triggers example application on Oozie: ${LOCAL_APP_NAME}"
-    run_command "sudo oozie job --config ${REMOTE_FILESYSTEM_APP_PROPERTIES} -run"
+    JOB_ID_LINE=$(run_command "sudo oozie job --config ${REMOTE_FILESYSTEM_APP_PROPERTIES} -run" | tee /dev/tty | grep '^job: ')
+    # Skip prefix
+    # "job: " = 5 characters
+    JOB_ID="${JOB_ID_LINE:5}"
     set +x
-    echo "You can run the following commands on dataproc cluster to see the job status"
+    echo "You can run the following commands cluster to see the job status"
     echo
-    echo "oozie job -info <JOB_ID>"
-    echo "oozie job -log  <JOB_ID>"
+    echo "${CMDNAME} -S -- oozie job -info ${JOB_ID}"
+    echo "${CMDNAME} -S -- oozie job -log ${JOB_ID}"
     echo
     echo "Follow instructions of setting up the proxy in dataproc cluster console to observe the job"
     echo
