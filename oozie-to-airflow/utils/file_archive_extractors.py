@@ -87,7 +87,8 @@ class ArchiveExtractor:
                 self.add_archive(archive_path)
         return self.archives, self.hdfs_archives
 
-    def _check_archive_extensions(self, oozie_archive_path: str) -> List[str]:
+    @classmethod
+    def _check_archive_extensions(cls, oozie_archive_path: str) -> List[str]:
         """
         Checks if the archive path is correct archive path.
         :param oozie_archive_path: path to check
@@ -96,13 +97,13 @@ class ArchiveExtractor:
         split_path = split_by_hash_sign(oozie_archive_path)
         archive_path = split_path[0]
         extension_accepted = False
-        for extension in self.ALLOWED_EXTENSIONS:
+        for extension in cls.ALLOWED_EXTENSIONS:
             if archive_path.endswith(extension):
                 extension_accepted = True
         if not extension_accepted:
             raise Exception(
                 "The path {} cannot be accepted as archive as it does not have one "
-                "of the extensions: {}".format(archive_path, self.ALLOWED_EXTENSIONS)
+                "of the extensions: {}".format(archive_path, cls.ALLOWED_EXTENSIONS)
             )
         return split_path
 
