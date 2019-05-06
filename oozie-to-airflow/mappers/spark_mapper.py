@@ -172,6 +172,7 @@ class SparkMapper(ActionMapper, PrepareMixin):
         action_task = Task(
             task_id=self.name,
             template_name="spark.tpl",
+            trigger_rule=self.trigger_rule,
             template_params=dict(
                 main_jar=self.java_jar,
                 main_class=self.java_class,
@@ -181,7 +182,6 @@ class SparkMapper(ActionMapper, PrepareMixin):
                 job_name=self.job_name,
                 dataproc_spark_properties=self.properties,
                 dataproc_spark_jars=self.dataproc_jars,
-                trigger_rule=self.trigger_rule,
             ),
         )
 

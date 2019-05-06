@@ -16,5 +16,6 @@
 
 {{ task_id }} = bash_operator.BashOperator(
     task_id={{ task_id | tojson }},
+    trigger_rule={{ trigger_rule | tojson }},
     bash_command={{ prepare_command | tojson }},
 )

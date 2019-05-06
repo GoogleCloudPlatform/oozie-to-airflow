@@ -109,7 +109,8 @@ class SubworkflowMapper(ActionMapper):
             Task(
                 task_id=self.name,
                 template_name="subwf.tpl",
-                template_params=dict(trigger_rule=self.trigger_rule, app_name=self.app_name),
+                trigger_rule=self.trigger_rule,
+                template_params=dict(app_name=self.app_name),
             )
         ]
         relations = []
