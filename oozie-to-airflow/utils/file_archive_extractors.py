@@ -18,6 +18,8 @@ from xml.etree.ElementTree import Element
 
 from utils.el_utils import replace_el_with_var
 
+ARCHIVE_EXTENSIONS = [".zip", ".gz", ".tar.gz", ".tar", ".jar"]
+
 
 def preprocess_path_to_hdfs(path: str, params: Dict[str, str]):
     if path.startswith("/"):
@@ -39,65 +41,42 @@ def split_by_hash_sign(path: str) -> List[str]:
     return [path]
 
 
-# pylint: disable=too-few-public-methods
-class FileExtractor:
-    """ Extracts all file paths from an Oozie node """
+def extract_file_paths(oozie_node: Element, params: Dict[str, str], hdfs_path: bool):
+    file_nodes: List[Element] = oozie_node.findall("file")
+    files = []
+    for file_node in file_nodes:
+        file_path = replace_el_with_var(file_node.text, params=params, quote=False)
+        file_path = preprocess_path_to_hdfs(file_path, params) if hdfs_path else file_path
+        files.append(file_path)
 
-    def __init__(self, oozie_node: Element, params: Dict[str, str], hdfs_path: bool):
-        self.files: List[str] = []
-        self.oozie_node = oozie_node
-        self.params = params
-        self.hdfs_path = hdfs_path
-
-    def parse_node(self):
-        file_nodes: List[Element] = self.oozie_node.findall("file")
-
-        for file_node in file_nodes:
-            file_path = replace_el_with_var(file_node.text, params=self.params, quote=False)
-            file_path = preprocess_path_to_hdfs(file_path, self.params) if self.hdfs_path else file_path
-            self.files.append(file_path)
-
-        return self.files
+    return files
 
 
-class ArchiveExtractor:
-    """ Extracts all archive paths from an Oozie node """
-
-    ALLOWED_EXTENSIONS = [".zip", ".gz", ".tar.gz", ".tar", ".jar"]
-
-    def __init__(self, oozie_node: Element, params: Dict[str, str], hdfs_path: bool):
-        self.archives: List[str] = []
-        self.oozie_node = oozie_node
-        self.params = params
-        self.hdfs_path = hdfs_path
-
-    def parse_node(self):
-        archive_nodes: List[Element] = self.oozie_node.findall("archive")
-        if archive_nodes:
-            for archive_node in archive_nodes:
-                archive_path = replace_el_with_var(archive_node.text, params=self.params, quote=False)
-                self.add_archive(archive_path)
-        return self.archives
-
-    @classmethod
-    def _check_archive_extensions(cls, oozie_archive_path: str) -> List[str]:
-        """
-        Checks if the archive path is correct archive path.
-        :param oozie_archive_path: path to check
-        :return: path split on hash
-        """
-        split_path = split_by_hash_sign(oozie_archive_path)
-        archive_path = split_path[0]
-        if not any(archive_path.endswith(extension) for extension in cls.ALLOWED_EXTENSIONS):
-            raise Exception(
-                "The path {} cannot be accepted as archive as it does not have one "
-                "of the extensions: {}".format(archive_path, cls.ALLOWED_EXTENSIONS)
-            )
-        return split_path
-
-    def add_archive(self, oozie_archive_path: str):
-        self._check_archive_extensions(oozie_archive_path)
-        file_path = (
-            preprocess_path_to_hdfs(oozie_archive_path, self.params) if self.hdfs_path else oozie_archive_path
+def _check_archive_extensions(oozie_archive_path: str) -> List[str]:
+    """
+    Checks if the archive path is correct archive path.
+    :param oozie_archive_path: path to check
+    :return: path split on hash
+    """
+    split_path = split_by_hash_sign(oozie_archive_path)
+    archive_path = split_path[0]
+    if not any(archive_path.endswith(extension) for extension in ARCHIVE_EXTENSIONS):
+        raise Exception(
+            "The path {} cannot be accepted as archive as it does not have one "
+            "of the extensions: {}".format(archive_path, ARCHIVE_EXTENSIONS)
         )
-        self.archives.append(file_path)
+    return split_path
+
+
+def extract_archive_paths(oozie_node: Element, params: Dict[str, str], hdfs_path: bool):
+    """ Extracts all archive paths from an Oozie node """
+    archives = []
+    archive_nodes: List[Element] = oozie_node.findall("archive")
+    if archive_nodes:
+        for archive_node in archive_nodes:
+            archive_path = replace_el_with_var(archive_node.text, params=params, quote=False)
+            _check_archive_extensions(archive_path)
+            file_path = preprocess_path_to_hdfs(archive_path, params) if hdfs_path else archive_path
+            archives.append(file_path)
+
+    return archives

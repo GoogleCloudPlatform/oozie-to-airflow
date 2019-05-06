@@ -22,7 +22,7 @@ from converter.primitives import Relation, Task
 from mappers.action_mapper import ActionMapper
 from mappers.prepare_mixin import PrepareMixin
 from utils import el_utils, xml_utils
-from utils.file_archive_extractors import ArchiveExtractor, FileExtractor
+from utils.file_archive_extractors import extract_file_paths, extract_archive_paths
 from utils.template_utils import render_template
 
 
@@ -52,8 +52,6 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
         self.trigger_rule = trigger_rule
         self.properties = {}
         self.params_dict = {}
-        self.file_extractor = FileExtractor(oozie_node=oozie_node, params=params, hdfs_path=True)
-        self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, params=params, hdfs_path=True)
         self._parse_oozie_node()
 
     def _parse_oozie_node(self):
@@ -61,8 +59,10 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
         self.name_node = el_utils.replace_el_with_var(name_node_text, params=self.params, quote=False)
         self._parse_config()
         self._parse_params()
-        self.hdfs_files = self.file_extractor.parse_node()
-        self.hdfs_archives = self.archive_extractor.parse_node()
+        self.hdfs_files = extract_file_paths(oozie_node=self.oozie_node, params=self.params, hdfs_path=True)
+        self.hdfs_archives = extract_archive_paths(
+            oozie_node=self.oozie_node, params=self.params, hdfs_path=True
+        )
 
     def _parse_params(self):
         param_nodes = xml_utils.find_nodes_by_tag(self.oozie_node, "param")
