@@ -15,10 +15,7 @@
 """Tests pig mapper"""
 import ast
 import unittest
-from unittest import mock
 from xml.etree import ElementTree as ET
-
-from airflow.utils.trigger_rule import TriggerRule
 
 from converter.primitives import Task, Relation
 from mappers import pig_mapper
@@ -60,12 +57,9 @@ class TestPigMapper(unittest.TestCase):
 
     def test_create_mapper_no_jinja(self):
         params = {"nameNode": "hdfs://"}
-        mapper = pig_mapper.PigMapper(
-            oozie_node=self.pig_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=params
-        )
+        mapper = pig_mapper.PigMapper(oozie_node=self.pig_node, name="test_id", params=params)
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
-        self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.pig_node, mapper.oozie_node)
         self.assertEqual("localhost:8032", mapper.resource_manager)
         self.assertEqual("hdfs://", mapper.name_node)
@@ -89,13 +83,10 @@ class TestPigMapper(unittest.TestCase):
             "scriptName": "id_el.pig",
         }
 
-        mapper = pig_mapper.PigMapper(
-            oozie_node=self.pig_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=params
-        )
+        mapper = pig_mapper.PigMapper(oozie_node=self.pig_node, name="test_id", params=params)
 
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
-        self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.pig_node, mapper.oozie_node)
         self.assertEqual("localhost:9999", mapper.resource_manager)
         self.assertEqual("hdfs://", mapper.name_node)
@@ -106,24 +97,17 @@ class TestPigMapper(unittest.TestCase):
             "/user/${wf:user()}/examples/output-data/demo/pig-node", mapper.params_dict["OUTPUT"]
         )
 
-    @mock.patch("mappers.pig_mapper.render_template", return_value="RETURN")
-    def test_convert_to_text(self, render_template_mock):
+    def test_convert_to_text(self):
         mapper = pig_mapper.PigMapper(
             oozie_node=self.pig_node,
             name="test_id",
-            trigger_rule=TriggerRule.DUMMY,
             params={"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3", "nameNode": "hdfs://"},
         )
-        res = mapper.convert_to_text()
-        self.assertEqual(res, "RETURN")
 
-        _, kwargs = render_template_mock.call_args
-        tasks = kwargs["tasks"]
-        relations = kwargs["relations"]
+        mapper.on_parse_node()
 
-        self.assertEqual(kwargs["template_name"], "action.tpl")
         self.assertEqual(
-            tasks,
+            mapper.tasks,
             [
                 Task(
                     task_id="test_id_prepare",
@@ -152,17 +136,10 @@ class TestPigMapper(unittest.TestCase):
                 ),
             ],
         )
-        self.assertEqual(relations, [Relation(from_task_id="test_id_prepare", to_task_id="test_id")])
+        self.assertEqual(mapper.relations, [Relation(from_task_id="test_id_prepare", to_task_id="test_id")])
 
     # pylint: disable=no-self-use
     def test_required_imports(self):
         imps = pig_mapper.PigMapper.required_imports()
         imp_str = "\n".join(imps)
         ast.parse(imp_str)
-
-    def test_first_task_id(self):
-        params = {"nameNode": "hdfs://"}
-        mapper = pig_mapper.PigMapper(
-            oozie_node=self.pig_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=params
-        )
-        self.assertEqual(mapper.first_task_id, "test_id_prepare")

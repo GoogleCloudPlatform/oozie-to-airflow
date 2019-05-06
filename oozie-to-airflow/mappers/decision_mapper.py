@@ -14,15 +14,12 @@
 # limitations under the License.
 """Maps decision node to Airflow's DAG"""
 import collections
-from typing import Dict, Set, List
+from typing import Dict, Set
 from xml.etree.ElementTree import Element
 
-from airflow.utils.trigger_rule import TriggerRule
-
-from converter.primitives import Task, Relation
+from converter.primitives import Task
 from mappers.base_mapper import BaseMapper
 from utils.el_utils import convert_el_to_jinja
-from utils.template_utils import render_template
 
 
 # noinspection PyAbstractClass
@@ -54,25 +51,27 @@ class DecisionMapper(BaseMapper):
 
     oozie_node: Element
     task_id: str
-    trigger_rule: str
     params: Dict[str, str]
     case_dict: Dict[str, str]
 
-    def __init__(
-        self,
-        oozie_node: Element,
-        name: str,
-        trigger_rule: str = TriggerRule.ALL_DONE,
-        params: Dict[str, str] = None,
-    ):
-        BaseMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule)
+    def __init__(self, oozie_node: Element, name: str, params: Dict[str, str] = None):
+        BaseMapper.__init__(self, oozie_node=oozie_node, name=name)
         if params is None:
             params = {}
         self.oozie_node = oozie_node
         self.name = name
-        self.trigger_rule = trigger_rule
         self.params = params
         self._get_cases()
+
+    def on_parse_node(self):
+        self.tasks = [
+            Task(
+                task_id=self.name,
+                template_name="decision.tpl",
+                template_params=dict(case_dict=self.case_dict),
+            )
+        ]
+        self.relations = []
 
     def _get_cases(self):
         switch_node = self.oozie_node[0]
@@ -83,19 +82,6 @@ class DecisionMapper(BaseMapper):
                 self.case_dict[case_text] = case.attrib["to"]
             else:  # Default return value
                 self.case_dict["default"] = case.attrib["to"]
-
-    def convert_to_text(self) -> str:
-        tasks = [
-            Task(
-                task_id=self.name,
-                trigger_rule=self.trigger_rule,
-                template_name="decision.tpl",
-                template_params=dict(case_dict=self.case_dict),
-            )
-        ]
-        relations: List[Relation] = []
-
-        return render_template(template_name="action.tpl", tasks=tasks, relations=relations)
 
     @staticmethod
     def required_imports() -> Set[str]:

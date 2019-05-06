@@ -16,21 +16,12 @@
 from typing import Set
 from xml.etree.ElementTree import Element
 
-from airflow.utils.trigger_rule import TriggerRule
 from mappers.base_mapper import BaseMapper
 
 
 class NullMapper(BaseMapper):
     def __init__(self, oozie_node: Element, name: str):
-        BaseMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=TriggerRule.DUMMY)
-
-    # pylint: disable=no-self-use
-    def convert_to_text(self) -> str:
-        return ""
-
-    # pylint: disable=no-self-use
-    def convert_to_airflow_op(self) -> None:
-        return
+        BaseMapper.__init__(self, oozie_node=oozie_node, name=name)
 
     @staticmethod
     def required_imports() -> Set[str]:

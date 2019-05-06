@@ -17,10 +17,9 @@ import ast
 import unittest
 from unittest import mock
 from xml.etree.ElementTree import Element
-from airflow.utils.trigger_rule import TriggerRule
 
 from converter.parsed_node import ParsedNode
-from converter.primitives import Workflow, Relation
+from converter.primitives import Workflow, Relation, Task
 from mappers.base_mapper import BaseMapper
 from mappers.start_mapper import StartMapper
 
@@ -29,14 +28,15 @@ class TestStartMapper(unittest.TestCase):
     oozie_node = Element("start")
 
     def test_create_mapper(self):
-        mapper = StartMapper(oozie_node=self.oozie_node, name="test_id", trigger_rule=TriggerRule.DUMMY)
+        mapper = StartMapper(oozie_node=self.oozie_node, name="test_id")
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
-        self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
 
-    def test_convert_to_text(self):
-        mapper = StartMapper(oozie_node=self.oozie_node, name="test_id", trigger_rule=TriggerRule.DUMMY)
-        self.assertEqual("", mapper.convert_to_text())
+    def test_on_parse_node(self):
+        mapper = StartMapper(oozie_node=self.oozie_node, name="test_id")
+        mapper.on_parse_node()
+        self.assertEqual(mapper.tasks, [Task(task_id="test_id", template_name="dummy.tpl")])
+        self.assertEqual(mapper.relations, [])
 
     # pylint: disable=no-self-use
     def test_required_imports(self):
@@ -47,7 +47,7 @@ class TestStartMapper(unittest.TestCase):
     def test_on_parse_finish(self):
         workflow = Workflow(input_directory_path=None, output_directory_path=None, dag_name=None)
 
-        mapper = StartMapper(oozie_node=self.oozie_node, name="first_task", trigger_rule=TriggerRule.DUMMY)
+        mapper = StartMapper(oozie_node=self.oozie_node, name="first_task")
 
         workflow.nodes["first_task"] = ParsedNode(mock.Mock(autospec=BaseMapper))
         workflow.nodes["second_task"] = ParsedNode(mapper)

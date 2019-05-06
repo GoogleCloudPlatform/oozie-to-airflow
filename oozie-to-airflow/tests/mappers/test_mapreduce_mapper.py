@@ -15,7 +15,6 @@
 """Tests for the MapReduce mapper"""
 import ast
 import unittest
-from unittest import mock
 from xml.etree import ElementTree as ET
 
 from airflow.utils.trigger_rule import TriggerRule
@@ -76,12 +75,9 @@ class TestMapReduceMapper(unittest.TestCase):
         self.mapreduce_node = ET.fromstring(mapreduce_node_str)
 
     def test_create_mapper_no_jinja(self):
-        mapper = mapreduce_mapper.MapReduceMapper(
-            oozie_node=self.mapreduce_node, name="test_id", trigger_rule=TriggerRule.DUMMY
-        )
+        mapper = mapreduce_mapper.MapReduceMapper(oozie_node=self.mapreduce_node, name="test_id")
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
-        self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.mapreduce_node, mapper.oozie_node)
         self.assertEqual("hdfs://", mapper.name_node)
         self.assertEqual("${queueName}", mapper.properties["mapred.job.queue.name"])
@@ -105,12 +101,11 @@ class TestMapReduceMapper(unittest.TestCase):
         params = {"nameNode": "hdfs://", "queueName": "myQueue", "examplesRoot": "examples"}
 
         mapper = mapreduce_mapper.MapReduceMapper(
-            oozie_node=self.mapreduce_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=params
+            oozie_node=self.mapreduce_node, name="test_id", params=params
         )
 
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
-        self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.mapreduce_node, mapper.oozie_node)
         self.assertEqual("hdfs://", mapper.name_node)
         self.assertEqual("myQueue", mapper.properties["mapred.job.queue.name"])
@@ -129,8 +124,7 @@ class TestMapReduceMapper(unittest.TestCase):
             mapper.properties["mapreduce.output.fileoutputformat.outputdir"],
         )
 
-    @mock.patch("mappers.mapreduce_mapper.render_template", return_value="RETURN")
-    def test_convert_to_text(self, render_template_mock):
+    def test_on_parse_node(self):
         mapper = mapreduce_mapper.MapReduceMapper(
             oozie_node=self.mapreduce_node,
             name="test_id",
@@ -143,18 +137,10 @@ class TestMapReduceMapper(unittest.TestCase):
                 "hadoop_main_class": "WordCount",
             },
         )
+
         mapper.on_parse_node()
-
-        res = mapper.convert_to_text()
-        self.assertEqual(res, "RETURN")
-
-        _, kwargs = render_template_mock.call_args
-        tasks = kwargs["tasks"]
-        relations = kwargs["relations"]
-
-        self.assertEqual(kwargs["template_name"], "action.tpl")
         self.assertEqual(
-            tasks,
+            mapper.tasks,
             [
                 Task(
                     task_id="test_id_prepare",
@@ -188,7 +174,7 @@ class TestMapReduceMapper(unittest.TestCase):
                 ),
             ],
         )
-        self.assertEqual(relations, [Relation(from_task_id="test_id_prepare", to_task_id="test_id")])
+        self.assertEqual(mapper.relations, [Relation(from_task_id="test_id_prepare", to_task_id="test_id")])
 
     # pylint: disable=no-self-use
     def test_required_imports(self):

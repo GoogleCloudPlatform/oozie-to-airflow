@@ -15,16 +15,13 @@
 """Maps Oozie start node to Airflow's DAG"""
 from typing import Set
 
-from mappers.base_mapper import BaseMapper
+from mappers.dummy_mapper import DummyMapper
 
 
-class StartMapper(BaseMapper):
+class StartMapper(DummyMapper):
     @staticmethod
     def required_imports() -> Set[str]:
         return set()
-
-    def convert_to_text(self) -> str:
-        return ""
 
     def on_parse_finish(self, workflow):
         super().on_parse_finish(self)

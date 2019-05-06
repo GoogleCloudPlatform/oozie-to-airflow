@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests Oozie Converter"""
-
+import ast
 import io
 import unittest
 from xml.etree.ElementTree import Element
@@ -24,7 +24,7 @@ import o2a
 from converter.oozie_converter import OozieConverter
 from converter.mappers import CONTROL_MAP, ACTION_MAP
 from converter.parsed_node import ParsedNode
-from converter.primitives import Relation
+from converter.primitives import Relation, Task
 from definitions import TPL_PATH
 from mappers import dummy_mapper
 from tests.utils.test_paths import EXAMPLE_DEMO_PATH
@@ -60,13 +60,15 @@ class TestOozieConverter(unittest.TestCase):
 
     def test_write_operators(self):
         node = ParsedNode(dummy_mapper.DummyMapper(oozie_node=Element("test"), name="task1"))
+        node.tasks = [Task(task_id="task_id", template_name="dummy.tpl")]
+        node.relations = [Relation(from_task_id="task_from", to_task_id="task_to")]
         nodes = {"task1": node}
 
         file = io.StringIO()
         self.converter.write_nodes(file=file, nodes=nodes, indent=0)
         file.seek(0)
 
-        self.assertEqual(node.mapper.convert_to_text(), file.read())
+        self.assertTrue(ast.parse(file.read()))
 
     def test_write_relations(self):
         relations = [

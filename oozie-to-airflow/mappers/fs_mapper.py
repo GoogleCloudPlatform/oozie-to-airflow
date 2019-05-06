@@ -21,7 +21,6 @@ from xml.etree.ElementTree import Element
 from converter.primitives import Task
 from mappers.action_mapper import ActionMapper
 from utils.relation_utils import chain
-from utils.template_utils import render_template
 from utils.el_utils import normalize_path
 
 ACTION_TYPE = "fs"
@@ -121,15 +120,13 @@ class FsMapper(ActionMapper):
     def on_parse_node(self):
         super().on_parse_node()
         self.tasks = self.parse_tasks()
+        self.relations = chain(self.tasks)
 
     def parse_tasks(self):
         if not list(self.oozie_node):
-            return [Task(task_id=self.name, template_name="dummy.tpl", trigger_rule=self.trigger_rule)]
+            return [Task(task_id=self.name, template_name="dummy.tpl")]
 
         return [self.parse_fs_action(i, node) for i, node in enumerate(self.oozie_node)]
-
-    def convert_to_text(self):
-        return render_template(template_name="action.tpl", tasks=self.tasks, relations=chain(self.tasks))
 
     @staticmethod
     def required_imports() -> Set[str]:
@@ -138,14 +135,6 @@ class FsMapper(ActionMapper):
             "from airflow.operators import bash_operator",
             "import shlex",
         }
-
-    @property
-    def first_task_id(self):
-        return self.tasks[0].task_id
-
-    @property
-    def last_task_id(self):
-        return self.tasks[-1].task_id
 
     def parse_fs_action(self, index: int, node: Element):
         tag_name = node.tag

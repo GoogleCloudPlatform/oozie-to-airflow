@@ -16,14 +16,11 @@
 from typing import Dict, Set
 from xml.etree.ElementTree import Element
 
-from airflow.utils.trigger_rule import TriggerRule
-
 from converter.primitives import Relation, Task
 from mappers.action_mapper import ActionMapper
 from mappers.prepare_mixin import PrepareMixin
 from utils import el_utils, xml_utils
 from utils.file_archive_extractors import ArchiveExtractor, FileExtractor
-from utils.template_utils import render_template
 
 
 # pylint: disable=too-many-instance-attributes
@@ -36,20 +33,13 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
     params_dict: Dict[str, str]
 
     def __init__(
-        self,
-        oozie_node: Element,
-        name: str,
-        trigger_rule: str = TriggerRule.ALL_SUCCESS,
-        params=None,
-        template_file_name: str = "mapreduce.tpl",
-        **kwargs,
+        self, oozie_node: Element, name: str, params=None, template_file_name: str = "mapreduce.tpl", **kwargs
     ):
-        ActionMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, **kwargs)
+        ActionMapper.__init__(self, oozie_node=oozie_node, name=name, **kwargs)
         if params is None:
             params = dict()
         self.template = template_file_name
         self.params = params
-        self.trigger_rule = trigger_rule
         self.properties = {}
         self.params_dict = {}
         self.file_extractor = FileExtractor(oozie_node=oozie_node, params=params)
@@ -73,19 +63,17 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
                 key, value = param.split("=", 1)
                 self.params_dict[key] = value
 
-    def convert_to_text(self) -> str:
+    def on_parse_node(self):
         prepare_command = self.get_prepare_command(self.oozie_node, self.params)
-        tasks = [
+        self.tasks = [
             Task(
                 task_id=self.name + "_prepare",
                 template_name="prepare.tpl",
-                trigger_rule=self.trigger_rule,
                 template_params=dict(prepare_command=prepare_command),
             ),
             Task(
                 task_id=self.name,
                 template_name="mapreduce.tpl",
-                trigger_rule=self.trigger_rule,
                 template_params=dict(
                     properties=self.properties,
                     params_dict=self.params_dict,
@@ -94,8 +82,7 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
                 ),
             ),
         ]
-        relations = [Relation(from_task_id=self.name + "_prepare", to_task_id=self.name)]
-        return render_template(template_name="action.tpl", tasks=tasks, relations=relations)
+        self.relations = [Relation(from_task_id=self.name + "_prepare", to_task_id=self.name)]
 
     @staticmethod
     def _validate_paths(input_directory_path, output_directory_path):

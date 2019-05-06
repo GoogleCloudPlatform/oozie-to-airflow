@@ -15,10 +15,8 @@
 """Tests for SSH mapper"""
 import ast
 import unittest
-from unittest import mock
 
 from xml.etree import ElementTree as ET
-from airflow.utils.trigger_rule import TriggerRule
 
 from converter.primitives import Task
 from mappers import ssh_mapper
@@ -39,12 +37,9 @@ class TestSSHMapper(unittest.TestCase):
         self.ssh_node = ET.fromstring(ssh_node_str)
 
     def test_create_mapper_no_jinja(self):
-        mapper = ssh_mapper.SSHMapper(
-            oozie_node=self.ssh_node, name="test_id", trigger_rule=TriggerRule.DUMMY
-        )
+        mapper = ssh_mapper.SSHMapper(oozie_node=self.ssh_node, name="test_id")
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
-        self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.ssh_node, mapper.oozie_node)
         self.assertEqual("user", mapper.user)
         self.assertEqual("apache.org", mapper.host)
@@ -55,33 +50,21 @@ class TestSSHMapper(unittest.TestCase):
         self.ssh_node.find("host").text = "${hostname}"
         params = {"hostname": "user@apache.org"}
 
-        mapper = ssh_mapper.SSHMapper(
-            oozie_node=self.ssh_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=params
-        )
+        mapper = ssh_mapper.SSHMapper(oozie_node=self.ssh_node, name="test_id", params=params)
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
-        self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.ssh_node, mapper.oozie_node)
         self.assertEqual("user", mapper.user)
         self.assertEqual("apache.org", mapper.host)
         self.assertEqual("'ls -l -a'", mapper.command)
 
-    @mock.patch("mappers.ssh_mapper.render_template", return_value="RETURN")
-    def test_convert_to_text(self, render_template_mock):
-        mapper = ssh_mapper.SSHMapper(
-            oozie_node=self.ssh_node, name="test_id", trigger_rule=TriggerRule.DUMMY
-        )
+    def test_on_parse(self):
+        mapper = ssh_mapper.SSHMapper(oozie_node=self.ssh_node, name="test_id")
 
-        res = mapper.convert_to_text()
-        self.assertEqual(res, "RETURN")
+        mapper.on_parse_node()
 
-        _, kwargs = render_template_mock.call_args
-        tasks = kwargs["tasks"]
-        relations = kwargs["relations"]
-
-        self.assertEqual(kwargs["template_name"], "action.tpl")
         self.assertEqual(
-            tasks,
+            mapper.tasks,
             [
                 Task(
                     task_id="test_id",
@@ -95,7 +78,7 @@ class TestSSHMapper(unittest.TestCase):
                 )
             ],
         )
-        self.assertEqual(relations, [])
+        self.assertEqual(mapper.relations, [])
 
     # pylint: disable=no-self-use
     def test_required_imports(self):

@@ -14,16 +14,12 @@
 # limitations under the License.
 """Maps SSH Oozie node to Airflow's DAG"""
 import shlex
-from typing import Dict, Set, List
+from typing import Dict, Set
 from xml.etree.ElementTree import Element
 
-from airflow.utils.trigger_rule import TriggerRule
-
-from converter.primitives import Task, Relation
+from converter.primitives import Task
 from mappers.action_mapper import ActionMapper
 from utils import el_utils
-
-from utils.template_utils import render_template
 
 
 class SSHMapper(ActionMapper):
@@ -38,12 +34,11 @@ class SSHMapper(ActionMapper):
         self,
         oozie_node: Element,
         name: str,
-        trigger_rule: str = TriggerRule.ALL_SUCCESS,
         params: Dict[str, str] = None,
         template: str = "ssh.tpl",
         **kwargs,
     ):
-        ActionMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, **kwargs)
+        ActionMapper.__init__(self, oozie_node=oozie_node, name=name, **kwargs)
 
         if params is None:
             params = {}
@@ -71,20 +66,16 @@ class SSHMapper(ActionMapper):
         user_host = host_key.split("@")
         self.user = user_host[0]
         self.host = user_host[1]
-
-    def convert_to_text(self) -> str:
-        tasks = [
+        self.tasks = [
             Task(
                 task_id=self.name,
                 template_name="ssh.tpl",
-                trigger_rule=self.trigger_rule,
                 template_params=dict(
                     params=self.params, command=self.command, user=self.user, host=self.host
                 ),
             )
         ]
-        relations: List[Relation] = []
-        return render_template(template_name="action.tpl", tasks=tasks, relations=relations)
+        self.relations = []
 
     @staticmethod
     def required_imports() -> Set[str]:

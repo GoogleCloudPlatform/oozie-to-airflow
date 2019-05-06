@@ -15,9 +15,7 @@
 """Tests for the Dummy mapper."""
 import ast
 import unittest
-from unittest import mock
 from xml.etree.ElementTree import Element
-from airflow.utils.trigger_rule import TriggerRule
 
 from converter.primitives import Task
 from mappers import dummy_mapper
@@ -27,29 +25,17 @@ class TestDummyMapper(unittest.TestCase):
     oozie_node = Element("dummy")
 
     def test_create_mapper(self):
-        mapper = dummy_mapper.DummyMapper(
-            oozie_node=self.oozie_node, name="test_id", trigger_rule=TriggerRule.DUMMY
-        )
+        mapper = dummy_mapper.DummyMapper(oozie_node=self.oozie_node, name="test_id")
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
-        self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
 
-    @mock.patch("mappers.dummy_mapper.render_template", return_value="RETURN")
-    def test_convert_to_text(self, render_template_mock):
-        mapper = dummy_mapper.DummyMapper(
-            oozie_node=self.oozie_node, name="test_id", trigger_rule=TriggerRule.DUMMY
-        )
+    def test_on_parse_node(self):
+        mapper = dummy_mapper.DummyMapper(oozie_node=self.oozie_node, name="test_id")
 
-        res = mapper.convert_to_text()
-        self.assertEqual(res, "RETURN")
+        mapper.on_parse_node()
 
-        _, kwargs = render_template_mock.call_args
-        tasks = kwargs["tasks"]
-        relations = kwargs["relations"]
-
-        self.assertEqual(kwargs["template_name"], "action.tpl")
-        self.assertEqual(tasks, [Task(task_id="test_id", template_name="dummy.tpl")])
-        self.assertEqual(relations, [])
+        self.assertEqual(mapper.tasks, [Task(task_id="test_id", template_name="dummy.tpl")])
+        self.assertEqual(mapper.relations, [])
 
     # pylint: disable=no-self-use
     def test_required_imports(self):

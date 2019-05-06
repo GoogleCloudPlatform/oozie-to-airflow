@@ -33,7 +33,6 @@ import unittest
 from xml.etree import ElementTree as ET
 
 from mappers import base_mapper
-from airflow.utils.trigger_rule import TriggerRule
 
 
 class TestBaseMapper(unittest.TestCase):
@@ -49,10 +48,4 @@ class TestBaseMapper(unittest.TestCase):
 </decision>
 """
         self.node = ET.fromstring(node_str)
-        self.mapper = base_mapper.BaseMapper(
-            oozie_node=self.node, name="test_id", trigger_rule=TriggerRule.DUMMY
-        )
-
-    def test_dummy_method(self):
-        self.assertEqual(self.mapper.first_task_id, "test_id")
-        self.assertEqual(self.mapper.last_task_id, "test_id")
+        self.mapper = base_mapper.BaseMapper(oozie_node=self.node, name="test_id")

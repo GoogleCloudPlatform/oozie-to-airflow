@@ -24,7 +24,6 @@ import uuid
 # noinspection PyPackageRequirements
 from typing import Type, Dict, Set
 
-from airflow.utils.trigger_rule import TriggerRule
 import utils.xml_utils
 from converter.parsed_node import ParsedNode
 from converter.primitives import Relation, Workflow
@@ -65,9 +64,7 @@ class OozieParser:
         A workflow definition may have zero or more kill nodes.
         """
         map_class = self.control_map["kill"]
-        mapper = map_class(
-            oozie_node=kill_node, name=kill_node.attrib["name"], trigger_rule=TriggerRule.ONE_FAILED
-        )
+        mapper = map_class(oozie_node=kill_node, name=kill_node.attrib["name"])
         p_node = ParsedNode(mapper)
 
         mapper.on_parse_node()
@@ -302,13 +299,24 @@ class OozieParser:
             logging.debug(f"Parsing node: {node}")
             self.parse_node(root, node)
 
-        self.create_relations()
+        self.create_tasks()
+        self.create_inner_relations()
+        self.update_node_roles()
         self.update_trigger_rules()
+        self.create_external_relations()
 
         for node in self.workflow.nodes.copy().values():
             node.mapper.on_parse_finish(self.workflow)
 
-    def create_relations(self) -> None:
+    def create_tasks(self) -> None:
+        for node in self.workflow.nodes.values():
+            node.tasks = node.mapper.tasks
+
+    def create_inner_relations(self) -> None:
+        for node in self.workflow.nodes.values():
+            node.relations = node.mapper.relations
+
+    def create_external_relations(self) -> None:
         """
         Given a dictionary of task_ids and ParsedNodes,
         returns a set of logical connectives for each task in Airflow.
@@ -319,18 +327,19 @@ class OozieParser:
         for p_node in self.workflow.nodes.values():
             for downstream in p_node.get_downstreams():
                 relation = Relation(
-                    from_task_id=p_node.last_task_id, to_task_id=self.workflow.nodes[downstream].first_task_id
+                    from_task_id=p_node.last_task_id,
+                    to_task_id=self.workflow.nodes[downstream].first_task_id_in_correct_flow,
                 )
                 self.workflow.relations.add(relation)
             error_downstream = p_node.get_error_downstream_name()
             if error_downstream:
                 relation = Relation(
                     from_task_id=p_node.last_task_id,
-                    to_task_id=self.workflow.nodes[error_downstream].first_task_id,
+                    to_task_id=self.workflow.nodes[error_downstream].first_task_id_in_error_flow,
                 )
                 self.workflow.relations.add(relation)
 
-    def update_trigger_rules(self) -> None:
+    def update_node_roles(self) -> None:
         """
         Updates the trigger rules of each node based on the downstream and
         error nodes.
@@ -345,6 +354,9 @@ class OozieParser:
                 # If a task is referenced  by an "error to=<task>", flip
                 # corresponding bit in the parsed node class
                 self.workflow.nodes[error_name].set_is_error(True)
+
+    def update_trigger_rules(self) -> None:
+        for node in self.workflow.nodes.values():
             node.update_trigger_rule()
 
     def get_relations(self) -> Set[Relation]:

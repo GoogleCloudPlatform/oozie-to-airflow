@@ -15,11 +15,9 @@
 """Tests Spark Mapper"""
 import ast
 import unittest
-from unittest import mock
 from xml.etree import ElementTree as ET
 
 from parameterized import parameterized
-from airflow.utils.trigger_rule import TriggerRule
 
 from converter.primitives import Task, Relation
 from mappers import spark_mapper
@@ -83,31 +81,18 @@ EXAMPLE_PARAMS = {"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"
 class TestSparkMapperWithPrepare(unittest.TestCase):
     def test_create_mapper(self):
         spark_node = ET.fromstring(EXAMPLE_XML_WITH_PREPARE)
-        mapper = spark_mapper.SparkMapper(
-            oozie_node=spark_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=EXAMPLE_PARAMS
-        )
+        mapper = spark_mapper.SparkMapper(oozie_node=spark_node, name="test_id", params=EXAMPLE_PARAMS)
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
-        self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(spark_node, mapper.oozie_node)
 
-    @mock.patch("mappers.spark_mapper.render_template")
-    def test_convert_to_text_with_prepare_node(self, render_template_mock):
+    def test_convert_to_text_with_prepare_node(self):
         spark_node = ET.fromstring(EXAMPLE_XML_WITH_PREPARE)
-        mapper = spark_mapper.SparkMapper(
-            oozie_node=spark_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=EXAMPLE_PARAMS
-        )
+        mapper = spark_mapper.SparkMapper(oozie_node=spark_node, name="test_id", params=EXAMPLE_PARAMS)
         mapper.on_parse_node()
 
-        mapper.convert_to_text()
-
-        _, kwargs = render_template_mock.call_args
-        tasks = kwargs["tasks"]
-        relations = kwargs["relations"]
-
-        self.assertEqual(kwargs["template_name"], "action.tpl")
         self.assertEqual(
-            tasks,
+            mapper.tasks,
             [
                 Task(
                     task_id="test_id_prepare",
@@ -138,26 +123,15 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
             ],
         )
 
-        self.assertEqual(relations, [Relation(from_task_id="test_id_prepare", to_task_id="test_id")])
+        self.assertEqual(mapper.relations, [Relation(from_task_id="test_id_prepare", to_task_id="test_id")])
 
-    @mock.patch("mappers.spark_mapper.render_template", return_value="RETURN")
-    def test_convert_to_text_without_prepare_node(self, render_template_mock):
+    def test_convert_to_text_without_prepare_node(self):
         spark_node = ET.fromstring(EXAMPLE_XML_WITHOUT_PREPARE)
-        mapper = spark_mapper.SparkMapper(
-            oozie_node=spark_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=EXAMPLE_PARAMS
-        )
+        mapper = spark_mapper.SparkMapper(oozie_node=spark_node, name="test_id", params=EXAMPLE_PARAMS)
         mapper.on_parse_node()
 
-        res = mapper.convert_to_text()
-        self.assertEqual(res, "RETURN")
-
-        _, kwargs = render_template_mock.call_args
-        tasks = kwargs["tasks"]
-        relations = kwargs["relations"]
-
-        self.assertEqual(kwargs["template_name"], "action.tpl")
         self.assertEqual(
-            tasks,
+            mapper.tasks,
             [
                 Task(
                     task_id="test_id",
@@ -179,7 +153,7 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
                 )
             ],
         )
-        self.assertEqual(relations, [])
+        self.assertEqual(mapper.relations, [])
 
     @parameterized.expand(
         [
@@ -205,22 +179,14 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
             ),
         ]
     )
-    @mock.patch("mappers.spark_mapper.render_template")
-    def test_convert_to_text_parse_spark_opts(self, spark_opts, properties, render_template_mock):
+    def test_convert_to_text_parse_spark_opts(self, spark_opts, properties):
         spark_node = ET.fromstring(EXAMPLE_XML_WITHOUT_PREPARE)
         spark_opts_node = find_nodes_by_tag(spark_node, spark_mapper.SPARK_TAG_OPTS)[0]
         spark_opts_node.text = spark_opts
-        mapper = spark_mapper.SparkMapper(
-            oozie_node=spark_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=EXAMPLE_PARAMS
-        )
+        mapper = spark_mapper.SparkMapper(oozie_node=spark_node, name="test_id", params=EXAMPLE_PARAMS)
         mapper.on_parse_node()
 
-        mapper.convert_to_text()
-
-        _, kwargs = render_template_mock.call_args
-        tasks = kwargs["tasks"]
-
-        self.assertEqual(tasks[0].template_params["dataproc_spark_properties"], properties)
+        self.assertEqual(mapper.tasks[0].template_params["dataproc_spark_properties"], properties)
 
     # pylint: disable=no-self-use
     def test_required_imports(self):

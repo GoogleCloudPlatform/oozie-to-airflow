@@ -19,18 +19,26 @@ import logging
 
 from airflow.utils.trigger_rule import TriggerRule
 
-from mappers.base_mapper import BaseMapper
+from converter import primitives
+
+# Pylint and flake8 does not understand forward references
+# https://www.python.org/dev/peps/pep-0484/#forward-references
+from mappers import base_mapper  # noqa: F401 pylint: disable=unused-import
 
 
 class ParsedNode:
     """Class for parsed Oozie workflow node"""
 
-    def __init__(self, mapper: BaseMapper):
+    def __init__(self, mapper: "base_mapper.BaseMapper"):
         self.mapper = mapper
         self.downstream_names: List[str] = []
         self.is_error: bool = False
         self.is_ok: bool = False
         self.error_xml: Optional[str] = None
+        self.tasks: List["primitives.Task"] = []
+        self.relations: List["primitives.Relation"] = []
+        self.error_task: Optional["primitives.Task"] = None
+        self.error_relation: Optional["primitives.Relation"] = None
 
     def add_downstream_node_name(self, node_name: str):
         """
@@ -55,28 +63,49 @@ class ParsedNode:
 
     def __repr__(self) -> str:
         return (
-            f"ParsedNode(mapper={repr(self.mapper)}, downstream_names={self.downstream_names}, "
-            f"is_error={self.is_error}, is_ok={self.is_ok}, error_xml={self.error_xml})"
+            f"ParsedNode(mapper={self.mapper}, downstream_names={self.downstream_names}, "
+            f"is_error={self.is_error}, is_ok={self.is_ok}, error_xml={self.error_xml}, tasks={self.tasks}, "
+            f"relations={self.relations})"
         )
 
     @property
-    def first_task_id(self) -> str:
+    def first_task_id_in_correct_flow(self) -> str:
         """
-        Returns task_id of first task in mapper
+        Returns task_id of first task in correct flow
         """
-        return self.mapper.first_task_id
+        return self.tasks[0].task_id
+
+    @property
+    def first_task_id_in_error_flow(self) -> str:
+        """
+        Returns task_id of first task in error
+        """
+        if self.error_task:
+            return self.error_task.task_id
+        return self.tasks[0].task_id
+
+    def get_all_tasks(self):
+        if self.error_task:
+            return [*self.tasks, self.error_task]
+        return [*self.tasks]
+
+    def get_all_relations(self):
+        if self.error_relation:
+            return [*self.relations, self.error_relation]
+        return [*self.relations]
 
     @property
     def last_task_id(self) -> str:
         """
         Returns task_id of last task in mapper
         """
-        return self.mapper.last_task_id
+        return self.tasks[-1].task_id
 
     def set_is_error(self, is_error: bool):
         """
         A bit that switches when the node is the error downstream of any other
         node.
+
         :param is_error: Boolean of is_error or not.
         """
         self.is_error = is_error
@@ -85,6 +114,7 @@ class ParsedNode:
         """
         A bit that switches when the node is the ok downstream of any other
         node.
+
         :param is_ok: Boolean of is_ok or not.
         """
         self.is_ok = is_ok
@@ -93,22 +123,39 @@ class ParsedNode:
         """
         The trigger rule gets determined by if it is error or ok.
 
-        OK only -> TriggerRule.ONE_SUCCESS
-        ERROR only -> TriggerRule.ONE_FAILED
-        both -> TriggerRule.DUMMY and a warning log.
-        neither -> TriggerRule.DUMMY
+        OK only
+            the trigger rules for the first task equals to TriggerRule.ALL_SUCCESS
 
-        Eventually this if it is both error and ok, then
-        we can extend it into two Airflow Operators where one
-        is a python branch operator, and make a decision there.
+        ERROR only
+            the trigger rules for the first task equals to TriggerRule.ONE_FAILED
+
+        neither
+            no changes
+
+        both
+            the trigger rules for the first task equals to TriggerRule.ALL_SUCCESS
+            An additional task is also created on the second position with
+            TriggerRule equals to TriggerRule.ONE_FAILED
+
         """
         if self.is_ok and self.is_error:
-            logging.warning(f"Task {self.mapper.name} is both an error node and a ok node.")
-            self.mapper.trigger_rule = TriggerRule.DUMMY
+            error_task_name = self.mapper.name + "_error_handle"
+            self.error_task = primitives.Task(
+                task_id=error_task_name, template_name="dummy.tpl", trigger_rule=TriggerRule.ONE_FAILED
+            )
+            self.error_relation = primitives.Relation(
+                to_task_id=self.tasks[0].task_id, from_task_id=error_task_name
+            )
+            for task in self.tasks:
+                task.trigger_rule = TriggerRule.ALL_SUCCESS
         elif not self.is_ok and not self.is_error:
-            # Sets to dummy, but does not warn user about it.
-            self.mapper.trigger_rule = TriggerRule.DUMMY
+            logging.warning(f"The Node {self.mapper.name} is not used in the correct and error flow.")
+            for task in self.tasks:
+                task.trigger_rule = TriggerRule.DUMMY
         elif self.is_ok:
-            self.mapper.trigger_rule = TriggerRule.ALL_SUCCESS
+            for task in self.tasks:
+                task.trigger_rule = TriggerRule.ALL_SUCCESS
         else:
-            self.mapper.trigger_rule = TriggerRule.ONE_FAILED
+            self.tasks[0].trigger_rule = TriggerRule.ONE_FAILED
+            for task in self.tasks[1:]:
+                task.trigger_rule = TriggerRule.ALL_SUCCESS

@@ -19,8 +19,6 @@ from contextlib import suppress
 from unittest import mock, TestCase
 from xml.etree import ElementTree as ET
 
-from airflow.utils.trigger_rule import TriggerRule
-
 from converter.mappers import CONTROL_MAP, ACTION_MAP
 from converter.primitives import Task
 from mappers import subworkflow_mapper
@@ -76,13 +74,11 @@ class TestSubworkflowMapper(TestCase):
             output_directory_path="/tmp",
             action_mapper=ACTION_MAP,
             control_mapper=CONTROL_MAP,
-            trigger_rule=TriggerRule.DUMMY,
             params=self.main_params,
         )
 
         # Then
         self.assertEqual("test_id", mapper.task_id)
-        self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.subworkflow_node, mapper.oozie_node)
         self.assertEqual(self.main_params, mapper.params)
         self.assertEqual("subwf.tpl", mapper.template)
@@ -110,13 +106,11 @@ class TestSubworkflowMapper(TestCase):
             output_directory_path="/tmp",
             action_mapper=ACTION_MAP,
             control_mapper=CONTROL_MAP,
-            trigger_rule=TriggerRule.DUMMY,
             params=self.main_params,
         )
 
         # Then
         self.assertEqual("test_id", mapper.task_id)
-        self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.subworkflow_node, mapper.oozie_node)
         self.assertEqual(self.main_params, mapper.params)
         self.assertEqual("subwf.tpl", mapper.template)
@@ -124,9 +118,8 @@ class TestSubworkflowMapper(TestCase):
         self.assertEqual({}, mapper.get_config_properties())
         self.assertTrue(os.path.isfile("/tmp/subdag_test.py"))
 
-    @mock.patch("mappers.subworkflow_mapper.render_template", return_value="RETURN")
     @mock.patch("utils.el_utils.parse_els")
-    def test_convert_to_text(self, parse_els_mock, render_template_mock):
+    def test_on_parse_node(self, parse_els_mock):
         # Given
         parse_els_mock.return_value = self.subworkflow_params
         # When
@@ -136,22 +129,15 @@ class TestSubworkflowMapper(TestCase):
             oozie_node=self.subworkflow_node,
             name="test_id",
             dag_name="test",
-            trigger_rule=TriggerRule.DUMMY,
             params=self.main_params,
             action_mapper=ACTION_MAP,
             control_mapper=CONTROL_MAP,
         )
 
-        res = mapper.convert_to_text()
-        self.assertEqual(res, "RETURN")
+        mapper.on_parse_node()
 
-        _, kwargs = render_template_mock.call_args
-        tasks = kwargs["tasks"]
-        relations = kwargs["relations"]
-
-        self.assertEqual(kwargs["template_name"], "action.tpl")
-        self.assertEqual(tasks, [Task(task_id="test_id", template_name="subwf.tpl")])
-        self.assertEqual(relations, [])
+        self.assertEqual(mapper.tasks, [Task(task_id="test_id", template_name="subwf.tpl")])
+        self.assertEqual(mapper.relations, [])
 
     # pylint: disable=no-self-use
     def test_required_imports(self):

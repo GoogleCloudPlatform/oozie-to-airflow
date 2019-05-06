@@ -18,14 +18,10 @@ from typing import Dict, Set
 
 import xml.etree.ElementTree as ET
 
-from airflow.utils.trigger_rule import TriggerRule
-
 from converter.primitives import Task, Relation
 from mappers.action_mapper import ActionMapper
 from mappers.prepare_mixin import PrepareMixin
 from utils import el_utils
-
-from utils.template_utils import render_template
 
 
 class ShellMapper(ActionMapper, PrepareMixin):
@@ -37,17 +33,15 @@ class ShellMapper(ActionMapper, PrepareMixin):
         self,
         oozie_node: ET.Element,
         name: str,
-        trigger_rule: str = TriggerRule.ALL_SUCCESS,
         params: Dict[str, str] = None,
         template: str = "shell.tpl",
         **kwargs,
     ):
-        ActionMapper.__init__(self, oozie_node, name, trigger_rule, **kwargs)
+        ActionMapper.__init__(self, oozie_node, name, **kwargs)
         if params is None:
             params = {}
         self.template = template
         self.params = params
-        self.trigger_rule = trigger_rule
         self._parse_oozie_node()
 
     def _parse_oozie_node(self):
@@ -62,9 +56,9 @@ class ShellMapper(ActionMapper, PrepareMixin):
         self.bash_command = el_utils.convert_el_to_jinja(cmd, quote=False)
         self.pig_command = f"sh {shlex.quote(self.bash_command)}"
 
-    def convert_to_text(self) -> str:
+    def on_parse_node(self):
         prepare_command = self.get_prepare_command(self.oozie_node, self.params)
-        tasks = [
+        self.tasks = [
             Task(
                 task_id=self.name + "_prepare",
                 template_name="prepare.tpl",
@@ -76,8 +70,7 @@ class ShellMapper(ActionMapper, PrepareMixin):
                 template_params=dict(pig_command=self.pig_command),
             ),
         ]
-        relations = [Relation(from_task_id=self.name + "_prepare", to_task_id=self.name)]
-        return render_template(template_name="action.tpl", tasks=tasks, relations=relations)
+        self.relations = [Relation(from_task_id=self.name + "_prepare", to_task_id=self.name)]
 
     @staticmethod
     def required_imports() -> Set[str]:

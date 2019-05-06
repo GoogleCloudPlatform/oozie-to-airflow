@@ -13,37 +13,24 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Base mapper - it is a base class for all mappers actions, and logic alike"""
-from typing import Set
+from typing import Set, List
 from xml.etree.ElementTree import Element
 
-import airflow.utils.trigger_rule
+from converter import primitives
 
 
 class BaseMapper:
     """The Base Mapper class - parent for all mappers."""
 
     # pylint: disable=unused-argument
-    def __init__(
-        self,
-        oozie_node: Element,
-        name: str,
-        trigger_rule=airflow.utils.trigger_rule.TriggerRule.ALL_SUCCESS,
-        params=None,
-        **kwargs,
-    ):
+    def __init__(self, oozie_node: Element, name: str, params=None, **kwargs):
         if params is None:
             params = {}
         self.params = params
         self.oozie_node = oozie_node
         self.name = name
-        self.trigger_rule = trigger_rule
-
-    def convert_to_text(self) -> str:
-        """
-        Returns a python operators equivalent string with relation.
-        This will be appended to the file.
-        """
-        raise NotImplementedError("Not Implemented")
+        self.tasks: List[primitives.Task] = []
+        self.relations: List[primitives.Relation] = []
 
     @staticmethod
     def required_imports() -> Set[str]:
@@ -54,20 +41,6 @@ class BaseMapper:
         Ex: returns {'from airflow.operators import bash_operator']}
         """
         raise NotImplementedError("Not Implemented")
-
-    @property
-    def first_task_id(self) -> str:
-        """
-        Returns task_id of first task in mapper
-        """
-        return self.name
-
-    @property
-    def last_task_id(self) -> str:
-        """
-        Returns task_id of last task in mapper
-        """
-        return self.name
 
     def on_parse_node(self):
         """

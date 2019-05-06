@@ -16,11 +16,9 @@
 
 import ast
 import unittest
-from unittest import mock
 from xml.etree import ElementTree as ET
 
 from parameterized import parameterized
-from airflow.utils.trigger_rule import TriggerRule
 
 from converter.primitives import Task, Relation
 from mappers import fs_mapper
@@ -166,21 +164,12 @@ class FsMapperSingleTestCase(unittest.TestCase):
             </fs>"""
         self.node = ET.fromstring(node_str)
 
-        self.mapper = fs_mapper.FsMapper(oozie_node=self.node, name="test_id", trigger_rule=TriggerRule.DUMMY)
+        self.mapper = fs_mapper.FsMapper(oozie_node=self.node, name="test_id")
         self.mapper.on_parse_node()
 
-    @mock.patch("mappers.fs_mapper.render_template", return_value="RETURN")
-    def test_convert_to_text(self, render_template_mock):
-        res = self.mapper.convert_to_text()
-        self.assertEqual(res, "RETURN")
-
-        _, kwargs = render_template_mock.call_args
-        tasks = kwargs["tasks"]
-        relations = kwargs["relations"]
-
-        self.assertEqual(kwargs["template_name"], "action.tpl")
+    def test_convert_to_text(self):
         self.assertEqual(
-            tasks,
+            self.mapper.tasks,
             [
                 Task(
                     task_id="test_id",
@@ -189,48 +178,28 @@ class FsMapperSingleTestCase(unittest.TestCase):
                 )
             ],
         )
-        self.assertEqual(relations, [])
+        self.assertEqual(self.mapper.relations, [])
 
     def test_required_imports(self):
         imps = fs_mapper.FsMapper.required_imports()
         imp_str = "\n".join(imps)
         self.assertIsNotNone(ast.parse(imp_str))
-
-    def test_get_first_task_id(self):
-        self.assertEqual(self.mapper.first_task_id, "test_id")
-
-    def test_get_last_task_id(self):
-        self.assertEqual(self.mapper.last_task_id, "test_id")
 
 
 class FsMapperEmptyTestCase(unittest.TestCase):
     def setUp(self):
         self.node = ET.Element("fs")
-        self.mapper = fs_mapper.FsMapper(oozie_node=self.node, name="test_id", trigger_rule=TriggerRule.DUMMY)
+        self.mapper = fs_mapper.FsMapper(oozie_node=self.node, name="test_id")
         self.mapper.on_parse_node()
 
-    @mock.patch("mappers.fs_mapper.render_template")
-    def test_convert_to_text(self, render_template_mock):
-        self.mapper.convert_to_text()
-
-        _, kwargs = render_template_mock.call_args
-        tasks = kwargs["tasks"]
-        relations = kwargs["relations"]
-
-        self.assertEqual(kwargs["template_name"], "action.tpl")
-        self.assertEqual(tasks, [Task(task_id="test_id", template_name="dummy.tpl")])
-        self.assertEqual(relations, [])
+    def test_on_parse_node(self):
+        self.assertEqual(self.mapper.tasks, [Task(task_id="test_id", template_name="dummy.tpl")])
+        self.assertEqual(self.mapper.relations, [])
 
     def test_required_imports(self):
         imps = fs_mapper.FsMapper.required_imports()
         imp_str = "\n".join(imps)
         self.assertIsNotNone(ast.parse(imp_str))
-
-    def test_get_first_task_id(self):
-        self.assertEqual(self.mapper.first_task_id, "test_id")
-
-    def test_get_last_task_id(self):
-        self.assertEqual(self.mapper.last_task_id, "test_id")
 
 
 class FsMapperComplexTestCase(unittest.TestCase):
@@ -275,18 +244,13 @@ class FsMapperComplexTestCase(unittest.TestCase):
             </fs>"""
         self.node = ET.fromstring(node_str)
 
-        self.mapper = fs_mapper.FsMapper(oozie_node=self.node, name="test_id", trigger_rule=TriggerRule.DUMMY)
+        self.mapper = fs_mapper.FsMapper(oozie_node=self.node, name="test_id")
         self.mapper.on_parse_node()
 
-    @mock.patch("mappers.fs_mapper.render_template")
-    def test_convert_to_text(self, render_template_mock):
-        self.mapper.convert_to_text()
+    def test_on_parse_node(self):
+        tasks = self.mapper.tasks
+        relations = self.mapper.relations
 
-        _, kwargs = render_template_mock.call_args
-        tasks = kwargs["tasks"]
-        relations = kwargs["relations"]
-
-        self.assertEqual(kwargs["template_name"], "action.tpl")
         self.assertEqual(
             tasks,
             [
@@ -409,9 +373,3 @@ class FsMapperComplexTestCase(unittest.TestCase):
         imps = fs_mapper.FsMapper.required_imports()
         imp_str = "\n".join(imps)
         self.assertIsNotNone(ast.parse(imp_str))
-
-    def test_get_first_task_id(self):
-        self.assertEqual(self.mapper.first_task_id, "test_id_fs_0_mkdir")
-
-    def test_get_last_task_id(self):
-        self.assertEqual(self.mapper.last_task_id, "test_id_fs_17_chgrp")

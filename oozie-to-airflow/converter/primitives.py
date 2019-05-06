@@ -66,7 +66,7 @@ class Workflow:  # pylint: disable=too-few-public-methods
         return (
             f"Workflow(dag_name={self.dag_name}, input_directory_path={self.input_directory_path}, "
             f"output_directory_path={self.output_directory_path}, relations={self.relations}, "
-            f"nodes={self.nodes.keys()}, dependencies={self.dependencies})"
+            f"nodes={self.nodes}, dependencies={self.dependencies})"
         )
 
     def __eq__(self, other):

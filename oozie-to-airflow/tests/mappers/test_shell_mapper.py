@@ -15,10 +15,7 @@
 """Tests shell mapper"""
 import ast
 import unittest
-from unittest import mock
 from xml.etree import ElementTree as ET
-
-from airflow.utils.trigger_rule import TriggerRule
 
 from converter.primitives import Task, Relation
 from mappers import shell_mapper
@@ -54,12 +51,9 @@ class TestShellMapper(unittest.TestCase):
         self.shell_node = ET.fromstring(shell_node_str)
 
     def test_create_mapper_no_jinja(self):
-        mapper = shell_mapper.ShellMapper(
-            oozie_node=self.shell_node, name="test_id", trigger_rule=TriggerRule.DUMMY
-        )
+        mapper = shell_mapper.ShellMapper(oozie_node=self.shell_node, name="test_id")
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
-        self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.shell_node, mapper.oozie_node)
         self.assertEqual("localhost:8032", mapper.resource_manager)
         self.assertEqual("hdfs://localhost:8020", mapper.name_node)
@@ -77,41 +71,30 @@ class TestShellMapper(unittest.TestCase):
             "examplesRoot": "examples",
         }
 
-        mapper = shell_mapper.ShellMapper(
-            oozie_node=self.shell_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=params
-        )
+        mapper = shell_mapper.ShellMapper(oozie_node=self.shell_node, name="test_id", params=params)
 
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
-        self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.shell_node, mapper.oozie_node)
         self.assertEqual("localhost:9999", mapper.resource_manager)
         self.assertEqual("hdfs://localhost:8021", mapper.name_node)
         self.assertEqual("myQueue", mapper.properties["mapred.job.queue.name"])
         self.assertEqual("echo arg1 arg2", mapper.bash_command)
 
-    @mock.patch("mappers.shell_mapper.render_template", return_value="RETURN")
-    def test_convert_to_text(self, render_template_mock):
+    def test_on_parse_node(self):
         mapper = shell_mapper.ShellMapper(
             oozie_node=self.shell_node,
             name="test_id",
-            trigger_rule=TriggerRule.DUMMY,
             params={
                 "dataproc_cluster": "my-cluster",
                 "gcp_region": "europe-west3",
                 "nameNode": "hdfs://localhost:9020/",
             },
         )
-        res = mapper.convert_to_text()
-        self.assertEqual(res, "RETURN")
+        mapper.on_parse_node()
 
-        _, kwargs = render_template_mock.call_args
-        tasks = kwargs["tasks"]
-        relations = kwargs["relations"]
-
-        self.assertEqual(kwargs["template_name"], "action.tpl")
         self.assertEqual(
-            tasks,
+            mapper.tasks,
             [
                 Task(
                     task_id="test_id_prepare",
@@ -130,7 +113,7 @@ class TestShellMapper(unittest.TestCase):
                 ),
             ],
         )
-        self.assertEqual(relations, [Relation(from_task_id="test_id_prepare", to_task_id="test_id")])
+        self.assertEqual(mapper.relations, [Relation(from_task_id="test_id_prepare", to_task_id="test_id")])
 
     # pylint: disable=no-self-use
     def test_required_imports(self):

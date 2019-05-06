@@ -18,17 +18,15 @@ import os
 from typing import Set, Dict, Type
 from xml.etree.ElementTree import Element
 
-from airflow.utils.trigger_rule import TriggerRule
-
 from converter.primitives import Task
 from converter.subworkflow_converter import OozieSubworkflowConverter
 from mappers.action_mapper import ActionMapper
 from mappers.base_mapper import BaseMapper
 from tests.utils.test_paths import EXAMPLES_PATH
 from utils import el_utils, xml_utils
-from utils.template_utils import render_template
 
 
+# pylint: disable=too-many-instance-attributes
 class SubworkflowMapper(ActionMapper):
     """
     Converts a Sub-workflow Oozie node to an Airflow task.
@@ -46,18 +44,16 @@ class SubworkflowMapper(ActionMapper):
         output_directory_path: str,
         action_mapper: Dict[str, Type[ActionMapper]],
         control_mapper: Dict[str, Type[BaseMapper]],
-        trigger_rule=TriggerRule.ALL_SUCCESS,
         params=None,
         template="subwf.tpl",
         **kwargs,
     ):
-        ActionMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, **kwargs)
+        ActionMapper.__init__(self, oozie_node=oozie_node, name=name, **kwargs)
         if params is None:
             params = {}
         self.template = template
         self.params = params
         self.task_id = name
-        self.trigger_rule = trigger_rule
         self.properties = {}
         self.input_directory_path = input_directory_path
         self.output_directory_path = output_directory_path
@@ -85,6 +81,10 @@ class SubworkflowMapper(ActionMapper):
         )
         converter.convert()
 
+    def on_parse_node(self):
+        self.tasks = [Task(task_id=self.name, template_name=self.template)]
+        self.relations = []
+
     def get_config_properties(self):
         propagate_configuration = self.oozie_node.find("propagate-configuration")
         # Below the `is not None` is necessary due to Element's __bool__() return value:
@@ -103,11 +103,6 @@ class SubworkflowMapper(ActionMapper):
                         node.find("value").text, params=self.params, quote=False
                     )
                     self.properties[name] = value
-
-    def convert_to_text(self):
-        tasks = [Task(task_id=self.name, template_name=self.template, trigger_rule=self.trigger_rule)]
-        relations = []
-        return render_template(template_name="action.tpl", tasks=tasks, relations=relations)
 
     @staticmethod
     def required_imports() -> Set[str]:

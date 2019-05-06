@@ -24,7 +24,7 @@ from parameterized import parameterized
 from converter import parser
 from converter import parsed_node
 from converter.mappers import ACTION_MAP, CONTROL_MAP
-from converter.primitives import Relation
+from converter.primitives import Relation, Task
 from mappers import dummy_mapper, pig_mapper
 from mappers import ssh_mapper
 from tests.utils.test_paths import EXAMPLE_DEMO_PATH, EXAMPLES_PATH
@@ -322,26 +322,31 @@ class TestOozieParser(unittest.TestCase):
         oozie_node = ET.Element("dummy")
         op1 = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task1"))
         op1.downstream_names = ["task2", "task3"]
+        op1.tasks = [Task(task_id="task1", template_name="dummy.tpl")]
         op1.error_xml = "fail1"
         op2 = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task2"))
         op2.downstream_names = ["task3", "task4"]
         op2.error_xml = "fail1"
+        op2.tasks = [Task(task_id="task2", template_name="dummy.tpl")]
         op3 = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task3"))
         op3.downstream_names = ["end1"]
         op3.error_xml = "fail1"
+        op3.tasks = [Task(task_id="task3", template_name="dummy.tpl")]
         op4 = mock.Mock(
             **{
-                "first_task_id": "task4_first",
+                "first_task_id_in_correct_flow": "task4_first",
                 "last_task_id": "task4_last",
                 "get_downstreams.return_value": ["task1", "task2", "task3"],
                 "get_error_downstream_name.return_value": "fail1",
             }
         )
         end = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=oozie_node, name="end1"))
+        end.tasks = [Task(task_id="end1", template_name="dummy.tpl")]
         fail = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=oozie_node, name="fail1"))
+        fail.tasks = [Task(task_id="fail1", template_name="dummy.tpl")]
         op_dict = {"task1": op1, "task2": op2, "task3": op3, "task4": op4, "end1": end, "fail1": fail}
         self.parser.workflow.nodes.update(op_dict)
-        self.parser.create_relations()
+        self.parser.create_external_relations()
 
         self.assertEqual(
             self.parser.workflow.relations,
@@ -366,18 +371,23 @@ class TestOozieParser(unittest.TestCase):
         op1 = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task1"))
         op1.downstream_names = ["task2", "task3"]
         op1.error_xml = "fail1"
+        op1.tasks = [Task(task_id="task1", template_name="dummy.tpl")]
         op2 = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task2"))
         op2.downstream_names = ["task3"]
         op2.error_xml = "fail1"
+        op2.tasks = [Task(task_id="task2", template_name="dummy.tpl")]
         op3 = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task3"))
         op3.downstream_names = ["end1"]
         op3.error_xml = "fail1"
+        op3.tasks = [Task(task_id="task2", template_name="dummy.tpl")]
         end = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=oozie_node, name="end1"))
+        end.tasks = [Task(task_id="end1", template_name="dummy.tpl")]
         fail = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=oozie_node, name="fail1"))
+        fail.tasks = [Task(task_id="fail1", template_name="dummy.tpl")]
         op_dict = {"task1": op1, "task2": op2, "task3": op3, "end1": end, "fail1": fail}
 
         self.parser.workflow.nodes.update(op_dict)
-        self.parser.create_relations()
+        self.parser.create_external_relations()
         self.parser.update_trigger_rules()
 
         self.assertFalse(op1.is_ok)
@@ -438,7 +448,7 @@ class TestOozieExamples(unittest.TestCase):
                         Relation(from_task_id="shell_node", to_task_id="join_node"),
                         Relation(from_task_id="subworkflow_node", to_task_id="join_node"),
                     },
-                    params={"nameNode": "hdfs://"},
+                    params={"nameNode": "hdfs://", "dataproc_cluster": "A", "gcp_region": "B"},
                 ),
             ),
             (
@@ -475,7 +485,7 @@ class TestOozieExamples(unittest.TestCase):
                     name="mapreduce",
                     node_names={"mr_node"},
                     relations=set(),
-                    params={"nameNode": "hdfs://localhost:8020/"},
+                    params={"nameNode": "hdfs://localhost:8020/", "dataproc_cluster": "A", "gcp_region": "B"},
                 ),
             ),
             (
@@ -483,12 +493,20 @@ class TestOozieExamples(unittest.TestCase):
                     name="pig",
                     node_names={"pig_node"},
                     relations=set(),
-                    params={"oozie.wf.application.path": "hdfs://", "nameNode": "hdfs://"},
+                    params={
+                        "oozie.wf.application.path": "hdfs://",
+                        "nameNode": "hdfs://",
+                        "dataproc_cluster": "A",
+                        "gcp_region": "B",
+                    },
                 ),
             ),
             (
                 WorkflowTestCase(
-                    name="shell", node_names={"shell_node"}, relations=set(), params={"nameNode": "hdfs://"}
+                    name="shell",
+                    node_names={"shell_node"},
+                    relations=set(),
+                    params={"nameNode": "hdfs://", "dataproc_cluster": "A", "gcp_region": "B"},
                 ),
             ),
             (
@@ -521,7 +539,13 @@ class TestOozieExamples(unittest.TestCase):
             action_mapper=ACTION_MAP,
             control_mapper=CONTROL_MAP,
         )
-        current_parser.parse_workflow()
+        try:
+            current_parser.parse_workflow()
+        except Exception:
+            from pprint import pprint
+
+            pprint(current_parser.workflow.nodes)
+            raise
         self.assertEqual(case.node_names, set(current_parser.workflow.nodes.keys()))
         self.assertEqual(case.relations, current_parser.workflow.relations)
         on_parse_finish_mock.assert_called()
