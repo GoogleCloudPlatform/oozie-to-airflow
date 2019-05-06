@@ -62,8 +62,8 @@ def _check_archive_extensions(oozie_archive_path: str) -> List[str]:
     archive_path = split_path[0]
     if not any(archive_path.endswith(extension) for extension in ARCHIVE_EXTENSIONS):
         raise Exception(
-            "The path {} cannot be accepted as archive as it does not have one "
-            "of the extensions: {}".format(archive_path, ARCHIVE_EXTENSIONS)
+            f"The path {archive_path} cannot be accepted as archive as it does not have one "
+            f"of the extensions: {ARCHIVE_EXTENSIONS}"
         )
     return split_path
 
