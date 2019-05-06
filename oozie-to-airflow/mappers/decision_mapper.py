@@ -88,8 +88,9 @@ class DecisionMapper(BaseMapper):
         tasks = [
             Task(
                 task_id=self.name,
+                trigger_rule=self.trigger_rule,
                 template_name="decision.tpl",
-                template_params=dict(trigger_rule=self.trigger_rule, case_dict=self.case_dict),
+                template_params=dict(case_dict=self.case_dict),
             )
         ]
         relations: List[Relation] = []

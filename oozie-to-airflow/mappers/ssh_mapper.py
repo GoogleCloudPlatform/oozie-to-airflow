@@ -77,12 +77,9 @@ class SSHMapper(ActionMapper):
             Task(
                 task_id=self.name,
                 template_name="ssh.tpl",
+                trigger_rule=self.trigger_rule,
                 template_params=dict(
-                    params=self.params,
-                    trigger_rule=self.trigger_rule,
-                    command=self.command,
-                    user=self.user,
-                    host=self.host,
+                    params=self.params, command=self.command, user=self.user, host=self.host
                 ),
             )
         ]

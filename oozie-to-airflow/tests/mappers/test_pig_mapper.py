@@ -132,7 +132,6 @@ class TestPigMapper(unittest.TestCase):
                     task_id="test_id",
                     template_name="pig.tpl",
                     template_params={
-                        "trigger_rule": "dummy",
                         "properties": {
                             "mapred.job.queue.name": "${queueName}",
                             "mapred.map.output.compress": "false",

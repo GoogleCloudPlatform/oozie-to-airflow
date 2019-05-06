@@ -136,7 +136,6 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
                             "-XX:HeapDumpPath=/tmp",
                         },
                         "dataproc_spark_jars": ["/lib/spark-examples_2.10-1.1.0.jar"],
-                        "trigger_rule": "dummy",
                     },
                 ),
             ],
@@ -183,7 +182,6 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
                         "dataproc_spark_jars": [
                             "/user/test_user/examples/apps/spark/lib/oozie-examples-4.3.0.jar"
                         ],
-                        "trigger_rule": "dummy",
                     },
                 )
             ],
