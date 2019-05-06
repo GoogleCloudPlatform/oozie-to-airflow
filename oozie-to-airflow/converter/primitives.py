@@ -16,6 +16,8 @@
 from collections import OrderedDict
 from typing import Set, Optional, Dict, NamedTuple, Any
 
+from airflow.utils.trigger_rule import TriggerRule
+
 # Pylint and flake8 does not understand forward references
 # https://www.python.org/dev/peps/pep-0484/#forward-references
 from converter import parsed_node  # noqa: F401 pylint: disable=unused-import
@@ -81,19 +83,25 @@ class Task:  # pylint: disable=too-few-public-methods
     template_name: str
     template_params: Dict[str, Any]
 
-    def __init__(self, task_id, template_name, template_params=None):
+    def __init__(self, task_id, template_name, trigger_rule=TriggerRule.DUMMY, template_params=None):
         self.task_id = task_id
         self.template_name = template_name
+        self.trigger_rule = trigger_rule
         self.template_params = template_params or {}
 
     @property
     def rendered_template(self):
-        return render_template(template_name=self.template_name, task_id=self.task_id, **self.template_params)
+        return render_template(
+            template_name=self.template_name,
+            task_id=self.task_id,
+            trigger_rule=self.trigger_rule,
+            **self.template_params,
+        )
 
     def __repr__(self) -> str:
         return (
             f'Task(task_id="{self.task_id}", template_name="{self.template_name}", '
-            f"template_params={self.template_params})"
+            f'trigger_rule="{self.trigger_rule}", template_params={self.template_params})'
         )
 
     def __eq__(self, other):

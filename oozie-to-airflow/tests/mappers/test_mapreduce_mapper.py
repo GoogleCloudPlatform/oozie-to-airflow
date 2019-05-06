@@ -164,7 +164,6 @@ class TestMapReduceMapper(unittest.TestCase):
                     task_id="test_id",
                     template_name="mapreduce.tpl",
                     template_params={
-                        "trigger_rule": "dummy",
                         "properties": {
                             "mapred.mapper.new-api": "true",
                             "mapred.reducer.new-api": "true",
