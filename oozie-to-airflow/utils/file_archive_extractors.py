@@ -64,7 +64,6 @@ class FileExtractor:
         :param oozie_file_path: oozie file path to add
         :return: None
         """
-        split_by_hash_sign(oozie_file_path)
         self.files.append(oozie_file_path)
         self.hdfs_files.append(preprocess_path_to_hdfs(oozie_file_path, self.params))
 
