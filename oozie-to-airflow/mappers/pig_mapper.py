@@ -53,8 +53,8 @@ class PigMapper(ActionMapper, PrepareMixin):
         self.trigger_rule = trigger_rule
         self.properties = {}
         self.params_dict = {}
-        self.file_extractor = FileExtractor(oozie_node=oozie_node, params=params)
-        self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, params=params)
+        self.file_extractor = FileExtractor(oozie_node=oozie_node, params=params, hdfs_path=True)
+        self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, params=params, hdfs_path=True)
         self._parse_oozie_node()
 
     def _parse_oozie_node(self):
@@ -66,8 +66,8 @@ class PigMapper(ActionMapper, PrepareMixin):
         self.script_file_name = el_utils.replace_el_with_var(script, params=self.params, quote=False)
         self._parse_config()
         self._parse_params()
-        self.files, self.hdfs_files = self.file_extractor.parse_node()
-        self.archives, self.hdfs_archives = self.archive_extractor.parse_node()
+        self.hdfs_files = self.file_extractor.parse_node()
+        self.hdfs_archives = self.archive_extractor.parse_node()
 
     def _parse_params(self):
         param_nodes = xml_utils.find_nodes_by_tag(self.oozie_node, "param")
@@ -102,9 +102,9 @@ class PigMapper(ActionMapper, PrepareMixin):
 
     def _add_symlinks(self, destination_pig_file):
         destination_pig_file.write("set mapred.create.symlink yes;\n")
-        if self.files:
+        if self.hdfs_files:
             destination_pig_file.write("set mapred.cache.file {};\n".format(",".join(self.hdfs_files)))
-        if self.archives:
+        if self.hdfs_archives:
             destination_pig_file.write("set mapred.cache.archives {};\n".format(",".join(self.hdfs_archives)))
 
     def copy_extra_assets(self, input_directory_path: str, output_directory_path: str):
@@ -118,7 +118,7 @@ class PigMapper(ActionMapper, PrepareMixin):
         with open(destination_pig_file_path, "w") as destination_pig_file:
             with open(source_pig_file_path, "r") as source_pig_file:
                 pig_script = source_pig_file.read()
-                if self.files or self.archives:
+                if self.hdfs_files or self.hdfs_archives:
                     self._add_symlinks(destination_pig_file)
                 destination_pig_file.write(pig_script)
 

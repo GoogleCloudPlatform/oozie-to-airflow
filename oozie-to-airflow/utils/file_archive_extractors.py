@@ -39,33 +39,25 @@ def split_by_hash_sign(path: str) -> List[str]:
     return [path]
 
 
+# pylint: disable=too-few-public-methods
 class FileExtractor:
     """ Extracts all file paths from an Oozie node """
 
-    def __init__(self, oozie_node: Element, params: Dict[str, str]):
+    def __init__(self, oozie_node: Element, params: Dict[str, str], hdfs_path: bool):
         self.files: List[str] = []
-        self.hdfs_files: List[str] = []
         self.oozie_node = oozie_node
         self.params = params
+        self.hdfs_path = hdfs_path
 
     def parse_node(self):
         file_nodes: List[Element] = self.oozie_node.findall("file")
 
         for file_node in file_nodes:
             file_path = replace_el_with_var(file_node.text, params=self.params, quote=False)
-            self.add_file(file_path)
+            file_path = preprocess_path_to_hdfs(file_path, self.params) if self.hdfs_path else file_path
+            self.files.append(file_path)
 
-        return self.files, self.hdfs_files
-
-    def add_file(self, oozie_file_path: str) -> None:
-        """
-        Adds file to the list of files for this action.
-
-        :param oozie_file_path: oozie file path to add
-        :return: None
-        """
-        self.files.append(oozie_file_path)
-        self.hdfs_files.append(preprocess_path_to_hdfs(oozie_file_path, self.params))
+        return self.files
 
 
 class ArchiveExtractor:
@@ -73,11 +65,11 @@ class ArchiveExtractor:
 
     ALLOWED_EXTENSIONS = [".zip", ".gz", ".tar.gz", ".tar", ".jar"]
 
-    def __init__(self, oozie_node: Element, params: Dict[str, str]):
+    def __init__(self, oozie_node: Element, params: Dict[str, str], hdfs_path: bool):
         self.archives: List[str] = []
-        self.hdfs_archives: List[str] = []
         self.oozie_node = oozie_node
         self.params = params
+        self.hdfs_path = hdfs_path
 
     def parse_node(self):
         archive_nodes: List[Element] = self.oozie_node.findall("archive")
@@ -85,7 +77,7 @@ class ArchiveExtractor:
             for archive_node in archive_nodes:
                 archive_path = replace_el_with_var(archive_node.text, params=self.params, quote=False)
                 self.add_archive(archive_path)
-        return self.archives, self.hdfs_archives
+        return self.archives
 
     @classmethod
     def _check_archive_extensions(cls, oozie_archive_path: str) -> List[str]:
@@ -109,5 +101,7 @@ class ArchiveExtractor:
 
     def add_archive(self, oozie_archive_path: str):
         self._check_archive_extensions(oozie_archive_path)
-        self.archives.append(oozie_archive_path)
-        self.hdfs_archives.append(preprocess_path_to_hdfs(oozie_archive_path, self.params))
+        file_path = (
+            preprocess_path_to_hdfs(oozie_archive_path, self.params) if self.hdfs_path else oozie_archive_path
+        )
+        self.archives.append(file_path)

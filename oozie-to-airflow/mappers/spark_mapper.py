@@ -68,8 +68,8 @@ class SparkMapper(ActionMapper, PrepareMixin):
         self.jars = []
         self.properties = {}
         self.application_args = []
-        self.file_extractor = FileExtractor(oozie_node=oozie_node, params=self.params)
-        self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, params=self.params)
+        self.file_extractor = FileExtractor(oozie_node=oozie_node, params=self.params, hdfs_path=True)
+        self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, params=self.params, hdfs_path=True)
         self.prepare_command = None
         self.hdfs_files = []
         self.hdfs_archives = []
@@ -80,8 +80,8 @@ class SparkMapper(ActionMapper, PrepareMixin):
         if self.has_prepare:
             self.prepare_command = self.get_prepare_command(oozie_node=self.oozie_node, params=self.params)
 
-        _, self.hdfs_files = self.file_extractor.parse_node()
-        _, self.hdfs_archives = self.archive_extractor.parse_node()
+        self.hdfs_files = self.file_extractor.parse_node()
+        self.hdfs_archives = self.archive_extractor.parse_node()
 
         self.java_jar = self._get_or_default(self.oozie_node, SPARK_TAG_JAR, None, params=self.params)
         self.java_class = self._get_or_default(self.oozie_node, SPARK_TAG_CLASS, None, params=self.params)

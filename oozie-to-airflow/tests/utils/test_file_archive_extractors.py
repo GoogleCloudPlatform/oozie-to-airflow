@@ -27,29 +27,53 @@ class TestArchiveExtractor(unittest.TestCase):
             "oozie.wf.application.path": "hdfs:///user/pig/examples/pig_test_node",
         }
 
-    def test_add_relative_archive(self):
+    def test_add_relative_archive_normal(self):
         # Given
-        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), params=self.default_params)
+        archive_extractor = ArchiveExtractor(
+            oozie_node=Element("fake"), params=self.default_params, hdfs_path=False
+        )
         # When
         archive_extractor.add_archive("test_archive.zip")
         # Then
         self.assertEqual(archive_extractor.archives, ["test_archive.zip"])
+
+    def test_add_relative_archive_hdfs(self):
+        # Given
+        archive_extractor = ArchiveExtractor(
+            oozie_node=Element("fake"), params=self.default_params, hdfs_path=True
+        )
+        # When
+        archive_extractor.add_archive("test_archive.zip")
+        # Then
         self.assertEqual(
-            archive_extractor.hdfs_archives, ["hdfs:///user/pig/examples/pig_test_node/test_archive.zip"]
+            archive_extractor.archives, ["hdfs:///user/pig/examples/pig_test_node/test_archive.zip"]
         )
 
-    def test_add_absolute_archive(self):
+    def test_add_absolute_archive_normal(self):
         # Given
-        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), params=self.default_params)
+        archive_extractor = ArchiveExtractor(
+            oozie_node=Element("fake"), params=self.default_params, hdfs_path=False
+        )
         # When
         archive_extractor.add_archive("/test_archive.zip")
         # Then
         self.assertEqual(archive_extractor.archives, ["/test_archive.zip"])
-        self.assertEqual(archive_extractor.hdfs_archives, ["hdfs:///test_archive.zip"])
 
-    def test_add_multiple_archives(self):
+    def test_add_absolute_archive_hdfs(self):
         # Given
-        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), params=self.default_params)
+        archive_extractor = ArchiveExtractor(
+            oozie_node=Element("fake"), params=self.default_params, hdfs_path=True
+        )
+        # When
+        archive_extractor.add_archive("/test_archive.zip")
+        # Then
+        self.assertEqual(archive_extractor.archives, ["hdfs:///test_archive.zip"])
+
+    def test_add_multiple_archives_normal(self):
+        # Given
+        archive_extractor = ArchiveExtractor(
+            oozie_node=Element("fake"), params=self.default_params, hdfs_path=False
+        )
         # When
         archive_extractor.add_archive("/test_archive.zip")
         archive_extractor.add_archive("test_archive2.tar")
@@ -58,8 +82,19 @@ class TestArchiveExtractor(unittest.TestCase):
         self.assertEqual(
             archive_extractor.archives, ["/test_archive.zip", "test_archive2.tar", "/test_archive3.tar.gz"]
         )
+
+    def test_add_multiple_archives_hdfs(self):
+        # Given
+        archive_extractor = ArchiveExtractor(
+            oozie_node=Element("fake"), params=self.default_params, hdfs_path=True
+        )
+        # When
+        archive_extractor.add_archive("/test_archive.zip")
+        archive_extractor.add_archive("test_archive2.tar")
+        archive_extractor.add_archive("/test_archive3.tar.gz")
+        # Then
         self.assertEqual(
-            archive_extractor.hdfs_archives,
+            archive_extractor.archives,
             [
                 "hdfs:///test_archive.zip",
                 "hdfs:///user/pig/examples/pig_test_node/test_archive2.tar",
@@ -67,9 +102,11 @@ class TestArchiveExtractor(unittest.TestCase):
             ],
         )
 
-    def test_add_hash_archives(self):
+    def test_add_hash_archives_normal(self):
         # Given
-        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), params=self.default_params)
+        archive_extractor = ArchiveExtractor(
+            oozie_node=Element("fake"), params=self.default_params, hdfs_path=False
+        )
         # When
         archive_extractor.add_archive("/test_archive.zip#test3_link")
         archive_extractor.add_archive("test_archive2.tar#test_link")
@@ -79,8 +116,19 @@ class TestArchiveExtractor(unittest.TestCase):
             archive_extractor.archives,
             ["/test_archive.zip#test3_link", "test_archive2.tar#test_link", "/test_archive3.tar.gz"],
         )
+
+    def test_add_hash_archives_hdfs(self):
+        # Given
+        archive_extractor = ArchiveExtractor(
+            oozie_node=Element("fake"), params=self.default_params, hdfs_path=True
+        )
+        # When
+        archive_extractor.add_archive("/test_archive.zip#test3_link")
+        archive_extractor.add_archive("test_archive2.tar#test_link")
+        archive_extractor.add_archive("/test_archive3.tar.gz")
+        # Then
         self.assertEqual(
-            archive_extractor.hdfs_archives,
+            archive_extractor.archives,
             [
                 "hdfs:///test_archive.zip#test3_link",
                 "hdfs:///user/pig/examples/pig_test_node/test_archive2.tar#test_link",
@@ -90,14 +138,14 @@ class TestArchiveExtractor(unittest.TestCase):
 
     def test_add_archive_extra_hash(self):
         # Given
-        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), params=self.default_params)
-        # When
-        with self.assertRaises(Exception) as context:
-            archive_extractor.add_archive("/test_archive.zip#4rarear#")
-        # Then
-        self.assertEqual(
-            "There should be maximum one '#' in the path /test_archive.zip#4rarear#", str(context.exception)
+        archive_extractor = ArchiveExtractor(
+            oozie_node=Element("fake"), params=self.default_params, hdfs_path=True
         )
+        # When
+        with self.assertRaisesRegex(
+            Exception, "There should be maximum one '#' in the path /test_archive.zip#4rarear#"
+        ):
+            archive_extractor.add_archive("/test_archive.zip#4rarear#")
 
     def test_replace_el(self):
         # Given
@@ -111,7 +159,7 @@ class TestArchiveExtractor(unittest.TestCase):
 </pig>
         """
         oozie_node = ET.fromstring(node_str)
-        archive_extractor = ArchiveExtractor(oozie_node=oozie_node, params=params)
+        archive_extractor = ArchiveExtractor(oozie_node=oozie_node, params=params, hdfs_path=True)
         # When
         archive_extractor.parse_node()
         # Then
@@ -121,5 +169,5 @@ class TestArchiveExtractor(unittest.TestCase):
                 "hdfs:///path/with/el/value2.tar",
                 "hdfs:///path/with/two/els/value1/value2.tar",
             ],
-            archive_extractor.hdfs_archives,
+            archive_extractor.archives,
         )
