@@ -16,7 +16,7 @@
 
 {{ task_id }} = dataproc_operator.DataProcHadoopOperator(
     task_id={{ task_id | tojson }},
-    trigger_rule={{ trigger_rule }},
+    trigger_rule={{ trigger_rule | tojson }},
     main_class=PARAMS['hadoop_main_class'],
     arguments=[
         {{ properties['mapreduce.input.fileinputformat.inputdir'] | tojson }},
