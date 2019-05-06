@@ -15,9 +15,9 @@
  #}
 {{ task_id }} = bash_operator.BashOperator(
     task_id='{{ task_id }}',
-    bash_command="gcloud dataproc jobs submit pig --cluster={dataproc_cluster} --region={gcp_region} --execute \"{pig_command}\"".format(
+    bash_command="gcloud dataproc jobs submit pig --cluster={dataproc_cluster} --region={gcp_region} --execute {pig_command}".format(
         dataproc_cluster=PARAMS['dataproc_cluster'],
         gcp_region=PARAMS['gcp_region'],
-        bash_command="{{ pig_command }}"
+        pig_command="{{ pig_command }}"
     ),
 )
