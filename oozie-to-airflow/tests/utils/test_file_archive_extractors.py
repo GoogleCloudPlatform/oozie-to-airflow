@@ -16,7 +16,112 @@
 import unittest
 from xml.etree import ElementTree as ET
 
-from utils.file_archive_extractors import extract_archive_paths
+from utils.file_archive_extractors import extract_archive_paths, extract_file_paths
+
+
+class TestFileExtractor(unittest.TestCase):
+    def setUp(self):
+        self.default_params = {
+            "nameNode": "hdfs://",
+            "oozie.wf.application.path": "hdfs:///user/pig/examples/pig_test_node",
+        }
+
+    def test_relative_file_normal(self):
+        # Given
+        node = self._get_archive_node(["test_file.XXX"])
+        # When
+        files = extract_file_paths(node, params=self.default_params, hdfs_path=False)
+        # Then
+        self.assertEqual(files, ["test_file.XXX"])
+
+    def test_relative_file_hdfs(self):
+        # Given
+        node = self._get_archive_node(["test_file.XXX"])
+        # When
+        files = extract_file_paths(node, params=self.default_params, hdfs_path=True)
+        # Then
+        self.assertEqual(files, ["hdfs:///user/pig/examples/pig_test_node/test_file.XXX"])
+
+    def test_absolute_file_normal(self):
+        # Given
+        node = self._get_archive_node(["test_file.XXX"])
+        # When
+        files = extract_file_paths(node, params=self.default_params, hdfs_path=False)
+        # Then
+        self.assertEqual(files, ["test_file.XXX"])
+
+    def test_absolute_file_hdfs(self):
+        # Given
+        node = self._get_archive_node(["test_file.XXX"])
+        # When
+        files = extract_file_paths(node, params=self.default_params, hdfs_path=True)
+        # Then
+        self.assertEqual(files, ["hdfs:///user/pig/examples/pig_test_node/test_file.XXX"])
+
+    def test_multiple_file_normal(self):
+        # Given
+        node = self._get_archive_node(["test_file.XXX", "/test_file.XXX", "/test_file3.XXX.XXX"])
+        # When
+        files = extract_file_paths(node, params=self.default_params, hdfs_path=False)
+        # Then
+        self.assertEqual(files, ["test_file.XXX", "/test_file.XXX", "/test_file3.XXX.XXX"])
+
+    def test_multiple_file_hdfs(self):
+        # Given
+        node = self._get_archive_node(["test_file.XXX", "/test_file.XXX", "/test_file3.XXX.XXX"])
+        # When
+        files = extract_file_paths(node, params=self.default_params, hdfs_path=True)
+        # Then
+        self.assertEqual(
+            files,
+            [
+                "hdfs:///user/pig/examples/pig_test_node/test_file.XXX",
+                "hdfs:///test_file.XXX",
+                "hdfs:///test_file3.XXX.XXX",
+            ],
+        )
+
+    def test_hash_file_normal(self):
+        # Given
+        node = self._get_archive_node(
+            ["/test_file.XXX#test3_link", "test_file2.XXX#test_link", "/test_file3.XXX.XXX"]
+        )
+        # When
+        files = extract_file_paths(node, self.default_params, hdfs_path=False)
+        # Then
+        self.assertEqual(
+            files, ["/test_file.XXX#test3_link", "test_file2.XXX#test_link", "/test_file3.XXX.XXX"]
+        )
+
+    def test_replace_el(self):
+        # Given
+        params = {"var1": "value1", "var2": "value2", **self.default_params}
+        node = self._get_archive_node(
+            [
+                "/path/with/el/${var1}.XXX",
+                "/path/with/el/${var2}.XXX",
+                "/path/with/two/els/${var1}/${var2}.XXX",
+            ]
+        )
+        # When
+        files = extract_file_paths(node, params, hdfs_path=True)
+        # Then
+        self.assertEqual(
+            [
+                "hdfs:///path/with/el/value1.XXX",
+                "hdfs:///path/with/el/value2.XXX",
+                "hdfs:///path/with/two/els/value1/value2.XXX",
+            ],
+            files,
+        )
+
+    @staticmethod
+    def _get_archive_node(paths):
+        root = ET.Element("pig")
+        for path in paths:
+            archive = ET.SubElement(root, "file")
+            archive.text = path
+        return root
 
 
 class TestArchiveExtractor(unittest.TestCase):
