@@ -88,11 +88,7 @@ class ArchiveExtractor:
         """
         split_path = split_by_hash_sign(oozie_archive_path)
         archive_path = split_path[0]
-        extension_accepted = False
-        for extension in cls.ALLOWED_EXTENSIONS:
-            if archive_path.endswith(extension):
-                extension_accepted = True
-        if not extension_accepted:
+        if not any(archive_path.endswith(extension) for extension in cls.ALLOWED_EXTENSIONS):
             raise Exception(
                 "The path {} cannot be accepted as archive as it does not have one "
                 "of the extensions: {}".format(archive_path, cls.ALLOWED_EXTENSIONS)
