@@ -183,7 +183,7 @@ class OozieConverter:
         Of the form: from time import time, etc.
         """
         logging.info("Writing imports to file")
-        file.write(f"\n{line_prefix}".join(depends))
+        file.write(f"\n{line_prefix}".join(sorted(depends)))
         file.write("\n\n")
 
     @staticmethod
