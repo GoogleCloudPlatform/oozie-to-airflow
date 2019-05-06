@@ -150,10 +150,7 @@ class TestSubworkflowMapper(TestCase):
         relations = kwargs["relations"]
 
         self.assertEqual(kwargs["template_name"], "action.tpl")
-        self.assertEqual(
-            tasks,
-            [Task(task_id="test_id", template_name="subwf.tpl", template_params={"trigger_rule": "dummy"})],
-        )
+        self.assertEqual(tasks, [Task(task_id="test_id", template_name="subwf.tpl")])
         self.assertEqual(relations, [])
 
     # pylint: disable=no-self-use

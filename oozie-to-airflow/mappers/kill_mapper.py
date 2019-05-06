@@ -26,13 +26,7 @@ class KillMapper(BaseMapper):
     """
 
     def convert_to_text(self) -> str:
-        tasks = [
-            Task(
-                task_id=self.name,
-                template_name="kill.tpl",
-                template_params=dict(trigger_rule=self.trigger_rule),
-            )
-        ]
+        tasks = [Task(task_id=self.name, template_name="kill.tpl", trigger_rule=self.trigger_rule)]
         relations: List[Relation] = []
         return render_template(template_name="action.tpl", tasks=tasks, relations=relations)
 

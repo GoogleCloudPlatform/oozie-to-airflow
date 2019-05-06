@@ -88,7 +88,6 @@ class TestSSHMapper(unittest.TestCase):
                     template_name="ssh.tpl",
                     template_params={
                         "params": {},
-                        "trigger_rule": "dummy",
                         "command": "'ls -l -a'",
                         "user": "user",
                         "host": "apache.org",

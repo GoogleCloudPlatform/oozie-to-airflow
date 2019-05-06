@@ -105,13 +105,7 @@ class SubworkflowMapper(ActionMapper):
                     self.properties[name] = value
 
     def convert_to_text(self):
-        tasks = [
-            Task(
-                task_id=self.name,
-                template_name=self.template,
-                template_params=dict(trigger_rule=self.trigger_rule),
-            )
-        ]
+        tasks = [Task(task_id=self.name, template_name=self.template, trigger_rule=self.trigger_rule)]
         relations = []
         return render_template(template_name="action.tpl", tasks=tasks, relations=relations)
 

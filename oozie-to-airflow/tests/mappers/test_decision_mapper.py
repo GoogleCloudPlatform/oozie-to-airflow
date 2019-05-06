@@ -74,10 +74,9 @@ class TestDecisionMapper(unittest.TestCase):
                     task_id="test_id",
                     template_name="decision.tpl",
                     template_params={
-                        "trigger_rule": "dummy",
                         "case_dict": OrderedDict(
                             [("first_not_null('', '')", "task1"), ("'True'", "task2"), ("default", "task3")]
-                        ),
+                        )
                     },
                 )
             ],

@@ -84,13 +84,14 @@ class PigMapper(ActionMapper, PrepareMixin):
             Task(
                 task_id=self.name + "_prepare",
                 template_name="prepare.tpl",
+                trigger_rule=self.trigger_rule,
                 template_params=dict(prepare_command=prepare_command),
             ),
             Task(
                 task_id=self.name,
                 template_name="pig.tpl",
+                trigger_rule=self.trigger_rule,
                 template_params=dict(
-                    trigger_rule=self.trigger_rule,
                     properties=self.properties,
                     params_dict=self.params_dict,
                     script_file_name=self.script_file_name,

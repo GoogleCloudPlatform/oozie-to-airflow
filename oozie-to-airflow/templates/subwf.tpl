@@ -16,5 +16,6 @@
 
 {{ task_id }} = SubDagOperator(
     task_id={{ task_id | tojson }},
+    trigger_rule={{ trigger_rule | tojson }},
     subdag=sub_dag(dag.dag_id, {{ task_id | tojson }}, dag.start_date, dag.schedule_interval)
 )

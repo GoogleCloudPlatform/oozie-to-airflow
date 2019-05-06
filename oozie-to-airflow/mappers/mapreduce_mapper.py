@@ -79,13 +79,14 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
             Task(
                 task_id=self.name + "_prepare",
                 template_name="prepare.tpl",
+                trigger_rule=self.trigger_rule,
                 template_params=dict(prepare_command=prepare_command),
             ),
             Task(
                 task_id=self.name,
                 template_name="mapreduce.tpl",
+                trigger_rule=self.trigger_rule,
                 template_params=dict(
-                    trigger_rule=self.trigger_rule,
                     properties=self.properties,
                     params_dict=self.params_dict,
                     hdfs_files=self.hdfs_files,

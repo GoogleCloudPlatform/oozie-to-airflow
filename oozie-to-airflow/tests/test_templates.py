@@ -96,16 +96,8 @@ class ActionTemplateTestCase(unittest.TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "action.tpl"
     DEFAULT_TEMPLATE_PARAMS = {
         "tasks": [
-            Task(
-                task_id="first_task",
-                template_name="dummy.tpl",
-                template_params=dict(trigger_rule=TriggerRule.DUMMY),
-            ),
-            Task(
-                task_id="second_task",
-                template_name="dummy.tpl",
-                template_params=dict(trigger_rule=TriggerRule.DUMMY),
-            ),
+            Task(task_id="first_task", template_name="dummy.tpl"),
+            Task(task_id="second_task", template_name="dummy.tpl"),
         ],
         "relations": [Relation(from_task_id="first_task", to_task_id="second_task")],
     }
@@ -142,7 +134,7 @@ class DummyTemplateTestCase(unittest.TestCase, TemplateTestMixin):
 class FsOpTempalteTestCase(unittest.TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "fs_op.tpl"
 
-    DEFAULT_TEMPLATE_PARAMS = {"task_id": "AAA", "pig_command": "AAA"}
+    DEFAULT_TEMPLATE_PARAMS = {"task_id": "AAA", "pig_command": "AAA", "trigger_rule": TriggerRule.DUMMY}
 
     def test_minimal_green_path(self):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
@@ -241,7 +233,7 @@ class PigTemplateTestCase(unittest.TestCase, TemplateTestMixin):
 class PrepareTemplateTestCase(unittest.TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "prepare.tpl"
 
-    DEFAULT_TEMPLATE_PARAMS = {"task_id": "AAA", "prepare_command": "AAAA"}
+    DEFAULT_TEMPLATE_PARAMS = {"task_id": "AAA", "prepare_command": "AAAA", "trigger_rule": "dummy"}
 
     def test_green_path(self):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
@@ -277,7 +269,7 @@ class RelationsTemplateTestCase(unittest.TestCase, TemplateTestMixin):
 class ShellTemplateTestCase(unittest.TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "shell.tpl"
 
-    DEFAULT_TEMPLATE_PARAMS = {"task_id": "AAA", "pig_command": "AAAA"}
+    DEFAULT_TEMPLATE_PARAMS = {"task_id": "AAA", "pig_command": "AAAA", "trigger_rule": "dummy"}
 
     def test_green_path(self):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
@@ -384,7 +376,7 @@ class SshTemplateTestCase(unittest.TestCase, TemplateTestMixin):
 class SubwfTemplateTestCase(unittest.TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "subwf.tpl"
 
-    DEFAULT_TEMPLATE_PARAMS = {"task_id": "test_id"}
+    DEFAULT_TEMPLATE_PARAMS = {"task_id": "test_id", "trigger_rule": "dummy"}
 
     def test_green_path(self):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)

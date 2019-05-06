@@ -21,9 +21,9 @@
 )
 
 {{ task_id }} = ssh_operator.SSHOperator(
-    ssh_hook={{ task_id }}_hook,
     task_id={{ task_id | tojson }},
     trigger_rule={{ trigger_rule | tojson }},
+    ssh_hook={{ task_id }}_hook,
     params=PARAMS,
     command={{ command | tojson }},
 )

@@ -124,24 +124,12 @@ class FsMapper(ActionMapper):
 
     def parse_tasks(self):
         if not list(self.oozie_node):
-            return [
-                Task(
-                    task_id=self.name,
-                    template_name="dummy.tpl",
-                    template_params=dict(trigger_rule=self.trigger_rule),
-                )
-            ]
+            return [Task(task_id=self.name, template_name="dummy.tpl", trigger_rule=self.trigger_rule)]
 
         return [self.parse_fs_action(i, node) for i, node in enumerate(self.oozie_node)]
 
     def convert_to_text(self):
-        return render_template(
-            template_name="action.tpl",
-            task_id=self.name,
-            trigger_rule=self.trigger_rule,
-            tasks=self.tasks,
-            relations=chain(self.tasks),
-        )
+        return render_template(template_name="action.tpl", tasks=self.tasks, relations=chain(self.tasks))
 
     @staticmethod
     def required_imports() -> Set[str]:

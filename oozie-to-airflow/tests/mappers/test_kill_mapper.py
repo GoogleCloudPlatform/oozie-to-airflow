@@ -51,10 +51,7 @@ class TestKillMapper(unittest.TestCase):
         relations = kwargs["relations"]
 
         self.assertEqual(kwargs["template_name"], "action.tpl")
-        self.assertEqual(
-            tasks,
-            [Task(task_id="test_id", template_name="kill.tpl", template_params={"trigger_rule": "dummy"})],
-        )
+        self.assertEqual(tasks, [Task(task_id="test_id", template_name="kill.tpl")])
         self.assertEqual(relations, [])
 
     # pylint: disable=no-self-use
