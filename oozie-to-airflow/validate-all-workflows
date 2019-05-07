@@ -14,6 +14,5 @@
 # limitations under the License.
 set -euo pipefail
 MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-ALL_WORKFLOWS=$(find ${MY_DIR} -name 'workflow.xml')
 
-${MY_DIR}/validate-workflows ${ALL_WORKFLOWS}
+find "${MY_DIR}" -name 'workflow.xml' | xargs -0 "${MY_DIR}/validate-workflows"

@@ -35,8 +35,9 @@ You can run all the checks manually by running:
 
 `pre-commit run --all-files`
 
-You might need to instal xmllint if you do not have it locally. This can be done
-with `apt install libxml2-utils` on Linux or `brew install xmlstarlet` on MacOS.
+You might need to install xmllint and docker if you do not have it locally. The first can be done with
+`apt install libxml2-utils` on Linux or `brew install xmlstarlet` on MacOS. The second can be made
+according to [the instructions](https://docs.docker.com/install/).
 
 You can always skip running the tests by providing `--no-verify` flag to `git commit` command.
 
