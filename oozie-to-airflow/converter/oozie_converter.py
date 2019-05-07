@@ -27,6 +27,7 @@ import logging
 import black
 
 from converter import parser
+from converter.constants import HDFS_FOLDER
 from converter.parsed_node import ParsedNode
 from converter.primitives import Relation
 from mappers.action_mapper import ActionMapper
@@ -160,7 +161,7 @@ class OozieConverter:
             file.write(textwrap.indent(node.mapper.convert_to_text(), indent * " "))
             logging.info(f"Wrote tasks corresponding to the action named: {node.mapper.name}")
             node.mapper.copy_extra_assets(
-                input_directory_path=os.path.join(self.input_directory_path, "assets"),
+                input_directory_path=os.path.join(self.input_directory_path, HDFS_FOLDER),
                 output_directory_path=self.output_directory_path,
             )
 
@@ -183,7 +184,7 @@ class OozieConverter:
         Of the form: from time import time, etc.
         """
         logging.info("Writing imports to file")
-        file.write(f"\n{line_prefix}".join(depends))
+        file.write(f"\n{line_prefix}".join(sorted(depends)))
         file.write("\n\n")
 
     @staticmethod
