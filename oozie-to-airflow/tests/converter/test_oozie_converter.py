@@ -89,7 +89,7 @@ class TestOozieConverter(unittest.TestCase):
         OozieConverter.write_dependencies(file, depends)
         file.seek(0)
 
-        expected = "\n".join(depends) + "\n\n"
+        expected = "from jaws import thriller\nimport airflow\n\n"
         self.assertEqual(expected, file.read())
 
     def test_write_dag_header(self):
