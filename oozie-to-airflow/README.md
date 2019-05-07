@@ -409,6 +409,41 @@ using the configuration elements.
 
 Currently there is no way specify the shell launcher configuration (it is ignored).
 
+### Spark Example
+
+The Shell example can be run as:
+
+`python o2a.py -i examples/spark -o output/spark`
+
+Make sure to first copy `/examples/spark/configuration.template.properties`, rename it as
+`configuration.properties` and fill in with configuration data.
+
+##### Output
+In this example the output will appear in `/output/spark/spark.py`.
+
+The converted DAG uses the `DataProcSparkOperator` in Airflow.
+
+#### Current limitations
+
+**1. Tasks written in Java are only supported**
+
+From the [Oozie documentation](https://oozie.apache.org/docs/5.1.0/DG_ShellActionExtension.html):
+> The jar element indicates a comma separated list of jars or python files.
+
+The solution was tested with only a single Jar file.
+
+**2. No Spark launcher configuration**
+
+From the [Oozie documentation](https://oozie.apache.org/docs/5.1.0/DG_SparkActionExtension.html):
+> Shell launcher configuration can be specified with a file, using the job-xml element, and inline,
+using the configuration elements.
+
+Currently there is no way specify the Spark launcher configuration (it is ignored).
+
+**3. No all elements is supported**
+
+The following elements are not supported: `job-tracker`, `name-node`, `master`, `mode`.
+
 
 ### Sub-workflow Example
 
