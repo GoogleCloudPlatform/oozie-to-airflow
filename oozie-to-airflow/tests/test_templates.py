@@ -69,6 +69,14 @@ class TemplateTestMixin:
         self.assertTrue(ast.parse(code))
 
     def test_all_template_parameters_must_be_correlated_with_output(self):
+        """
+        This test performs mutations of each value and checks if this caused a change
+        in result of the template rendering. The new value is selected randomly. The operation is
+        performed recursively
+
+        This test allows you to check if all the parameters specified in the `DEFAULT_TEMPLATE_PARAMS` field
+        are used in the template specified by the `DEFAULT_TEMPLATE_PARAMS` field.
+        """
         original_view = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
 
         def mutate_random(previous_segments):
