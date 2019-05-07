@@ -137,7 +137,7 @@ class TemplateTestMixin:
         """
         original_view = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
 
-        def mutate_and_test_each_template_parameter_recursively(path: List[Union[str, int]]):
+        def walk_recursively_and_mutate(path: List[Union[str, int]]):
             current_value = get_value_by_path(self.DEFAULT_TEMPLATE_PARAMS, path)
             if isinstance(current_value, str):
                 template_params = deepcopy(self.DEFAULT_TEMPLATE_PARAMS)
@@ -150,12 +150,12 @@ class TemplateTestMixin:
                 )
             elif isinstance(current_value, dict):
                 for key, _ in current_value.items():
-                    mutate_and_test_each_template_parameter_recursively([*path, key])
+                    walk_recursively_and_mutate([*path, key])
             elif isinstance(current_value, list):
                 for i in range(len(current_value)):
-                    mutate_and_test_each_template_parameter_recursively([*path, i])
+                    walk_recursively_and_mutate([*path, i])
 
-        mutate_and_test_each_template_parameter_recursively([])
+        walk_recursively_and_mutate([])
 
 
 class ActionTemplateTestCase(unittest.TestCase, TemplateTestMixin):
@@ -256,7 +256,7 @@ class MapReduceTemplateTestCase(unittest.TestCase, TemplateTestMixin):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
         self.assertValidPython(res)
 
-    @parameterized.expand([({"hdfs_files": DELETE_MARKER},), ({"hdfs_archives": DELETE_MARKER},)])
+    @parameterized.expand([({"hdfs_files": None},), ({"hdfs_archives": None},)])
     def test_optional_parameters(self, mutation):
         template_params = mutate(self.DEFAULT_TEMPLATE_PARAMS, mutation)
         res = render_template("mapreduce.tpl", **template_params)
@@ -281,9 +281,7 @@ class PigTemplateTestCase(unittest.TestCase, TemplateTestMixin):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
         self.assertValidPython(res)
 
-    @parameterized.expand(
-        [({"params_dict": {"OUTPUT": DELETE_MARKER}},), ({"params_dict": {"INPUT": DELETE_MARKER}},)]
-    )
+    @parameterized.expand([({"params_dict": {"OUTPUT": None}},), ({"params_dict": {"INPUT": None}},)])
     def test_optional_parameters(self, mutation):
         template_params = mutate(self.DEFAULT_TEMPLATE_PARAMS, mutation)
         res = render_template(self.TEMPLATE_NAME, **template_params)
@@ -381,12 +379,12 @@ class SparkTemplateTestCase(unittest.TestCase, TemplateTestMixin):
 
     @parameterized.expand(
         [
-            ({"archives": DELETE_MARKER},),
-            ({"dataproc_spark_jars": DELETE_MARKER},),
-            ({"dataproc_spark_properties": DELETE_MARKER},),
-            ({"files": DELETE_MARKER},),
-            ({"main_class": DELETE_MARKER},),
-            ({"main_jar": DELETE_MARKER},),
+            ({"archives": None},),
+            ({"dataproc_spark_jars": None},),
+            ({"dataproc_spark_properties": None},),
+            ({"files": None},),
+            ({"main_class": None},),
+            ({"main_jar": None},),
         ]
     )
     def test_optional_parameters(self, mutation):
@@ -426,7 +424,7 @@ class SshTemplateTestCase(unittest.TestCase, TemplateTestMixin):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
         self.assertValidPython(res)
 
-    @parameterized.expand([({"params": DELETE_MARKER},)])
+    @parameterized.expand([({"params": None},)])
     def test_optional_parameters(self, mutation):
         template_params = mutate(self.DEFAULT_TEMPLATE_PARAMS, mutation)
         res = render_template(self.TEMPLATE_NAME, **template_params)
@@ -450,7 +448,7 @@ class SshTemplateTestCase(unittest.TestCase, TemplateTestMixin):
 class SubwfTemplateTestCase(unittest.TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "subwf.tpl"
 
-    DEFAULT_TEMPLATE_PARAMS = {"task_id": "test_id"}
+    DEFAULT_TEMPLATE_PARAMS = {"task_id": "test_id", "app_name": "AAA"}
 
     def test_green_path(self):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
