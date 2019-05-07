@@ -20,7 +20,7 @@ import jinja2
 from definitions import TPL_PATH
 
 TEMPLATE_LOADER = jinja2.FileSystemLoader(searchpath=TPL_PATH)
-TEMPLATE_ENV = jinja2.Environment(loader=TEMPLATE_LOADER)
+TEMPLATE_ENV = jinja2.Environment(loader=TEMPLATE_LOADER, undefined=jinja2.StrictUndefined)
 TEMPLATE_CACHES: Dict[str, Any] = {}
 
 
