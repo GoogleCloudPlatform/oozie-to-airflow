@@ -68,16 +68,23 @@ EXAMPLE_XML_WITHOUT_PREPARE = """
     <name>Spark Examples</name>
     <mode>client</mode>
     <class>org.apache.spark.examples.mllib.JavaALS</class>
-    <jar>/lib/spark-examples_2.10-1.1.0.jar</jar>
+    <jar>/user/${userName}/${examplesRoot}/apps/spark/lib/oozie-examples-4.3.0.jar</jar>
     <spark-opts>
     --executor-memory 20G --num-executors 50
     --conf spark.executor.extraJavaOptions="-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
     </spark-opts>
     <arg>inputpath=hdfs:///input/file.txt</arg>
     <arg>value=2</arg>
+    <arg>/user/${userName}/${examplesRoot}/apps/spark/lib/oozie-examples-4.3.0.jar</arg>
 </spark>
 """
-EXAMPLE_PARAMS = {"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3", "nameNode": "hdfs://"}
+EXAMPLE_PARAMS = {
+    "dataproc_cluster": "my-cluster",
+    "gcp_region": "europe-west3",
+    "nameNode": "hdfs://",
+    "userName": "test_user",
+    "examplesRoot": "examples",
+}
 
 
 class TestSparkMapperWithPrepare(unittest.TestCase):
@@ -156,8 +163,12 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
             tasks[0].template_params,
             {
                 "archives": [],
-                "arguments": ["inputpath=hdfs:///input/file.txt", "value=2"],
-                "dataproc_spark_jars": ["/lib/spark-examples_2.10-1.1.0.jar"],
+                "arguments": [
+                    "inputpath=hdfs:///input/file.txt",
+                    "value=2",
+                    "/user/test_user/examples/apps/spark/lib/oozie-examples-4.3.0.jar",
+                ],
+                "dataproc_spark_jars": ["/user/test_user/examples/apps/spark/lib/oozie-examples-4.3.0.jar"],
                 "dataproc_spark_properties": {
                     "mapred.compress.map.output": "true",
                     "spark.executor.extraJavaOptions": "-XX:+HeapDumpOnOutOfMemoryError "
