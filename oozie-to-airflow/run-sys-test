@@ -98,15 +98,21 @@ function prepare_dataproc {
 for example application: ${LOCAL_APP_NAME}"
 
     run_command "rm -rf ${REMOTE_FILESYSTEM_APP_DIR}"
-    if [[ -d "${LOCAL_APP_DIR}/assets" ]]; then
+    if [[ -d "${LOCAL_APP_DIR}/hdfs" ]]; then
+        if [[ ! -f "${LOCAL_APP_DIR}/hdfs/workflow.xml" ]]; then
+            echo
+            echo "Missing ${LOCAL_APP_DIR}/hdfs/workflow.xml file"
+            echo
+            exit 1
+        fi
         run_command "mkdir -p ${REMOTE_FILESYSTEM_ALL_APPS_DIR}"
-        scp_folder "${LOCAL_APP_DIR}/assets/" "${REMOTE_FILESYSTEM_APP_DIR}"
+        scp_folder "${LOCAL_APP_DIR}/hdfs/" "${REMOTE_FILESYSTEM_APP_DIR}"
     else
-        run_command "mkdir -p ${REMOTE_FILESYSTEM_APP_DIR}"
+        echo
+        echo "Missing ${LOCAL_APP_DIR}/hdfs folder. It should contain at least workflow.xml"
+        echo
+        exit 1
     fi
-
-    scp_file "${LOCAL_APP_DIR}/workflow.xml" "${REMOTE_FILESYSTEM_APP_DIR}/workflow.xml"
-
 
     LOCAL_APP_PROPERTIES="/tmp/${LOCAL_APP_NAME}_${RANDOM_PREFIX}_job.properties"
 

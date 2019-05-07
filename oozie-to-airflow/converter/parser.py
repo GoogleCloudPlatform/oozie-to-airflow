@@ -26,6 +26,7 @@ from typing import Type, Dict, Set
 
 from airflow.utils.trigger_rule import TriggerRule
 import utils.xml_utils
+from converter.constants import HDFS_FOLDER
 from converter.parsed_node import ParsedNode
 from converter.primitives import Relation, Workflow
 from mappers.action_mapper import ActionMapper
@@ -54,7 +55,7 @@ class OozieParser:
             input_directory_path=input_directory_path,
             output_directory_path=output_directory_path,
         )
-        self.workflow_file = os.path.join(input_directory_path, "workflow.xml")
+        self.workflow_file = os.path.join(input_directory_path, HDFS_FOLDER, "workflow.xml")
         self.params = params
         self.action_map = action_mapper
         self.control_map = control_mapper
