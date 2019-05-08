@@ -94,7 +94,7 @@ def get_value_by_path(target: Any, path: List[Union[str, int]]) -> Any:
     return result
 
 
-def set_value_by_path(target: Any, segments: List[Union[str, int]], value: Any) -> None:
+def set_value_by_path(target: Any, path: List[Union[str, int]], value: Any) -> None:
     """"
     Sets the value at path of dict or list.
 
@@ -112,13 +112,13 @@ def set_value_by_path(target: Any, segments: List[Union[str, int]], value: Any) 
     The behavior of the function is similar to:
     https://lodash.com/docs#get
     """
-    result = get_value_by_path(target, segments[:-1])
+    result = get_value_by_path(target, path[:-1])
     if isinstance(result, dict):
-        result[segments[-1]] = value
+        result[path[-1]] = value
     elif isinstance(result, list):
-        result[int(segments[-1])] = value
+        result[int(path[-1])] = value
     else:
-        raise Exception(f"Invalid path: {segments}")
+        raise Exception(f"Invalid path: {path}")
 
 
 class TemplateTestMixin:
