@@ -52,15 +52,17 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
         self.params_dict = {}
         self.file_extractor = FileExtractor(oozie_node=oozie_node, params=params)
         self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, params=params)
-        self._parse_oozie_node()
+        self.name_node = None
+        self.hdfs_files = None
+        self.hdfs_archives = None
 
-    def _parse_oozie_node(self):
+    def on_parse_node(self):
         name_node_text = self.oozie_node.find("name-node").text
         self.name_node = el_utils.replace_el_with_var(name_node_text, params=self.params, quote=False)
         self._parse_config()
         self._parse_params()
-        self.files, self.hdfs_files = self.file_extractor.parse_node()
-        self.archives, self.hdfs_archives = self.archive_extractor.parse_node()
+        _, self.hdfs_files = self.file_extractor.parse_node()
+        _, self.hdfs_archives = self.archive_extractor.parse_node()
 
     def _parse_params(self):
         param_nodes = xml_utils.find_nodes_by_tag(self.oozie_node, "param")
@@ -72,14 +74,7 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
                 self.params_dict[key] = value
 
     def to_tasks_and_relations(self):
-        prepare_command = self.get_prepare_command(self.oozie_node, self.params)
         tasks = [
-            Task(
-                task_id=self.name + "_prepare",
-                template_name="prepare.tpl",
-                trigger_rule=self.trigger_rule,
-                template_params=dict(prepare_command=prepare_command),
-            ),
             Task(
                 task_id=self.name,
                 template_name="mapreduce.tpl",
@@ -90,9 +85,21 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
                     hdfs_files=self.hdfs_files,
                     hdfs_archives=self.hdfs_archives,
                 ),
-            ),
+            )
         ]
-        relations = [Relation(from_task_id=self.name + "_prepare", to_task_id=self.name)]
+        relations = []
+        if self.has_prepare(self.oozie_node):
+            prepare_command = self.get_prepare_command(self.oozie_node, self.params)
+            tasks.insert(
+                0,
+                Task(
+                    task_id=self.name + "_prepare",
+                    template_name="prepare.tpl",
+                    trigger_rule=self.trigger_rule,
+                    template_params=dict(prepare_command=prepare_command),
+                ),
+            )
+            relations = [Relation(from_task_id=self.name + "_prepare", to_task_id=self.name)]
         return tasks, relations
 
     @staticmethod
