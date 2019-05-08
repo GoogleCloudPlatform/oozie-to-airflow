@@ -55,11 +55,9 @@ class SparkMapper(ActionMapper, PrepareMixin):
         name: str,
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
         params: Dict[str, str] = None,
-        template: str = "spark.tpl",
         **kwargs,
     ):
         ActionMapper.__init__(self, oozie_node, name, trigger_rule, **kwargs)
-        self.template = template
         self.params = params or {}
         self.trigger_rule = trigger_rule
         self.java_class = ""

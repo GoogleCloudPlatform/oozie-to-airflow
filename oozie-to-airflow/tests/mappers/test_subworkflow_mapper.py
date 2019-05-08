@@ -80,7 +80,6 @@ class TestSubworkflowMapper(TestCase):
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.subworkflow_node, mapper.oozie_node)
         self.assertEqual(self.main_params, mapper.params)
-        self.assertEqual("subwf.tpl", mapper.template)
         # Propagate config node is present, should forward config properties
         self.assertEqual({"resourceManager": "localhost:8032"}, mapper.get_config_properties())
         self.assertTrue(os.path.isfile(self.SUBDAG_TEST_FILEPATH))
@@ -102,7 +101,6 @@ class TestSubworkflowMapper(TestCase):
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.subworkflow_node, mapper.oozie_node)
         self.assertEqual(self.main_params, mapper.params)
-        self.assertEqual("subwf.tpl", mapper.template)
         # Propagate config node is missing, should NOT forward config properties
         self.assertEqual({}, mapper.get_config_properties())
         self.assertTrue(os.path.isfile(self.SUBDAG_TEST_FILEPATH))
