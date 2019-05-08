@@ -39,13 +39,11 @@ class ShellMapper(ActionMapper, PrepareMixin):
         name: str,
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
         params: Dict[str, str] = None,
-        template: str = "shell.tpl",
         **kwargs,
     ):
         ActionMapper.__init__(self, oozie_node, name, trigger_rule, **kwargs)
         if params is None:
             params = {}
-        self.template = template
         self.params = params
         self.trigger_rule = trigger_rule
         self._parse_oozie_node()
