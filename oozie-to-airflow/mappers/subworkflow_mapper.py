@@ -49,13 +49,11 @@ class SubworkflowMapper(ActionMapper):
         control_mapper: Dict[str, Type[BaseMapper]],
         trigger_rule=TriggerRule.ALL_SUCCESS,
         params=None,
-        template="subwf.tpl",
         **kwargs,
     ):
         ActionMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, **kwargs)
         if params is None:
             params = {}
-        self.template = template
         self.params = params
         self.task_id = name
         self.trigger_rule = trigger_rule
@@ -110,7 +108,7 @@ class SubworkflowMapper(ActionMapper):
         tasks = [
             Task(
                 task_id=self.name,
-                template_name=self.template,
+                template_name="subwf.tpl",
                 template_params=dict(trigger_rule=self.trigger_rule, app_name=self.app_name),
             )
         ]

@@ -41,13 +41,11 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
         name: str,
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
         params=None,
-        template_file_name: str = "mapreduce.tpl",
         **kwargs,
     ):
         ActionMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, **kwargs)
         if params is None:
             params = dict()
-        self.template = template_file_name
         self.params = params
         self.trigger_rule = trigger_rule
         self.properties = {}
