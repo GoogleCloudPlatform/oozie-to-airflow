@@ -475,7 +475,7 @@ class TestOozieExamples(unittest.TestCase):
                     name="mapreduce",
                     node_names={"mr_node"},
                     relations=set(),
-                    params={"nameNode": "hdfs://localhost:8020/"},
+                    params={"dataproc_cluster": "A", "gcp_region": "B", "nameNode": "hdfs://"},
                 ),
             ),
             (
