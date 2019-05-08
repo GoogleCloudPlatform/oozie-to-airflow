@@ -53,17 +53,6 @@ class TestShellMapper(unittest.TestCase):
 """
         self.shell_node = ET.fromstring(shell_node_str)
 
-    def test_create_mapper_no_jinja(self):
-        mapper = self._get_shell_mapper(params=None)
-        # make sure everything is getting initialized correctly
-        self.assertEqual("test_id", mapper.name)
-        self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
-        self.assertEqual(self.shell_node, mapper.oozie_node)
-        self.assertEqual("localhost:8032", mapper.resource_manager)
-        self.assertEqual("hdfs://localhost:8020", mapper.name_node)
-        self.assertEqual("${queueName}", mapper.properties["mapred.job.queue.name"])
-        self.assertEqual("echo arg1 arg2", mapper.bash_command)
-
     def test_create_mapper_jinja(self):
         # test jinja templating
         self.shell_node.find("resource-manager").text = "${resourceManager}"
@@ -84,7 +73,7 @@ class TestShellMapper(unittest.TestCase):
         self.assertEqual("localhost:9999", mapper.resource_manager)
         self.assertEqual("hdfs://localhost:8021", mapper.name_node)
         self.assertEqual("myQueue", mapper.properties["mapred.job.queue.name"])
-        self.assertEqual("echo arg1 arg2", mapper.bash_command)
+        self.assertEqual("'echo arg1 arg2'", mapper.bash_command)
 
     @mock.patch("mappers.shell_mapper.render_template", return_value="RETURN")
     def test_convert_to_text(self, render_template_mock):
@@ -92,6 +81,7 @@ class TestShellMapper(unittest.TestCase):
             "dataproc_cluster": "my-cluster",
             "gcp_region": "europe-west3",
             "nameNode": "hdfs://localhost:9020/",
+            "queueName": "default",
         }
         mapper = self._get_shell_mapper(params=params)
         res = mapper.convert_to_text()

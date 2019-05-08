@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,8 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-nameNode=hdfs://localhost:8020
-resourceManager=localhost:8032
-queueName=default
-examplesRoot=examples
-oozie.wf.application.path=/user/${user.name}/${examplesRoot}/apps/fs
+from typing import NamedTuple, Dict
+
+
+class Ctx(NamedTuple):
+    params: Dict[str, str]

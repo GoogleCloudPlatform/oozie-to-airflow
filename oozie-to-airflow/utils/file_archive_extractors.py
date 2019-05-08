@@ -16,22 +16,12 @@
 from typing import Dict, List
 from xml.etree.ElementTree import Element
 
-from utils.el_utils import replace_el_with_var
+from utils.el_utils import convert_el_to_string
 
 
 class HdfsPathProcessor:
     def __init__(self, params: Dict[str, str]):
         self.params = params
-
-    @staticmethod
-    def check_path_for_comma(path: str) -> None:
-        """
-        Raises exception if path has comma
-        :param path: path to check
-        :return: None
-        """
-        if "," in path:
-            raise Exception("There should not be ',' in the path {}".format(path))
 
     def preprocess_path_to_hdfs(self, path: str):
         if path.startswith("/"):
@@ -67,7 +57,7 @@ class FileExtractor:
         file_nodes: List[Element] = self.oozie_node.findall("file")
 
         for file_node in file_nodes:
-            file_path = replace_el_with_var(file_node.text, params=self.params, quote=False)
+            file_path = convert_el_to_string(file_node.text)
             self.add_file(file_path)
 
         return self.files, self.hdfs_files
@@ -79,7 +69,6 @@ class FileExtractor:
         :param oozie_file_path: oozie file path to add
         :return: None
         """
-        self.file_path_processor.check_path_for_comma(oozie_file_path)
         split_by_hash_sign(oozie_file_path)
         self.files.append(oozie_file_path)
         self.hdfs_files.append(self.file_path_processor.preprocess_path_to_hdfs(oozie_file_path))
@@ -101,7 +90,7 @@ class ArchiveExtractor:
         archive_nodes: List[Element] = self.oozie_node.findall("archive")
         if archive_nodes:
             for archive_node in archive_nodes:
-                archive_path = replace_el_with_var(archive_node.text, params=self.params, quote=False)
+                archive_path = convert_el_to_string(archive_node.text)
                 self.add_archive(archive_path)
         return self.archives, self.hdfs_archives
 

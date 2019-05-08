@@ -34,11 +34,15 @@ class TestSubworkflowMapper(TestCase):
         "gcp_conn_id": "google_cloud_default",
         "gcp_region": "europe-west3",
         "gcp_uri_prefix": "gs://test_bucket/dags",
+        "queueName": "default",
         "nameNode": "hdfs://",
+        "examplesRoot": "examples",
+        "resourceManager": "localhost:8032",
         "oozie.wf.application.path": "hdfs:///user/pig/examples/pi",
     }
 
     main_params = {
+        "queueName": "default",
         "examplesRoot": "examples",
         "nameNode": "hdfs://",
         "resourceManager": "localhost:8032",

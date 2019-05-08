@@ -51,6 +51,8 @@ class Workflow:  # pylint: disable=too-few-public-methods
         # These are the general dependencies required that every operator
         # requires.
         self.dependencies = {
+            "from typing import NamedTuple, Dict",
+            "",
             "import datetime",
             "from airflow import models",
             "from airflow.utils.trigger_rule import TriggerRule",

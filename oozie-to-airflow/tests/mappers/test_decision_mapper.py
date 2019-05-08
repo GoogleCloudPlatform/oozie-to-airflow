@@ -46,7 +46,7 @@ class TestDecisionMapper(unittest.TestCase):
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.decision_node, mapper.oozie_node)
         # test conversion from Oozie EL to Jinja
-        self.assertEqual("first_not_null('', '')", next(iter(mapper.case_dict)))
+        self.assertEqual("\"{first_not_null('', '')}\"", next(iter(mapper.case_dict)))
 
     @mock.patch("mappers.decision_mapper.render_template", return_value="RETURN")
     def test_convert_to_text(self, render_template_mock):

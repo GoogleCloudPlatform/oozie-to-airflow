@@ -43,7 +43,9 @@ class SSHMapper(ActionMapper):
         template: str = "ssh.tpl",
         **kwargs,
     ):
-        ActionMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, **kwargs)
+        ActionMapper.__init__(
+            self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, params=params, **kwargs
+        )
 
         if params is None:
             params = {}
@@ -57,16 +59,16 @@ class SSHMapper(ActionMapper):
         args = (x.text if x.text else "" for x in arg_nodes)
         cmd = " ".join(shlex.quote(x) for x in [cmd, *args])
 
-        self.command = el_utils.convert_el_to_jinja(cmd, quote=True)
+        self.command = el_utils.convert_el_to_string(cmd)
         host = self.oozie_node.find("host")
         if host is None:
             raise Exception("Missing host node in SSH action: {}".format(self.oozie_node))
-        host_key = el_utils.strip_el(host.text)
+        host_key = el_utils.replace_el_with_var_value(host.text, parameters=self.params)
         # the <user> node is formatted like [USER]@[HOST]
         if host_key in params:
             host_key = params[host_key]
 
-        # Since ariflow separates user and host, we can't use jinja templating.
+        # Since airflow separates user and host, we can't use jinja templating.
         # We must check if it is in params.
         user_host = host_key.split("@")
         self.user = user_host[0]

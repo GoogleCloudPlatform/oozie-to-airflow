@@ -51,22 +51,23 @@ class ShellMapper(ActionMapper, PrepareMixin):
     def _parse_oozie_node(self):
         res_man_text = self.oozie_node.find("resource-manager").text
         name_node_text = self.oozie_node.find("name-node").text
-        self.resource_manager = el_utils.replace_el_with_var(res_man_text, params=self.params, quote=False)
-        self.name_node = el_utils.replace_el_with_var(name_node_text, params=self.params, quote=False)
+        self.resource_manager = el_utils.convert_el_to_string(res_man_text)
+        self.name_node = el_utils.convert_el_to_string(name_node_text)
         self._parse_config()
         cmd_node = self.oozie_node.find("exec")
         arg_nodes = self.oozie_node.findall("argument")
         cmd = " ".join([cmd_node.text] + [x.text for x in arg_nodes])
-        self.bash_command = el_utils.convert_el_to_jinja(cmd, quote=False)
+        self.bash_command = el_utils.convert_el_to_string(cmd, quote_character="'")
         self.pig_command = f"sh {shlex.quote(self.bash_command)}"
 
     def convert_to_text(self) -> str:
-        prepare_command = self.get_prepare_command(self.oozie_node, self.params)
+        prepare_command, prepare_parameters = self.get_prepare_command(self.oozie_node, self.params)
         tasks = [
             Task(
                 task_id=self.name + "_prepare",
                 template_name="prepare.tpl",
-                template_params=dict(prepare_command=prepare_command),
+                template_params=dict(prepare_command=prepare_command,
+                                     prepare_parameters=prepare_parameters),
             ),
             Task(
                 task_id=self.name,

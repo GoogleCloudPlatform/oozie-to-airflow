@@ -13,7 +13,10 @@
   See the License for the specific language governing permissions and
   limitations under the License.
  #}
-{{ task_id }} = bash_operator.BashOperator(
-    task_id='{{ task_id | tojson }}',
-    bash_command='{{ prepare_command | tojson }}'.format({% for parameter in prepare_parameters %}f{{ parameter }},{% endfor %}))
 
+class Ctx(NamedTuple):
+    params: Dict[str, str]
+
+DAG_CONTEXT = Ctx(
+    params = {{ params }}
+)

@@ -23,10 +23,10 @@
     {% if archives %}archives={{ archives | tojson }},{% endif %}
     {% if files %}files={{ files | tojson }},{% endif %}
     job_name={{ job_name | tojson }},
-    cluster_name=PARAMS['dataproc_cluster'],
+    cluster_name=DAG_CONTEXT.params['dataproc_cluster'],
     {% if dataproc_spark_jars %}dataproc_spark_jars={{ dataproc_spark_jars | tojson }},{% endif %}
     {% if dataproc_spark_properties %}dataproc_spark_properties={{ dataproc_spark_properties | tojson }},{% endif %}
-    gcp_conn_id=PARAMS['gcp_conn_id'],
-    region=PARAMS['gcp_region'],
+    gcp_conn_id=DAG_CONTEXT.params['gcp_conn_id'],
+    region=DAG_CONTEXT.params['gcp_region'],
     trigger_rule={{ trigger_rule | tojson }},
 )

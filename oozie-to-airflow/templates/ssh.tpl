@@ -24,6 +24,6 @@
     ssh_hook={{ task_id }}_hook,
     task_id={{ task_id | tojson }},
     trigger_rule={{ trigger_rule | tojson }},
-    params=PARAMS,
+    params=DAG_CONTEXT.params,
     command={{ command | tojson }},
 )

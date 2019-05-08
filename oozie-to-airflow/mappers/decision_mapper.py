@@ -21,7 +21,7 @@ from airflow.utils.trigger_rule import TriggerRule
 
 from converter.primitives import Task, Relation
 from mappers.base_mapper import BaseMapper
-from utils.el_utils import convert_el_to_jinja
+from utils.el_utils import convert_el_to_string
 from utils.template_utils import render_template
 
 
@@ -79,7 +79,7 @@ class DecisionMapper(BaseMapper):
         self.case_dict = collections.OrderedDict()
         for case in switch_node:
             if "case" in case.tag:
-                case_text = convert_el_to_jinja(case.text.strip(), quote=True)
+                case_text = convert_el_to_string(case.text.strip())
                 self.case_dict[case_text] = case.attrib["to"]
             else:  # Default return value
                 self.case_dict["default"] = case.attrib["to"]

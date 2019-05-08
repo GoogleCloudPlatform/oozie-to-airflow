@@ -25,26 +25,12 @@ from utils.el_utils import normalize_path
 
 # pylint: disable=too-many-public-methods
 class TestELUtils(unittest.TestCase):
-    def test_strip_el(self):
-        exp_func = 'concat("abc", "def")'
-        exp_var = "hostname"
-
-        el_func1 = '${concat("abc", "def")}'
-        el_var1 = "${hostname}"
-        el_func2 = '${ concat("abc", "def") }'
-        el_var2 = "${ hostname }"
-
-        self.assertEqual(el_utils.strip_el(el_func1), exp_func)
-        self.assertEqual(el_utils.strip_el(el_func2), exp_func)
-        self.assertEqual(el_utils.strip_el(el_var1), exp_var)
-        self.assertEqual(el_utils.strip_el(el_var2), exp_var)
-
     def test_replace_el_with_var_var_no_quote(self):
         params = {"hostname": "airflow@apache.org"}
         el_var = "${hostname}"
         expected = "airflow@apache.org"
 
-        replaced = el_utils.replace_el_with_var(el_var, params, quote=False)
+        replaced = el_utils.replace_el_with_var_value(el_var, params)
         self.assertEqual(replaced, expected)
 
     def test_replace_el_with_var_func_no_quote(self):
@@ -53,24 +39,7 @@ class TestELUtils(unittest.TestCase):
         el_var = '${concat("abc", "def")}'
         expected = '${concat("abc", "def")}'
 
-        replaced = el_utils.replace_el_with_var(el_var, params, quote=False)
-        self.assertEqual(replaced, expected)
-
-    def test_replace_el_with_var_var_quote(self):
-        params = {"hostname": "airflow@apache.org"}
-        el_var = "${hostname}"
-        expected = "'airflow@apache.org'"
-
-        replaced = el_utils.replace_el_with_var(el_var, params, quote=True)
-        self.assertEqual(replaced, expected)
-
-    def test_replace_el_with_var_func_quote(self):
-        # functions shouldn't be replaced
-        params = {}
-        el_var = '${concat("abc", "def")}'
-        expected = '\'${concat("abc", "def")}\''
-
-        replaced = el_utils.replace_el_with_var(el_var, params, quote=True)
+        replaced = el_utils.replace_el_with_var_value(el_var, params)
         self.assertEqual(replaced, expected)
 
     def test_parse_el_func(self):
@@ -80,56 +49,69 @@ class TestELUtils(unittest.TestCase):
         el_func_map = {"concat": test_module}
         el_func1 = '${concat("as", "df")}'
         el_func2 = "${concat()}"
-        expected1 = 'test("as", "df")'
-        expected2 = "test()"
+        el_func3 = "${concat('as', 'df')}"
+        expected1 = "{test('as', 'df')}"
+        expected2 = "{test()}"
+        expected3 = "{test('as', 'df')}"
 
-        self.assertEqual(expected1, el_utils.parse_el_func(el_func1, el_func_map))
-        self.assertEqual(expected2, el_utils.parse_el_func(el_func2, el_func_map))
+        self.assertEqual(
+            expected1, el_utils._code_of_first_el_function(el_func1, el_func_map, quote_character='"')
+        )
+        self.assertEqual(
+            expected2, el_utils._code_of_first_el_function(el_func2, el_func_map, quote_character='"')
+        )
+        self.assertEqual(
+            expected3, el_utils._code_of_first_el_function(el_func3, el_func_map, quote_character='"')
+        )
 
     def test_parse_el_func_none(self):
         el_func_map = {}
         test_str1 = "asdf"
         test_str2 = "${hostname}"
 
-        self.assertEqual(el_utils.parse_el_func(test_str1, el_func_map), None)
-        self.assertEqual(el_utils.parse_el_func(test_str2, el_func_map), None)
+        self.assertEqual(
+            el_utils._code_of_first_el_function(test_str1, el_func_map, quote_character='"'), None
+        )
+        self.assertEqual(
+            el_utils._code_of_first_el_function(test_str2, el_func_map, quote_character='"'), None
+        )
 
     def test_parse_el_func_fail(self):
         el_func_map = {}
         el_func = '${concat("abc, "def")}'
 
         with self.assertRaises(KeyError):
-            el_utils.parse_el_func(el_func, el_func_map)
+            el_utils._code_of_first_el_function(el_func, el_func_map)
 
-    def test_convert_el_to_jinja_var_no_quote(self):
+    def test_convert_el_to_string_var(self):
         el_function = "${hostname}"
-        expected = "{{ params.hostname }}"
-        self.assertEqual(expected, el_utils.convert_el_to_jinja(el_function, quote=False))
+        expected = "\"{DAG_CONTEXT.params['hostname']}\""
+        self.assertEqual(expected, el_utils.convert_el_to_string(el_function))
 
-    def test_convert_el_to_jinja_var_quote(self):
-        el_function = "${hostname}"
-        expected = "'{{ params.hostname }}'"
-        self.assertEqual(expected, el_utils.convert_el_to_jinja(el_function, quote=True))
+    def test_convert_el_wf_conf_to_string(self):
+        el_function = '${wf:conf("user.name")}'
+        expected = "\"{wf_conf(DAG_CONTEXT, 'user.name')}\""
+        self.assertEqual(expected, el_utils.convert_el_to_string(el_function))
 
-    def test_convert_el_to_jinja_func_no_quote(self):
+    def test_convert_el_to_string_simple_function(self):
         el_function = '${concat("ab", "de")}'
-        expected = 'concat("ab", "de")'
-        self.assertEqual(expected, el_utils.convert_el_to_jinja(el_function, quote=False))
+        expected = "\"{concat('ab', 'de')}\""
+        self.assertEqual(expected, el_utils.convert_el_to_string(el_function))
 
-    def test_convert_el_to_jinja_func_quote(self):
-        el_function = '${concat("ab", "de")}'
-        expected = 'concat("ab", "de")'
-        self.assertEqual(expected, el_utils.convert_el_to_jinja(el_function, quote=True))
-
-    def test_convert_el_to_jinja_no_change_no_quote(self):
+    def test_convert_el_to_string_no_quotes(self):
         el_function = "no_el_here"
         expected = "no_el_here"
-        self.assertEqual(expected, el_utils.convert_el_to_jinja(el_function, quote=False))
+        self.assertEqual(expected, el_utils.convert_el_to_string(el_function, quote_character=""))
 
-    def test_convert_el_to_jinja_no_change_quote(self):
+    def test_convert_el_to_string_quote_double(self):
+        el_function = "no_el_here"
+        expected = '"no_el_here"'
+        self.assertEqual(expected, el_utils.convert_el_to_string(el_function))
+
+    def test_convert_el_to_string_quote_single(self):
         el_function = "no_el_here"
         expected = "'no_el_here'"
-        self.assertEqual(expected, el_utils.convert_el_to_jinja(el_function, quote=True))
+        self.assertEqual(expected, el_utils.convert_el_to_string(el_function, quote_character="'"))
 
     def test_parse_els_no_file(self):
         params = {"test": "answer"}
@@ -189,17 +171,21 @@ class TestELUtils(unittest.TestCase):
         self.assertEqual(expected_result, result)
 
     @parameterized.expand(
-        [
-            ("${nameNodeAAA}/examples/output-data/demo/pig-node",),
-            ("/examples/output-data/demo/pig-node",),
-            ("http:///examples/output-data/demo/pig-node2",),
-        ]
+        [("/examples/output-data/demo/pig-node",), ("http:///examples/output-data/demo/pig-node2",)]
     )
     def test_normalize_path_red_path(self, oozie_path):
         cluster = "my-cluster"
         region = "europe-west3"
         params = {"nameNode": "hdfs://localhost:8020", "dataproc_cluster": cluster, "gcp_region": region}
         with self.assertRaisesRegex(ParseException, "Unknown path format. "):
+            normalize_path(oozie_path, params)
+
+    @parameterized.expand([("${nameNodeAAA}/examples/output-data/demo/pig-node",)])
+    def test_normalize_path_red_path2(self, oozie_path):
+        cluster = "my-cluster"
+        region = "europe-west3"
+        params = {"nameNode": "hdfs://localhost:8020", "dataproc_cluster": cluster, "gcp_region": region}
+        with self.assertRaisesRegex(Exception, "The parameter nameNodeAAA cannot be found in"):
             normalize_path(oozie_path, params)
 
     @parameterized.expand(

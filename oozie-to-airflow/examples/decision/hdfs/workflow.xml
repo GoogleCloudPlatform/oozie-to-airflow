@@ -47,7 +47,7 @@
     </decision>
     <action name="first">
         <fs>
-            <delete path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/test-delete-1'/>
+            <delete path="${nameNode}/user/${wf:conf('user.name')}/${examplesRoot}/apps/fs/test-delete-1"/>
         </fs>
         <ok to="end"/>
         <error to="end"/>

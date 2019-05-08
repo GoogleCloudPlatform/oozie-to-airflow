@@ -105,25 +105,41 @@ class TestOozieConverter(unittest.TestCase):
         template_loader = jinja2.FileSystemLoader(searchpath=TPL_PATH)
         template_env = jinja2.Environment(loader=template_loader)
         template = template_env.get_template(template)
-        expected = template.render(dag_name=dag_name, schedule_interval=1, start_days_ago=1)
+        expected = """
+
+with models.DAG(
+    'dag_name',
+    schedule_interval=datetime.timedelta(days=1),  # Change to suit your needs
+    start_date=dates.days_ago(1)  # Change to suit your needs
+) as dag:"""
 
         self.assertEqual(expected, file.read())
 
-    def test_write_params_list(self):
-        expected = """
-        PARAMS = {
-            "list": [
-                "item1",
-                "item2"
-            ],
-            "single": "item"
-        }
-        """
-
-        params = {"list": "item1,item2", "single": "item"}
+    def test_write_parameters(self):
+        template = "params.tpl"
 
         file = io.StringIO()
-        OozieConverter.write_params(file, params=params)
+        OozieConverter.write_parameters(
+            file, template=template, params={"list": "item1,item2", "single": "item"}
+        )
         file.seek(0)
 
-        self.assertEqual(remove_all_whitespaces(expected), remove_all_whitespaces(file.read()))
+        template_loader = jinja2.FileSystemLoader(searchpath=TPL_PATH)
+        template_env = jinja2.Environment(loader=template_loader)
+        template = template_env.get_template(template)
+        expected = """
+
+class Ctx(NamedTuple):
+    params: Dict[str, str]
+
+DAG_CONTEXT = Ctx(
+    params = {
+    "list": [
+        "item1",
+        "item2"
+    ],
+    "single": "item"
+}
+)"""
+
+        self.assertEqual(expected, file.read())

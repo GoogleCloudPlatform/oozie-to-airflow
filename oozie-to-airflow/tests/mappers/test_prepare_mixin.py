@@ -43,12 +43,21 @@ class TestPrepareMixin(unittest.TestCase):
 """
         pig_node_prepare = ET.fromstring(pig_node_prepare_str)
 
-        prepare = prepare_mixin.PrepareMixin().get_prepare_command(oozie_node=pig_node_prepare, params=params)
+        prepare_command, prepare_parameters = prepare_mixin.PrepareMixin().get_prepare_command_and_parameters(
+            pig_node_prepare, params
+        )
         self.assertEqual(
-            '$DAGS_FOLDER/../data/prepare.sh -c {0} -r {1} -d "{2} {3}" -m "{4} {5}"'.format(
-                cluster, region, self.delete_path1, self.delete_path2, self.mkdir_path1, self.mkdir_path2
-            ),
-            prepare,
+            '$DAGS_FOLDER/../data/prepare.sh -c my-cluster -r europe-west3 -d "{} {}" -m "{} {}"',
+            prepare_command,
+        )
+        self.assertEqual(
+            [
+                "\"{DAG_CONTEXT.params['nameNode']}/examples/output-data/demo/pig-node\"",
+                "\"{DAG_CONTEXT.params['nameNode']}/examples/output-data/demo/pig-node2\"",
+                "\"{DAG_CONTEXT.params['nameNode']}/examples/input-data/demo/pig-node\"",
+                "\"{DAG_CONTEXT.params['nameNode']}/examples/input-data/demo/pig-node2\"",
+            ],
+            prepare_parameters,
         )
 
     def test_no_prepare(self):
@@ -58,5 +67,8 @@ class TestPrepareMixin(unittest.TestCase):
         # language=XML
         pig_node_str = "<pig><name-node>hdfs://</name-node></pig>"
         pig_node = ET.fromstring(pig_node_str)
-        prepare = prepare_mixin.PrepareMixin().get_prepare_command(oozie_node=pig_node, params=params)
-        self.assertEqual("", prepare)
+        prepare_command, prepare_parameters = prepare_mixin.PrepareMixin().get_prepare_command_and_parameters(
+            pig_node, params
+        )
+        self.assertEqual("", prepare_command)
+        self.assertEqual([], prepare_parameters)

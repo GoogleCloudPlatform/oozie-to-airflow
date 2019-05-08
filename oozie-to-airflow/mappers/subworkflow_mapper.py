@@ -99,8 +99,8 @@ class SubworkflowMapper(ActionMapper):
             if property_nodes:
                 for node in property_nodes:
                     name = node.find("name").text
-                    value = el_utils.replace_el_with_var(
-                        node.find("value").text, params=self.params, quote=False
+                    value = el_utils.replace_el_with_var_value(
+                        node.find("value").text, parameters=self.params
                     )
                     self.properties[name] = value
 

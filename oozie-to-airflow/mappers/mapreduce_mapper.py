@@ -56,7 +56,7 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
 
     def _parse_oozie_node(self):
         name_node_text = self.oozie_node.find("name-node").text
-        self.name_node = el_utils.replace_el_with_var(name_node_text, params=self.params, quote=False)
+        self.name_node = el_utils.convert_el_to_string(name_node_text)
         self._parse_config()
         self._parse_params()
         self.files, self.hdfs_files = self.file_extractor.parse_node()
@@ -67,17 +67,18 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
         if param_nodes:
             self.params_dict = {}
             for node in param_nodes:
-                param = el_utils.replace_el_with_var(node.text, params=self.params, quote=False)
+                param = el_utils.replace_el_with_var_value(node.text, parameters=self.params)
                 key, value = param.split("=", 1)
                 self.params_dict[key] = value
 
     def convert_to_text(self) -> str:
-        prepare_command = self.get_prepare_command(self.oozie_node, self.params)
+        prepare_command, prepare_parameters = self.get_prepare_command_and_parameters(self.oozie_node, self.params)
         tasks = [
             Task(
                 task_id=self.name + "_prepare",
                 template_name="prepare.tpl",
-                template_params=dict(prepare_command=prepare_command),
+                template_params=dict(prepare_command=prepare_command,
+                                     prepare_parameters=prepare_parameters),
             ),
             Task(
                 task_id=self.name,

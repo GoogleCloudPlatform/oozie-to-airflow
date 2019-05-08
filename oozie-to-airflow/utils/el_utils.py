@@ -16,14 +16,16 @@
 import logging
 import os
 import re
-from typing import Dict, List, Optional, Union
+from typing import Dict, List, Optional, Union, Any, Callable
 from urllib.parse import urlparse, ParseResult
 
 from converter.exceptions import ParseException
 from o2a_libs import el_basic_functions
+from o2a_libs import el_wf_functions
 
-FN_MATCH = re.compile(r"\${\s?(\w+)\(([\w\s,\'\"\-]*)\)\s?\}")
-VAR_MATCH = re.compile(r"\${([\w.]+)}")
+FN_MATCH = re.compile(r"\${\s*(\w+)\(([\w\s,\'\"\-]*)\)\s*\}")
+WF_FN_MATCH = re.compile(r"\${\s*(wf:\w+)\(([\"\'][^\"\']*[\"\'])\)\s*\}")
+VAR_MATCH = re.compile(r"\${\s*([\w.]+)\s*}")
 
 EL_CONSTANTS = {"KB": 1024 ** 1, "MB": 1024 ** 2, "GB": 1024 ** 3, "TB": 1024 ** 4, "PB": 1024 ** 5}
 
@@ -44,7 +46,7 @@ WF_EL_FUNCTIONS = {
     "wf:id": None,
     "wf:name": None,
     "wf:appPath": None,
-    "wf:conf": None,
+    "wf:conf": el_wf_functions.wf_conf,
     "wf:user": None,
     "wf:group": None,
     "wf:callback": None,
@@ -56,81 +58,242 @@ WF_EL_FUNCTIONS = {
 }
 
 
-def strip_el(el_function):
+# noinspection PyUnusedLocal
+def _value_of_first_variable(
+    el_string: str,
+    func_map: Dict[str, Callable] = None,
+    quote_character: str = "",
+    parameters: Dict[str, str] = None,
+) -> str:
     """
-    Given an el function or variable like ${ variable },
-    strips out everything except for the variable.
+    Finds first variable like ${variableName} and returns
+    replacement string for the variable as string or None if no
+    variable is found.
+
+    :param el_string - string to look the function within
+    :param quote_character - character used for quoting (usually ', " or empty string for no quoting.
+    :param func_map - map of available functions
+    :param parameters - dictionary of parameters
+
+    :return replacement for the first function found or None if no variable found
+    :raise KeyError in case variable is not found in parameters
     """
+    var_match = re.findall(VAR_MATCH, el_string)
+    if not var_match:
+        return None
+    else:
+        variable = var_match[0]
+        if parameters and variable not in parameters.keys():
+            raise KeyError(f"The parameter {variable} cannot be found in {parameters}")
+        return parameters[variable]
 
-    return re.sub("[${}]", "", el_function).strip()
 
-
-def replace_el_with_var(el_function, params, quote=True):
+def _code_of_first_el_function(
+    el_string: str,
+    func_map: Dict[str, Callable] = None,
+    quote_character: str = "",
+    parameters: Dict[str, str] = None,
+):
     """
-    Only supports a single variable
+    Finds first el_function like ${ function(arg1, arg2 } and returns
+    replacement string for the function in the form of '{function(arg1,arg2)}'
+    or None if no function is found
+
+    In case of functions which are not yet implemented returns
+    NOT_IMPLEMENTED_function_arg1_arg2 string.
+
+
+    :param el_string - string to look the function within
+    :param quote_character - character used for quoting (usually ', " or empty string for no quoting.
+    :param func_map - map of available functions
+    :param parameters - dictionary of parameters
+
+    :return replacement for the first function found or None if no function found
+    :raise KeyError in case function is found but no mapping found for the function
     """
-    # Matches oozie EL variables e.g. ${hostname}
-    var_match = VAR_MATCH.findall(el_function)
+    if func_map is None:
+        func_map = EL_FUNCTIONS
 
-    jinjafied_el = el_function
-    if var_match:
-        for var in var_match:
-            if var in params:
-                jinjafied_el = jinjafied_el.replace("${" + var + "}", params[var])
-            else:
-                logging.info(f"Couldn't replace EL {var}")
-
-    return "'" + jinjafied_el + "'" if quote else jinjafied_el
+    return _match_function(
+        el_string=el_string,
+        match=FN_MATCH,
+        func_map=func_map,
+        add_context=False,
+        quote_character=quote_character,
+    )
 
 
-def parse_el_func(el_function, el_func_map=None):
-    # Finds things like ${ function(arg1, arg2 } and returns
-    # a list like ['function', 'arg1, arg2']
-    if el_func_map is None:
-        el_func_map = EL_FUNCTIONS
-    fn_match = FN_MATCH.findall(el_function)
+# noinspection PyUnusedLocal
+def _code_of_first_wf_el_function(
+    el_string: str,
+    quote_character: str,
+    func_map: Dict[str, Callable] = None,
+    parameters: Dict[str, str] = None,
+):
+    """
+    Finds first wf_el_function like ${ wf:function(arg1, arg2 } and returns
+    replacement string for the function in the form of '{wf_function(arg1,arg2)}'
+    or None if no function is found.
 
+    In case of functions which are not yet implemented returns
+    NOT_IMPLEMENTED_function_arg1_arg2 string.
+
+    :param el_string - string to look the function within
+    :param quote_character - character used for quoting (usually ', " or empty string for no quoting.
+    :param func_map - map of available wf functions
+    :param parameters - optional parameters available
+
+    :return replacement for the first function found or None if no function found
+    :raise KeyError in case function is found but no mapping found for the function
+    """
+    # Finds things like ${wf:function(arg1, arg2 } and returns
+    # a function in the form of 'wf_function(arg1,arg2)'
+    if func_map is None:
+        func_map = WF_EL_FUNCTIONS
+
+    return _match_function(
+        el_string=el_string,
+        match=WF_FN_MATCH,
+        func_map=func_map,
+        add_context=True,
+        quote_character=quote_character,
+    )
+
+
+# noinspection PyUnusedLocal
+def _code_of_first_variable(
+    el_string: str,
+    quote_character: str,
+    func_map: Dict[str, Callable] = None,
+    parameters: Dict[str, str] = None,
+) -> str:
+    """
+    Finds first variable like ${variableName} and returns
+    replacement string for the variable in the form of '{PARAMS['variableName]}'
+    or None if no variable is found.
+
+    :param el_string - string to look the variable within
+    :param quote_character - character used for quoting (usually ', " or empty string for no quoting.
+    :param func_map - map of available wf functions
+    :param parameters - optional parameters available
+
+    :return replacement for the first function found or None if no variable found
+    :raise KeyError in case parameter is not found
+    """
+    var_match = re.findall(VAR_MATCH, el_string)
+    if not var_match:
+        return None
+    else:
+        variable = var_match[0]
+        if parameters and variable not in parameters.keys():
+            raise KeyError(f"The parameter {variable} cannot be found in {parameters}")
+
+        the_other_quote_character = _the_other_quote(quote_character)
+        return f"{{DAG_CONTEXT.params[{the_other_quote_character}{variable}{the_other_quote_character}]}}"
+
+
+def _replace_all_matches(
+    el_string: str,
+    match_regex: Any,
+    replace_function: Callable,
+    quote_character: str,
+    parameters: Dict[str, str],
+):
+    match = re.search(match_regex, el_string)
+    while match:
+        replaced_value = replace_function(el_string, quote_character=quote_character, parameters=parameters)
+        el_string = re.sub(match_regex, repl=replaced_value, string=el_string, count=1)
+        match = re.search(match_regex, el_string)
+    return el_string
+
+
+def _the_other_quote(quote_character):
+    return "'" if quote_character == '"' else '"'
+
+
+# noinspection PyUnusedLocal
+def _match_function(
+    el_string: str, match: Any, func_map: Dict[str, Callable], add_context: bool, quote_character: str
+) -> Optional[str]:
+    fn_match = re.findall(match, el_string)
     if not fn_match:
         return None
-
-    # fn_match is of the form [('concat', "'ls', '-l'")]
-    # for an el function like ${concat('ls', '-l')}
-    if fn_match[0][0] not in el_func_map:
-        raise KeyError("{} EL function not supported.".format(fn_match[0][0]))
-
-    mapped_func = el_func_map[fn_match[0][0]]
+    else:
+        if fn_match[0][0] not in func_map:
+            raise KeyError("EL function not supported: {}".format(fn_match[0][0]))
+    mapped_func = func_map[fn_match[0][0]]
+    if mapped_func is None:
+        return f"NOT_IMPLEMENTED_fn_match_{fn_match[0][0]}_{fn_match[0][1]}"
 
     func_name = mapped_func.__name__
-    return "{}({})".format(func_name, fn_match[0][1])
+
+    if quote_character != "":
+        arguments = fn_match[0][1].replace(quote_character, _the_other_quote(quote_character))
+    else:
+        arguments = fn_match[0][1]
+    if add_context:
+        return f"{{{func_name}(DAG_CONTEXT, {arguments})}}"
+    else:
+        return f"{{{func_name}({arguments})}}"
 
 
-def convert_el_to_jinja(oozie_el, quote=True):
+def _convert_line(line: str, prop_dict: Dict[str, str]) -> None:
     """
-    Converts an EL with either a function or a variable to the form:
-    Variable:
-        ${variable} -> {{ params.variable }}
-        ${func()} -> mapped_func()
+    Converts a line from the properties file and adds it to the properties dictionary.
+    """
+    key, value = line.split("=", 1)
+    value = replace_el_with_var_value(value.strip(), prop_dict)
+    prop_dict[key.strip()] = value
 
-    Only supports a single variable or a single EL function.
 
-    If quote is true, returns the string surround in single quotes, unless it
-    is a function, then no quotes are added.
+# noinspection PyUnusedLocal
+def replace_el_with_var_value(el_string: str, parameters: Dict[str, str], quote_character: str = ""):
+    return _replace_all_matches(
+        el_string=el_string,
+        match_regex=VAR_MATCH,
+        replace_function=_value_of_first_variable,
+        quote_character=quote_character,
+        parameters=parameters,
+    )
+
+
+def convert_el_to_string(el_string: str, quote_character='"', parameters: Dict[str, str] = None):
+    """
+    Converts an EL with functions or variables to the form:
+
+    If quote character is set, it returns the arguments are surrounded with
+    the other quotes (" -> '  or ' -> ") and the whole string is surrounded
+    with quote_character provided
     """
     # Matches oozie EL functions e.g. ${concat()}
-    fn_match = FN_MATCH.findall(oozie_el)
-    # Matches oozie EL variables e.g. ${hostname}
-    var_match = VAR_MATCH.findall(oozie_el)
 
-    jinjafied_el = oozie_el
+    new_el_string = el_string
 
-    if fn_match:
-        jinjafied_el = parse_el_func(oozie_el)
-        return jinjafied_el
-    if var_match:
-        for var in var_match:
-            jinjafied_el = jinjafied_el.replace("${" + var + "}", "{{ params." + var + " }}")
+    new_el_string = _replace_all_matches(
+        el_string=new_el_string,
+        match_regex=FN_MATCH,
+        replace_function=_code_of_first_el_function,
+        quote_character=quote_character,
+        parameters=parameters,
+    )
 
-    return "'" + jinjafied_el + "'" if quote else jinjafied_el
+    new_el_string = _replace_all_matches(
+        el_string=new_el_string,
+        match_regex=WF_FN_MATCH,
+        replace_function=_code_of_first_wf_el_function,
+        quote_character=quote_character,
+        parameters=parameters,
+    )
+
+    new_el_string = _replace_all_matches(
+        el_string=new_el_string,
+        match_regex=VAR_MATCH,
+        replace_function=_code_of_first_variable,
+        quote_character=quote_character,
+        parameters=parameters,
+    )
+
+    return f"{quote_character}{new_el_string}{quote_character}"
 
 
 def parse_els(properties_file: Optional[str], prop_dict: Dict[str, str] = None):
@@ -144,7 +307,8 @@ def parse_els(properties_file: Optional[str], prop_dict: Dict[str, str] = None):
         command=ssh ${host}
 
     The params would be parsed like:
-        PARAMS = {
+
+    DAG_CONTEXT.params = {
         host: 'user@google.com',
         command='ssh user@google.com',
     }
@@ -164,15 +328,6 @@ def parse_els(properties_file: Optional[str], prop_dict: Dict[str, str] = None):
     return prop_dict
 
 
-def _convert_line(line: str, prop_dict: Dict[str, str]) -> None:
-    """
-    Converts a line from the properties file and adds it to the properties dictionary.
-    """
-    key, value = line.split("=", 1)
-    value = replace_el_with_var(value.strip(), prop_dict, quote=False)
-    prop_dict[key.strip()] = value
-
-
 def comma_separated_string_to_list(line: str) -> Union[List[str], str]:
     """
     Converts a comma-separated string to a List of strings.
@@ -183,7 +338,7 @@ def comma_separated_string_to_list(line: str) -> Union[List[str], str]:
 
 
 def normalize_path(url, params, allow_no_schema=False):
-    url_with_var = replace_el_with_var(url, params=params, quote=False)
+    url_with_var = replace_el_with_var_value(url, parameters=params)
     url_parts: ParseResult = urlparse(url_with_var)
     allowed_schema = {"hdfs", ""} if allow_no_schema else {"hdfs"}
     if url_parts.scheme not in allowed_schema:

@@ -411,7 +411,7 @@ class TestOozieExamples(unittest.TestCase):
                         Relation(from_task_id="decision_node", to_task_id="first"),
                         Relation(from_task_id="decision_node", to_task_id="kill"),
                     },
-                    params={"nameNode": "hdfs://"},
+                    params={"nameNode": "hdfs://", "examplesRoot": "examples"},
                 ),
             ),
             (
@@ -438,7 +438,13 @@ class TestOozieExamples(unittest.TestCase):
                         Relation(from_task_id="shell_node", to_task_id="join_node"),
                         Relation(from_task_id="subworkflow_node", to_task_id="join_node"),
                     },
-                    params={"nameNode": "hdfs://", "dataproc_cluster": "AAA"},
+                    params={
+                        "nameNode": "hdfs://",
+                        "queueName": "default",
+                        "examplesRoot": "examples",
+                        "resourceManager": "localhost:8032",
+                        "dataproc_cluster": "AAA"
+                    },
                 ),
             ),
             (

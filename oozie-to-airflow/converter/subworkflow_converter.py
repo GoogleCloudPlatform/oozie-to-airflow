@@ -57,10 +57,14 @@ class OozieSubworkflowConverter(OozieConverter):
         self, depends: Set[str], file: TextIO, nodes: Dict[str, ParsedNode], relations: Set[Relation]
     ) -> None:
         self.write_dependencies(file, depends)
-        file.write("PARAMS = " + json.dumps(self.params, indent=INDENT) + "\n\n")
+        self.write_parameters(file=file, params=self.params)
         file.write("\ndef sub_dag(parent_dag_name, child_dag_name, start_date, schedule_interval):\n")
         self.write_dag_header(
-            file, self.dag_name, self.schedule_interval, self.start_days_ago, template="dag_subwf.tpl"
+            file=file,
+            dag_name=self.dag_name,
+            schedule_interval=self.schedule_interval,
+            start_days_ago=self.start_days_ago,
+            template="dag_subwf.tpl",
         )
         self.write_nodes(file, nodes, indent=INDENT + 4)
         file.write("\n\n")

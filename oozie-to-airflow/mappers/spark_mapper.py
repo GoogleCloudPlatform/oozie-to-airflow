@@ -104,7 +104,7 @@ class SparkMapper(ActionMapper, PrepareMixin):
 
         app_args = xml_utils.find_nodes_by_tag(self.oozie_node, SPARK_TAG_ARGS)
         for arg in app_args:
-            self.application_args.append(el_utils.replace_el_with_var(arg.text, self.params, quote=False))
+            self.application_args.append(el_utils.convert_el_to_string(arg.text))
 
     @staticmethod
     def _get_or_default(root: ET.Element, tag: str, default: str = None, params: Dict[str, str] = None):
@@ -119,7 +119,7 @@ class SparkMapper(ActionMapper, PrepareMixin):
 
         if var:
             # Only check the first one
-            return el_utils.replace_el_with_var(var[0].text, params=params, quote=False)
+            return el_utils.replace_el_with_var_value(var[0].text, parameters=params)
         return default
 
     @staticmethod

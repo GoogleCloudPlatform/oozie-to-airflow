@@ -136,18 +136,16 @@ class OozieConverter:
         Template method, can be overridden.
         """
         self.write_dependencies(file, depends)
-        self.write_params(file, self.params)
-        self.write_dag_header(file, self.dag_name, self.schedule_interval, self.start_days_ago)
+        self.write_parameters(file=file, params=self.params)
+        self.write_dag_header(
+            file=file,
+            dag_name=self.dag_name,
+            schedule_interval=self.schedule_interval,
+            start_days_ago=self.start_days_ago,
+        )
         self.write_nodes(file, nodes)
         file.write("\n\n")
         self.write_relations(file, relations)
-
-    @staticmethod
-    def write_params(file: TextIO, params: Dict[str, str]) -> None:
-        converted_params: Dict[str, Union[List[str], str]] = {
-            x: comma_separated_string_to_list(y) for x, y in params.items()
-        }
-        file.write("PARAMS = " + json.dumps(converted_params, indent=INDENT) + "\n\n")
 
     def write_nodes(self, file: TextIO, nodes: Dict[str, ParsedNode], indent: int = INDENT):
         """
@@ -188,7 +186,9 @@ class OozieConverter:
         file.write("\n\n")
 
     @staticmethod
-    def write_dag_header(file, dag_name, schedule_interval, start_days_ago, template="dag.tpl"):
+    def write_dag_header(
+        file: TextIO, dag_name: str, schedule_interval: str, start_days_ago: str, template: str = "dag.tpl"
+    ):
         """
         Write the DAG header to the open file specified in the file pointer
         :param file: Opened file to write to.
@@ -197,7 +197,6 @@ class OozieConverter:
         :param start_days_ago: Desired DAG start date, expressed as number of days ago from the present day
         :param template: Desired template to use when creating the DAG header.
         """
-
         file.write(
             render_template(
                 template_name=template,
@@ -207,3 +206,17 @@ class OozieConverter:
             )
         )
         logging.info("Wrote DAG header.")
+
+    @staticmethod
+    def write_parameters(file: TextIO, params: Dict[str, str], template: str = "params.tpl"):
+        """
+        Write the DAG header to the open file specified in the file pointer
+        :param file: Opened file to write to.
+        :param params: parameters of the DAG
+        :param template: Desired template to use when creating the DAG header.
+        """
+        converted_params = {x: comma_separated_string_to_list(y) for x, y in params.items()}
+        file.write(
+            render_template(template_name=template, params=json.dumps(converted_params, indent=INDENT))
+        )
+        logging.info("Wrote DAG params.")

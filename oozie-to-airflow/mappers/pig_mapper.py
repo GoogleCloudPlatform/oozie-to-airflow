@@ -59,9 +59,9 @@ class PigMapper(ActionMapper, PrepareMixin):
         res_man_text = self.oozie_node.find("resource-manager").text
         name_node_text = self.oozie_node.find("name-node").text
         script = self.oozie_node.find("script").text
-        self.resource_manager = el_utils.replace_el_with_var(res_man_text, params=self.params, quote=False)
-        self.name_node = el_utils.replace_el_with_var(name_node_text, params=self.params, quote=False)
-        self.script_file_name = el_utils.replace_el_with_var(script, params=self.params, quote=False)
+        self.resource_manager = el_utils.convert_el_to_string(res_man_text)
+        self.name_node = el_utils.convert_el_to_string(name_node_text)
+        self.script_file_name = el_utils.replace_el_with_var_value(script, self.params)
         self._parse_config()
         self._parse_params()
         self.files, self.hdfs_files = self.file_extractor.parse_node()
@@ -72,17 +72,21 @@ class PigMapper(ActionMapper, PrepareMixin):
         if param_nodes:
             self.params_dict = {}
             for node in param_nodes:
-                param = el_utils.replace_el_with_var(node.text, params=self.params, quote=False)
+                param = el_utils.convert_el_to_string(node.text)
                 key, value = param.split("=")
-                self.params_dict[key] = value
+                # Remove quote from the key (not needed - keys should not be derived from variables)
+                key = key[1:]
+                # But add the quote to the value as it can have some variables
+                self.params_dict[key] = '"' + value
 
     def convert_to_text(self) -> str:
-        prepare_command = self.get_prepare_command(self.oozie_node, self.params)
+        prepare_command, prepare_parameters = self.get_prepare_command_and_parameters(self.oozie_node, self.params)
         tasks = [
             Task(
                 task_id=self.name + "_prepare",
                 template_name="prepare.tpl",
-                template_params=dict(prepare_command=prepare_command),
+                template_params=dict(prepare_command=prepare_command,
+                                     prepare_parameters=prepare_parameters),
             ),
             Task(
                 task_id=self.name,
