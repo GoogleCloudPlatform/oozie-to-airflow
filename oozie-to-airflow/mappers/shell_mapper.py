@@ -53,7 +53,6 @@ class ShellMapper(ActionMapper, PrepareMixin):
         name_node_text = self.oozie_node.find("name-node").text
         self.resource_manager = el_utils.replace_el_with_var(res_man_text, params=self.params, quote=False)
         self.name_node = el_utils.replace_el_with_var(name_node_text, params=self.params, quote=False)
-        self._parse_config()
         cmd_node = self.oozie_node.find("exec")
         arg_nodes = self.oozie_node.findall("argument")
         cmd = " ".join([cmd_node.text] + [x.text for x in arg_nodes])

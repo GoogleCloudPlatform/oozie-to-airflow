@@ -15,9 +15,17 @@
 """Base class for all action nappers"""
 from typing import Dict
 
+from converter.primitives import Workflow
 from mappers.base_mapper import BaseMapper
 
-from utils import xml_utils, el_utils
+from utils.config_extractors import (
+    TAG_CONFIGURATION,
+    TAG_JOB_XML,
+    extract_properties_from_configuration_node,
+    extract_properties_from_job_xml_nodes,
+)
+
+from utils.xml_utils import find_nodes_by_tag, find_node_by_tag
 
 
 # pylint: disable=abstract-method
@@ -25,16 +33,27 @@ from utils import xml_utils, el_utils
 class ActionMapper(BaseMapper):
     """Base class for all action mappers"""
 
-    properties: Dict[str, str] = {}
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.properties: Dict[str, str] = {}
 
-    def _parse_config(self):
-        config = self.oozie_node.find("configuration")
-        if config:
-            property_nodes = xml_utils.find_nodes_by_tag(config, "property")
-            if property_nodes:
-                for node in property_nodes:
-                    name = node.find("name").text
-                    value = el_utils.replace_el_with_var(
-                        node.find("value").text, params=self.params, quote=False
-                    )
-                    self.properties[name] = value
+    def on_parse_node(self, workflow):
+        super().on_parse_node(workflow)
+        self._parse_job_xml_and_configuration(workflow)
+
+    def _parse_job_xml_and_configuration(self, workflow: Workflow):
+        job_xml_nodes = find_nodes_by_tag(self.oozie_node, TAG_JOB_XML)
+        self.properties.update(
+            extract_properties_from_job_xml_nodes(
+                job_xml_nodes=job_xml_nodes,
+                input_directory_path=workflow.input_directory_path,
+                params=self.params,
+            )
+        )
+
+        configuration_node = find_node_by_tag(self.oozie_node, TAG_CONFIGURATION)
+        if configuration_node is not None:
+            new_properties = extract_properties_from_configuration_node(
+                config_node=configuration_node, params=self.params
+            )
+            self.properties.update(new_properties)

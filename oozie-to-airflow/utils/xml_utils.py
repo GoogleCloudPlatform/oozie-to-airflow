@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """XML parsing utilities"""
-from typing import List, cast
+from typing import List, cast, Optional
 from xml.etree import ElementTree as ET
 
 
@@ -43,6 +43,18 @@ def find_node_by_name(root, name) -> ET.Element:
     if len(node) > 1:
         raise MultipleNodeFoundException("More than one node with name {} found".format(name))
     return node[0]
+
+
+def find_node_by_tag(root, tag) -> Optional[ET.Element]:
+    """
+    Returns a first XML node that have the tag provided. In this case
+    only direct descendants under the root node are checked for the tag.
+    If nothing is found, it returns None.
+    """
+    nodes = find_nodes_by_tag(root, tag)
+    if nodes:
+        return nodes[0]
+    return None
 
 
 def find_nodes_by_tag(root, tag) -> List[ET.Element]:

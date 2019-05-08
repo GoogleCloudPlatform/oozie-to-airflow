@@ -118,8 +118,8 @@ class FsMapper(ActionMapper):
         super().__init__(*args, **kwargs)
         self.tasks = []
 
-    def on_parse_node(self):
-        super().on_parse_node()
+    def on_parse_node(self, workflow):
+        super().on_parse_node(workflow)
         self.tasks = self.parse_tasks()
 
     def parse_tasks(self):

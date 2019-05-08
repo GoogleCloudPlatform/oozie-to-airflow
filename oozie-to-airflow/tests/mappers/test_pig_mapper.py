@@ -68,11 +68,6 @@ class TestPigMapper(unittest.TestCase):
         self.assertEqual("localhost:8032", mapper.resource_manager)
         self.assertEqual("hdfs://", mapper.name_node)
         self.assertEqual("id.pig", mapper.script_file_name)
-        self.assertEqual("${queueName}", mapper.properties["mapred.job.queue.name"])
-        self.assertEqual("/user/${wf:user()}/${examplesRoot}/input-data/text", mapper.params_dict["INPUT"])
-        self.assertEqual(
-            "/user/${wf:user()}/${examplesRoot}/output-data/demo/pig-node", mapper.params_dict["OUTPUT"]
-        )
 
     def test_create_mapper_jinja(self):
         # test jinja templating
@@ -96,16 +91,13 @@ class TestPigMapper(unittest.TestCase):
         self.assertEqual("localhost:9999", mapper.resource_manager)
         self.assertEqual("hdfs://", mapper.name_node)
         self.assertEqual("id_el.pig", mapper.script_file_name)
-        self.assertEqual("myQueue", mapper.properties["mapred.job.queue.name"])
-        self.assertEqual("/user/${wf:user()}/examples/input-data/text", mapper.params_dict["INPUT"])
-        self.assertEqual(
-            "/user/${wf:user()}/examples/output-data/demo/pig-node", mapper.params_dict["OUTPUT"]
-        )
 
     @mock.patch("mappers.pig_mapper.render_template", return_value="RETURN")
     def test_convert_to_text(self, render_template_mock):
         params = {"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3", "nameNode": "hdfs://"}
         mapper = self._get_pig_mapper(params=params)
+
+        mapper.on_parse_node(mock.MagicMock())
 
         res = mapper.convert_to_text()
         self.assertEqual(res, "RETURN")

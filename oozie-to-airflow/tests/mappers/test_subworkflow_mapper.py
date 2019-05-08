@@ -16,6 +16,7 @@
 import ast
 import os
 from contextlib import suppress
+from copy import deepcopy
 from unittest import mock, TestCase
 from xml.etree import ElementTree as ET
 
@@ -47,8 +48,8 @@ class TestSubworkflowMapper(TestCase):
 
     SUBDAG_TEST_FILEPATH = "/tmp/subdag_pig.py"
 
-    @classmethod
-    def setUpClass(cls):
+    def setUp(self):
+        super().setUp()
         # language=XML
         subworkflow_node_str = """
 <sub-workflow>
@@ -61,8 +62,7 @@ class TestSubworkflowMapper(TestCase):
         </property>
     </configuration>
 </sub-workflow>"""
-        super(TestSubworkflowMapper, cls).setUpClass()
-        cls.subworkflow_node = ET.fromstring(subworkflow_node_str)
+        self.subworkflow_node = ET.fromstring(subworkflow_node_str)
 
     def tearDown(self) -> None:
         with suppress(OSError):
@@ -71,7 +71,7 @@ class TestSubworkflowMapper(TestCase):
     @mock.patch("utils.el_utils.parse_els")
     def test_create_mapper_jinja(self, parse_els):
         # Given
-        parse_els.return_value = self.subworkflow_params
+        parse_els.return_value = deepcopy(self.subworkflow_params)
         # When
         mapper = self._get_subwf_mapper()
 
@@ -80,14 +80,25 @@ class TestSubworkflowMapper(TestCase):
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.subworkflow_node, mapper.oozie_node)
         self.assertEqual(self.main_params, mapper.params)
-        # Propagate config node is present, should forward config properties
-        self.assertEqual({"resourceManager": "localhost:8032"}, mapper.get_config_properties())
         self.assertTrue(os.path.isfile(self.SUBDAG_TEST_FILEPATH))
 
     @mock.patch("utils.el_utils.parse_els")
-    def test_create_mapper_jinja_no_propagate(self, parse_els):
+    def test_get_config_properties_propagate(self, parse_els):
         # Given
-        parse_els.return_value = self.subworkflow_params
+        parse_els.return_value = deepcopy(self.subworkflow_params)
+        self.assertFalse(os.path.isfile(self.SUBDAG_TEST_FILEPATH))
+
+        # When
+        mapper = self._get_subwf_mapper()
+        mapper.on_parse_node(mock.MagicMock())
+
+        # Propagate config node is missing, should NOT forward config properties
+        self.assertEqual({"resourceManager": "localhost:8032"}, mapper.get_config_properties())
+
+    @mock.patch("utils.el_utils.parse_els")
+    def test_get_config_properties_no_propagate(self, parse_els):
+        # Given
+        parse_els.return_value = deepcopy(self.subworkflow_params)
         self.assertFalse(os.path.isfile(self.SUBDAG_TEST_FILEPATH))
         # Removing the propagate-configuration node
         propagate_configuration = self.subworkflow_node.find("propagate-configuration")
@@ -95,12 +106,8 @@ class TestSubworkflowMapper(TestCase):
 
         # When
         mapper = self._get_subwf_mapper()
+        mapper.on_parse_node(mock.MagicMock())
 
-        # Then
-        self.assertEqual("test_id", mapper.task_id)
-        self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
-        self.assertEqual(self.subworkflow_node, mapper.oozie_node)
-        self.assertEqual(self.main_params, mapper.params)
         # Propagate config node is missing, should NOT forward config properties
         self.assertEqual({}, mapper.get_config_properties())
         self.assertTrue(os.path.isfile(self.SUBDAG_TEST_FILEPATH))
@@ -142,5 +149,5 @@ class TestSubworkflowMapper(TestCase):
             action_mapper=ACTION_MAP,
             trigger_rule=TriggerRule.DUMMY,
             control_mapper=CONTROL_MAP,
-            params=self.main_params,
+            params=deepcopy(self.main_params),
         )

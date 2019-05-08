@@ -28,11 +28,8 @@ from utils.template_utils import render_template
 
 
 # pylint: disable=too-many-instance-attributes
-SPARK_TAG_VALUE = "value"
-SPARK_TAG_NAME = "name"
 SPARK_TAG_ARGS = "arg"
 SPARK_TAG_OPTS = "spark-opts"
-SPARK_TAG_CONFIGURATION = "configuration"
 SPARK_TAG_JOB_XML = "job-xml"
 SPARK_TAG_JOB_NAME = "name"
 SPARK_TAG_CLASS = "class"
@@ -73,7 +70,7 @@ class SparkMapper(ActionMapper, PrepareMixin):
         self.hdfs_archives = []
         self.dataproc_jars = []
 
-    def on_parse_node(self):
+    def on_parse_node(self, workflow):
 
         if self.has_prepare:
             self.prepare_command = self.get_prepare_command(oozie_node=self.oozie_node, params=self.params)
@@ -88,15 +85,7 @@ class SparkMapper(ActionMapper, PrepareMixin):
             self.java_jar = None
         self.job_name = self._get_or_default(self.oozie_node, SPARK_TAG_JOB_NAME, None, params=self.params)
 
-        job_xml_nodes = xml_utils.find_nodes_by_tag(self.oozie_node, SPARK_TAG_JOB_XML)
-
-        for xml_file in job_xml_nodes:
-            tree = ET.parse(xml_file.text)
-            self.properties.update(self._parse_config_node(tree.getroot()))
-
-        config_nodes = xml_utils.find_nodes_by_tag(self.oozie_node, SPARK_TAG_CONFIGURATION)
-        if config_nodes:
-            self.properties.update(self._parse_config_node(config_nodes[0]))
+        super().on_parse_node(workflow)
 
         spark_opts = xml_utils.find_nodes_by_tag(self.oozie_node, SPARK_TAG_OPTS)
         if spark_opts:
@@ -121,16 +110,6 @@ class SparkMapper(ActionMapper, PrepareMixin):
             # Only check the first one
             return el_utils.replace_el_with_var(var[0].text, params=params, quote=False)
         return default
-
-    @staticmethod
-    def _parse_config_node(config_node: ET.Element) -> Dict[str, str]:
-        conf_dict = {}
-        for prop in config_node:
-            name_node = prop.find(SPARK_TAG_NAME)
-            value_node = prop.find(SPARK_TAG_VALUE)
-            if name_node is not None and name_node.text and value_node is not None and value_node.text:
-                conf_dict[name_node.text] = value_node.text
-        return conf_dict
 
     @staticmethod
     def _parse_spark_opts(spark_opts_node: ET.Element):

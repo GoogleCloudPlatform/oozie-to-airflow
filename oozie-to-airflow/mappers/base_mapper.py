@@ -68,7 +68,7 @@ class BaseMapper:
         """
         return self.name
 
-    def on_parse_node(self):
+    def on_parse_node(self, workflow):
         """
         Called when processing a node.
         """

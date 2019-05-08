@@ -100,7 +100,7 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
     def test_convert_to_text_with_prepare_node(self, render_template_mock):
         spark_node = ET.fromstring(EXAMPLE_XML_WITH_PREPARE)
         mapper = self._get_spark_mapper(spark_node)
-        mapper.on_parse_node()
+        mapper.on_parse_node(mock.MagicMock())
 
         mapper.convert_to_text()
 
@@ -147,7 +147,7 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
     def test_convert_to_text_without_prepare_node(self, render_template_mock):
         spark_node = ET.fromstring(EXAMPLE_XML_WITHOUT_PREPARE)
         mapper = self._get_spark_mapper(spark_node)
-        mapper.on_parse_node()
+        mapper.on_parse_node(mock.MagicMock())
 
         res = mapper.convert_to_text()
         self.assertEqual(res, "RETURN")
@@ -218,7 +218,7 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
         spark_opts_node = find_nodes_by_tag(spark_node, spark_mapper.SPARK_TAG_OPTS)[0]
         spark_opts_node.text = spark_opts
         mapper = self._get_spark_mapper(spark_node)
-        mapper.on_parse_node()
+        mapper.on_parse_node(mock.MagicMock())
 
         mapper.convert_to_text()
 

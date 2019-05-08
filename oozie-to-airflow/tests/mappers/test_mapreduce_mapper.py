@@ -82,21 +82,6 @@ class TestMapReduceMapper(unittest.TestCase):
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.mapreduce_node, mapper.oozie_node)
         self.assertEqual("hdfs://", mapper.name_node)
-        self.assertEqual("${queueName}", mapper.properties["mapred.job.queue.name"])
-        self.assertEqual("WordCount$Map", mapper.properties["mapreduce.job.map.class"])
-        self.assertEqual("WordCount$Reduce", mapper.properties["mapreduce.job.reduce.class"])
-        self.assertEqual("org.apache.hadoop.io.Text", mapper.properties["mapreduce.job.output.key.class"])
-        self.assertEqual(
-            "org.apache.hadoop.io.IntWritable", mapper.properties["mapreduce.job.output.value.class"]
-        )
-        self.assertEqual(
-            "/user/mapred/${examplesRoot}/mapreduce/input",
-            mapper.properties["mapreduce.input.fileinputformat.inputdir"],
-        )
-        self.assertEqual(
-            "/user/mapred/${examplesRoot}/mapreduce/output",
-            mapper.properties["mapreduce.output.fileoutputformat.outputdir"],
-        )
 
     def test_create_mapper_jinja(self):
         # test jinja templating
@@ -109,21 +94,6 @@ class TestMapReduceMapper(unittest.TestCase):
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.mapreduce_node, mapper.oozie_node)
         self.assertEqual("hdfs://", mapper.name_node)
-        self.assertEqual("myQueue", mapper.properties["mapred.job.queue.name"])
-        self.assertEqual("WordCount$Map", mapper.properties["mapreduce.job.map.class"])
-        self.assertEqual("WordCount$Reduce", mapper.properties["mapreduce.job.reduce.class"])
-        self.assertEqual("org.apache.hadoop.io.Text", mapper.properties["mapreduce.job.output.key.class"])
-        self.assertEqual(
-            "org.apache.hadoop.io.IntWritable", mapper.properties["mapreduce.job.output.value.class"]
-        )
-        self.assertEqual(
-            "/user/mapred/examples/mapreduce/input",
-            mapper.properties["mapreduce.input.fileinputformat.inputdir"],
-        )
-        self.assertEqual(
-            "/user/mapred/examples/mapreduce/output",
-            mapper.properties["mapreduce.output.fileoutputformat.outputdir"],
-        )
 
     @mock.patch("mappers.mapreduce_mapper.render_template", return_value="RETURN")
     def test_convert_to_text(self, render_template_mock):
@@ -139,7 +109,7 @@ class TestMapReduceMapper(unittest.TestCase):
                 "hadoop_main_class": "WordCount",
             },
         )
-        mapper.on_parse_node()
+        mapper.on_parse_node(mock.MagicMock())
 
         res = mapper.convert_to_text()
         self.assertEqual(res, "RETURN")

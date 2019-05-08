@@ -61,7 +61,6 @@ class TestShellMapper(unittest.TestCase):
         self.assertEqual(self.shell_node, mapper.oozie_node)
         self.assertEqual("localhost:8032", mapper.resource_manager)
         self.assertEqual("hdfs://localhost:8020", mapper.name_node)
-        self.assertEqual("${queueName}", mapper.properties["mapred.job.queue.name"])
         self.assertEqual("echo arg1 arg2", mapper.bash_command)
 
     def test_create_mapper_jinja(self):
@@ -83,7 +82,6 @@ class TestShellMapper(unittest.TestCase):
         self.assertEqual(self.shell_node, mapper.oozie_node)
         self.assertEqual("localhost:9999", mapper.resource_manager)
         self.assertEqual("hdfs://localhost:8021", mapper.name_node)
-        self.assertEqual("myQueue", mapper.properties["mapred.job.queue.name"])
         self.assertEqual("echo arg1 arg2", mapper.bash_command)
 
     @mock.patch("mappers.shell_mapper.render_template", return_value="RETURN")
@@ -94,9 +92,10 @@ class TestShellMapper(unittest.TestCase):
             "nameNode": "hdfs://localhost:9020/",
         }
         mapper = self._get_shell_mapper(params=params)
+        mapper.on_parse_node(mock.MagicMock())
         res = mapper.convert_to_text()
-        self.assertEqual(res, "RETURN")
 
+        self.assertEqual(res, "RETURN")
         _, kwargs = render_template_mock.call_args
         tasks = kwargs["tasks"]
         relations = kwargs["relations"]

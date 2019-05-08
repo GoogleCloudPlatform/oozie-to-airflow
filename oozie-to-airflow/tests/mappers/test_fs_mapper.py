@@ -167,7 +167,7 @@ class FsMapperSingleTestCase(unittest.TestCase):
         self.node = ET.fromstring(node_str)
 
         self.mapper = _get_fs_mapper(oozie_node=self.node)
-        self.mapper.on_parse_node()
+        self.mapper.on_parse_node(mock.MagicMock())
 
     @mock.patch("mappers.fs_mapper.render_template", return_value="RETURN")
     def test_convert_to_text(self, render_template_mock):
@@ -207,7 +207,7 @@ class FsMapperEmptyTestCase(unittest.TestCase):
     def setUp(self):
         self.node = ET.Element("fs")
         self.mapper = _get_fs_mapper(oozie_node=self.node)
-        self.mapper.on_parse_node()
+        self.mapper.on_parse_node(mock.MagicMock())
 
     @mock.patch("mappers.fs_mapper.render_template")
     def test_convert_to_text(self, render_template_mock):
@@ -276,7 +276,7 @@ class FsMapperComplexTestCase(unittest.TestCase):
         self.node = ET.fromstring(node_str)
 
         self.mapper = _get_fs_mapper(oozie_node=self.node)
-        self.mapper.on_parse_node()
+        self.mapper.on_parse_node(mock.MagicMock())
 
     @mock.patch("mappers.fs_mapper.render_template")
     def test_convert_to_text(self, render_template_mock):
