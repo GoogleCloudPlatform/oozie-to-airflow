@@ -16,7 +16,7 @@
 set -euxo pipefail
 
 # ensure hdfs path exists
-hdfs dfs -mkdir -p /user/$(whoami)/
+hdfs dfs -mkdir -p "/user/$(whoami)/"
 
 # copy examples to home dir
 cp /usr/local/lib/oozie/oozie-examples.tar.gz .

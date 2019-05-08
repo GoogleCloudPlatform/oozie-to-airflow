@@ -19,17 +19,19 @@ set -euo pipefail
 
 # Update short and long options in the complete script
 # This way autocomplete will work automagically with all options
-. ${MY_DIR}/run-sys-test-complete
+# shellcheck source=run-sys-test-complete
+. "${MY_DIR}/run-sys-test-complete"
 
 
 CMDNAME="$(basename -- "$0")"
 
 function save_to_file {
-    echo $(eval echo \$$1) > ${MY_DIR}/.$1
+    # shellcheck disable=SC2005
+    echo "$(eval echo "\$$1")" > "${MY_DIR}/.$1"
 }
 
 function read_from_file {
-    cat ${MY_DIR}/.$1 2>/dev/null || true
+    cat "${MY_DIR}/.$1" 2>/dev/null || true
 }
 
 
@@ -81,13 +83,13 @@ function prepare_configuration {
         echo "Cluster name: ${DATAPROC_CLUSTER_NAME}"
         echo "Region: ${GCP_REGION}"
         echo
-        j2 ${LOCAL_CONFIGURATION_PROPERTIES_TEMPLATE} \
+        j2 "${LOCAL_CONFIGURATION_PROPERTIES_TEMPLATE}" \
               -e DATAPROC_CLUSTER_NAME \
               -e GCP_REGION \
               -e COMPOSER_DAG_BUCKET \
               -e DATAPROC_USER \
               -e LOCAL_APP_NAME \
-              -o ${LOCAL_CONFIGURATION_PROPERTIES}
+              -o "${LOCAL_CONFIGURATION_PROPERTIES}"
     fi
 }
 
@@ -105,7 +107,7 @@ for example application: ${LOCAL_APP_NAME}"
             echo
             exit 1
         fi
-        run_command "mkdir -p ${REMOTE_FILESYSTEM_ALL_APPS_DIR}"
+        run_command "mkdir -p \"${REMOTE_FILESYSTEM_ALL_APPS_DIR}\""
         scp_folder "${LOCAL_APP_DIR}/hdfs/" "${REMOTE_FILESYSTEM_APP_DIR}"
     else
         echo
@@ -117,10 +119,11 @@ for example application: ${LOCAL_APP_NAME}"
     LOCAL_APP_PROPERTIES="/tmp/${LOCAL_APP_NAME}_${RANDOM_PREFIX}_job.properties"
 
     # Overwrite job properties with the dataproc cluster master
-    cat "${LOCAL_APP_DIR}/job.properties" | \
-       sed "s/^nameNode.*$/nameNode=hdfs:\/\/${DATAPROC_CLUSTER_MASTER}:8020/" | \
-       sed "s/^resourceManager.*$/resourceManager=${DATAPROC_CLUSTER_MASTER}:8032/" | \
-       sed "s/\${user\.name}/${DATAPROC_USER}/" > ${LOCAL_APP_PROPERTIES}
+
+    sed -e "s/^nameNode.*$/nameNode=hdfs:\/\/${DATAPROC_CLUSTER_MASTER}:8020/" \
+        -e "s/^resourceManager.*$/resourceManager=${DATAPROC_CLUSTER_MASTER}:8032/" \
+        -e "s/\${user\.name}/${DATAPROC_USER}/" \
+        "${LOCAL_APP_DIR}/job.properties"  > "${LOCAL_APP_PROPERTIES}"
     scp_file "${LOCAL_APP_PROPERTIES}" "${REMOTE_FILESYSTEM_APP_PROPERTIES}"
 
     submit_pig "fs -rm -r -f ${HDFS_REMOTE_APP_DIR}"
@@ -195,14 +198,14 @@ getopt -T >/dev/null
 GETOPT_RETVAL=$?
 
 if [[ $(uname -s) == 'Darwin' ]] ; then
-    which gstat >/dev/null
+    command -v gstat >/dev/null
     STAT_PRESENT=$?
 else
-    which stat >/dev/null
+    command -v stat >/dev/null
     STAT_PRESENT=$?
 fi
 
-which j2 > /dev/null
+command -v j2 > /dev/null
 J2_PRESENT=$?
 
 set -e
@@ -212,13 +215,14 @@ function setup_autocomplete {
     echo "Installing bash completion for local user"
     echo
     set +e
+    # shellcheck disable=SC2088
     grep "~/.bash_completion.d" ~/.bash_profile >/dev/null 2>&1
     RES=$?
     set -e
     if [[ "${RES}" == "0" ]]; then
         echo "Bash dir already created"
     else
-        ${MY_DIR}/confirm "This will create ~/.bash_completion.d/ directory and modify ~/.bash_profile file"
+        "${MY_DIR}/confirm" "This will create ~/.bash_completion.d/ directory and modify ~/.bash_profile file"
         echo
         echo
         mkdir -pv ~/.bash_completion.d
@@ -229,7 +233,7 @@ for BCFILE in ~/.bash_completion.d/* ; do
 done
 EOF
     fi
-    ln -sf ${MY_DIR}/run-sys-test-complete ~/.bash_completion.d/
+    ln -sf "${MY_DIR}/run-sys-test-complete" ~/.bash_completion.d/
     echo
     echo
     echo The run-set-tests completion installed to ~/.bash_completion.d/run-sys-test-complete
@@ -376,6 +380,7 @@ function ssh_to_cluster_master {
     echo "SSH to cluster master ${DATAPROC_CLUSTER_MASTER} in zone ${DATAPROC_MASTER_ZONE}"
     echo
     set -x
+    # shellcheck disable=SC2068
     gcloud compute ssh "${DATAPROC_CLUSTER_MASTER}" --zone "${DATAPROC_MASTER_ZONE}" -- $@
 }
 
@@ -426,27 +431,27 @@ function footer {
 
 
 function run_command {
-    gcloud compute ssh ${DATAPROC_CLUSTER_MASTER} --zone=${DATAPROC_MASTER_ZONE} --command "${1}"
+    gcloud compute ssh "${DATAPROC_CLUSTER_MASTER}" --zone="${DATAPROC_MASTER_ZONE}" --command "${1}"
 }
 
 function scp_folder {
-    gcloud compute scp --zone=${DATAPROC_MASTER_ZONE} --recurse ${1} ${DATAPROC_CLUSTER_MASTER}:${2}
+    gcloud compute scp --zone="${DATAPROC_MASTER_ZONE}" --recurse "${1}" "${DATAPROC_CLUSTER_MASTER}:${2}"
 }
 
 function scp_file {
-    gcloud compute scp --zone=${DATAPROC_MASTER_ZONE} ${1} ${DATAPROC_CLUSTER_MASTER}:${2}
+    gcloud compute scp --zone="${DATAPROC_MASTER_ZONE}" "${1}" "${DATAPROC_CLUSTER_MASTER}:${2}"
 }
 
 function submit_pig {
-    gcloud dataproc jobs submit pig --cluster=${DATAPROC_CLUSTER_NAME} --region=${GCP_REGION} \
+    gcloud dataproc jobs submit pig --cluster="${DATAPROC_CLUSTER_NAME}" --region="${GCP_REGION}" \
         --execute "${1}"
 }
 
 function convert {
     header "Convert workflow.xml to Airflow's ${OUTPUT_DAG_NAME}.py dag for example: ${LOCAL_APP_NAME}"
-    python ${LOCAL_BASE_DIR}/o2a.py -i ${LOCAL_APP_DIR} -o ${LOCAL_OUTPUT_DIR} -u ${DATAPROC_USER} \
-       -d ${OUTPUT_DAG_NAME}
-    python -m py_compile ${LOCAL_OUTPUT_DIR}/${OUTPUT_DAG_NAME}.py
+    python "${LOCAL_BASE_DIR}/o2a.py" -i "${LOCAL_APP_DIR}" -o "${LOCAL_OUTPUT_DIR}" -u "${DATAPROC_USER}" \
+       -d "${OUTPUT_DAG_NAME}"
+    python -m py_compile "${LOCAL_OUTPUT_DIR}/${OUTPUT_DAG_NAME}.py"
     footer
 }
 
@@ -456,7 +461,7 @@ function test_composer {
 
     gcloud composer environments run "${COMPOSER_NAME}" --location "${COMPOSER_LOCATION}" list_dags
     gcloud composer environments run "${COMPOSER_NAME}" --location "${COMPOSER_LOCATION}" trigger_dag\
-       -- ${OUTPUT_DAG_NAME}
+       -- "${OUTPUT_DAG_NAME}"
     echo
     echo "You can check the progress at the address: ${COMPOSER_WEB_UI_URL}"
     echo
@@ -497,8 +502,8 @@ function fetch_composer_environment_info {
 function fetch_dataproc_environment_info {
     header "Fetching information about the Dataproc environment"
     echo
-    DATAPROC_CLUSTER_MASTER=$(gcloud dataproc clusters describe ${DATAPROC_CLUSTER_NAME} --region=${GCP_REGION} --format='value(config.masterConfig.instanceNames[0])')
-    DATAPROC_MASTER_ZONE=$(gcloud dataproc clusters describe ${DATAPROC_CLUSTER_NAME} --region=${GCP_REGION} --format='value(config.gceClusterConfig.zoneUri.basename())')
+    DATAPROC_CLUSTER_MASTER=$(gcloud dataproc clusters describe "${DATAPROC_CLUSTER_NAME}" --region="${GCP_REGION}" --format='value(config.masterConfig.instanceNames[0])')
+    DATAPROC_MASTER_ZONE=$(gcloud dataproc clusters describe "${DATAPROC_CLUSTER_NAME}" --region="${GCP_REGION}" --format='value(config.gceClusterConfig.zoneUri.basename())')
     DATAPROC_USER=$(run_command "whoami")
     REMOTE_FILESYSTEM_ALL_APPS_DIR=/home/${DATAPROC_USER}/o2a
     REMOTE_FILESYSTEM_APP_DIR=${REMOTE_FILESYSTEM_ALL_APPS_DIR}/${LOCAL_APP_NAME}
@@ -513,6 +518,7 @@ fi
 
 if [[ ${RUN_SSH_COMMAND} == "true" ]]; then
     fetch_dataproc_environment_info
+    # shellcheck disable=SC2068
     ssh_to_cluster_master $@
     exit
 fi

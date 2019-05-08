@@ -14,7 +14,9 @@
 # limitations under the License.
 set -euo pipefail
 MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-WORKFLOWS=${@}
+
+# shellcheck disable=SC2206
+WORKFLOWS=( $@ )
 
 FAILED_WORKFLOWS=""
 VERBOSE=${VERBOSE:=""}
@@ -24,14 +26,13 @@ if [[ "${VERBOSE}" != "" ]]; then
     XMLLINT_EXTRA_PARAMS="--load-trace"
 fi
 
-for WORKFLOW in ${WORKFLOWS}
-do
+for WORKFLOW in "${WORKFLOWS[@]}"; do
     echo
     echo "Validating ${WORKFLOW}"
     echo
     set +e
     # Note - if you add new actions add the schema for this action to "all-schemas-1.0.xsd"
-    xmllint --noout ${XMLLINT_EXTRA_PARAMS} --schema ${MY_DIR}/schema/all-schemas-1.0.xsd ${WORKFLOW}
+    xmllint --noout ${XMLLINT_EXTRA_PARAMS} --schema "${MY_DIR}/schema/all-schemas-1.0.xsd" "${WORKFLOW}"
     ERR=$?
     set -e
     if [[ ${ERR} != "0" ]]; then

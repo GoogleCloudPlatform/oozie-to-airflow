@@ -83,9 +83,9 @@ repos:
         always_run: true
     -   id: check-bash-syntax
         name: Check Shell scripts syntax corectness
-        language: system
-        entry: bash -n
-        files: \.sh$
+        language: docker_image
+        entry: koalaman/shellcheck:stable -e SC1091 -e SC2181
+        types: [shell]
     -   id: forbid-unicode-non-breaking-spaces
         name: Detect unicode non-breaking space character U+00A0 aka M-BM-
         language: system
