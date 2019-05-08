@@ -17,7 +17,7 @@ import ast
 import unittest
 from copy import deepcopy
 from random import randint
-from typing import Dict, Any
+from typing import Dict, Any, Union, List
 
 from parameterized import parameterized
 from airflow.utils.trigger_rule import TriggerRule
@@ -28,9 +28,32 @@ from utils.template_utils import render_template
 DELETE_MARKER: Any = {}
 
 
-def mutate(parent: Dict[str, Any], mutations: Dict[str, Any]):
-    result = {}
-    result.update(parent)
+def mutate(parent: Dict[str, Any], mutations: Dict[str, Any]) -> Dict[str, Any]:
+    """
+    Mutate a dictionary. The mutation is determined using a dictionary with changes.
+    The mutation may contain a special value - ``DELETE_MARKER``, which means that the key will be deleted.
+    In the simplest case, this means that two dictionaries are combined.
+
+    :Example::
+
+    .. code-block:: pycon
+
+        In [0]: target = { 'a': { 'b': { 'c': 3 } } }
+
+        In [1]: mutate(target, {'a': {'b': "AAAA"}})
+        Out[1]: {'a': {'b': 'AAAA'}}
+
+    :Example::
+
+    .. code-block:: pycon
+
+        In [0]: target = { 'a': { 'b': { 'c': 3 } } }
+
+        In [1]: mutate(target, {'a': {'b': DELETE_MARKER}})
+        Out[1]: {'a': {}}
+
+    """
+    result = deepcopy(parent)
     for key, value in mutations.items():
         if value is DELETE_MARKER:
             del result[key]
@@ -41,26 +64,61 @@ def mutate(parent: Dict[str, Any], mutations: Dict[str, Any]):
     return result
 
 
-def get_by_path(target, segments):
+def get_value_by_path(target: Any, path: List[Union[str, int]]) -> Any:
+    """
+    Gets the value at path of dict or list.
+
+    :Example:
+
+    .. code-block:: pycon
+
+        In [0]: target = { 'a': { 'b': { 'c': 3 } } }
+        Out[0]: {'a': [{'b': {'c': 'AAA'}}]}
+
+        In [1]: target = { 'a': [{ 'b': { 'c': 3 } }] }
+
+        In [2]: get_value_by_path(target, ["a", 0, "b", "c"])
+        Out[2]: 3
+
+    The behavior of the function is similar to:
+    https://lodash.com/docs#get
+    """
     result = target
-    for segment in segments:
+    for segment in path:
         if isinstance(result, dict):
             result = result[segment]
         elif isinstance(result, list):
             result = result[int(segment)]
         else:
-            raise Exception(f"Invalid path: {'.'.join(segments)}")
+            raise Exception(f"Invalid path: {path}")
     return result
 
 
-def set_by_path(target, segments, value):
-    result = get_by_path(target, segments[:-1])
+def set_value_by_path(target: Any, segments: List[Union[str, int]], value: Any) -> None:
+    """"
+    Sets the value at path of dict or list.
+
+    :Example::
+
+    .. code-block:: pycon
+
+        In [0]: target = { 'a': [{ 'b': { 'c': 3 } }] }
+
+        In [1]: set_value_by_path(target, ["a", 0, "b", "c"], "AAA")
+
+        In [2]: target
+        Out[2]: {'a': [{'b': {'c': 'AAA'}}]}
+
+    The behavior of the function is similar to:
+    https://lodash.com/docs#get
+    """
+    result = get_value_by_path(target, segments[:-1])
     if isinstance(result, dict):
         result[segments[-1]] = value
     elif isinstance(result, list):
         result[int(segments[-1])] = value
     else:
-        raise Exception(f"Invalid path: {'.'.join(segments)}")
+        raise Exception(f"Invalid path: {segments}")
 
 
 class TemplateTestMixin:
@@ -72,32 +130,32 @@ class TemplateTestMixin:
         """
         This test performs mutations of each value and checks if this caused a change
         in result of the template rendering. The new value is selected randomly. The operation is
-        performed recursively
+        performed recursively.
 
         This test allows you to check if all the parameters specified in the `DEFAULT_TEMPLATE_PARAMS` field
-        are used in the template specified by the `DEFAULT_TEMPLATE_PARAMS` field.
+        are used in the template specified by the `TEMPLATE_NAME` field.
         """
         original_view = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
 
-        def mutate_random(previous_segments):
-            current_value = get_by_path(self.DEFAULT_TEMPLATE_PARAMS, previous_segments)
+        def mutate_recursively(path: List[Union[str, int]]):
+            current_value = get_value_by_path(self.DEFAULT_TEMPLATE_PARAMS, path)
             if isinstance(current_value, str):
                 template_params = deepcopy(self.DEFAULT_TEMPLATE_PARAMS)
-                set_by_path(template_params, previous_segments, f"test_{randint(0, 100)}")
+                set_value_by_path(template_params, path, f"no_error_value_{randint(0, 100)}")
                 mutated_view = render_template(self.TEMPLATE_NAME, **template_params)
                 self.assertNotEqual(
                     original_view,
                     mutated_view,
-                    f"Uncorrelated template params: {previous_segments}, Mutated view: {mutated_view}",
+                    f"Uncorrelated template params: {path}, Mutated view: {mutated_view}",
                 )
             elif isinstance(current_value, dict):
                 for key, _ in current_value.items():
-                    mutate_random([*previous_segments, key])
+                    mutate_recursively([*path, key])
             elif isinstance(current_value, list):
                 for i in range(len(current_value)):
-                    mutate_random([*previous_segments, i])
+                    mutate_recursively([*path, i])
 
-        mutate_random([])
+        mutate_recursively([])
 
 
 class ActionTemplateTestCase(unittest.TestCase, TemplateTestMixin):
