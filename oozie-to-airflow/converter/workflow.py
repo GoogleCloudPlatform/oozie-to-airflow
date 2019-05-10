@@ -12,23 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Class for Airflow relation"""
+"""Workflow"""
 from collections import OrderedDict
-from typing import Set, Optional, Dict, NamedTuple, Any
+from typing import Optional, Set, Dict
 
-from airflow.utils.trigger_rule import TriggerRule
-
-# Pylint and flake8 does not understand forward references
-# https://www.python.org/dev/peps/pep-0484/#forward-references
-from converter import parsed_node  # noqa: F401 pylint: disable=unused-import
-from utils.template_utils import render_template
-
-
-class Relation(NamedTuple):
-    """Class for Airflow relation"""
-
-    from_task_id: str
-    to_task_id: str
+from converter.parsed_node import ParsedNode
+from converter.relation import Relation
 
 
 # This is a container for data, so it does not contain public methods intentionally.
@@ -39,20 +28,28 @@ class Workflow:  # pylint: disable=too-few-public-methods
     input_directory_path: str
     output_directory_path: str
     relations: Set[Relation]
-    nodes: Dict[str, "parsed_node.ParsedNode"]
+    nodes: Dict[str, ParsedNode]
     dependencies: Set[str]  # TODO: Check is set likely maintain insertion order (Python 3.6 ?)
 
-    def __init__(self, input_directory_path, output_directory_path, dag_name=None) -> None:
+    def __init__(
+        self,
+        input_directory_path,
+        output_directory_path,
+        dag_name=None,
+        relations=None,
+        nodes=None,
+        dependencies=None,
+    ) -> None:
         self.input_directory_path = input_directory_path
         self.output_directory_path = output_directory_path
         self.dag_name = dag_name
-        self.relations = set()
+        self.relations = relations or set()
         # Dictionary is ordered purely for output being somewhat ordered the
         # same as how Oozie workflow was parsed.
-        self.nodes = OrderedDict()
+        self.nodes = nodes or OrderedDict()
         # These are the general dependencies required that every operator
         # requires.
-        self.dependencies = {
+        self.dependencies = dependencies or {
             "import datetime",
             "from airflow import models",
             "from airflow.utils.trigger_rule import TriggerRule",
@@ -67,41 +64,6 @@ class Workflow:  # pylint: disable=too-few-public-methods
             f"Workflow(dag_name={self.dag_name}, input_directory_path={self.input_directory_path}, "
             f"output_directory_path={self.output_directory_path}, relations={self.relations}, "
             f"nodes={self.nodes.keys()}, dependencies={self.dependencies})"
-        )
-
-    def __eq__(self, other):
-        if isinstance(other, self.__class__):
-            return self.__dict__ == other.__dict__
-        return False
-
-
-# This is a container for data, so it does not contain public methods intentionally.
-class Task:  # pylint: disable=too-few-public-methods
-    """Class for Airflow Task"""
-
-    task_id: str
-    template_name: str
-    template_params: Dict[str, Any]
-
-    def __init__(self, task_id, template_name, trigger_rule=TriggerRule.DUMMY, template_params=None):
-        self.task_id = task_id
-        self.template_name = template_name
-        self.trigger_rule = trigger_rule
-        self.template_params = template_params or {}
-
-    @property
-    def rendered_template(self):
-        return render_template(
-            template_name=self.template_name,
-            task_id=self.task_id,
-            trigger_rule=self.trigger_rule,
-            **self.template_params,
-        )
-
-    def __repr__(self) -> str:
-        return (
-            f'Task(task_id="{self.task_id}", template_name="{self.template_name}", '
-            f'trigger_rule="{self.trigger_rule}", template_params={self.template_params})'
         )
 
     def __eq__(self, other):
