@@ -16,7 +16,6 @@
 
 import ast
 import unittest
-from unittest import mock
 from xml.etree import ElementTree as ET
 
 from parameterized import parameterized
@@ -169,16 +168,9 @@ class FsMapperSingleTestCase(unittest.TestCase):
         self.mapper = _get_fs_mapper(oozie_node=self.node)
         self.mapper.on_parse_node()
 
-    @mock.patch("mappers.fs_mapper.render_template", return_value="RETURN")
-    def test_convert_to_text(self, render_template_mock):
-        res = self.mapper.convert_to_text()
-        self.assertEqual(res, "RETURN")
+    def test_to_tasks_and_relations(self):
+        tasks, relations = self.mapper.to_tasks_and_relations()
 
-        _, kwargs = render_template_mock.call_args
-        tasks = kwargs["tasks"]
-        relations = kwargs["relations"]
-
-        self.assertEqual(kwargs["template_name"], "action.tpl")
         self.assertEqual(
             tasks,
             [
@@ -209,15 +201,9 @@ class FsMapperEmptyTestCase(unittest.TestCase):
         self.mapper = _get_fs_mapper(oozie_node=self.node)
         self.mapper.on_parse_node()
 
-    @mock.patch("mappers.fs_mapper.render_template")
-    def test_convert_to_text(self, render_template_mock):
-        self.mapper.convert_to_text()
+    def test_to_tasks_and_relations(self):
+        tasks, relations = self.mapper.to_tasks_and_relations()
 
-        _, kwargs = render_template_mock.call_args
-        tasks = kwargs["tasks"]
-        relations = kwargs["relations"]
-
-        self.assertEqual(kwargs["template_name"], "action.tpl")
         self.assertEqual(tasks, [Task(task_id="test_id", template_name="dummy.tpl")])
         self.assertEqual(relations, [])
 
@@ -278,15 +264,9 @@ class FsMapperComplexTestCase(unittest.TestCase):
         self.mapper = _get_fs_mapper(oozie_node=self.node)
         self.mapper.on_parse_node()
 
-    @mock.patch("mappers.fs_mapper.render_template")
-    def test_convert_to_text(self, render_template_mock):
-        self.mapper.convert_to_text()
+    def test_to_tasks_and_relations(self):
+        tasks, relations = self.mapper.to_tasks_and_relations()
 
-        _, kwargs = render_template_mock.call_args
-        tasks = kwargs["tasks"]
-        relations = kwargs["relations"]
-
-        self.assertEqual(kwargs["template_name"], "action.tpl")
         self.assertEqual(
             tasks,
             [

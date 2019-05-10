@@ -35,18 +35,11 @@ class TestEndMapper(unittest.TestCase):
         self.assertEqual("test_id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
 
-    @mock.patch("mappers.dummy_mapper.render_template", return_value="RETURN")
-    def test_convert_to_text(self, render_template_mock):
+    def test_convert_tasks_and_relations(self):
         mapper = self._get_end_mapper()
 
-        res = mapper.convert_to_text()
-        self.assertEqual(res, "RETURN")
+        tasks, relations = mapper.to_tasks_and_relations()
 
-        _, kwargs = render_template_mock.call_args
-        tasks = kwargs["tasks"]
-        relations = kwargs["relations"]
-
-        self.assertEqual(kwargs["template_name"], "action.tpl")
         self.assertEqual(tasks, [Task(task_id="test_id", template_name="dummy.tpl")])
         self.assertEqual(relations, [])
 

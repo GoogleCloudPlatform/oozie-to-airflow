@@ -158,7 +158,13 @@ class OozieConverter:
         :param indent: integer of how many spaces to indent entire operator
         """
         for node in nodes.values():
-            file.write(textwrap.indent(node.mapper.convert_to_text(), indent * " "))
+            tasks, relations = node.mapper.to_tasks_and_relations()
+            file.write(
+                textwrap.indent(
+                    render_template(template_name="action.tpl", tasks=tasks, relations=relations),
+                    indent * " ",
+                )
+            )
             logging.info(f"Wrote tasks corresponding to the action named: {node.mapper.name}")
             node.mapper.copy_extra_assets(
                 input_directory_path=os.path.join(self.input_directory_path, HDFS_FOLDER),

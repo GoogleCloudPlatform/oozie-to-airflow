@@ -23,8 +23,6 @@ from converter.primitives import Task, Relation
 from mappers.action_mapper import ActionMapper
 from utils import el_utils
 
-from utils.template_utils import render_template
-
 
 class SSHMapper(ActionMapper):
     """
@@ -72,7 +70,7 @@ class SSHMapper(ActionMapper):
         self.user = user_host[0]
         self.host = user_host[1]
 
-    def convert_to_text(self) -> str:
+    def to_tasks_and_relations(self):
         tasks = [
             Task(
                 task_id=self.name,
@@ -84,7 +82,7 @@ class SSHMapper(ActionMapper):
             )
         ]
         relations: List[Relation] = []
-        return render_template(template_name="action.tpl", tasks=tasks, relations=relations)
+        return tasks, relations
 
     def required_imports(self) -> Set[str]:
         return {

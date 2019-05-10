@@ -18,14 +18,13 @@ from typing import Set
 
 from converter.primitives import Task
 from mappers.action_mapper import ActionMapper
-from utils.template_utils import render_template
 
 
 class DummyMapper(ActionMapper):
-    def convert_to_text(self):
+    def to_tasks_and_relations(self):
         tasks = [Task(task_id=self.name, trigger_rule=self.trigger_rule, template_name="dummy.tpl")]
         relations = []
-        return render_template(template_name="action.tpl", tasks=tasks, relations=relations)
+        return tasks, relations
 
     def required_imports(self) -> Set[str]:
         return {"from airflow.operators import dummy_operator"}

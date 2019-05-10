@@ -23,7 +23,6 @@ from mappers.action_mapper import ActionMapper
 from mappers.prepare_mixin import PrepareMixin
 from utils import el_utils, xml_utils
 from utils.file_archive_extractors import ArchiveExtractor, FileExtractor
-from utils.template_utils import render_template
 
 
 # pylint: disable=too-many-instance-attributes
@@ -71,7 +70,7 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
                 key, value = param.split("=", 1)
                 self.params_dict[key] = value
 
-    def convert_to_text(self) -> str:
+    def to_tasks_and_relations(self):
         prepare_command = self.get_prepare_command(self.oozie_node, self.params)
         tasks = [
             Task(
@@ -93,7 +92,7 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
             ),
         ]
         relations = [Relation(from_task_id=self.name + "_prepare", to_task_id=self.name)]
-        return render_template(template_name="action.tpl", tasks=tasks, relations=relations)
+        return tasks, relations
 
     @staticmethod
     def _validate_paths(input_directory_path, output_directory_path):

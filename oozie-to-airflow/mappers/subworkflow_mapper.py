@@ -26,7 +26,6 @@ from mappers.action_mapper import ActionMapper
 from mappers.base_mapper import BaseMapper
 from tests.utils.test_paths import EXAMPLES_PATH
 from utils import el_utils, xml_utils
-from utils.template_utils import render_template
 
 
 # pylint: disable=too-many-instance-attributes
@@ -104,7 +103,7 @@ class SubworkflowMapper(ActionMapper):
                     )
                     self.properties[name] = value
 
-    def convert_to_text(self):
+    def to_tasks_and_relations(self):
         tasks = [
             Task(
                 task_id=self.name,
@@ -114,7 +113,7 @@ class SubworkflowMapper(ActionMapper):
             )
         ]
         relations = []
-        return render_template(template_name="action.tpl", tasks=tasks, relations=relations)
+        return tasks, relations
 
     def required_imports(self) -> Set[str]:
         return {

@@ -15,7 +15,6 @@
 """Tests decision_mapper"""
 import ast
 import unittest
-from unittest import mock
 from collections import OrderedDict
 
 from xml.etree import ElementTree as ET
@@ -48,21 +47,14 @@ class TestDecisionMapper(unittest.TestCase):
         # test conversion from Oozie EL to Jinja
         self.assertEqual("first_not_null('', '')", next(iter(mapper.case_dict)))
 
-    @mock.patch("mappers.decision_mapper.render_template", return_value="RETURN")
-    def test_convert_to_text(self, render_template_mock):
+    def test_to_tasks_and_relations(self):
         # TODO
         # decision mapper does not have the required EL parsing to correctly get
         # parsed, so once that is finished need to redo tests.
         mapper = self._get_decision_mapper()
 
-        res = mapper.convert_to_text()
-        self.assertEqual(res, "RETURN")
+        tasks, relations = mapper.to_tasks_and_relations()
 
-        _, kwargs = render_template_mock.call_args
-        tasks = kwargs["tasks"]
-        relations = kwargs["relations"]
-
-        self.assertEqual(kwargs["template_name"], "action.tpl")
         self.assertEqual(
             tasks,
             [

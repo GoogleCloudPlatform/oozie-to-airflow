@@ -17,7 +17,6 @@ from typing import Set, List
 
 from converter.primitives import Workflow, Task, Relation
 from mappers.base_mapper import BaseMapper
-from utils.template_utils import render_template
 
 
 class KillMapper(BaseMapper):
@@ -25,10 +24,10 @@ class KillMapper(BaseMapper):
     Converts a Kill Oozie node to an Airflow task.
     """
 
-    def convert_to_text(self) -> str:
+    def to_tasks_and_relations(self):
         tasks = [Task(task_id=self.name, template_name="kill.tpl", trigger_rule=self.trigger_rule)]
         relations: List[Relation] = []
-        return render_template(template_name="action.tpl", tasks=tasks, relations=relations)
+        return tasks, relations
 
     def required_imports(self) -> Set[str]:
         return {"from airflow.operators import bash_operator"}
