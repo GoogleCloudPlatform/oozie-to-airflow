@@ -20,8 +20,8 @@ from xml.etree.ElementTree import Element
 
 from airflow.utils.trigger_rule import TriggerRule
 
-from converter.primitives import Task
-from converter.subworkflow_converter import OozieSubworkflowConverter
+from converter.oozie_converter import OozieConverter
+from converter.task import Task
 from mappers.action_mapper import ActionMapper
 from mappers.base_mapper import BaseMapper
 from tests.utils.test_paths import EXAMPLES_PATH
@@ -73,10 +73,11 @@ class SubworkflowMapper(ActionMapper):
         app_path = os.path.join(EXAMPLES_PATH, self.app_name)
         logging.info(f"Converting subworkflow from {app_path}")
         self._parse_config()
-        converter = OozieSubworkflowConverter(
+        converter = OozieConverter(
             input_directory_path=app_path,
             output_directory_path=self.output_directory_path,
             start_days_ago=0,
+            template_name="subworkflow.tpl",
             action_mapper=self.action_mapper,
             control_mapper=self.control_mapper,
             dag_name=f"{self.dag_name}.{self.task_id}",

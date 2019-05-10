@@ -16,12 +16,10 @@
 """
 import shutil
 from pathlib import Path
-from typing import Dict, TextIO, Type, Set, Union, List
+from typing import Dict, Type, Union, List
 
 import os
-import json
 
-import textwrap
 import logging
 
 import black
@@ -29,7 +27,7 @@ import black
 from converter import parser
 from converter.constants import HDFS_FOLDER
 from converter.parsed_node import ParsedNode
-from converter.primitives import Relation
+from converter.workflow import Workflow
 from mappers.action_mapper import ActionMapper
 from mappers.base_mapper import BaseMapper
 from utils import el_utils
@@ -37,9 +35,8 @@ from utils.constants import CONFIGURATION_PROPERTIES, JOB_PROPERTIES
 from utils.el_utils import comma_separated_string_to_list
 from utils.template_utils import render_template
 
-INDENT = 4
 
-
+# pylint: disable=too-many-instance-attributes, too-many-arguments
 class OozieConverter:
     """Converts Oozie Workflow app to Airflow's DAG
     """
@@ -51,6 +48,7 @@ class OozieConverter:
         output_directory_path: str,
         action_mapper: Dict[str, Type[ActionMapper]],
         control_mapper: Dict[str, Type[BaseMapper]],
+        template_name: str = "workflow.tpl",
         user: str = None,
         start_days_ago: int = None,
         schedule_interval: str = None,
@@ -72,6 +70,7 @@ class OozieConverter:
         self.start_days_ago = start_days_ago
         self.schedule_interval = schedule_interval
         self.dag_name = dag_name
+        self.template_name = template_name
         self.configuration_properties_file = os.path.join(input_directory_path, CONFIGURATION_PROPERTIES)
         self.job_properties_file = os.path.join(input_directory_path, JOB_PROPERTIES)
         self.output_dag_name = (
@@ -93,18 +92,30 @@ class OozieConverter:
         )
 
     def recreate_output_directory(self):
-        self._recreate_output_directory()
+        shutil.rmtree(self.output_directory_path, ignore_errors=True)
+        os.makedirs(self.output_directory_path, exist_ok=True)
 
     def convert(self):
         self.parser.parse_workflow()
-        relations = self.parser.get_relations()
-        depends = self.parser.get_dependencies()
-        nodes = self.parser.get_nodes()
-        self.create_dag_file(nodes, depends, relations)
 
-    def _recreate_output_directory(self):
-        shutil.rmtree(self.output_directory_path, ignore_errors=True)
-        os.makedirs(self.output_directory_path, exist_ok=True)
+        workflow = self.parser.workflow
+        self.convert_nodes(workflow.nodes)
+        self.create_dag_file(workflow)
+        self.copy_extra_assets(workflow.nodes)
+
+    @staticmethod
+    def convert_nodes(nodes: Dict[str, ParsedNode]):
+        """
+        For each Oozie node, converts it into relations and internal relations.
+
+        It uses the mapper, which is stored in ParsedNode. The result is saved in ParsedNode.tasks
+        and ParsedNode.relations
+        """
+        logging.info("Converting nodes to tasks and inner relations")
+        for p_node in nodes.values():
+            tasks, relations = p_node.mapper.to_tasks_and_relations()
+            p_node.tasks = tasks
+            p_node.relations = relations
 
     def add_properties_to_params(self, params: Dict[str, str]):
         """
@@ -112,104 +123,45 @@ class OozieConverter:
         """
         return el_utils.parse_els(self.job_properties_file, params)
 
-    def create_dag_file(self, nodes: Dict[str, ParsedNode], depends: Set[str], relations: Set[Relation]):
+    def create_dag_file(self, workflow: Workflow):
         """
         Writes to a file the Apache Oozie parsed workflow in Airflow's DAG format.
-
-        :param nodes: A dictionary of {'task_id': ParsedNode object}
-        :param depends: A list of strings that will be interpreted as import
-            statements
-        :param relations: A list of Relation corresponding to operator relations
         """
         file_name = self.output_dag_name
         with open(file_name, "w") as file:
             logging.info(f"Saving to file: {file_name}")
-            self.write_dag(depends, file, nodes, relations)
+            dag_content = self.render_workflow(workflow)
+            file.write(dag_content)
         black.format_file_in_place(
             Path(file_name), mode=black.FileMode(line_length=110), fast=False, write_back=black.WriteBack.YES
         )
 
-    def write_dag(
-        self, depends: Set[str], file: TextIO, nodes: Dict[str, ParsedNode], relations: Set[Relation]
-    ):
+    def copy_extra_assets(self, nodes: Dict[str, ParsedNode]):
         """
-        Template method, can be overridden.
-        """
-        self.write_dependencies(file, depends)
-        self.write_params(file, self.params)
-        self.write_dag_header(file, self.dag_name, self.schedule_interval, self.start_days_ago)
-        self.write_nodes(file, nodes)
-        file.write("\n\n")
-        self.write_relations(file, relations)
-
-    @staticmethod
-    def write_params(file: TextIO, params: Dict[str, str]) -> None:
-        converted_params: Dict[str, Union[List[str], str]] = {
-            x: comma_separated_string_to_list(y) for x, y in params.items()
-        }
-        file.write("PARAMS = " + json.dumps(converted_params, indent=INDENT) + "\n\n")
-
-    def write_nodes(self, file: TextIO, nodes: Dict[str, ParsedNode], indent: int = INDENT):
-        """
-        Writes the Airflow tasks to the given opened file object.
-
-        :param file: The file pointer to write to.
-        :param nodes: Dictionary of {'task_id', ParsedNode}
-        :param indent: integer of how many spaces to indent entire operator
+        Copies additional assets needed to execute a workflow, eg. Pig scripts.
         """
         for node in nodes.values():
-            tasks, relations = node.mapper.to_tasks_and_relations()
-            file.write(
-                textwrap.indent(
-                    render_template(template_name="action.tpl", tasks=tasks, relations=relations),
-                    indent * " ",
-                )
-            )
-            logging.info(f"Wrote tasks corresponding to the action named: {node.mapper.name}")
+            logging.info(f"Copies additional assets for the node: {node.mapper.name}")
             node.mapper.copy_extra_assets(
                 input_directory_path=os.path.join(self.input_directory_path, HDFS_FOLDER),
                 output_directory_path=self.output_directory_path,
             )
 
-    @staticmethod
-    def write_relations(file, relations, indent=INDENT):
+    def render_workflow(self, workflow: Workflow):
         """
-        Write the relations to the given opened file object.
-
-        These are each written on a new line.
+        Creates text representation of the workflow.
         """
-        logging.info("Writing control flow dependencies to file.")
-        relations_str = render_template(template_name="relations.tpl", relations=relations)
-        file.write(textwrap.indent(relations_str, indent * " "))
-
-    @staticmethod
-    def write_dependencies(file, depends, line_prefix=""):
-        """
-        Writes each dependency on a new line of the given file pointer.
-
-        Of the form: from time import time, etc.
-        """
-        logging.info("Writing imports to file")
-        file.write(f"\n{line_prefix}".join(sorted(depends)))
-        file.write("\n\n")
-
-    @staticmethod
-    def write_dag_header(file, dag_name, schedule_interval, start_days_ago, template="dag.tpl"):
-        """
-        Write the DAG header to the open file specified in the file pointer
-        :param file: Opened file to write to.
-        :param dag_name: Desired name of DAG
-        :param schedule_interval: Desired DAG schedule interval, expressed as number of days
-        :param start_days_ago: Desired DAG start date, expressed as number of days ago from the present day
-        :param template: Desired template to use when creating the DAG header.
-        """
-
-        file.write(
-            render_template(
-                template_name=template,
-                dag_name=dag_name,
-                schedule_interval=schedule_interval,
-                start_days_ago=start_days_ago,
-            )
+        converted_params: Dict[str, Union[List[str], str]] = {
+            x: comma_separated_string_to_list(y) for x, y in self.params.items()
+        }
+        dag_file = render_template(
+            template_name=self.template_name,
+            dag_name=self.dag_name,
+            schedule_interval=self.schedule_interval,
+            start_days_ago=self.start_days_ago,
+            params=converted_params,
+            relations=workflow.relations,
+            nodes=list(workflow.nodes.values()),
+            dependencies=sorted(workflow.dependencies),
         )
-        logging.info("Wrote DAG header.")
+        return dag_file

@@ -18,7 +18,7 @@ import unittest
 from xml.etree.ElementTree import Element
 from airflow.utils.trigger_rule import TriggerRule
 
-from converter.primitives import Task
+from converter.task import Task
 from mappers import dummy_mapper
 
 

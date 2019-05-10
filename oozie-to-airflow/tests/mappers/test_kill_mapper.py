@@ -20,7 +20,9 @@ from xml.etree.ElementTree import Element
 from airflow.utils.trigger_rule import TriggerRule
 
 from converter.parsed_node import ParsedNode
-from converter.primitives import Workflow, Relation, Task
+from converter.task import Task
+from converter.workflow import Workflow
+from converter.relation import Relation
 from mappers import kill_mapper
 from mappers.base_mapper import BaseMapper
 

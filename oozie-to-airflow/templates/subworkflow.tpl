@@ -13,6 +13,22 @@
   See the License for the specific language governing permissions and
   limitations under the License.
  #}
-{% for relation in relations %}
-{{ relation.from_task_id }}.set_downstream({{ relation.to_task_id }})
+
+{%- for dependency in dependencies %}
+{{ dependency }}
 {% endfor %}
+
+PARAMS = {{ params | tojson }}
+
+def sub_dag(parent_dag_name, child_dag_name, start_date, schedule_interval):
+    with models.DAG(
+        '{0}.{1}'.format(parent_dag_name, child_dag_name),
+        schedule_interval=schedule_interval,  # Change to suit your needs
+        start_date=start_date  # Change to suit your needs
+    ) as dag:
+
+    {% filter indent(8, True) %}
+    {% include "dag_body.tpl" %}
+    {% endfilter %}
+
+    return dag

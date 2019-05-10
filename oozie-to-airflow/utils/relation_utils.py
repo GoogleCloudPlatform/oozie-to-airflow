@@ -16,7 +16,8 @@
 
 from typing import List, Sequence
 
-from converter.primitives import Relation, Task
+from converter.task import Task
+from converter.relation import Relation
 
 
 def chain(ops: Sequence[Task]) -> List[Relation]:

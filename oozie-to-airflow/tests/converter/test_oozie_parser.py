@@ -24,7 +24,7 @@ from parameterized import parameterized
 from converter import parser
 from converter import parsed_node
 from converter.mappers import ACTION_MAP, CONTROL_MAP
-from converter.primitives import Relation
+from converter.relation import Relation
 from mappers import dummy_mapper, pig_mapper
 from mappers import ssh_mapper
 from tests.utils.test_paths import EXAMPLE_DEMO_PATH, EXAMPLES_PATH

@@ -19,7 +19,8 @@ from xml.etree.ElementTree import Element
 
 from airflow.utils.trigger_rule import TriggerRule
 
-from converter.primitives import Task, Relation
+from converter.task import Task
+from converter.relation import Relation
 from mappers.action_mapper import ActionMapper
 from utils import el_utils
 

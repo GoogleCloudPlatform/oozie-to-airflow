@@ -15,7 +15,9 @@
 """Kill mapper - maps the workflow end"""
 from typing import Set, List
 
-from converter.primitives import Workflow, Task, Relation
+from converter.task import Task
+from converter.workflow import Workflow
+from converter.relation import Relation
 from mappers.base_mapper import BaseMapper
 
 

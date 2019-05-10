@@ -15,7 +15,8 @@
 """Tests Relation utils"""
 import unittest
 
-from converter.primitives import Task, Relation
+from converter.task import Task
+from converter.relation import Relation
 from mappers import fs_mapper
 
 
@@ -32,10 +33,10 @@ class chainTestCase(unittest.TestCase):
     def test_multiple(self):
         relations = fs_mapper.chain(
             [
-                fs_mapper.Task(task_id="task_1", template_name=""),
-                fs_mapper.Task(task_id="task_2", template_name=""),
-                fs_mapper.Task(task_id="task_3", template_name=""),
-                fs_mapper.Task(task_id="task_4", template_name=""),
+                Task(task_id="task_1", template_name=""),
+                Task(task_id="task_2", template_name=""),
+                Task(task_id="task_3", template_name=""),
+                Task(task_id="task_4", template_name=""),
             ]
         )
         self.assertEqual(
