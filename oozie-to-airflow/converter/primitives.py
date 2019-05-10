@@ -42,17 +42,25 @@ class Workflow:  # pylint: disable=too-few-public-methods
     nodes: Dict[str, "parsed_node.ParsedNode"]
     dependencies: Set[str]  # TODO: Check is set likely maintain insertion order (Python 3.6 ?)
 
-    def __init__(self, input_directory_path, output_directory_path, dag_name=None) -> None:
+    def __init__(
+        self,
+        input_directory_path,
+        output_directory_path,
+        dag_name=None,
+        relations=None,
+        nodes=None,
+        dependencies=None,
+    ) -> None:
         self.input_directory_path = input_directory_path
         self.output_directory_path = output_directory_path
         self.dag_name = dag_name
-        self.relations = set()
+        self.relations = relations or set()
         # Dictionary is ordered purely for output being somewhat ordered the
         # same as how Oozie workflow was parsed.
-        self.nodes = OrderedDict()
+        self.nodes = nodes or OrderedDict()
         # These are the general dependencies required that every operator
         # requires.
-        self.dependencies = {
+        self.dependencies = dependencies or {
             "import datetime",
             "from airflow import models",
             "from airflow.utils.trigger_rule import TriggerRule",

@@ -22,7 +22,7 @@ import xml.etree.ElementTree as ET
 import uuid
 
 # noinspection PyPackageRequirements
-from typing import Type, Dict, Set
+from typing import Type, Dict
 
 from airflow.utils.trigger_rule import TriggerRule
 import utils.xml_utils
@@ -347,12 +347,3 @@ class OozieParser:
                 # corresponding bit in the parsed node class
                 self.workflow.nodes[error_name].set_is_error(True)
             node.update_trigger_rule()
-
-    def get_relations(self) -> Set[Relation]:
-        return self.workflow.relations
-
-    def get_dependencies(self) -> Set[str]:
-        return self.workflow.dependencies
-
-    def get_nodes(self) -> Dict[str, ParsedNode]:
-        return self.workflow.nodes

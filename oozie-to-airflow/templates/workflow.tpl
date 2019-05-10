@@ -13,6 +13,19 @@
   See the License for the specific language governing permissions and
   limitations under the License.
  #}
-{% for relation in relations %}
-{{ relation.from_task_id }}.set_downstream({{ relation.to_task_id }})
+
+{%- for depedency in dependencies %}
+{{ depedency }}
 {% endfor %}
+
+PARAMS = {{ params | tojson }}
+
+with models.DAG(
+    {{ dag_name | tojson }},
+    schedule_interval={% if schedule_interval %}datetime.timedelta(days={{ schedule_interval }}){% else %}None{% endif %},  # Change to suit your needs
+    start_date=dates.days_ago({{ start_days_ago }})  # Change to suit your needs
+) as dag:
+
+{% filter indent(4, True) %}
+{% include "dag_body.tpl" %}
+{% endfilter %}

@@ -14,15 +14,17 @@
 # limitations under the License.
 """Tests Templates"""
 import ast
-import unittest
 from copy import deepcopy
 from random import randint
 from typing import Dict, Any, Union, List
+from unittest import mock, TestCase
 
 from parameterized import parameterized
 from airflow.utils.trigger_rule import TriggerRule
 
+from converter.parsed_node import ParsedNode
 from converter.primitives import Task, Relation
+from mappers.dummy_mapper import DummyMapper
 from utils.template_utils import render_template
 
 DELETE_MARKER: Any = {}
@@ -158,22 +160,7 @@ class TemplateTestMixin:
         walk_recursively_and_mutate([])
 
 
-class ActionTemplateTestCase(unittest.TestCase, TemplateTestMixin):
-    TEMPLATE_NAME = "action.tpl"
-    DEFAULT_TEMPLATE_PARAMS = {
-        "tasks": [
-            Task(task_id="first_task", template_name="dummy.tpl"),
-            Task(task_id="second_task", template_name="dummy.tpl"),
-        ],
-        "relations": [Relation(from_task_id="first_task", to_task_id="second_task")],
-    }
-
-    def test_minimal_green_path(self):
-        res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
-        self.assertValidPython(res)
-
-
-class DecisionTemplateTestCase(unittest.TestCase, TemplateTestMixin):
+class DecisionTemplateTestCase(TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "decision.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = dict(
@@ -187,7 +174,7 @@ class DecisionTemplateTestCase(unittest.TestCase, TemplateTestMixin):
         self.assertValidPython(res)
 
 
-class DummyTemplateTestCase(unittest.TestCase, TemplateTestMixin):
+class DummyTemplateTestCase(TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "dummy.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = dict(task_id="AAA", trigger_rule=TriggerRule.DUMMY)
@@ -197,7 +184,7 @@ class DummyTemplateTestCase(unittest.TestCase, TemplateTestMixin):
         self.assertValidPython(res)
 
 
-class FsOpTempalteTestCase(unittest.TestCase, TemplateTestMixin):
+class FsOpTempalteTestCase(TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "fs_op.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = {"task_id": "AAA", "pig_command": "AAA", "trigger_rule": TriggerRule.DUMMY}
@@ -212,7 +199,7 @@ class FsOpTempalteTestCase(unittest.TestCase, TemplateTestMixin):
         self.assertValidPython(res)
 
 
-class KillTemplateTestCase(unittest.TestCase, TemplateTestMixin):
+class KillTemplateTestCase(TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "kill.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = dict(task_id="AAA", trigger_rule=TriggerRule.DUMMY)
@@ -222,7 +209,7 @@ class KillTemplateTestCase(unittest.TestCase, TemplateTestMixin):
         self.assertValidPython(res)
 
 
-class MapReduceTemplateTestCase(unittest.TestCase, TemplateTestMixin):
+class MapReduceTemplateTestCase(TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "mapreduce.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = {
@@ -255,7 +242,7 @@ class MapReduceTemplateTestCase(unittest.TestCase, TemplateTestMixin):
         self.assertValidPython(res)
 
 
-class PigTemplateTestCase(unittest.TestCase, TemplateTestMixin):
+class PigTemplateTestCase(TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "pig.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = {
@@ -294,7 +281,7 @@ class PigTemplateTestCase(unittest.TestCase, TemplateTestMixin):
         self.assertValidPython(res)
 
 
-class PrepareTemplateTestCase(unittest.TestCase, TemplateTestMixin):
+class PrepareTemplateTestCase(TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "prepare.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = {"task_id": "AAA", "prepare_command": "AAAA", "trigger_rule": "dummy"}
@@ -310,27 +297,7 @@ class PrepareTemplateTestCase(unittest.TestCase, TemplateTestMixin):
         self.assertValidPython(res)
 
 
-class RelationsTemplateTestCase(unittest.TestCase, TemplateTestMixin):
-    TEMPLATE_NAME = "relations.tpl"
-
-    DEFAULT_TEMPLATE_PARAMS = {
-        "relations": [
-            Relation(from_task_id="A_task", to_task_id="B_task"),
-            Relation(from_task_id="C_task", to_task_id="D_task"),
-            Relation(from_task_id="E_task", to_task_id="F_task"),
-        ]
-    }
-
-    def test_green_path(self):
-        res = render_template("relations.tpl", **self.DEFAULT_TEMPLATE_PARAMS)
-        self.assertValidPython(res)
-
-    def test_empty(self):
-        template_params = {"relations": []}
-        render_template(self.TEMPLATE_NAME, **template_params)
-
-
-class ShellTemplateTestCase(unittest.TestCase, TemplateTestMixin):
+class ShellTemplateTestCase(TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "shell.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = {"task_id": "AAA", "pig_command": "AAAA", "trigger_rule": "dummy"}
@@ -346,7 +313,7 @@ class ShellTemplateTestCase(unittest.TestCase, TemplateTestMixin):
         self.assertValidPython(res)
 
 
-class SparkTemplateTestCase(unittest.TestCase, TemplateTestMixin):
+class SparkTemplateTestCase(TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "spark.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = {
@@ -400,7 +367,7 @@ class SparkTemplateTestCase(unittest.TestCase, TemplateTestMixin):
         self.assertValidPython(res)
 
 
-class SshTemplateTestCase(unittest.TestCase, TemplateTestMixin):
+class SshTemplateTestCase(TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "ssh.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = {
@@ -437,10 +404,62 @@ class SshTemplateTestCase(unittest.TestCase, TemplateTestMixin):
         self.assertValidPython(res)
 
 
-class SubwfTemplateTestCase(unittest.TestCase, TemplateTestMixin):
+class SubwfTemplateTestCase(TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "subwf.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = {"task_id": "test_id", "app_name": "AAA", "trigger_rule": "dummy"}
+
+    def test_green_path(self):
+        res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
+        self.assertValidPython(res)
+
+
+class WorkflowTemplateTestCase(TestCase, TemplateTestMixin):
+    TEMPLATE_NAME = "workflow.tpl"
+
+    DEFAULT_TEMPLATE_PARAMS = dict(
+        dag_name="test_dag",
+        dependencies=["import awesome_stuff"],
+        nodes=[
+            ParsedNode(
+                mock.MagicMock(spec=DummyMapper),
+                tasks=[
+                    Task(task_id="first_task", template_name="dummy.tpl"),
+                    Task(task_id="second_task", template_name="dummy.tpl"),
+                ],
+            )
+        ],
+        params={"user.name": "USER"},
+        relations={Relation(from_task_id="TASK_1", to_task_id="TASK_2")},
+        schedule_interval=None,
+        start_days_ago=None,
+    )
+
+    def test_green_path(self):
+        res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
+        self.assertValidPython(res)
+
+
+class SubWorkflowTemplateTestCase(TestCase, TemplateTestMixin):
+    TEMPLATE_NAME = "subworkflow.tpl"
+
+    DEFAULT_TEMPLATE_PARAMS = dict(
+        dependencies=["import awesome_stuff"],
+        nodes=[
+            ParsedNode(
+                mock.MagicMock(spec=DummyMapper),
+                tasks=[
+                    Task(task_id="first_task", template_name="dummy.tpl"),
+                    Task(task_id="second_task", template_name="dummy.tpl"),
+                ],
+                relations=[Relation(from_task_id="first_task", to_task_id="second_task")],
+            )
+        ],
+        params={"user.name": "USER"},
+        relations={Relation(from_task_id="TASK_1", to_task_id="TASK_2")},
+        schedule_interval=None,
+        start_days_ago=None,
+    )
 
     def test_green_path(self):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)

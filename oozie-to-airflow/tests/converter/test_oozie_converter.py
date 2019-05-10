@@ -15,34 +15,28 @@
 """Tests Oozie Converter"""
 
 import io
-import unittest
-from unittest import mock
-from xml.etree.ElementTree import Element
-
-import jinja2
+from pathlib import Path
+from unittest import mock, TestCase
+from xml.etree import ElementTree as ET
 
 import o2a
 from converter.oozie_converter import OozieConverter
 from converter.mappers import CONTROL_MAP, ACTION_MAP
 from converter.parsed_node import ParsedNode
-from converter.primitives import Relation, Task
-from definitions import TPL_PATH
-from mappers import dummy_mapper
-from tests.utils.test_paths import EXAMPLE_DEMO_PATH
+
+from converter.primitives import Relation, Task, Workflow
+from mappers.dummy_mapper import DummyMapper
 
 
-def remove_all_whitespaces(expected):
-    return "".join(expected.split())
-
-
-class TestOozieConverter(unittest.TestCase):
+class TestOozieConverter(TestCase):
     def setUp(self):
         self.converter = OozieConverter(
             dag_name="test_dag",
-            input_directory_path=EXAMPLE_DEMO_PATH,
+            input_directory_path="/input_directory_path/",
             output_directory_path="/tmp",
             action_mapper=ACTION_MAP,
             control_mapper=CONTROL_MAP,
+            user="USER",
         )
 
     def test_parse_args_input_output_file(self):
@@ -59,81 +53,85 @@ class TestOozieConverter(unittest.TestCase):
         args = o2a.parse_args(["-i", input_dir, "-o", output_dir, "-u", user])
         self.assertEqual(args.user, user)
 
-    @mock.patch("converter.oozie_converter.render_template", return_value="TEST_CONTENT")
-    def test_write_operators(self, render_template_mock):
-        node = ParsedNode(dummy_mapper.DummyMapper(oozie_node=Element("test"), name="task1"))
-        nodes = {"task1": node}
+    @mock.patch("converter.oozie_converter.render_template", return_value="AAA")
+    @mock.patch("builtins.open", return_value=io.StringIO())
+    @mock.patch("converter.oozie_converter.black")
+    def test_create_dag_file(self, black_mock, open_mock, _):
+        workflow = Workflow(
+            dag_name="A",
+            input_directory_path="in_dir",
+            output_directory_path="out_dir",
+            relations={Relation(from_task_id="AAA", to_task_id="BBB")},
+            nodes=dict(AAA=ParsedNode(DummyMapper(ET.Element("dummy"), name="AAA"))),
+            dependencies={"import AAAA"},
+        )
 
-        file = io.StringIO()
-        self.converter.write_nodes(file=file, nodes=nodes, indent=0)
-        file.seek(0)
+        self.converter.create_dag_file(workflow)
+        open_mock.assert_called_once_with("/tmp/test_dag.py", "w")
+        black_mock.format_file_in_place.assert_called_once_with(
+            Path("/tmp/test_dag.py"), fast=mock.ANY, mode=mock.ANY, write_back=mock.ANY
+        )
+
+    @mock.patch("converter.oozie_converter.render_template", return_value="TEXT_CONTENT")
+    def test_write_dag_file(self, render_template_mock):
+        relations = {Relation(from_task_id="TASK_1", to_task_id="TASK_2")}
+        nodes = dict(TASK_1=ParsedNode(DummyMapper(ET.Element("dummy"), name="TASK_1")))
+        dependencies = {"import awesome_stuff"}
+        workflow = Workflow(
+            input_directory_path="/tmp/input_directory",
+            output_directory_path="/tmp/input_directory",
+            dag_name="test_dag",
+            relations=relations,
+            nodes=nodes,
+            dependencies=dependencies,
+        )
+
+        content = self.converter.render_workflow(workflow=workflow)
+
         render_template_mock.assert_called_once_with(
-            template_name="action.tpl",
-            relations=[],
-            tasks=[
-                Task(
-                    task_id="task1", template_name="dummy.tpl", trigger_rule="all_success", template_params={}
-                )
-            ],
+            dag_name="test_dag",
+            dependencies=["import awesome_stuff"],
+            nodes=[nodes["TASK_1"]],
+            params={"user.name": "USER"},
+            relations={Relation(from_task_id="TASK_1", to_task_id="TASK_2")},
+            schedule_interval=None,
+            start_days_ago=None,
+            template_name="workflow.tpl",
         )
-        self.assertEqual("TEST_CONTENT", file.read())
 
-    def test_write_relations(self):
-        relations = [
-            Relation(from_task_id="task1", to_task_id="task2"),
-            Relation(from_task_id="task2", to_task_id="task3"),
+        self.assertEqual(content, "TEXT_CONTENT")
+
+    def test_convert_nodes(self):
+        tasks_1 = [
+            Task(task_id="first_task", template_name="dummy.tpl"),
+            Task(task_id="second_task", template_name="dummy.tpl"),
         ]
+        relations_1 = {Relation(from_task_id="first_task", to_task_id="tasks_2")}
+        tasks_2 = [Task(task_id="third_task", template_name="dummy.tpl")]
+        relations_2 = {}
 
-        file = io.StringIO()
-        OozieConverter.write_relations(file, relations, indent=0)
-        file.seek(0)
+        mapper_1 = mock.MagicMock(**{"to_tasks_and_relations.return_value": (tasks_1, relations_1)})
+        mapper_2 = mock.MagicMock(**{"to_tasks_and_relations.return_value": (tasks_2, relations_2)})
 
-        content = file.read()
-        self.assertIn("task1.set_downstream(task2)", content)
-        self.assertIn("task2.set_downstream(task3)", content)
+        node_1 = ParsedNode(mapper=mapper_1)
+        node_2 = ParsedNode(mapper=mapper_2)
+        nodes = dict(TASK_1=node_1, TASK_2=node_2)
 
-    def test_write_dependencies(self):
-        depends = ["import airflow", "from jaws import thriller"]
+        self.converter.convert_nodes(nodes=nodes)
+        self.assertIs(node_1.tasks, tasks_1)
+        self.assertIs(node_2.tasks, tasks_2)
+        self.assertIs(node_1.relations, relations_1)
+        self.assertIs(node_2.relations, relations_2)
 
-        file = io.StringIO()
-        OozieConverter.write_dependencies(file, depends)
-        file.seek(0)
+    def test_copy_extra_assets(self):
+        mock_1 = mock.MagicMock()
+        mock_2 = mock.MagicMock()
 
-        expected = "from jaws import thriller\nimport airflow\n\n"
-        self.assertEqual(expected, file.read())
+        self.converter.copy_extra_assets(dict(mock_1=mock_1, mock_2=mock_2))
 
-    def test_write_dag_header(self):
-        dag_name = "dag_name"
-        template = "dag.tpl"
-
-        file = io.StringIO()
-        OozieConverter.write_dag_header(
-            file, dag_name, template=template, schedule_interval=1, start_days_ago=1
+        mock_1.mapper.copy_extra_assets.assert_called_once_with(
+            input_directory_path="/input_directory_path/hdfs", output_directory_path="/tmp"
         )
-        file.seek(0)
-
-        template_loader = jinja2.FileSystemLoader(searchpath=TPL_PATH)
-        template_env = jinja2.Environment(loader=template_loader)
-        template = template_env.get_template(template)
-        expected = template.render(dag_name=dag_name, schedule_interval=1, start_days_ago=1)
-
-        self.assertEqual(expected, file.read())
-
-    def test_write_params_list(self):
-        expected = """
-        PARAMS = {
-            "list": [
-                "item1",
-                "item2"
-            ],
-            "single": "item"
-        }
-        """
-
-        params = {"list": "item1,item2", "single": "item"}
-
-        file = io.StringIO()
-        OozieConverter.write_params(file, params=params)
-        file.seek(0)
-
-        self.assertEqual(remove_all_whitespaces(expected), remove_all_whitespaces(file.read()))
+        mock_2.mapper.copy_extra_assets.assert_called_once_with(
+            input_directory_path="/input_directory_path/hdfs", output_directory_path="/tmp"
+        )
