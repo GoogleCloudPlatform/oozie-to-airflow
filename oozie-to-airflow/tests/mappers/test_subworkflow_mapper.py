@@ -105,22 +105,15 @@ class TestSubworkflowMapper(TestCase):
         self.assertEqual({}, mapper.get_config_properties())
         self.assertTrue(os.path.isfile(self.SUBDAG_TEST_FILEPATH))
 
-    @mock.patch("mappers.subworkflow_mapper.render_template", return_value="RETURN")
     @mock.patch("utils.el_utils.parse_els")
-    def test_convert_to_text(self, parse_els_mock, render_template_mock):
+    def test_to_tasks_and_relations(self, parse_els_mock):
         # Given
         parse_els_mock.return_value = self.subworkflow_params
-        # When
         mapper = self._get_subwf_mapper()
+        # When
+        tasks, relations = mapper.to_tasks_and_relations()
 
-        res = mapper.convert_to_text()
-        self.assertEqual(res, "RETURN")
-
-        _, kwargs = render_template_mock.call_args
-        tasks = kwargs["tasks"]
-        relations = kwargs["relations"]
-
-        self.assertEqual(kwargs["template_name"], "action.tpl")
+        # Then
         self.assertEqual(
             tasks, [Task(task_id="test_id", template_name="subwf.tpl", template_params={"app_name": "pig"})]
         )

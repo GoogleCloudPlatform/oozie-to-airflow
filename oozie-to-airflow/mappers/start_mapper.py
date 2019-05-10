@@ -22,8 +22,8 @@ class StartMapper(BaseMapper):
     def required_imports(self) -> Set[str]:
         return set()
 
-    def convert_to_text(self) -> str:
-        return ""
+    def to_tasks_and_relations(self):
+        return [], []
 
     def on_parse_finish(self, workflow):
         super().on_parse_finish(self)

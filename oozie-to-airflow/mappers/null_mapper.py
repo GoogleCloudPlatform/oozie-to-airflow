@@ -25,8 +25,8 @@ class NullMapper(BaseMapper):
         BaseMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=TriggerRule.DUMMY)
 
     # pylint: disable=no-self-use
-    def convert_to_text(self) -> str:
-        return ""
+    def to_tasks_and_relations(self):
+        return [], []
 
     # pylint: disable=no-self-use
     def convert_to_airflow_op(self) -> None:

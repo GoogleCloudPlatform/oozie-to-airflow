@@ -25,8 +25,6 @@ from mappers.action_mapper import ActionMapper
 from mappers.prepare_mixin import PrepareMixin
 from utils import el_utils
 
-from utils.template_utils import render_template
-
 
 class ShellMapper(ActionMapper, PrepareMixin):
     """
@@ -60,7 +58,7 @@ class ShellMapper(ActionMapper, PrepareMixin):
         self.bash_command = el_utils.convert_el_to_jinja(cmd, quote=False)
         self.pig_command = f"sh {shlex.quote(self.bash_command)}"
 
-    def convert_to_text(self) -> str:
+    def to_tasks_and_relations(self):
         prepare_command = self.get_prepare_command(self.oozie_node, self.params)
         tasks = [
             Task(
@@ -75,7 +73,7 @@ class ShellMapper(ActionMapper, PrepareMixin):
             ),
         ]
         relations = [Relation(from_task_id=self.name + "_prepare", to_task_id=self.name)]
-        return render_template(template_name="action.tpl", tasks=tasks, relations=relations)
+        return tasks, relations
 
     def required_imports(self) -> Set[str]:
         return {"from airflow.utils import dates", "from airflow.contrib.operators import dataproc_operator"}

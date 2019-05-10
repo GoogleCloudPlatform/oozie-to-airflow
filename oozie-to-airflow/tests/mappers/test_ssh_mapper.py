@@ -15,7 +15,6 @@
 """Tests for SSH mapper"""
 import ast
 import unittest
-from unittest import mock
 
 from xml.etree import ElementTree as ET
 from airflow.utils.trigger_rule import TriggerRule
@@ -62,18 +61,11 @@ class TestSSHMapper(unittest.TestCase):
         self.assertEqual("apache.org", mapper.host)
         self.assertEqual("'ls -l -a'", mapper.command)
 
-    @mock.patch("mappers.ssh_mapper.render_template", return_value="RETURN")
-    def test_convert_to_text(self, render_template_mock):
+    def test_to_tasks_and_relations(self):
         mapper = self._get_ssh_mapper()
 
-        res = mapper.convert_to_text()
-        self.assertEqual(res, "RETURN")
+        tasks, relations = mapper.to_tasks_and_relations()
 
-        _, kwargs = render_template_mock.call_args
-        tasks = kwargs["tasks"]
-        relations = kwargs["relations"]
-
-        self.assertEqual(kwargs["template_name"], "action.tpl")
         self.assertEqual(
             tasks,
             [

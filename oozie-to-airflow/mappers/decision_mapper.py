@@ -22,7 +22,6 @@ from airflow.utils.trigger_rule import TriggerRule
 from converter.primitives import Task, Relation
 from mappers.base_mapper import BaseMapper
 from utils.el_utils import convert_el_to_jinja
-from utils.template_utils import render_template
 
 
 # noinspection PyAbstractClass
@@ -84,7 +83,7 @@ class DecisionMapper(BaseMapper):
             else:  # Default return value
                 self.case_dict["default"] = case.attrib["to"]
 
-    def convert_to_text(self) -> str:
+    def to_tasks_and_relations(self):
         tasks = [
             Task(
                 task_id=self.name,
@@ -94,8 +93,7 @@ class DecisionMapper(BaseMapper):
             )
         ]
         relations: List[Relation] = []
-
-        return render_template(template_name="action.tpl", tasks=tasks, relations=relations)
+        return tasks, relations
 
     def required_imports(self) -> Set[str]:
         return {

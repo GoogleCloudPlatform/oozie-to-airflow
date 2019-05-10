@@ -24,7 +24,6 @@ from mappers.action_mapper import ActionMapper
 from mappers.prepare_mixin import PrepareMixin
 from utils import xml_utils, el_utils
 from utils.file_archive_extractors import FileExtractor, ArchiveExtractor
-from utils.template_utils import render_template
 
 
 # pylint: disable=too-many-instance-attributes
@@ -207,10 +206,10 @@ class SparkMapper(ActionMapper, PrepareMixin):
             else []
         )
 
-    def convert_to_text(self):
+    def to_tasks_and_relations(self):
         tasks = self._get_tasks()
         relations = self._get_relations()
-        return render_template(template_name="action.tpl", tasks=tasks, relations=relations)
+        return tasks, relations
 
     def required_imports(self) -> Set[str]:
         # Bash are for the potential prepare statement

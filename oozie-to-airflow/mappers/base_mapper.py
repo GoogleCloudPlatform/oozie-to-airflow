@@ -13,10 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Base mapper - it is a base class for all mappers actions, and logic alike"""
-from typing import Set
+from typing import Set, Tuple, List
 from xml.etree.ElementTree import Element
 
 import airflow.utils.trigger_rule
+
+# Pylint and flake8 does not understand forward references
+# https://www.python.org/dev/peps/pep-0484/#forward-references
+from converter import primitives  # noqa: F401 pylint: disable=unused-import
 
 
 class BaseMapper:
@@ -38,10 +42,9 @@ class BaseMapper:
         self.name = name
         self.trigger_rule = trigger_rule
 
-    def convert_to_text(self) -> str:
+    def to_tasks_and_relations(self) -> Tuple[List["primitives.Task"], List["primitives.Relation"]]:
         """
-        Returns a python operators equivalent string with relation.
-        This will be appended to the file.
+        Convert oozie node to tasks and relations.
         """
         raise NotImplementedError("Not Implemented")
 
