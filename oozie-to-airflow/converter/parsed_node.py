@@ -19,13 +19,15 @@ import logging
 
 from airflow.utils.trigger_rule import TriggerRule
 
-from mappers.base_mapper import BaseMapper
+# Pylint and flake8 does not understand forward references
+# https://www.python.org/dev/peps/pep-0484/#forward-references
+from mappers import base_mapper  # noqa: F401 pylint: disable=unused-import
 
 
 class ParsedNode:
     """Class for parsed Oozie workflow node"""
 
-    def __init__(self, mapper: BaseMapper):
+    def __init__(self, mapper: "base_mapper.BaseMapper"):
         self.mapper = mapper
         self.downstream_names: List[str] = []
         self.is_error: bool = False

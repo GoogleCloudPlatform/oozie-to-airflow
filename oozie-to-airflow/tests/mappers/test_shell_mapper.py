@@ -15,7 +15,6 @@
 """Tests shell mapper"""
 import ast
 import unittest
-from unittest import mock
 from xml.etree import ElementTree as ET
 
 from airflow.utils.trigger_rule import TriggerRule
@@ -86,22 +85,15 @@ class TestShellMapper(unittest.TestCase):
         self.assertEqual("myQueue", mapper.properties["mapred.job.queue.name"])
         self.assertEqual("echo arg1 arg2", mapper.bash_command)
 
-    @mock.patch("mappers.shell_mapper.render_template", return_value="RETURN")
-    def test_convert_to_text(self, render_template_mock):
+    def test_to_tasks_and_relations(self):
         params = {
             "dataproc_cluster": "my-cluster",
             "gcp_region": "europe-west3",
             "nameNode": "hdfs://localhost:9020/",
         }
         mapper = self._get_shell_mapper(params=params)
-        res = mapper.convert_to_text()
-        self.assertEqual(res, "RETURN")
+        tasks, relations = mapper.to_tasks_and_relations()
 
-        _, kwargs = render_template_mock.call_args
-        tasks = kwargs["tasks"]
-        relations = kwargs["relations"]
-
-        self.assertEqual(kwargs["template_name"], "action.tpl")
         self.assertEqual(
             tasks,
             [

@@ -15,7 +15,6 @@
 """Tests pig mapper"""
 import ast
 import unittest
-from unittest import mock
 from xml.etree import ElementTree as ET
 
 from airflow.utils.trigger_rule import TriggerRule
@@ -102,19 +101,12 @@ class TestPigMapper(unittest.TestCase):
             "/user/${wf:user()}/examples/output-data/demo/pig-node", mapper.params_dict["OUTPUT"]
         )
 
-    @mock.patch("mappers.pig_mapper.render_template", return_value="RETURN")
-    def test_convert_to_text(self, render_template_mock):
+    def test_to_tasks_and_relations(self):
         params = {"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3", "nameNode": "hdfs://"}
         mapper = self._get_pig_mapper(params=params)
 
-        res = mapper.convert_to_text()
-        self.assertEqual(res, "RETURN")
+        tasks, relations = mapper.to_tasks_and_relations()
 
-        _, kwargs = render_template_mock.call_args
-        tasks = kwargs["tasks"]
-        relations = kwargs["relations"]
-
-        self.assertEqual(kwargs["template_name"], "action.tpl")
         self.assertEqual(
             tasks,
             [

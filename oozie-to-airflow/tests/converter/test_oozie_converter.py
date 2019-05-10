@@ -16,6 +16,7 @@
 
 import io
 import unittest
+from unittest import mock
 from xml.etree.ElementTree import Element
 
 import jinja2
@@ -24,7 +25,7 @@ import o2a
 from converter.oozie_converter import OozieConverter
 from converter.mappers import CONTROL_MAP, ACTION_MAP
 from converter.parsed_node import ParsedNode
-from converter.primitives import Relation
+from converter.primitives import Relation, Task
 from definitions import TPL_PATH
 from mappers import dummy_mapper
 from tests.utils.test_paths import EXAMPLE_DEMO_PATH
@@ -58,15 +59,24 @@ class TestOozieConverter(unittest.TestCase):
         args = o2a.parse_args(["-i", input_dir, "-o", output_dir, "-u", user])
         self.assertEqual(args.user, user)
 
-    def test_write_operators(self):
+    @mock.patch("converter.oozie_converter.render_template", return_value="TEST_CONTENT")
+    def test_write_operators(self, render_template_mock):
         node = ParsedNode(dummy_mapper.DummyMapper(oozie_node=Element("test"), name="task1"))
         nodes = {"task1": node}
 
         file = io.StringIO()
         self.converter.write_nodes(file=file, nodes=nodes, indent=0)
         file.seek(0)
-
-        self.assertEqual(node.mapper.convert_to_text(), file.read())
+        render_template_mock.assert_called_once_with(
+            template_name="action.tpl",
+            relations=[],
+            tasks=[
+                Task(
+                    task_id="task1", template_name="dummy.tpl", trigger_rule="all_success", template_params={}
+                )
+            ],
+        )
+        self.assertEqual("TEST_CONTENT", file.read())
 
     def test_write_relations(self):
         relations = [

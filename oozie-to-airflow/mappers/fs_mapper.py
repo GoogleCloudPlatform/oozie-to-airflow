@@ -21,7 +21,6 @@ from xml.etree.ElementTree import Element
 from converter.primitives import Task
 from mappers.action_mapper import ActionMapper
 from utils.relation_utils import chain
-from utils.template_utils import render_template
 from utils.el_utils import normalize_path
 
 ACTION_TYPE = "fs"
@@ -128,8 +127,8 @@ class FsMapper(ActionMapper):
 
         return [self.parse_fs_action(i, node) for i, node in enumerate(self.oozie_node)]
 
-    def convert_to_text(self):
-        return render_template(template_name="action.tpl", tasks=self.tasks, relations=chain(self.tasks))
+    def to_tasks_and_relations(self):
+        return self.tasks, chain(self.tasks)
 
     def required_imports(self) -> Set[str]:
         return {

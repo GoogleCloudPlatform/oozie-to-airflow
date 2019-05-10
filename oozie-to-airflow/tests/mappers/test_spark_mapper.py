@@ -15,7 +15,6 @@
 """Tests Spark Mapper"""
 import ast
 import unittest
-from unittest import mock
 from xml.etree import ElementTree as ET
 
 from parameterized import parameterized
@@ -96,19 +95,13 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(spark_node, mapper.oozie_node)
 
-    @mock.patch("mappers.spark_mapper.render_template")
-    def test_convert_to_text_with_prepare_node(self, render_template_mock):
+    def test_to_tasks_and_relations_with_prepare_node(self):
         spark_node = ET.fromstring(EXAMPLE_XML_WITH_PREPARE)
         mapper = self._get_spark_mapper(spark_node)
         mapper.on_parse_node()
 
-        mapper.convert_to_text()
+        tasks, relations = mapper.to_tasks_and_relations()
 
-        _, kwargs = render_template_mock.call_args
-        tasks = kwargs["tasks"]
-        relations = kwargs["relations"]
-
-        self.assertEqual(kwargs["template_name"], "action.tpl")
         self.assertEqual(
             tasks,
             [
@@ -143,20 +136,13 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
 
         self.assertEqual(relations, [Relation(from_task_id="test_id_prepare", to_task_id="test_id")])
 
-    @mock.patch("mappers.spark_mapper.render_template", return_value="RETURN")
-    def test_convert_to_text_without_prepare_node(self, render_template_mock):
+    def test_to_tasks_and_relations_without_prepare_node(self):
         spark_node = ET.fromstring(EXAMPLE_XML_WITHOUT_PREPARE)
         mapper = self._get_spark_mapper(spark_node)
         mapper.on_parse_node()
 
-        res = mapper.convert_to_text()
-        self.assertEqual(res, "RETURN")
+        tasks, relations = mapper.to_tasks_and_relations()
 
-        _, kwargs = render_template_mock.call_args
-        tasks = kwargs["tasks"]
-        relations = kwargs["relations"]
-
-        self.assertEqual(kwargs["template_name"], "action.tpl")
         self.assertEqual(
             tasks,
             [
@@ -212,18 +198,14 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
             ),
         ]
     )
-    @mock.patch("mappers.spark_mapper.render_template")
-    def test_convert_to_text_parse_spark_opts(self, spark_opts, properties, render_template_mock):
+    def test_to_tasks_and_relations_parse_spark_opts(self, spark_opts, properties):
         spark_node = ET.fromstring(EXAMPLE_XML_WITHOUT_PREPARE)
         spark_opts_node = find_nodes_by_tag(spark_node, spark_mapper.SPARK_TAG_OPTS)[0]
         spark_opts_node.text = spark_opts
         mapper = self._get_spark_mapper(spark_node)
         mapper.on_parse_node()
 
-        mapper.convert_to_text()
-
-        _, kwargs = render_template_mock.call_args
-        tasks = kwargs["tasks"]
+        tasks, _ = mapper.to_tasks_and_relations()
 
         self.assertEqual(tasks[0].template_params["dataproc_spark_properties"], properties)
 

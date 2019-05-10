@@ -34,9 +34,11 @@ class TestStartMapper(unittest.TestCase):
         self.assertEqual("test_id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
 
-    def test_convert_to_text(self):
+    def test_to_tasks_and_relations(self):
         mapper = self._get_start_mapper()
-        self.assertEqual("", mapper.convert_to_text())
+        tasks, relations = mapper.to_tasks_and_relations()
+        self.assertEqual(tasks, [])
+        self.assertEqual(relations, [])
 
     def test_required_imports(self):
         mapper = self._get_start_mapper()
