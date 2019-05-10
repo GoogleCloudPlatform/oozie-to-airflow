@@ -238,6 +238,38 @@ class TestOozieParser(unittest.TestCase):
         self.assertEqual(["myNameNode/test_dir/test.txt#test_link.txt"], p_op.mapper.hdfs_files)
         self.assertEqual(["myNameNode/test_dir/test2.zip#test_zip_dir"], p_op.mapper.hdfs_archives)
 
+    def test_parse_mapreduce_node(self):
+        self.parser.params = {
+            "nameNode": "hdfs://",
+            "dataproc_cluster": "mycluster",
+            "gcp_region": "europe-west3",
+        }
+        node_name = "mr-node"
+        # language=XML
+        xml = """
+<action name='{node_name}'>
+    <map-reduce>
+        <name-node>hdfs://</name-node>
+        <prepare>
+            <delete path="hdfs:///user/mapreduce/examples/apps/mapreduce/output"/>
+        </prepare>
+    </map-reduce>
+    <ok to="end"/>
+    <error to="fail"/>
+</action>
+""".format(
+            node_name=node_name
+        )
+
+        action_node = ET.fromstring(xml)
+        self.parser.parse_action_node(action_node)
+        self.assertIn(node_name, self.parser.workflow.nodes)
+        mr_node = self.parser.workflow.nodes[node_name]
+        self.assertIn("end", mr_node.get_downstreams())
+        self.assertEqual("fail", mr_node.get_error_downstream_name())
+        for depend in mr_node.mapper.required_imports():
+            self.assertIn(depend, self.parser.workflow.dependencies)
+
     @mock.patch("mappers.dummy_mapper.DummyMapper.on_parse_node", wraps=None)
     def test_parse_action_node_unknown(self, on_parse_node_mock):
         self.parser.action_map = {"unknown": dummy_mapper.DummyMapper}
