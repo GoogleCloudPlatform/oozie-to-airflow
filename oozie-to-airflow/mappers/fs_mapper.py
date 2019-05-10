@@ -18,7 +18,7 @@ import shlex
 from typing import Set, List
 from xml.etree.ElementTree import Element
 
-from converter.primitives import Task
+from converter.task import Task
 from mappers.action_mapper import ActionMapper
 from utils.relation_utils import chain
 from utils.el_utils import normalize_path

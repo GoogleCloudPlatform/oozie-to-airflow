@@ -22,7 +22,7 @@ from xml.etree import ElementTree as ET
 from airflow.utils.trigger_rule import TriggerRule
 
 from converter.mappers import CONTROL_MAP, ACTION_MAP
-from converter.primitives import Task
+from converter.task import Task
 from mappers import subworkflow_mapper
 from tests.utils.test_paths import EXAMPLE_SUBWORKFLOW_PATH
 

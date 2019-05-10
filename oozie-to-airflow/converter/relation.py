@@ -12,19 +12,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Dummy Mapper that is used as temporary solution while we are implementing the real mappers.
-"""
-from typing import Set
-
-from converter.task import Task
-from mappers.action_mapper import ActionMapper
+"""Relation between tasks"""
+from typing import NamedTuple
 
 
-class DummyMapper(ActionMapper):
-    def to_tasks_and_relations(self):
-        tasks = [Task(task_id=self.name, trigger_rule=self.trigger_rule, template_name="dummy.tpl")]
-        relations = []
-        return tasks, relations
+class Relation(NamedTuple):
+    """Class for Airflow relation"""
 
-    def required_imports(self) -> Set[str]:
-        return {"from airflow.operators import dummy_operator"}
+    from_task_id: str
+    to_task_id: str
