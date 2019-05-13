@@ -19,6 +19,10 @@ import sys
 from collections import namedtuple
 from pathlib import Path
 from typing import Dict, TextIO, Type, Set, Union, List
+import getpass
+from datetime import datetime
+
+from os.path import basename
 
 import os
 import json
@@ -161,6 +165,7 @@ class OozieConverter:
         """
         Template method, can be overridden.
         """
+        self.write_file_header(file)
         self.write_dependencies(file, depends)
         self.write_params(file, self.params)
         self.write_dag_header(file, self.dag_name, self.schedule_interval, self.start_days_ago)
@@ -233,3 +238,18 @@ class OozieConverter:
             )
         )
         logging.info("Wrote DAG header.")
+
+    def write_file_header(self, file: TextIO) -> None:
+        """
+        Writes header of the python-generated file
+        :param file: Opened file to write to
+        """
+        logging.info("Writing file header.")
+        file.write("# -*- coding: utf-8 -*-\n")
+        file.write(f'"""{basename(self.output_dag_name)}\n')
+        file.write(f"  DAG generated on {datetime.now():%Y-%m-%d %H:%M:%S%z} by {getpass.getuser()}\n")
+        file.write(f"     Input folder     : {self.input_directory_path}\n")
+        file.write(f"     Output directory : {self.output_directory_path}\n")
+        file.write(f"     Output DAG name  : {self.output_dag_name}\n")
+        file.write('"""\n')
+        logging.info("Wrote file header.")
