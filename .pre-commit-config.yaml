@@ -16,9 +16,9 @@ repos:
 -   repo: https://github.com/ambv/black
     rev: 19.3b0
     hooks:
-    - id: black
-      name: Formats python files using black
-      language_version: python3.6
+        - id: black
+          name: Formats python files using black
+          language_version: python3.6
 -   repo: https://github.com/Lucas-C/pre-commit-hooks
     sha: v1.1.6
     hooks:
@@ -75,6 +75,12 @@ repos:
             name: Checks for common programming errors with pylint
 -   repo: local
     hooks:
+    -   id: autoflake
+        name: Autoflake - removes unused imports and variables
+        entry: autoflake
+        language: python
+        files: \.py$
+        args: ['--in-place', '--remove-all-unused-imports', '--remove-unused-variable', '--recursive']
     -   id: pytest
         name: Runs all unit tests with pytest
         entry: oozie-to-airflow/run-all-unit-tests
