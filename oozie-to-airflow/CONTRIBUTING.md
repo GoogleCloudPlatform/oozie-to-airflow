@@ -1,0 +1,427 @@
+<!--
+  Copyright 2019 Google LLC
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+ -->
+
+# Contributing to Oozie to Airflow
+
+This document helps to jump-start with development of Oozie to Airflow tool.
+
+* [Contributing to Oozie to Airflow](#contributing-to-oozie-to-airflow)
+  * [Required Python Dependencies](#required-python-dependencies)
+* [Architecture of the converter](#architecture-of-the-converter)
+* [Implementation details](#implementation-details)
+  * [Properties handling](#properties-handling)
+  * [EL functions support](#el-functions-support)
+  * [Escaping of strings](#escaping-of-strings)
+  * [Variable names generated from task ids](#variable-names-generated-from-task-ids)
+* [Testing](#testing)
+  * [Static code analysis](#static-code-analysis)
+  * [Unit Tests](#unit-tests)
+  * [Testing conversion](#testing-conversion)
+  * [Travis CI](#travis-ci)
+  * [System Tests](#system-tests)
+    * [System test environment](#system-test-environment)
+    * [Running system tests](#running-system-tests)
+    * [Test phases](#test-phases)
+    * [Test scenarios](#test-scenarios)
+    * [Running sub\-workflows](#running-sub-workflows)
+    * [Running all example conversions](#running-all-example-conversions)
+
+Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go)
+
+## Required Python Dependencies
+
+It is recommended to use virtualenv - for example using
+[virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/)
+
+You need:
+    * Python >= 3.6
+    * Requirements installed from [requirements.txt](../requirements.txt) - for example using
+      `pip install -r requirements.txt`
+
+The shell script included in the directory, [init.sh](init.sh), can
+be run to set up the dependencies in your local virtualenv.
+
+```bash
+$ ./init.sh
+```
+
+# Architecture of the converter
+
+TODO: Describe architecture here
+
+# Implementation details
+
+## Properties handling
+
+Properties in the workflows can be referred to as ${propertyName}.
+
+In case of property files (for example job.properties), those referencesare in-lined in the property values
+- the ${propertyName} is replaced with the property value. There is no support for el-functions in property
+files.
+
+In case of generated DAG python files, the properties are stored in CTX object and they are referred
+to using f-string notation or directly in the code you can control that in the implementation of the mapper
+and corresponding jinja2 template.
+
+Those are generated example properties:
+
+```python
+from o2a_libs import ctx
+
+CTX = ctx.Ctx(
+    properties={
+        "user.name": "potiuk",
+        "dataproc_cluster": "oozie-jarek-big3",
+        "gcp_conn_id": "google_cloud_default",
+        "gcp_region": "europe-west1",
+        "hadoop_jars": "hdfs:/user/potiuk/examples/apps/childwf/lib/wordcount.jar",
+        "hadoop_main_class": "WordCount",
+        "nameNode": "hdfs://",
+        "resourceManager": "localhost:8032",
+        "queueName": "default",
+        "examplesRoot": "examples",
+        "oozie.use.system.libpath": "true",
+        "oozie.wf.application.path": "hdfs:///user/potiuk/examples/apps/mapreduce",
+        "outputDir": "output",
+    }
+)
+```
+
+The properties are read in the code using f-string notation of python 3.6 or direct references.
+
+Example XML "prepare" element:
+
+```xml
+<prepare>
+    <delete path="${nameNode}/${examplesRoot}/apps/childwf/shell/test"/>
+    <mkdir path="${nameNode}/${examplesRoot}/apps/childwf/shell/test"/>
+</prepare>
+```
+
+It can be mapped to this python code:
+
+```python
+shell_node_prepare = bash_operator.BashOperator(
+    task_id="shell-node-prepare",
+    trigger_rule="dummy",
+    bash_command='$DAGS_FOLDER/../data/prepare.sh -c oozie-jarek-big3 -r europe-west1 -d "{}" -m "{}"'.format(
+        f'{CTX["nameNode"]}/{CTX["examplesRoot"]}/apps/test',
+        f'{CTX["nameNode"]}/{CTX["examplesRoot"]}/apps/test',
+    ),
+)
+```
+
+This is how some properties can be referred-to directly in the code:
+
+```python
+    dataproc_hadoop_jars=CTX["hadoop_jars"].split(","),
+    gcp_conn_id=CTX["gcp_conn_id"],
+    region=CTX["gcp_region"],
+    dataproc_job_id=f"mr_node",
+```
+
+## EL functions support
+
+Support for EL functions is done using f-string interpolation. Also those functions can be referred directly
+in the generated code.
+
+We currently support calling functions (both basic and workflow functions). There is no support for
+other constructs of the expression language for now (such as conditions etc.). We will consider that in the
+future.
+
+Example XML "prepare" element:
+```xml
+<prepare>
+    <delete path="${nameNode}/user/${wf:conf('user.name')}/${examplesRoot}/apps/demo/pig/output-data"/>
+    <mkdir path="${nameNode}/user/${wf:conf('user.name')}/${examplesRoot}/apps/demo/pig/created-folder"/>
+</prepare>
+```
+
+It can be mapped to this python code:
+
+```python
+shell_node_prepare = bash_operator.BashOperator(
+    task_id="shell-node-prepare",
+    trigger_rule="dummy",
+    bash_command='$DAGS_FOLDER/../data/prepare.sh -c oozie-jarek-big3 -r europe-west1 -d "{}" -m "{}"'.format(
+        f'{CTX["nameNode"]}/user/{el_wf_functions.wf_conf(CTX, "user.name")}/{CTX["examplesRoot"]}/apps/demo/shell/output-data',
+        f'{CTX["nameNode"]}/user/{el_wf_functions.wf_conf(CTX, "user.name")}/{CTX["examplesRoot"]}/apps/demo/shell/created-folder',
+    ),
+)
+```
+
+Example XML decision node:
+
+```xml
+<decision name="decision-node">
+    <switch>
+        <!-- Until workflow EL functions (wf:xyz()) are implemented we use a dummy replacement -->
+        <case to="first-node">
+            ${firstNotNull("", "")}
+        </case>
+        <case to="kill-node">
+            ${firstNotNull("test", "")}
+        </case>
+        <default to="end-node"/>
+    </switch>
+</decision>
+```
+
+It can be mapped to this python code:
+
+```python
+def decision_node_decision():
+
+    if f'{el_basic_functions.first_not_null("", "")}' == "True":
+        return f"first-node"
+
+    elif f'{el_basic_functions.first_not_null("test", "")}' == "True":
+        return f"kill-node"
+
+    return f"end-node"
+
+decision_node = python_operator.BranchPythonOperator(
+    task_id="decision-node", trigger_rule="all_success", python_callable=decision_node_decision
+)
+```
+
+## Escaping of strings
+
+We are generating a number of string values in the python code and we need to properly escape it. Especially
+in case we generate f-strings with properties or functions we have to make sure non-valid
+characters are escaped properly.
+
+We approach it in the following way:
+
+* Strings are escaped in python using "codecs.escape_encode" method. It is not well documented but it is
+  part of the python C-API and it allows to python-escape string - such string surrounded with single quote
+  is always a valid python string.
+
+* We always use single quote (') for strings. Usually single quotes are part of the Jinja template where
+  they surround variable that has been already escaped in the code (for example `task_id='{{ task_id }}'`)
+  even if original functions use '' for arguments quoting, they are replaced to " during escaping so that
+  they do not need to be additionally prefixed with `\`
+
+* strings returned by el_utils functions (`replace_el_with_property_values`, `convert_el_string_to_fstring`)
+  are already escaped - they are supposed to be surrounded with `f'` and `'` so that they are interpolated
+  using f-string for example `f'{{ file }}'`
+
+* arrays of strings which can contain f-string should be printed in jinja using for loop with `f'` prefix
+  so that they can be individually interpolated. For example:
+  `archives=[{% for archive in hdfs_archives %}f'{{ archive }}', {% endfor %}],`
+
+## Variable names generated from task ids
+
+Variable names are generated from task ids by replacing the `-` with `_` and removing of invalid characters.
+This might in some rare cases generate conflicts, however it should be very rare and at worst you need
+to fix it in the workflow.xml file. Task variable is available in the jinja template as
+`{{ task_variable_name }}` - still `'{{ task_id }}'` is the original name as specified in the
+workflow.xml.
+
+# Testing
+
+## Static code analysis
+
+We are using a number of checks for quality checks of the code using pre-commit framework.
+They are verified during Travis CI build but also you can install pre-commit hook by running:
+
+`pre-commit install`
+
+You can run all the checks manually by running:
+
+`pre-commit run --all-files`
+
+You might need to install xmllint and docker if you do not have it locally. The first can be done with
+`apt install libxml2-utils` on Linux or `brew install xmlstarlet` on MacOS. The second can be done
+according to [the instructions](https://docs.docker.com/install/).
+
+You can always skip running the tests by providing `--no-verify` flag to `git commit` command.
+
+You can check all commands of pre-commit framework at https://pre-commit.com/
+
+
+## Unit Tests
+
+Currently, the test directory is set up in a such a way that the folders in the [tests](tests)
+directory mirrors the structure of the `oozie-to-airflow` directory.
+For example, if we have `o2a_libs/helper_functions.py` the tests for that
+file would be in `tests/o2a_libs/test_helper_functions.py`.
+
+Unit tests are run automatically in Travis CI and when using pre-commit hook. You can also
+run all unit tests via [run-all-unit-tests](run-all-unit-tests).
+
+## Testing conversion
+
+All the examples can be automatically converted by running [run-all-conversions](run-all-conversions).
+
+## Travis CI
+
+Travis CI is setup to execute full set of unit tests, static code checks and example conversions. You
+cannot merge PR until all of these tests pass successfully.
+
+The Travis CI instance is available [here](https://travis-ci.com/GoogleCloudPlatform/cloud-composer).
+
+## System Tests
+
+Oozie to Airflow has a set of system tests that test end-2-end functionality of conversion and execution
+of workflows using Cloud Dataproc and Cloud Composer.
+
+
+### System test environment
+
+Cloud Composer:
+
+* composer-1.5.0-airflow-1.10.1
+* python version 3 (3.6.6)
+* machine n1-standard-1
+* node count: 3
+* Additional pypi packages:
+    * sshtunnel==0.1.4
+
+Cloud Dataproc Cluster with Oozie
+* n1-standard-2, 4 vCPU, 20 GB memory (! Minimum 16 GB RAM needed)
+* primary disk size, 50 GB
+* Image 1.3.29-debian9
+* Hadoop version
+* Init action: [oozie-5.1.sh](../dataproc/oozie-5.1.sh)
+
+### Running system tests
+
+We can run examples defined in examples folder as system tests. The system tests use an existing
+Composer, Dataproc cluster and Oozie run in the Dataproc cluster to prepare HDFS application folder structure
+and trigger the tests automatically.
+
+You can run the tests using this command:
+
+`./run-sys-tests --application <APPLICATION> --phase <PHASE>`
+
+Default phase is convert - it only converts the oozie workflow to Airflow DAG without running the tests
+on either Oozie nor Composer
+
+When you run the script with `--help` you can see all the options. You can setup autocomplete
+with `-A` option - this way you do not have to remember all the options.
+
+Current options:
+
+```
+Usage: run-sys-test [FLAGS] [-A|-S]
+
+Executes prepare or run phase for integration testing of O2A converter.
+
+Flags:
+
+-h, --help
+        Shows this help message.
+
+-a, --application <APPLICATION>
+        Application (from examples dir) to run the tests on. Must be specified unless -S or -A are specified.
+
+-p, --phase <PHASE>
+        Phase of the test to run. One of [ convert prepare-dataproc prepare-composer test-composer test-oozie ]. Defaults to convert.
+
+-C, --composer-name <COMPOSER_NAME>
+        Composer instance used to run the operations on. Defaults to o2a-integration
+
+-L, --composer-location <COMPOSER_LOCATION>
+        Composer locations. Defaults to europe-west1
+
+-c, --cluster <CLUSTER>
+        Cluster used to run the operations on. Defaults to oozie-51
+
+-b, --bucket <BUCKET>
+        Airflow Composer DAG bucket used. Defaults to bucket that is used by Composer.
+
+-r, --region <REGION>
+        GCP Region where the cluster is located. Defaults to europe-west3
+
+-v, --verbose
+        Add even more verbosity when running the script.
+
+
+Optional commands to execute:
+
+
+-S, --ssh-to-cluster-master
+        SSH to dataproc's cluster master. Arguments after -- are passed to gcloud ssh command as extra args.
+
+-A, --setup-autocomplete
+        Sets up autocomplete for run-sys-tests
+```
+
+You do not need to specify the parameters once you run the script with your chosen flags.
+The latest parameters used are stored and cached locally in .ENVIRONMENT_NAME files and used next time
+when you run the script:
+
+    .COMPOSER_DAG_BUCKET
+    .COMPOSER_LOCATION
+    .COMPOSER_NAME
+    .DATAPROC_CLUSTER_NAME
+    .GCP_REGION
+    .LOCAL_APP_NAME
+    .PHASE
+
+
+### Test phases
+
+The following phases are defined for the system tests:
+
+* **prepare-configuration** - prepares configuration based on passed Dataproc/Composer parameters
+
+* **convert** - converts the example application workflow to DAG and stores it in output/<APPLICATION> directory
+
+* **prepare-dataproc** - prepares Dataproc cluster to execute both Composer and Oozie jobs. The preparation is:
+
+   * Local filesystem: `${HOME}/o2a/<APPLICATION>` directory contains application to be uploaded to HDFS
+
+   * Local filesystem: `${HOME}/o2a/<APPLICATION>.properties` property file to run the oozie job
+
+   * HDFS: /user/${user.name}/examples/apps/<APPLICATION> - the application is stored in this HDFS directory
+
+* **test-composer** - runs tests on Composer instance
+
+* **test-oozie** - runs tests on Oozie in Hadoop cluster
+
+### Test scenarios
+
+The typical scenario to run the tests are:
+
+Running application via Oozie:
+```
+./run-sys-test --phase prepare-dataproc --application <APP> --cluster <CLUSTER>
+
+./run-sys-test --phase test-oozie
+```
+
+Running application via composer:
+```
+./run-sys-test --phase prepare-dataproc --application <APP> --cluster <CLUSTER>
+
+./run-sys-test --phase test-composer
+```
+
+### Running sub-workflows
+
+In order to run sub-workflows you need to have the sub-workflow application already present in HDFS,
+therefore you need to run at least  `./run-sys-test --phase prepare-dataproc --application <SUBWORKFLOW_APP>`
+
+For example in case of the demo application, you need to run at least once
+`./run-sys-test --phase prepare-dataproc --application childwf` because `childwf` is used as sub-workflow
+in the demo application.
+
+### Running all example conversions
+
+All example conversions can by run via the `./run-all-conversions` script. It is also executed during
+automated tests in CI.

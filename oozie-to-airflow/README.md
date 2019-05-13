@@ -25,11 +25,20 @@ The program targets Apache Airflow >= 1.10 and Apache Oozie 1.0 XML schema.
 # Table of Contents
 
 * [Oozie to Airflow](#oozie-to-airflow)
-  * [Background](#background)
-* [Running the Program](#running-the-program)
+* [Table of Contents](#table-of-contents)
+* [Background](#background)
+* [Running the conversion](#running-the-conversion)
   * [Required Python Dependencies](#required-python-dependencies)
-  * [Running the conversion](#running-the-conversion)
+* [Conversion process](#conversion-process)
+  * [Running the o2a converter](#running-the-o2a-converter)
   * [Structure of the application folder](#structure-of-the-application-folder)
+  * [Configuration properties](#configuration-properties)
+* [Executing Oozie and Airflow workflows](#executing-oozie-and-airflow-workflows)
+  * [Creating Dataproc cluster with Oozie 5\.1\.0](#creating-dataproc-cluster-with-oozie-510)
+  * [Preparing the HDFS folder](#preparing-the-hdfs-folder)
+  * [Running Oozie workflow](#running-oozie-workflow)
+  * [Creating Composer environment](#creating-composer-environment)
+  * [Running the generated DAG in Composer](#running-the-generated-dag-in-composer)
 * [Supported Oozie features](#supported-oozie-features)
   * [Control nodes](#control-nodes)
     * [Fork](#fork)
@@ -39,7 +48,10 @@ The program targets Apache Airflow >= 1.10 and Apache Oozie 1.0 XML schema.
     * [End](#end)
     * [Kill](#kill)
   * [Known Limitations](#known-limitations)
+  * [Workflow properties](#workflow-properties)
   * [EL Functions](#el-functions)
+    * [Basic functions supported](#basic-functions-supported)
+    * [Workflow functions supported](#workflow-functions-supported)
 * [Examples](#examples)
   * [Demo Example](#demo-example)
     * [Current limitations](#current-limitations)
@@ -74,19 +86,11 @@ The program targets Apache Airflow >= 1.10 and Apache Oozie 1.0 XML schema.
   * [EL Example](#el-example)
     * [Output](#output-10)
     * [Current limitations](#current-limitations-10)
-* [Unit Tests](#unit-tests)
-* [System Tests](#system-tests)
-  * [System test environment](#system-test-environment)
-    * [Running the system tests](#running-the-system-tests)
-    * [Re\-running the system tests](#re-running-the-system-tests)
-    * [Test phases](#test-phases)
-    * [Test scenarios](#test-scenarios)
-    * [Running sub\-workflows](#running-sub-workflows)
-    * [Running all example conversions](#running-all-example-conversions)
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go)
 
-## Background
+# Background
+
 Apache Airflow is a workflow management system developed by AirBnB in 2014.
 It is a platform to programmatically author, schedule, and monitor workflows.
 Airflow workflows are designed as [Directed Acyclic Graphs](https://airflow.apache.org/tutorial.html#example-pipeline-definition)
@@ -104,14 +108,14 @@ There are a few differences noted below:
 | Oozie   | XML    | Action Node | Control Node                    | Subworkflow    | EL functions/Properties file | URL based callbacks |
 | Airflow | Python | Operators   | Trigger Rules, set_downstream() | SubDag         | jinja2 and macros            | Callbacks/Emails    |
 
-# Running the Program
+# Running the conversion
 
 ## Required Python Dependencies
-* Python > 3.6
+* Python >= 3.6
 * See [requirements.txt](../requirements.txt)
 
 Additionally the shell script included in the directory, `init.sh`, can
-be ran to set up the dependencies and ready your machine to run the examples.
+be run to set up the dependencies and ready your machine to run the examples.
 
 ```bash
 # Allow init.sh to execute
@@ -120,7 +124,9 @@ $ chmod +x init.sh
 $ ./init.sh
 ```
 
-## Running the conversion
+# Conversion process
+
+## Running the o2a converter
 
 You can run the program (minimally) by calling:
 `python o2a.py -i <INPUT_APPLICATION_FOLDER> -o <OUTPUT_FOLDER_PATH>`
@@ -153,24 +159,125 @@ optional arguments:
                         Desired DAG schedule interval as number of days
 ```
 
+After running the conversion all the .py files are generated in the output folder. All the
+files from the output folder can be used to run the workflow in Composer.
+
 ## Structure of the application folder
 
 The application folder has to follow the structure defined as follows:
 
 ```
 <APPLICATION>/
-             |- job.properties        - job properties that are used to run the job
-             |- hdfs                  - folder with application - should be copied to HDFS
-             |     |- workflow.xml    - Oozie workflow xml (1.0 schema)
-             |     |- ...             - additional folders required to be copied to HDFS
-             |- configuration.template.properties - template of configuration values used during conversion
-             |- configuration.properties          - generated properties for configuration values
+             |- job.properties            - job properties that are used to run the job
+             |- hdfs                      - folder with application - should be copied to HDFS
+             |     |- workflow.xml        - Oozie workflow xml (1.0 schema)
+             |     |- ...                 - additional folders required to be copied to HDFS
+             |- configuration.properties  - configuration values needed to run the conversion
+```
+## Configuration properties
+
+Configuration properties file contains properties that are needed to connect to the right
+dataproc cluster and Composer instance.
+
+* dataproc_cluster   - Dataproc cluster name
+* gcp_region         - GCP region where the cluster is located
+* gcp_conn_id        - GCP connection id used (default = 'google_cloud_default')
+* gcp_uri_prefix     - DAGs folder of the Composer GS bucket - usually gs://<BUCKET_NAME>/dags
+
+# Executing Oozie and Airflow workflows
+
+The Oozie workflows converted can be tested using a Dataproc Cluster with Oozie and
+an instance of Google Cloud Platform Composer.
+
+Preparing and running the workflows can be done using manual process described below or it can
+be semi-automated using [run-sys-test](run-sys-test) as described in
+[CONTRIBUTING.md](CONTRIBUTING.md#running-system-tests).
+
+## Creating Dataproc cluster with Oozie 5.1.0
+
+In order to run the workflow with Oooze you need to have Oozie 5.1.0 in Dataproc. We prepared an
+[initialization action](https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/init-actions)
+that allows to run Oozie 5.1.0 on Dataproc.
+
+In order to use it, you must upload [oozie=5.1.sh](dataproc/oozie-5.1.sh) to your GCS bucket and create
+the cluster using following command:
+
+```bash
+gcloud dataproc clusters create <CLUSTER_NAME> --region europe-west1 --subnet default --zone "" \
+     --single-node --master-machine-type custom-4-20480 --master-boot-disk-size 500 \
+     --image-version 1.3-deb9 --project polidea-airflow \
+     --initialization-actions 'gs://<BUCKET>/<FOLDER>/oozie-5.1.sh' \
+     --initialization-action-timeout=30m
 ```
 
+Note that you need at least 20GB RAM to run Oozie jobs on the cluster. The custom machine type below has enough RAM
+to handle oozie.
+
+**note 1:** it might take ~20 minutes to create the cluster
+
+**note 2:** the init-action works only with [single-node cluster](https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/single-node-clusters)
+and Dataproc 1.3
+
+Once cluster is created, steps from `dataproc/example-map-reduce.job.sh` can be run on master node to execute
+Oozie's example Map-Reduce job.
+
+Oozie is serving web UI on port 11000. To enable access to it please follow [official instructions](https://cloud.google.com/dataproc/docs/concepts/accessing/cluster-web-interfaces)
+on how to connect to the cluster web interfaces.
+
+List of jobs with their statuses can be also shown by issuing `oozie jobs` command on master node.
+
+## Preparing the HDFS folder
+
+In order to prepare the application for execution in HDFS you need to copy the application
+folder including workflow.xml file to some HDFS folder. In [examples](examples) the example application
+folders are named 'hdfs'. The example applications also contain job.properties that should be modified
+according to your needs.
+
+This step is semi-automated using `prepare-dataproc` phase of [run-sys-test](run-sys-test). It creates
+folders and modifies the property files automatically based on the options you provide when you start
+the tool. See more in [CONTRIBUTING.md](CONTRIBUTING.md#running-system-tests).
+
+## Running Oozie workflow
+
+Once you have the HDFS folder and job.properties you can run the workflow using command similar to:
+
+```bash
+oozie job --config job.properties
+```
+This step is semi-automated using `test-oozie` phase of [run-sys-test](run-sys-test). It copies the files
+as needed and triggers the copied DAG.
+
+## Creating Composer environment
+
+You can create composer environment using command similar to:
+
+```bash
+gcloud beta composer environments create <ENVIRONMENT_NAME> \
+    --location us-central1 \
+    --zone us-central1-f \
+    --machine-type n1-standard-2 \
+    --image-version composer-latest-airflow-x.y.z \
+    --labels env=beta
+```
+
+## Running the generated DAG in Composer
+
+Once you perform conversion, you need to copy generated files and shared libraries to the
+Google Cloud Storage bucket of Composer. The following files should be copied:
+
+* [scripts](scripts) - content of this folder should be copied to `gs://<COMPOSER_DAG_BUCKET>/data/`
+* [o2a_libs](o2a_libs) - the whole folder should be copied to `gs://<COMPOSER_DAG_BUCKET>/dags/o2a_libs/`
+* Generated OUTPUT_DIRECTORY - the content should be copied to `gs://<COMPOSER_DAG_BUCKET>/dags/`
+
+Then you can trigger the DAG in the way that is convenient for you (via command line or UI of Composer)
+
+This step is semi-automated using `test-composer` phase of [run-sys-test](run-sys-test). It copies the files
+as needed and triggers the copied DAG. See more in [CONTRIBUTING.md](CONTRIBUTING.md#running-system-tests).
 
 # Supported Oozie features
 
 ## Control nodes
+
 ### Fork
 
 A [fork node](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a3.1.5_Fork_and_Join_Control_Nodes)
@@ -299,24 +406,48 @@ This is because if goes from A to C on ok, and B goes to C on error, C's trigger
 will have to be set to `DUMMY`, but this means that if A goes to error, and B goes to ok
 C will then execute incorrectly.
 
-This limitation is temporary and will be removed in a future version of Oozie-2-Airflow converter.
+This limitation is temporary and will be removed in a future version of Oozie to Airflow converter.
+
+
+## Workflow properties
+
+Workflow properties are supported, however for now we only support properties passed by job.properties
+and properties defined in actions in workflow.xml. Support for default properties will be added soon.
 
 
 ## EL Functions
 
-As of now, a very minimal set of [Oozie EL](https://oozie.apache.org/docs/4.0.1/WorkflowFunctionalSpec.html#a4.2_Expression_Language_Functions)
-functions are supported. The way they work is that there exists a
-dictionary mapping from each Oozie EL function string to the
-corresponding Python function. This is in `utils/el_utils.py`.
-This design allows for custom EL function mapping if one so chooses. By
-default everything gets mapped to the module `o2a_libs`. This means in
-order to use EL function mapping, the folder `o2a_libs` should
-be copied over to the Airflow DAG folder. This should then be picked up and
-parsed by the Airflow workers and then available to all DAGs.
+As of now, a minimal set of [Oozie EL](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a4.2_Expression_Language_Functions)
+functions are supported.
+
+Calling of the functions is performed as f-string expressions (hence python 3.6+ support needed for
+generated DAGs. There is support only for properties and calling functions. There is no support currently
+for all other expression language constructs (conditions etc.). Support for some of those constructs will
+be added in the future.
+
+### Basic functions supported
+
+Those are the [Basic EL functions supported](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a4.2.2_Basic_EL_Functions)
+
+* first_not_null
+* concat
+* replace_all
+* append_all
+* trim
+* url_encode
+* timestamp
+* to_json_str
+
+### Workflow functions supported
+
+Those are the [Worfklwo EL functions supported](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a4.2.3_Workflow_EL_Functions))
+
+* wf:conf
+* wf:user
 
 # Examples
 
-All examples can be found in the `examples/` directory.
+All examples can be found in the [examples](examples) directory.
 
 * [Demo](#demo-example)
 * [SSH](#ssh-example)
@@ -326,6 +457,11 @@ All examples can be found in the `examples/` directory.
 * [Sub-workflow](#sub-workflow-example)
 * [Decision](#decision-example)
 * [EL](#el-example)
+
+Note that the examples have configuration.template.properties that need to be copied to
+configuration.properties with updated values. You can also follow
+[running the system tests](CONTRIBUTING.md#running-the-system-tests) to generate example's
+configuration.properties automatically.
 
 ## Demo Example
 
@@ -634,162 +770,3 @@ In this example the output will appear in `output/el/test_el_dag.py`.
 
 Decision example is not yet fully functional as EL functions are not yet fully implemented so condition is
 hard-coded for now. Once EL functions are implemented, the condition in the example will be updated.
-
-# Unit Tests
-
-Currently, the test directory is set up in a such a way that the folders in `tests/` directory mirrors the structure of the `oozie-to-airflow` directory. For example, if we have `oozie-to-airflow/o2a_libs/helper_functions.py` the tests for that file would be in `tests/o2a_libs/test_helper_functions.py`.
-
-Unit tests are run automatically in Travis CI and when using pre commit hooks (see [README.md](../README.md))
-
-# System Tests
-
-Oozie to Airflow has a set of system tests that test end-2-end functionality of conversion and execution
-of workflows using Cloud Dataproc and Cloud Composer.
-
-## System test environment
-
-Cloud Composer:
-* composer-1.5.0-airflow-1.10.1
-* python version 3 (3.6.6)
-* machine n1-standard-1
-* node count: 3
-* Additional pypi packages:
-    * sshtunnel==0.1.4
-
-Cloud Dataproc Cluster with Oozie
-* n1-standard-2, 4 vCPU, 20 GB memory (! Minimum 16 GB RAM needed)
-* primary disk size, 50 GB
-* Image 1.3.29-debian9
-* Hadoop version
-* Init action: [oozie-5.1.sh](../dataproc/oozie-5.1.sh)
-
-
-### Running the system tests
-
-We can run examples defined in examples folder as system tests. The system tests use an existing
-Composer, Dataproc cluster and Oozie run in the Dataproc cluster to prepare HDFS application folder structure
-and trigger the tests automatically.
-
-You can run the tests using this command:
-
-`./run-sys-tests --application <APPLICATION> --phase <PHASE>`
-
-Default phase is convert - it only converts the oozie workflow to Airflow DAG without running the tests
-on either Oozie nor Composer
-
-When you run the script with `--help` you can see all the options. You can setup autocomplete
-with `-A` option - this way you do not have to remember all the options.
-
-Current options:
-
-```
-Usage: run-sys-test [FLAGS] [-A|-S]
-
-Executes prepare or run phase for integration testing of O2A converter.
-
-Flags:
-
--h, --help
-        Shows this help message.
-
--a, --application <APPLICATION>
-        Application (from examples dir) to run the tests on. Must be specified unless -S or -A are specified.
-
--p, --phase <PHASE>
-        Phase of the test to run. One of [ convert prepare-dataproc prepare-composer test-composer test-oozie ]. Defaults to convert.
-
--C, --composer-name <COMPOSER_NAME>
-        Composer instance used to run the operations on. Defaults to o2a-integration
-
--L, --composer-location <COMPOSER_LOCATION>
-        Composer locations. Defaults to europe-west1
-
--c, --cluster <CLUSTER>
-        Cluster used to run the operations on. Defaults to oozie-51
-
--b, --bucket <BUCKET>
-        Airflow Composer DAG bucket used. Defaults to bucket that is used by Composer.
-
--r, --region <REGION>
-        GCP Region where the cluster is located. Defaults to europe-west3
-
--v, --verbose
-        Add even more verbosity when running the script.
-
-
-Optional commands to execute:
-
-
--S, --ssh-to-cluster-master
-        SSH to dataproc's cluster master. Arguments after -- are passed to gcloud ssh command as extra args.
-
--A, --setup-autocomplete
-        Sets up autocomplete for run-sys-tests
-```
-
-### Re-running the system tests
-
-You do not need to specify the parameters once you run the script with your chosen flags.
-The latest parameters used are stored and cached locally in .ENVIRONMENT_NAME files and used next time
-when you run the script:
-
-    .COMPOSER_DAG_BUCKET
-    .COMPOSER_LOCATION
-    .COMPOSER_NAME
-    .DATAPROC_CLUSTER_NAME
-    .GCP_REGION
-    .LOCAL_APP_NAME
-    .PHASE
-
-
-### Test phases
-
-The following phases are defined for the system tests:
-
-* **prepare-configuration** - prepares configuration based on passed Dataproc/Composer parameters
-
-* **convert** - converts the example application workflow to DAG and stores it in output/<APPLICATION> directory
-
-* **prepare-dataproc** - prepares Dataproc cluster to execute both Composer and Oozie jobs. The preparation is:
-
-   * Local filesystem: `${HOME}/o2a/<APPLICATION>` directory contains application to be uploaded to HDFS
-
-   * Local filesystem: `${HOME}/o2a/<APPLICATION>.properties` property file to run the oozie job
-
-   * HDFS: /user/${user.name}/examples/apps/<APPLICATION> - the application is stored in this HDFS directory
-
-* **test-composer** - runs tests on Composer instance
-
-* **test-oozie** - runs tests on Oozie in Hadoop cluster
-
-### Test scenarios
-
-The typical scenario to run the tests are:
-
-Running application via Oozie:
-```
-./run-sys-test --phase prepare-dataproc --application <APP> --cluster <CLUSTER>
-
-./run-sys-test --phase test-oozie
-```
-
-Running application via composer:
-```
-./run-sys-test --phase prepare-dataproc --application <APP> --cluster <CLUSTER>
-
-./run-sys-test --phase test-composer
-```
-
-### Running sub-workflows
-
-In order to run sub-workflows you need to have the sub-workflow application already present in HDFS,
-therefore you need to run at least  `./run-sys-test --phase prepare-dataproc --application <SUBWORKFLOW_APP>`
-
-For example in case of the demo application, you need to run at least once
-`./run-sys-test --phase prepare-dataproc --application childwf` because `childwf` is used as sub-workflow
-in the demo application.
-
-### Running all example conversions
-
-All example conversions can by run via the `./run-all-conversions` script. It is also executed during
-automated tests.

@@ -23,52 +23,6 @@
 [![Updates](https://pyup.io/repos/github/GoogleCloudPlatform/cloud-composer/shield.svg)](https://pyup.io/repos/github/GoogleCloudPlatform/cloud-composer/)
 [![Python 3](https://pyup.io/repos/github/GoogleCloudPlatform/cloud-composer/python-3-shield.svg)](https://pyup.io/repos/github/GoogleCloudPlatform/cloud-composer/)
 
-Python3.6 is required to run the project.
+This is a cloud-composer related set of python tools.
 
-We are using a number of checks for quality checks of the code. They are verified during Travis build but
-also you can install pre-commit hook by running:
-
-`pre-commit install`
-
-
-You can run all the checks manually by running:
-
-`pre-commit run --all-files`
-
-You might need to install xmllint and docker if you do not have it locally. The first can be done with
-`apt install libxml2-utils` on Linux or `brew install xmlstarlet` on MacOS. The second can be done
-according to [the instructions](https://docs.docker.com/install/).
-
-You can always skip running the tests by providing `--no-verify` flag to `git commit` command.
-
-You can check all commands of pre-commit framework at https://pre-commit.com/
-
-
-# Running Oozie 5.1.0 in Dataproc
-
-We prepared Dataproc [initialization action](https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/init-actions)
-that allows to run Oozie 5.1.0 on Dataproc.
-
-Please upload `dataproc/oozie-5.1.sh` to your GCS bucket and create cluster using following command:
-
-Note that you need at least 20GB RAM to run Oozie jobs on the cluster. The custom machine type below has enough RAM
-to handle oozie.
-
-```bash
-gcloud dataproc clusters create <CLUSTER_NAME> --region europe-west1 --subnet default --zone "" \
-     --single-node --master-machine-type custom-4-20480 --master-boot-disk-size 500 \
-     --image-version 1.3-deb9 --project polidea-airflow --initialization-actions 'gs://<BUCKET>/<FOLDER>/oozie-5.1.sh' \
-     --initialization-action-timeout=30m
-```
-**note 1:** it might take ~20 minutes to create the cluster
-
-**note 2:** the init-action works only with [single-node cluster](https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/single-node-clusters)
-and Dataproc 1.3
-
-Once cluster is created, steps from `dataproc/example-map-reduce.job.sh` can be run on master node to execute
-Oozie's example Map-Reduce job.
-
-Oozie is serving web UI on port 11000. To enable access to it please follow [official instructions](https://cloud.google.com/dataproc/docs/concepts/accessing/cluster-web-interfaces)
-on how to connect to the cluster web interfaces.
-
-List of jobs with their statuses can be also shown by issuing `oozie jobs` command on master node.
+The tool currently implemented is [Oozie 2 Airflow](oozie-to-airflow/README.md)
