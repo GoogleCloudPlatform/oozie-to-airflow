@@ -24,6 +24,11 @@ install:
   - pip install -r ../requirements.txt
   - sudo apt-get install coreutils libxml2-utils
 script:
+  - echo "COMPOSER_DAG_BUCKET" > .COMPOSER_DAG_BUCKET
+  - echo "COMPOSER_LOCATION" > .COMPOSER_LOCATION
+  - echo "COMPOSER_NAME" > .COMPOSER_NAME
+  - echo "DATAPROC_CLUSTER_NAME" > .DATAPROC_CLUSTER_NAME
+  - echo "GCP_REGION" > .GCP_REGION
   - ./run-all-conversions
   - pre-commit run --all-files
 after_success:
