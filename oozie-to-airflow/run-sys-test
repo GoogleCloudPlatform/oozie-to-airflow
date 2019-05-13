@@ -70,21 +70,21 @@ COMPOSER_WEB_UI_URL=""
 VERBOSE="false"
 
 function setup_configuration {
-    read -p "Enter Composer name [${COMPOSER_NAME}]: " input
+    read -r -p "Enter Composer name [${COMPOSER_NAME}]: " input
     COMPOSER_NAME=${input:-COMPOSER_NAME}
 
-    read -p "Enter Composer location [${COMPOSER_LOCATION}]: " input
+    read -r -p "Enter Composer location [${COMPOSER_LOCATION}]: " input
     COMPOSER_LOCATION=${input:-COMPOSER_LOCATION}
 
-    read -p "Enter Dataproc cluster name [${DATAPROC_CLUSTER_NAME}]: " input
+    read -r -p "Enter Dataproc cluster name [${DATAPROC_CLUSTER_NAME}]: " input
     DATAPROC_CLUSTER_NAME=${input:-DATAPROC_CLUSTER_NAME}
 
-    read -p "Enter GCP Region [${GCP_REGION}]: " input
+    read -r -p "Enter GCP Region [${GCP_REGION}]: " input
     GCP_REGION=${input:-GCP_REGION}
 
     "${MY_DIR}/confirm" "Do you want to configure additional options?"
 
-    read -p "Enter the name of the bucket that is used to store DAGs [${COMPOSER_DAG_BUCKET}]: " input
+    read -r -p "Enter the name of the bucket that is used to store DAGs [${COMPOSER_DAG_BUCKET}]: " input
     COMPOSER_DAG_BUCKET=${input:-COMPOSER_DAG_BUCKET}
 }
 
