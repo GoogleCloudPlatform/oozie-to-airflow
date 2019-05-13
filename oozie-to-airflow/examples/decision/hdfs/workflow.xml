@@ -36,24 +36,24 @@
     <decision name="decision-node">
         <switch>
             <!-- Until workflow EL functions (wf:xyz()) are implemented we use a dummy replacement -->
-            <case to="first">
+            <case to="first-node">
                 ${firstNotNull("", "")}
             </case>
-            <case to="kill">
+            <case to="kill-node">
                 ${firstNotNull("test", "")}
             </case>
-            <default to="end"/>
+            <default to="end-node"/>
         </switch>
     </decision>
-    <action name="first">
+    <action name="first-node">
         <fs>
-            <delete path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/test-delete-1'/>
+            <delete path="${nameNode}/user/${wf:conf('user.name')}/${examplesRoot}/apps/fs/test-delete-1"/>
         </fs>
-        <ok to="end"/>
-        <error to="end"/>
+        <ok to="end-node"/>
+        <error to="end-node"/>
     </action>
-    <kill name="kill">
+    <kill name="kill-node">
         <message>Fake end reached</message>
     </kill>
-    <end name="end"/>
+    <end name="end-node"/>
 </workflow-app>

@@ -29,7 +29,7 @@ class TestFileExtractor(unittest.TestCase):
 
     def test_add_relative_file(self):
         # Given
-        file_extractor = FileExtractor(oozie_node=Element("fake"), params=self.default_params)
+        file_extractor = FileExtractor(oozie_node=Element("fake"), properties=self.default_params)
         # When
         file_extractor.add_file("test_file")
         # Then
@@ -38,7 +38,7 @@ class TestFileExtractor(unittest.TestCase):
 
     def test_add_absolute_file(self):
         # Given
-        file_extractor = FileExtractor(oozie_node=Element("fake"), params=self.default_params)
+        file_extractor = FileExtractor(oozie_node=Element("fake"), properties=self.default_params)
         # When
         file_extractor.add_file("/test_file")
         # Then
@@ -47,7 +47,7 @@ class TestFileExtractor(unittest.TestCase):
 
     def test_add_multiple_files(self):
         # Given
-        file_extractor = FileExtractor(oozie_node=Element("fake"), params=self.default_params)
+        file_extractor = FileExtractor(oozie_node=Element("fake"), properties=self.default_params)
         # When
         file_extractor.add_file("/test_file")
         file_extractor.add_file("test_file2")
@@ -61,7 +61,7 @@ class TestFileExtractor(unittest.TestCase):
 
     def test_add_hash_files(self):
         # Given
-        file_extractor = FileExtractor(oozie_node=Element("fake"), params=self.default_params)
+        file_extractor = FileExtractor(oozie_node=Element("fake"), properties=self.default_params)
         # When
         file_extractor.add_file("/test_file#test3_link")
         file_extractor.add_file("test_file2#test_link")
@@ -81,7 +81,7 @@ class TestFileExtractor(unittest.TestCase):
 
     def test_add_file_extra_hash(self):
         # Given
-        file_extractor = FileExtractor(oozie_node=Element("fake"), params=self.default_params)
+        file_extractor = FileExtractor(oozie_node=Element("fake"), properties=self.default_params)
         # When
         with self.assertRaises(Exception) as context:
             file_extractor.add_file("/test_file#4rarear#")
@@ -92,7 +92,7 @@ class TestFileExtractor(unittest.TestCase):
 
     def test_replace_el(self):
         # Given
-        params = {"var1": "value1", "var2": "value2", **self.default_params}
+        properties = {"var1": "value1", "var2": "value2", **self.default_params}
         # language=XML
         node_str = """
 <pig>
@@ -102,15 +102,15 @@ class TestFileExtractor(unittest.TestCase):
 </pig>
         """
         oozie_node = ET.fromstring(node_str)
-        file_extractor = FileExtractor(oozie_node=oozie_node, params=params)
+        file_extractor = FileExtractor(oozie_node=oozie_node, properties=properties)
         # When
         file_extractor.parse_node()
         # Then
         self.assertEqual(
             file_extractor.hdfs_files,
             [
-                "hdfs:///path/with/el/value1",
-                "hdfs:///path/with/el/value2",
-                "hdfs:///path/with/two/els/value1/value2",
+                'hdfs:///path/with/el/{CTX["var1"]}',
+                'hdfs:///path/with/el/{CTX["var2"]}',
+                'hdfs:///path/with/two/els/{CTX["var1"]}/{CTX["var2"]}',
             ],
         )

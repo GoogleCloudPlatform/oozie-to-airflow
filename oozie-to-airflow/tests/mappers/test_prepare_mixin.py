@@ -28,7 +28,7 @@ class TestPrepareMixin(unittest.TestCase):
     def test_with_prepare(self):
         cluster = "my-cluster"
         region = "europe-west3"
-        params = {"nameNode": "hdfs://localhost:8020", "dataproc_cluster": cluster, "gcp_region": region}
+        properties = {"nameNode": "hdfs://localhost:8020", "dataproc_cluster": cluster, "gcp_region": region}
         # language=XML
         pig_node_prepare_str = """
 <pig>
@@ -43,20 +43,32 @@ class TestPrepareMixin(unittest.TestCase):
 """
         pig_node_prepare = ET.fromstring(pig_node_prepare_str)
 
-        prepare = prepare_mixin.PrepareMixin().get_prepare_command(oozie_node=pig_node_prepare, params=params)
+        prepare_command, prepare_arguments = prepare_mixin.PrepareMixin().get_prepare_command_with_arguments(
+            pig_node_prepare, properties
+        )
         self.assertEqual(
-            '$DAGS_FOLDER/../data/prepare.sh -c {0} -r {1} -d "{2} {3}" -m "{4} {5}"'.format(
-                cluster, region, self.delete_path1, self.delete_path2, self.mkdir_path1, self.mkdir_path2
-            ),
-            prepare,
+            '$DAGS_FOLDER/../data/prepare.sh -c my-cluster -r europe-west3 -d "{} {}" -m "{} {}"',
+            prepare_command,
+        )
+        self.assertEqual(
+            [
+                '{CTX["nameNode"]}/examples/output-data/demo/pig-node',
+                '{CTX["nameNode"]}/examples/output-data/demo/pig-node2',
+                '{CTX["nameNode"]}/examples/input-data/demo/pig-node',
+                '{CTX["nameNode"]}/examples/input-data/demo/pig-node2',
+            ],
+            prepare_arguments,
         )
 
     def test_no_prepare(self):
         cluster = "my-cluster"
         region = "europe-west3"
-        params = {"nameNode": "hdfs://localhost:8020", "dataproc_cluster": cluster, "gcp_region": region}
+        properties = {"nameNode": "hdfs://localhost:8020", "dataproc_cluster": cluster, "gcp_region": region}
         # language=XML
         pig_node_str = "<pig><name-node>hdfs://</name-node></pig>"
         pig_node = ET.fromstring(pig_node_str)
-        prepare = prepare_mixin.PrepareMixin().get_prepare_command(oozie_node=pig_node, params=params)
-        self.assertEqual("", prepare)
+        prepare_command, prepare_arguments = prepare_mixin.PrepareMixin().get_prepare_command_with_arguments(
+            pig_node, properties
+        )
+        self.assertEqual("", prepare_command)
+        self.assertEqual([], prepare_arguments)

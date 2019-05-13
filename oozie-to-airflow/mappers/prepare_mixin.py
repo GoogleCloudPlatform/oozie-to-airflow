@@ -16,8 +16,7 @@
 from typing import Dict, List, Tuple
 import xml.etree.ElementTree as ET
 
-from utils import xml_utils
-from utils.el_utils import normalize_path
+from utils import xml_utils, el_utils
 
 
 class PrepareMixin:
@@ -27,24 +26,34 @@ class PrepareMixin:
     def has_prepare(oozie_node):
         return bool(xml_utils.find_nodes_by_tag(oozie_node, "prepare"))
 
-    def get_prepare_command(self, oozie_node: ET.Element, params: Dict[str, str]):
+    def get_prepare_command_with_arguments(
+        self, prepare_node: ET.Element, properties: Dict[str, str]
+    ) -> Tuple[str, List[str]]:
+        """
+        Returns tuple - prepare command and argument list as f-strings.
+        This shou;d be used to build actual command using the f-strings to read property values.
+        :param prepare_node: prepare node
+        :param properties: current job properties
+        :return:
+        """
         # In BashOperator in Composer we can't read from $DAGS_FOLDER (~/dags) - permission denied.
         # However we can read from ~/data -> /home/airflow/gcs/data.
         # The easiest way to access it is using the $DAGS_FOLDER env variable.
-        delete_paths, mkdir_paths = self.parse_prepare_node(oozie_node, params)
+        delete_paths, mkdir_paths = self.parse_prepare_node(prepare_node, properties=properties)
         if delete_paths or mkdir_paths:
-            delete = " ".join(delete_paths)
-            mkdir = " ".join(mkdir_paths)
-            return "$DAGS_FOLDER/../data/prepare.sh -c {0} -r {1}{2}{3}".format(
-                params["dataproc_cluster"],
-                params["gcp_region"],
-                ' -d "{}"'.format(delete) if delete else "",
-                ' -m "{}"'.format(mkdir) if mkdir else "",
+            return (
+                "$DAGS_FOLDER/../data/prepare.sh -c {0} -r {1}{2}{3}".format(
+                    properties["dataproc_cluster"],
+                    properties["gcp_region"],
+                    ' -d "' + ("{} " * len(delete_paths)).strip() + '"' if delete_paths else "",
+                    ' -m "' + ("{} " * len(mkdir_paths)).strip() + '"' if mkdir_paths else "",
+                ),
+                delete_paths + mkdir_paths,
             )
-        return ""
+        return "", []
 
     @staticmethod
-    def parse_prepare_node(oozie_node: ET.Element, params: Dict[str, str]) -> Tuple[List[str], List[str]]:
+    def parse_prepare_node(oozie_node: ET.Element, properties: Dict[str, str]) -> Tuple[List[str], List[str]]:
         """
         <prepare>
             <delete path="[PATH]"/>
@@ -60,7 +69,7 @@ class PrepareMixin:
             # If there exists a prepare node, there will only be one, according
             # to oozie xml schema
             for node in prepare_nodes[0]:
-                node_path = normalize_path(node.attrib["path"], params=params)
+                node_path = el_utils.convert_el_string_to_fstring(node.attrib["path"], properties=properties)
                 if node.tag == "delete":
                     delete_paths.append(node_path)
                 else:

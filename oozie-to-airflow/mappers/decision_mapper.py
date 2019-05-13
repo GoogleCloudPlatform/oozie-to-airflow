@@ -21,7 +21,7 @@ from airflow.utils.trigger_rule import TriggerRule
 
 from converter.primitives import Task, Relation
 from mappers.base_mapper import BaseMapper
-from utils.el_utils import convert_el_to_jinja
+from utils.el_utils import convert_el_string_to_fstring
 from utils.template_utils import render_template
 
 
@@ -52,37 +52,31 @@ class DecisionMapper(BaseMapper):
     </workflow-app>
     """
 
-    oozie_node: Element
-    task_id: str
-    trigger_rule: str
-    params: Dict[str, str]
-    case_dict: Dict[str, str]
-
     def __init__(
         self,
         oozie_node: Element,
         name: str,
+        properties: Dict[str, str],
         trigger_rule: str = TriggerRule.ALL_DONE,
-        params: Dict[str, str] = None,
     ):
-        BaseMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule)
-        if params is None:
-            params = {}
+        BaseMapper.__init__(
+            self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, properties=properties
+        )
         self.oozie_node = oozie_node
         self.name = name
         self.trigger_rule = trigger_rule
-        self.params = params
-        self._get_cases()
+        self.case_dict = self._get_cases()
 
     def _get_cases(self):
         switch_node = self.oozie_node[0]
-        self.case_dict = collections.OrderedDict()
+        case_dict = collections.OrderedDict()
         for case in switch_node:
             if "case" in case.tag:
-                case_text = convert_el_to_jinja(case.text.strip(), quote=True)
-                self.case_dict[case_text] = case.attrib["to"]
+                case_text = convert_el_string_to_fstring(case.text.strip(), properties=self.properties)
+                case_dict[case_text] = case.attrib["to"]
             else:  # Default return value
-                self.case_dict["default"] = case.attrib["to"]
+                case_dict["default"] = case.attrib["to"]
+        return case_dict
 
     def convert_to_text(self) -> str:
         tasks = [

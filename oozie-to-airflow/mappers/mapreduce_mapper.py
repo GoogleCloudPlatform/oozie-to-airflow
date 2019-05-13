@@ -32,32 +32,26 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
     Converts a MapReduce Oozie node to an Airflow task.
     """
 
-    properties: Dict[str, str]
-    params_dict: Dict[str, str]
-
     def __init__(
         self,
         oozie_node: Element,
         name: str,
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
-        params=None,
+        properties=None,
         **kwargs,
     ):
-        ActionMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, **kwargs)
-        if params is None:
-            params = dict()
-        self.params = params
+        ActionMapper.__init__(
+            self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, properties=properties, **kwargs
+        )
+        self.params_dict: Dict[str, str] = {}
         self.trigger_rule = trigger_rule
-        self.properties = {}
-        self.params_dict = {}
-        self.file_extractor = FileExtractor(oozie_node=oozie_node, params=params)
-        self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, params=params)
+        self.file_extractor = FileExtractor(oozie_node=oozie_node, properties=properties)
+        self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, properties=properties)
         self._parse_oozie_node()
 
     def _parse_oozie_node(self):
         name_node_text = self.oozie_node.find("name-node").text
-        self.name_node = el_utils.replace_el_with_var(name_node_text, params=self.params, quote=False)
-        self._parse_config()
+        self.name_node = el_utils.convert_el_string_to_fstring(name_node_text, properties=self.properties)
         self._parse_params()
         self.files, self.hdfs_files = self.file_extractor.parse_node()
         self.archives, self.hdfs_archives = self.archive_extractor.parse_node()
@@ -67,18 +61,20 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
         if param_nodes:
             self.params_dict = {}
             for node in param_nodes:
-                param = el_utils.replace_el_with_var(node.text, params=self.params, quote=False)
+                param = el_utils.replace_el_with_property_values(node.text, properties=self.properties)
                 key, value = param.split("=", 1)
                 self.params_dict[key] = value
 
     def convert_to_text(self) -> str:
-        prepare_command = self.get_prepare_command(self.oozie_node, self.params)
+        prepare_command, prepare_arguments = self.get_prepare_command_with_arguments(
+            self.oozie_node, self.properties
+        )
         tasks = [
             Task(
-                task_id=self.name + "_prepare",
+                task_id=self.name + "-prepare",
                 template_name="prepare.tpl",
                 trigger_rule=self.trigger_rule,
-                template_params=dict(prepare_command=prepare_command),
+                template_params=dict(prepare_command=prepare_command, prepare_arguments=prepare_arguments),
             ),
             Task(
                 task_id=self.name,
@@ -92,7 +88,7 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
                 ),
             ),
         ]
-        relations = [Relation(from_task_id=self.name + "_prepare", to_task_id=self.name)]
+        relations = [Relation(from_task_id=self.name + "-prepare", to_task_id=self.name)]
         return render_template(template_name="action.tpl", tasks=tasks, relations=relations)
 
     @staticmethod

@@ -31,7 +31,7 @@ class TestStartMapper(unittest.TestCase):
     def test_create_mapper(self):
         mapper = self._get_start_mapper()
         # make sure everything is getting initialized correctly
-        self.assertEqual("test_id", mapper.name)
+        self.assertEqual("test-id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
 
     def test_convert_to_text(self):
@@ -59,6 +59,6 @@ class TestStartMapper(unittest.TestCase):
         self.assertEqual(set(workflow.nodes.keys()), {"second_task"})
         self.assertEqual(workflow.relations, set())
 
-    def _get_start_mapper(self, name="test_id"):
+    def _get_start_mapper(self, name="test-id"):
         mapper = StartMapper(oozie_node=self.oozie_node, name=name, trigger_rule=TriggerRule.DUMMY)
         return mapper

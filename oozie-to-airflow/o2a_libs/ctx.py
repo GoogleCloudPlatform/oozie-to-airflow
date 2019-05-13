@@ -12,22 +12,14 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Maps Oozie start node to Airflow's DAG"""
-from typing import Set
+"""Named tuple used to keep context for DAG"""
 
-from mappers.base_mapper import BaseMapper
+from typing import Dict
 
 
-class StartMapper(BaseMapper):
-    def required_imports(self) -> Set[str]:
-        return set()
+class Ctx:  # pylint: disable=too-few-public-methods
+    def __init__(self, properties: Dict[str, str]):
+        self.properties = properties
 
-    def convert_to_text(self) -> str:
-        return ""
-
-    def on_parse_finish(self, workflow):
-        super().on_parse_finish(self)
-        del workflow.nodes[self.name]
-        workflow.relations -= {
-            relation for relation in workflow.relations if relation.from_task_variable_name == self.name
-        }
+    def __getitem__(self, key):
+        return self.properties[key]

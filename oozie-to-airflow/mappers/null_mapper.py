@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Null Mapper - used when there is a need to insert no-op node"""
-from typing import Set
+from typing import Set, Dict
 from xml.etree.ElementTree import Element
 
 from airflow.utils.trigger_rule import TriggerRule
@@ -21,8 +21,14 @@ from mappers.base_mapper import BaseMapper
 
 
 class NullMapper(BaseMapper):
-    def __init__(self, oozie_node: Element, name: str):
-        BaseMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=TriggerRule.DUMMY)
+    """
+    Mapper providing a no-op node.
+    """
+
+    def __init__(self, oozie_node: Element, name: str, properties: Dict[str, str]):
+        BaseMapper.__init__(
+            self, oozie_node=oozie_node, name=name, properties=properties, trigger_rule=TriggerRule.DUMMY
+        )
 
     # pylint: disable=no-self-use
     def convert_to_text(self) -> str:

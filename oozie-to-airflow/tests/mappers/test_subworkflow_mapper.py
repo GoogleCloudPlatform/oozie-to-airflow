@@ -34,14 +34,18 @@ class TestSubworkflowMapper(TestCase):
         "gcp_conn_id": "google_cloud_default",
         "gcp_region": "europe-west3",
         "gcp_uri_prefix": "gs://test_bucket/dags",
+        "queueName": "default",
         "nameNode": "hdfs://",
+        "examplesRoot": "examples",
+        "resourceManager": "localhost:8032",
         "oozie.wf.application.path": "hdfs:///user/pig/examples/pi",
     }
 
-    main_params = {
+    expected_main_properties = {
+        "queueName": "default",
         "examplesRoot": "examples",
         "nameNode": "hdfs://",
-        "resourceManager": "localhost:8032",
+        "resourceManager": '{CTX["resourceManager"]}',
         "dataproc_cluster": "cluster-o2a",
     }
 
@@ -68,7 +72,7 @@ class TestSubworkflowMapper(TestCase):
         with suppress(OSError):
             os.remove(self.SUBDAG_TEST_FILEPATH)
 
-    @mock.patch("utils.el_utils.parse_els")
+    @mock.patch("utils.el_utils.parse_el_property_file_into_dictionary")
     def test_create_mapper_jinja(self, parse_els):
         # Given
         parse_els.return_value = self.subworkflow_params
@@ -76,15 +80,24 @@ class TestSubworkflowMapper(TestCase):
         mapper = self._get_subwf_mapper()
 
         # Then
-        self.assertEqual("test_id", mapper.task_id)
+        self.assertEqual("test-id", mapper.task_id)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.subworkflow_node, mapper.oozie_node)
-        self.assertEqual(self.main_params, mapper.params)
+        self.assertEqual(self.expected_main_properties, mapper.properties)
         # Propagate config node is present, should forward config properties
-        self.assertEqual({"resourceManager": "localhost:8032"}, mapper.get_config_properties())
+        self.assertEqual(
+            {
+                "dataproc_cluster": "cluster-o2a",
+                "examplesRoot": "examples",
+                "nameNode": "hdfs://",
+                "queueName": "default",
+                "resourceManager": '{CTX["resourceManager"]}',
+            },
+            mapper.get_config_properties(),
+        )
         self.assertTrue(os.path.isfile(self.SUBDAG_TEST_FILEPATH))
 
-    @mock.patch("utils.el_utils.parse_els")
+    @mock.patch("utils.el_utils.parse_el_property_file_into_dictionary")
     def test_create_mapper_jinja_no_propagate(self, parse_els):
         # Given
         parse_els.return_value = self.subworkflow_params
@@ -97,16 +110,16 @@ class TestSubworkflowMapper(TestCase):
         mapper = self._get_subwf_mapper()
 
         # Then
-        self.assertEqual("test_id", mapper.task_id)
+        self.assertEqual("test-id", mapper.task_id)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.subworkflow_node, mapper.oozie_node)
-        self.assertEqual(self.main_params, mapper.params)
+        self.assertEqual(self.expected_main_properties, mapper.properties)
         # Propagate config node is missing, should NOT forward config properties
         self.assertEqual({}, mapper.get_config_properties())
         self.assertTrue(os.path.isfile(self.SUBDAG_TEST_FILEPATH))
 
     @mock.patch("mappers.subworkflow_mapper.render_template", return_value="RETURN")
-    @mock.patch("utils.el_utils.parse_els")
+    @mock.patch("utils.el_utils.parse_el_property_file_into_dictionary")
     def test_convert_to_text(self, parse_els_mock, render_template_mock):
         # Given
         parse_els_mock.return_value = self.subworkflow_params
@@ -122,7 +135,7 @@ class TestSubworkflowMapper(TestCase):
 
         self.assertEqual(kwargs["template_name"], "action.tpl")
         self.assertEqual(
-            tasks, [Task(task_id="test_id", template_name="subwf.tpl", template_params={"app_name": "pig"})]
+            [Task(task_id="test-id", template_name="subwf.tpl", template_params={"app_name": "pig"})], tasks
         )
         self.assertEqual(relations, [])
 
@@ -137,10 +150,10 @@ class TestSubworkflowMapper(TestCase):
             input_directory_path=EXAMPLE_SUBWORKFLOW_PATH,
             output_directory_path="/tmp",
             oozie_node=self.subworkflow_node,
-            name="test_id",
+            name="test-id",
             dag_name="test",
             action_mapper=ACTION_MAP,
             trigger_rule=TriggerRule.DUMMY,
             control_mapper=CONTROL_MAP,
-            params=self.main_params,
+            properties=self.expected_main_properties,
         )

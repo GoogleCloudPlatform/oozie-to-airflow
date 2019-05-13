@@ -29,7 +29,7 @@ class TestArchiveExtractor(unittest.TestCase):
 
     def test_add_relative_archive(self):
         # Given
-        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), params=self.default_params)
+        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), properties=self.default_params)
         # When
         archive_extractor.add_archive("test_archive.zip")
         # Then
@@ -40,7 +40,7 @@ class TestArchiveExtractor(unittest.TestCase):
 
     def test_add_absolute_archive(self):
         # Given
-        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), params=self.default_params)
+        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), properties=self.default_params)
         # When
         archive_extractor.add_archive("/test_archive.zip")
         # Then
@@ -49,7 +49,7 @@ class TestArchiveExtractor(unittest.TestCase):
 
     def test_add_multiple_archives(self):
         # Given
-        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), params=self.default_params)
+        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), properties=self.default_params)
         # When
         archive_extractor.add_archive("/test_archive.zip")
         archive_extractor.add_archive("test_archive2.tar")
@@ -69,7 +69,7 @@ class TestArchiveExtractor(unittest.TestCase):
 
     def test_add_hash_archives(self):
         # Given
-        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), params=self.default_params)
+        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), properties=self.default_params)
         # When
         archive_extractor.add_archive("/test_archive.zip#test3_link")
         archive_extractor.add_archive("test_archive2.tar#test_link")
@@ -90,7 +90,7 @@ class TestArchiveExtractor(unittest.TestCase):
 
     def test_add_archive_extra_hash(self):
         # Given
-        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), params=self.default_params)
+        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), properties=self.default_params)
         # When
         with self.assertRaises(Exception) as context:
             archive_extractor.add_archive("/test_archive.zip#4rarear#")
@@ -101,7 +101,7 @@ class TestArchiveExtractor(unittest.TestCase):
 
     def test_replace_el(self):
         # Given
-        params = {"var1": "value1", "var2": "value2", **self.default_params}
+        properties = {"var1": "value1", "var2": "value2", **self.default_params}
         # language=XML
         node_str = """
 <pig>
@@ -111,15 +111,15 @@ class TestArchiveExtractor(unittest.TestCase):
 </pig>
         """
         oozie_node = ET.fromstring(node_str)
-        archive_extractor = ArchiveExtractor(oozie_node=oozie_node, params=params)
+        archive_extractor = ArchiveExtractor(oozie_node=oozie_node, properties=properties)
         # When
         archive_extractor.parse_node()
         # Then
         self.assertEqual(
             [
-                "hdfs:///path/with/el/value1.tar",
-                "hdfs:///path/with/el/value2.tar",
-                "hdfs:///path/with/two/els/value1/value2.tar",
+                'hdfs:///path/with/el/{CTX["var1"]}.tar',
+                'hdfs:///path/with/el/{CTX["var2"]}.tar',
+                'hdfs:///path/with/two/els/{CTX["var1"]}/{CTX["var2"]}.tar',
             ],
             archive_extractor.hdfs_archives,
         )

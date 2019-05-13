@@ -18,13 +18,13 @@ import shutil
 import sys
 from collections import namedtuple
 from pathlib import Path
-from typing import Dict, TextIO, Type, Set, Union, List
+from typing import Dict, TextIO, Set, Optional
 import getpass
 from datetime import datetime
 
-from os.path import basename
+from os import environ, makedirs
+from os.path import basename, join
 
-import os
 import json
 
 import textwrap
@@ -34,10 +34,9 @@ import black
 from autoflake import fix_file
 from converter import parser
 from converter.constants import HDFS_FOLDER
+from converter.mappers import ACTION_MAP, CONTROL_MAP
 from converter.parsed_node import ParsedNode
 from converter.primitives import Relation
-from mappers.action_mapper import ActionMapper
-from mappers.base_mapper import BaseMapper
 from utils import el_utils
 from utils.constants import CONFIGURATION_PROPERTIES, JOB_PROPERTIES
 from utils.el_utils import comma_separated_string_to_list
@@ -50,13 +49,14 @@ class OozieConverter:
     """Converts Oozie Workflow app to Airflow's DAG
     """
 
+    action_mapper = ACTION_MAP
+    control_mapper = CONTROL_MAP
+
     def __init__(
         self,
         dag_name: str,
         input_directory_path: str,
         output_directory_path: str,
-        action_mapper: Dict[str, Type[ActionMapper]],
-        control_mapper: Dict[str, Type[BaseMapper]],
         user: str = None,
         start_days_ago: int = None,
         schedule_interval: str = None,
@@ -65,7 +65,7 @@ class OozieConverter:
         """
         :param input_directory_path: Oozie workflow directory.
         :param output_directory_path: Desired output directory.
-        :param user: Username.  # TODO remove me and use real ${user} EL
+        :param user: Username.
         :param start_days_ago: Desired DAG start date, expressed as number of days ago from the present day
         :param schedule_interval: Desired DAG schedule interval, expressed as number of days
         :param dag_name: Desired output DAG name.
@@ -78,24 +78,20 @@ class OozieConverter:
         self.start_days_ago = start_days_ago
         self.schedule_interval = schedule_interval
         self.dag_name = dag_name
-        self.configuration_properties_file = os.path.join(input_directory_path, CONFIGURATION_PROPERTIES)
-        self.job_properties_file = os.path.join(input_directory_path, JOB_PROPERTIES)
+        self.user = user
         self.output_dag_name = (
-            os.path.join(output_directory_path, output_dag_name)
+            join(output_directory_path, output_dag_name)
             if output_dag_name
-            else os.path.join(output_directory_path, self.dag_name) + ".py"
+            else join(output_directory_path, self.dag_name) + ".py"
         )
-        params = {"user.name": user or os.environ["USER"]}
-        params = self.add_properties_to_params(params)
-        params = el_utils.parse_els(self.configuration_properties_file, params)
-        self.params = params
+        self.properties = self.get_properties()
         self.parser = parser.OozieParser(
             input_directory_path=input_directory_path,
             output_directory_path=output_directory_path,
-            params=params,
+            properties=self.properties,
             dag_name=dag_name,
-            action_mapper=action_mapper,
-            control_mapper=control_mapper,
+            action_mapper=self.action_mapper,
+            control_mapper=self.control_mapper,
         )
 
     def recreate_output_directory(self):
@@ -110,13 +106,17 @@ class OozieConverter:
 
     def _recreate_output_directory(self):
         shutil.rmtree(self.output_directory_path, ignore_errors=True)
-        os.makedirs(self.output_directory_path, exist_ok=True)
+        makedirs(self.output_directory_path, exist_ok=True)
 
-    def add_properties_to_params(self, params: Dict[str, str]):
-        """
-        Template method, can be overridden.
-        """
-        return el_utils.parse_els(self.job_properties_file, params)
+    def get_properties(self):
+        properties = {"user.name": self.user or environ["USER"]}
+        properties = el_utils.parse_el_property_file_into_dictionary(
+            join(self.input_directory_path, CONFIGURATION_PROPERTIES), properties
+        )
+        properties = el_utils.parse_el_property_file_into_dictionary(
+            join(self.input_directory_path, JOB_PROPERTIES), properties
+        )
+        return properties
 
     def create_dag_file(self, nodes: Dict[str, ParsedNode], depends: Set[str], relations: Set[Relation]):
         """
@@ -167,18 +167,16 @@ class OozieConverter:
         """
         self.write_file_header(file)
         self.write_dependencies(file, depends)
-        self.write_params(file, self.params)
-        self.write_dag_header(file, self.dag_name, self.schedule_interval, self.start_days_ago)
+        self.write_properties(file=file, properties=self.properties)
+        self.write_dag_header(
+            file=file,
+            dag_name=self.dag_name,
+            schedule_interval=self.schedule_interval,
+            start_days_ago=self.start_days_ago,
+        )
         self.write_nodes(file, nodes)
         file.write("\n\n")
         self.write_relations(file, relations)
-
-    @staticmethod
-    def write_params(file: TextIO, params: Dict[str, str]) -> None:
-        converted_params: Dict[str, Union[List[str], str]] = {
-            x: comma_separated_string_to_list(y) for x, y in params.items()
-        }
-        file.write("PARAMS = " + json.dumps(converted_params, indent=INDENT) + "\n\n")
 
     def write_nodes(self, file: TextIO, nodes: Dict[str, ParsedNode], indent: int = INDENT):
         """
@@ -192,7 +190,7 @@ class OozieConverter:
             file.write(textwrap.indent(node.mapper.convert_to_text(), indent * " "))
             logging.info(f"Wrote tasks corresponding to the action named: {node.mapper.name}")
             node.mapper.copy_extra_assets(
-                input_directory_path=os.path.join(self.input_directory_path, HDFS_FOLDER),
+                input_directory_path=join(self.input_directory_path, HDFS_FOLDER),
                 output_directory_path=self.output_directory_path,
             )
 
@@ -215,11 +213,17 @@ class OozieConverter:
         Of the form: from time import time, etc.
         """
         logging.info("Writing imports to file")
-        file.write(f"\n{line_prefix}".join(sorted(depends)))
+        file.write(f"\n{line_prefix}".join(depends))
         file.write("\n\n")
 
     @staticmethod
-    def write_dag_header(file, dag_name, schedule_interval, start_days_ago, template="dag.tpl"):
+    def write_dag_header(
+        file: TextIO,
+        dag_name: str,
+        schedule_interval: Optional[str],
+        start_days_ago: Optional[int],
+        template: str = "dag.tpl",
+    ):
         """
         Write the DAG header to the open file specified in the file pointer
         :param file: Opened file to write to.
@@ -228,7 +232,6 @@ class OozieConverter:
         :param start_days_ago: Desired DAG start date, expressed as number of days ago from the present day
         :param template: Desired template to use when creating the DAG header.
         """
-
         file.write(
             render_template(
                 template_name=template,
@@ -238,6 +241,22 @@ class OozieConverter:
             )
         )
         logging.info("Wrote DAG header.")
+
+    @staticmethod
+    def write_properties(file: TextIO, properties: Dict[str, str], template: str = "properties.tpl") -> None:
+        """
+        Write the DAG header to the open file specified in the file pointer
+        :param file: Opened file to write to.
+        :param properties: properties of the DAG
+        :param template: Desired template to use when creating the DAG header.
+        """
+        converted_properties = {x: comma_separated_string_to_list(y) for x, y in properties.items()}
+        file.write(
+            render_template(
+                template_name=template, properties=json.dumps(converted_properties, indent=INDENT)
+            )
+        )
+        logging.info("Wrote DAG properties.")
 
     def write_file_header(self, file: TextIO) -> None:
         """

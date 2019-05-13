@@ -50,9 +50,9 @@ class TestBaseMapper(unittest.TestCase):
 """
         self.node = ET.fromstring(node_str)
         self.mapper = base_mapper.BaseMapper(
-            oozie_node=self.node, name="test_id", trigger_rule=TriggerRule.DUMMY
+            oozie_node=self.node, name="test-id", trigger_rule=TriggerRule.DUMMY
         )
 
     def test_dummy_method(self):
-        self.assertEqual(self.mapper.first_task_id, "test_id")
-        self.assertEqual(self.mapper.last_task_id, "test_id")
+        self.assertEqual(self.mapper.first_task_id, "test-id")
+        self.assertEqual(self.mapper.last_task_id, "test-id")

@@ -14,25 +14,24 @@
   limitations under the License.
  #}
 
-def {{ task_id }}_decision():
+def {{ task_variable_name }}_decision():
 {% for key, val in case_dict.items() -%}
 {%- if loop.first %}
-    if {{ key }}:
-        return "{{ val }}"
+    if f'{{ key }}' == 'True':
+        return f'{{ val }}'
 {% endif %}
 {%- if not loop.first and not loop.last %}
-    elif {{ key }}:
-        return "{{ val }}"
+    elif f'{{ key }}' == 'True':
+        return f'{{ val }}'
 {% endif %}
 {%- if loop.last %}
-    else:
-        return "{{ val }}"
+    return f'{{ val }}'
 {%- endif %}
 {%- endfor %}
 
 
-{{ task_id }} = python_operator.BranchPythonOperator(
-    task_id={{ task_id | tojson }},
-    trigger_rule={{ trigger_rule | tojson }},
-    python_callable={{ task_id }}_decision,
+{{ task_variable_name }} = python_operator.BranchPythonOperator(
+    task_id='{{ task_id }}',
+    trigger_rule='{{ trigger_rule}}',
+    python_callable={{ task_variable_name }}_decision,
 )

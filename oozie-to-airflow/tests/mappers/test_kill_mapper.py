@@ -32,13 +32,13 @@ class TestKillMapper(unittest.TestCase):
     def test_create_mapper(self):
         mapper = self._get_kill_mapper()
         # make sure everything is getting initialized correctly
-        self.assertEqual("test_id", mapper.name)
+        self.assertEqual("test-id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
 
     @mock.patch("mappers.kill_mapper.render_template", return_value="RETURN")
     def test_convert_to_text(self, render_template_mock):
         mapper = kill_mapper.KillMapper(
-            oozie_node=self.oozie_node, name="test_id", trigger_rule=TriggerRule.DUMMY
+            oozie_node=self.oozie_node, name="test-id", trigger_rule=TriggerRule.DUMMY
         )
 
         res = mapper.convert_to_text()
@@ -49,7 +49,7 @@ class TestKillMapper(unittest.TestCase):
         relations = kwargs["relations"]
 
         self.assertEqual(kwargs["template_name"], "action.tpl")
-        self.assertEqual(tasks, [Task(task_id="test_id", template_name="kill.tpl")])
+        self.assertEqual(tasks, [Task(task_id="test-id", template_name="kill.tpl")])
         self.assertEqual(relations, [])
 
     def test_on_parse_finish(self):
@@ -79,5 +79,5 @@ class TestKillMapper(unittest.TestCase):
         imp_str = "\n".join(imps)
         ast.parse(imp_str)
 
-    def _get_kill_mapper(self, name="test_id"):
+    def _get_kill_mapper(self, name="test-id"):
         return kill_mapper.KillMapper(oozie_node=self.oozie_node, name=name, trigger_rule=TriggerRule.DUMMY)

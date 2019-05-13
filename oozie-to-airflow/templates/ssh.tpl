@@ -14,16 +14,16 @@
   limitations under the License.
  #}
 
-{{ task_id }}_hook = ssh_hook.SSHHook(
+{{ task_variable_name }}_hook = ssh_hook.SSHHook(
     ssh_conn_id='ssh_default',
-    username={{ user | tojson }},
-    remote_host={{ host | tojson }},
+    username=f'{{ user }}',
+    remote_host=f'{{ host }}',
 )
 
-{{ task_id }} = ssh_operator.SSHOperator(
-    task_id={{ task_id | tojson }},
-    trigger_rule={{ trigger_rule | tojson }},
-    ssh_hook={{ task_id }}_hook,
-    params=PARAMS,
-    command={{ command | tojson }},
+{{ task_variable_name }} = ssh_operator.SSHOperator(
+    ssh_hook={{ task_variable_name }}_hook,
+    task_id='{{ task_id }}',
+    trigger_rule='{{ trigger_rule }}',
+    params=CTX.properties,
+    command=f'{{ command }}',
 )

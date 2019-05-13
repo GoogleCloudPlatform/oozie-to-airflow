@@ -13,10 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Base mapper - it is a base class for all mappers actions, and logic alike"""
+from copy import deepcopy
 from typing import Set
 from xml.etree.ElementTree import Element
 
-import airflow.utils.trigger_rule
+from airflow.utils.trigger_rule import TriggerRule
 
 
 class BaseMapper:
@@ -27,13 +28,13 @@ class BaseMapper:
         self,
         oozie_node: Element,
         name: str,
-        trigger_rule=airflow.utils.trigger_rule.TriggerRule.ALL_SUCCESS,
-        params=None,
+        trigger_rule: str = TriggerRule.ALL_SUCCESS,
+        properties=None,
         **kwargs,
     ):
-        if params is None:
-            params = {}
-        self.params = params
+        if properties is None:
+            properties = {}
+        self.properties = deepcopy(properties)
         self.oozie_node = oozie_node
         self.name = name
         self.trigger_rule = trigger_rule

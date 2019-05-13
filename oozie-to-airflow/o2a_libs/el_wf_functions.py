@@ -13,25 +13,28 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """All WF EL functions"""
-# pylint: disable=unused-argument
+# pylint: disable=unused-argument # TODO: Remove me after all functions are implemented
+from o2a_libs.ctx import Ctx
 
 
-def wf_id():
+# noinspection PyUnusedLocal
+def wf_id(ctx: Ctx):
     """
     It returns the workflow job ID for the current workflow job.
 
     In airflow it can be found using Jinja templating for `run_id`
-    This has the effect that some parameters cannot be templated, and thus
+    This has the effect that some properties cannot be templated, and thus
     this will fail.
     """
     return "{{ run_id }}"
 
 
-def wf_name():
+# noinspection PyUnusedLocal
+def wf_name(ctx: Ctx):
     """
     It returns the workflow application name for the current workflow job.
 
-    This has the effect that some parameters cannot be templated, and thus
+    This has the effect that some properties cannot be templated, and thus
     this will fail.
 
     :return: Current DAG id.
@@ -39,33 +42,32 @@ def wf_name():
     return "{{ dag.dag_id }}"
 
 
-def wf_app_path():
+# noinspection PyUnusedLocal
+def wf_app_path(ctx: Ctx):
     """
     It returns the workflow application path for the current workflow job.
-    This has the effect that some parameters cannot be templated, and thus
-    this will fail.
     """
 
 
-def wf_conf():
+def wf_conf(ctx: Ctx, property_name: str):
     """
     It returns the value of the workflow job configuration property for the
     current workflow job, or an empty string if undefined.
 
-    This has the effect that some parameters cannot be templated, and thus
-    this will fail.
     """
+    return ctx[property_name]
 
 
-def wf_user():
+def wf_user(ctx: Ctx):
     """
     Returns the user name that started the current workflow job.
 
     """
-    return "{{ params.user.name }}"
+    return ctx["user.name"]
 
 
-def wf_group():
+# noinspection PyUnusedLocal
+def wf_group(ctx: Ctx):
     """
     It returns the group/ACL for the current workflow job.
 
@@ -73,7 +75,8 @@ def wf_group():
     """
 
 
-def wf_callback(state_variable):
+# noinspection PyUnusedLocal
+def wf_callback(ctx: Ctx, state_variable: str):
     """
     It returns the callback URL for the current workflow action node, stateVar
     can be a valid exit state (=OK= or ERROR ) for the action or a token to be
@@ -90,7 +93,8 @@ def wf_callback(state_variable):
     """
 
 
-def wf_transition(node):
+# noinspection PyUnusedLocal
+def wf_transition(ctx: Ctx, node):
     """
     It returns the transition taken by the specified workflow action node, or
     an empty string if the action has not being executed or it has not completed
@@ -98,7 +102,8 @@ def wf_transition(node):
     """
 
 
-def wf_last_error_node():
+# noinspection PyUnusedLocal
+def wf_last_error_node(ctx: Ctx):
     """
     It returns the name of the last workflow action node that exit with an ERROR
     exit state, or an empty string if no action has exited with ERROR state in the
@@ -106,7 +111,8 @@ def wf_last_error_node():
     """
 
 
-def wf_error_code(node):
+# noinspection PyUnusedLocal
+def wf_error_code(ctx: Ctx, node):
     """
     It returns the error code for the specified action node, or an empty string if
     the action node has not exited with ERROR state.
@@ -115,7 +121,8 @@ def wf_error_code(node):
     """
 
 
-def wf_error_message(message):
+# noinspection PyUnusedLocal
+def wf_error_message(ctx: Ctx, message):
     """
     It returns the error message for the specified action node, or an empty string
     if no action node has not exited with ERROR state.
@@ -124,14 +131,16 @@ def wf_error_message(message):
     """
 
 
-def wf_run():
+# noinspection PyUnusedLocal
+def wf_run(ctx: Ctx):
     """
     It returns the run number for the current workflow job, normally 0 unless the
     workflow job is re-run, in which case indicates the current run.
     """
 
 
-def wf_action_data(node):
+# noinspection PyUnusedLocal
+def wf_action_data(ctx: Ctx, node):
     """
     This function is only applicable to action nodes that produce output data on
     completion.
@@ -141,21 +150,24 @@ def wf_action_data(node):
     """
 
 
-def wf_action_external_id(node):
+# noinspection PyUnusedLocal
+def wf_action_external_id(ctx: Ctx, node):
     """
     It returns the external Id for an action node, or an empty string if the
     action has not being executed or it has not completed yet.
     """
 
 
-def wf_action_tracker_uri(node):
+# noinspection PyUnusedLocal
+def wf_action_tracker_uri(ctx: Ctx, node):
     """
     It returns the tracker URI for an action node, or an empty string if the action
     has not being executed or it has not completed yet.
     """
 
 
-def wf_action_external_status(node):
+# noinspection PyUnusedLocal
+def wf_action_external_status(ctx: Ctx, node):
     """
     It returns the external status for an action node, or an empty string if the
     action has not being executed or it has not completed yet.

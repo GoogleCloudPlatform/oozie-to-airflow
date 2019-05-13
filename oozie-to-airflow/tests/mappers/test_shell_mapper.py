@@ -53,47 +53,37 @@ class TestShellMapper(unittest.TestCase):
 """
         self.shell_node = ET.fromstring(shell_node_str)
 
-    def test_create_mapper_no_jinja(self):
-        mapper = self._get_shell_mapper(params=None)
-        # make sure everything is getting initialized correctly
-        self.assertEqual("test_id", mapper.name)
-        self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
-        self.assertEqual(self.shell_node, mapper.oozie_node)
-        self.assertEqual("localhost:8032", mapper.resource_manager)
-        self.assertEqual("hdfs://localhost:8020", mapper.name_node)
-        self.assertEqual("${queueName}", mapper.properties["mapred.job.queue.name"])
-        self.assertEqual("echo arg1 arg2", mapper.bash_command)
-
     def test_create_mapper_jinja(self):
         # test jinja templating
         self.shell_node.find("resource-manager").text = "${resourceManager}"
         self.shell_node.find("name-node").text = "${nameNode}"
-        params = {
+        properties = {
             "resourceManager": "localhost:9999",
             "nameNode": "hdfs://localhost:8021",
             "queueName": "myQueue",
             "examplesRoot": "examples",
         }
 
-        mapper = self._get_shell_mapper(params=params)
+        mapper = self._get_shell_mapper(properties=properties)
 
         # make sure everything is getting initialized correctly
-        self.assertEqual("test_id", mapper.name)
+        self.assertEqual("test-id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.shell_node, mapper.oozie_node)
-        self.assertEqual("localhost:9999", mapper.resource_manager)
-        self.assertEqual("hdfs://localhost:8021", mapper.name_node)
-        self.assertEqual("myQueue", mapper.properties["mapred.job.queue.name"])
+        self.assertEqual('{CTX["resourceManager"]}', mapper.resource_manager)
+        self.assertEqual('{CTX["nameNode"]}', mapper.name_node)
+        self.assertEqual('{CTX["queueName"]}', mapper.properties["mapred.job.queue.name"])
         self.assertEqual("echo arg1 arg2", mapper.bash_command)
 
     @mock.patch("mappers.shell_mapper.render_template", return_value="RETURN")
     def test_convert_to_text(self, render_template_mock):
-        params = {
+        properties = {
             "dataproc_cluster": "my-cluster",
             "gcp_region": "europe-west3",
             "nameNode": "hdfs://localhost:9020/",
+            "queueName": "default",
         }
-        mapper = self._get_shell_mapper(params=params)
+        mapper = self._get_shell_mapper(properties=properties)
         res = mapper.convert_to_text()
         self.assertEqual(res, "RETURN")
 
@@ -103,35 +93,44 @@ class TestShellMapper(unittest.TestCase):
 
         self.assertEqual(kwargs["template_name"], "action.tpl")
         self.assertEqual(
-            tasks,
             [
                 Task(
-                    task_id="test_id_prepare",
+                    task_id="test-id-prepare",
                     template_name="prepare.tpl",
                     template_params={
                         "prepare_command": "$DAGS_FOLDER/../data/prepare.sh -c my-cluster -r europe-west3 "
-                        '-d "//examples/output-data/demo/pig-node //examples/output-data'
-                        '/demo/pig-node2" -m "//examples/input-data/demo/pig-node '
-                        '//examples/input-data/demo/pig-node2"'
+                        '-d "{} {}" -m "{} {}"',
+                        "prepare_arguments": [
+                            '{CTX["nameNode"]}/examples/output-data/demo/pig-node',
+                            '{CTX["nameNode"]}/examples/output-data/demo/pig-node2',
+                            '{CTX["nameNode"]}/examples/input-data/demo/pig-node',
+                            '{CTX["nameNode"]}/examples/input-data/demo/pig-node2',
+                        ],
                     },
                 ),
                 Task(
-                    task_id="test_id",
+                    task_id="test-id",
                     template_name="shell.tpl",
-                    template_params={"pig_command": "sh 'echo arg1 arg2'"},
+                    template_params={"pig_command": "sh \\'echo arg1 arg2\\'"},
                 ),
             ],
+            tasks,
         )
-        self.assertEqual(relations, [Relation(from_task_id="test_id_prepare", to_task_id="test_id")])
+        self.assertEqual(relations, [Relation(from_task_id="test-id-prepare", to_task_id="test-id")])
 
     def test_required_imports(self):
-        params = {"nameNode": "hdfs://localhost:9020/"}
-        mapper = self._get_shell_mapper(params=params)
+        properties = {
+            "resourceManager": "localhost:9999",
+            "nameNode": "hdfs://localhost:8021",
+            "queueName": "myQueue",
+            "examplesRoot": "examples",
+        }
+        mapper = self._get_shell_mapper(properties=properties)
         imps = mapper.required_imports()
         imp_str = "\n".join(imps)
         ast.parse(imp_str)
 
-    def _get_shell_mapper(self, params):
+    def _get_shell_mapper(self, properties):
         return shell_mapper.ShellMapper(
-            oozie_node=self.shell_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=params
+            oozie_node=self.shell_node, name="test-id", trigger_rule=TriggerRule.DUMMY, properties=properties
         )

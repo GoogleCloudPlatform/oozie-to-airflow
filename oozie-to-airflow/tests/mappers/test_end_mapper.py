@@ -32,7 +32,7 @@ class TestEndMapper(unittest.TestCase):
     def test_create_mapper(self):
         mapper = self._get_end_mapper()
         # make sure everything is getting initialized correctly
-        self.assertEqual("test_id", mapper.name)
+        self.assertEqual("test-id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
 
     @mock.patch("mappers.dummy_mapper.render_template", return_value="RETURN")
@@ -47,7 +47,7 @@ class TestEndMapper(unittest.TestCase):
         relations = kwargs["relations"]
 
         self.assertEqual(kwargs["template_name"], "action.tpl")
-        self.assertEqual(tasks, [Task(task_id="test_id", template_name="dummy.tpl")])
+        self.assertEqual(tasks, [Task(task_id="test-id", template_name="dummy.tpl")])
         self.assertEqual(relations, [])
 
     def test_required_imports(self):
@@ -90,6 +90,8 @@ class TestEndMapper(unittest.TestCase):
         self.assertEqual(set(workflow.nodes.keys()), {"first_task", "second_task", "end_task"})
         self.assertEqual(workflow.relations, {Relation(from_task_id="first_task", to_task_id="end_task")})
 
-    def _get_end_mapper(self, name="test_id"):
-        mapper = end_mapper.EndMapper(oozie_node=self.oozie_node, name=name, trigger_rule=TriggerRule.DUMMY)
+    def _get_end_mapper(self, name="test-id"):
+        mapper = end_mapper.EndMapper(
+            oozie_node=self.oozie_node, name=name, trigger_rule=TriggerRule.DUMMY, properties={}
+        )
         return mapper

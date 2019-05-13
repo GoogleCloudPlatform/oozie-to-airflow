@@ -38,29 +38,19 @@ class TestSSHMapper(unittest.TestCase):
 """
         self.ssh_node = ET.fromstring(ssh_node_str)
 
-    def test_create_mapper_no_jinja(self):
-        mapper = self._get_ssh_mapper()
-        # make sure everything is getting initialized correctly
-        self.assertEqual("test_id", mapper.name)
-        self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
-        self.assertEqual(self.ssh_node, mapper.oozie_node)
-        self.assertEqual("user", mapper.user)
-        self.assertEqual("apache.org", mapper.host)
-        self.assertEqual("'ls -l -a'", mapper.command)
-
     def test_create_mapper_jinja(self):
         # test jinja templating
         self.ssh_node.find("host").text = "${hostname}"
-        params = {"hostname": "user@apache.org"}
+        properties = {"hostname": "user@apache.org"}
 
-        mapper = self._get_ssh_mapper(params=params)
+        mapper = self._get_ssh_mapper(properties=properties)
         # make sure everything is getting initialized correctly
-        self.assertEqual("test_id", mapper.name)
+        self.assertEqual("test-id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.ssh_node, mapper.oozie_node)
         self.assertEqual("user", mapper.user)
         self.assertEqual("apache.org", mapper.host)
-        self.assertEqual("'ls -l -a'", mapper.command)
+        self.assertEqual("ls -l -a", mapper.command)
 
     @mock.patch("mappers.ssh_mapper.render_template", return_value="RETURN")
     def test_convert_to_text(self, render_template_mock):
@@ -75,19 +65,19 @@ class TestSSHMapper(unittest.TestCase):
 
         self.assertEqual(kwargs["template_name"], "action.tpl")
         self.assertEqual(
-            tasks,
             [
                 Task(
-                    task_id="test_id",
+                    task_id="test-id",
                     template_name="ssh.tpl",
                     template_params={
-                        "params": {},
-                        "command": "'ls -l -a'",
+                        "properties": {},
+                        "command": "ls -l -a",
                         "user": "user",
                         "host": "apache.org",
                     },
                 )
             ],
+            tasks,
         )
         self.assertEqual(relations, [])
 
@@ -97,8 +87,8 @@ class TestSSHMapper(unittest.TestCase):
         imp_str = "\n".join(imps)
         ast.parse(imp_str)
 
-    def _get_ssh_mapper(self, params=None):
+    def _get_ssh_mapper(self, properties=None):
         mapper = ssh_mapper.SSHMapper(
-            oozie_node=self.ssh_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=params
+            oozie_node=self.ssh_node, name="test-id", trigger_rule=TriggerRule.DUMMY, properties=properties
         )
         return mapper

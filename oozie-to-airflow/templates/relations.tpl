@@ -14,5 +14,5 @@
   limitations under the License.
  #}
 {% for relation in relations %}
-{{ relation.from_task_id }}.set_downstream({{ relation.to_task_id }})
+{{ relation.from_task_variable_name }}.set_downstream({{ relation.to_task_variable_name }})
 {% endfor %}

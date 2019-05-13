@@ -14,6 +14,9 @@
 # limitations under the License.
 """Base class for all action nappers"""
 from typing import Dict
+from xml.etree.ElementTree import Element
+
+from airflow.utils.trigger_rule import TriggerRule
 
 from mappers.base_mapper import BaseMapper
 
@@ -25,7 +28,18 @@ from utils import xml_utils, el_utils
 class ActionMapper(BaseMapper):
     """Base class for all action mappers"""
 
-    properties: Dict[str, str] = {}
+    def __init__(
+        self,
+        oozie_node: Element,
+        name: str,
+        properties: Dict[str, str],
+        trigger_rule=TriggerRule.ALL_SUCCESS,
+        **kwargs,
+    ):
+        super().__init__(
+            oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, properties=properties, **kwargs
+        )
+        self._parse_config()
 
     def _parse_config(self):
         config = self.oozie_node.find("configuration")
@@ -34,7 +48,7 @@ class ActionMapper(BaseMapper):
             if property_nodes:
                 for node in property_nodes:
                     name = node.find("name").text
-                    value = el_utils.replace_el_with_var(
-                        node.find("value").text, params=self.params, quote=False
+                    value = el_utils.convert_el_string_to_fstring(
+                        node.find("value").text, properties=self.properties
                     )
                     self.properties[name] = value

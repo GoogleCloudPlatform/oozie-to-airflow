@@ -42,8 +42,8 @@
             <resource-manager>${resourceManager}</resource-manager>
             <name-node>${nameNode}</name-node>
             <prepare>
-                <delete path="${nameNode}/user/${userName}/${examplesRoot}/apps/childwf/shell/test"/>
-                <mkdir path="${nameNode}/user/${userName}/${examplesRoot}/apps/childwf/shell/test"/>
+                <delete path="${nameNode}/user/${wf:conf('user.name')}/${examplesRoot}/apps/childwf/shell/test"/>
+                <mkdir path="${nameNode}/user/${wf:conf('user.name')}/${examplesRoot}/apps/childwf/shell/test"/>
             </prepare>
             <configuration>
                 <property>
@@ -62,7 +62,7 @@
         <map-reduce>
             <name-node>${nameNode}</name-node>
             <prepare>
-                <delete path="${nameNode}/user/${userName}/${examplesRoot}/apps/childwf/${outputDir}"/>
+                <delete path="${nameNode}/user/${wf:conf('user.name')}/${examplesRoot}/apps/childwf/${outputDir}"/>
             </prepare>
             <configuration>
                 <property>
@@ -95,14 +95,14 @@
                 </property>
                 <property>
                     <name>mapreduce.input.fileinputformat.inputdir</name>
-                    <value>/user/${userName}/${examplesRoot}/apps/childwf/input</value>
+                    <value>/user/${wf:conf('user.name')}/${examplesRoot}/apps/childwf/input</value>
                 </property>
                 <property>
                     <name>mapreduce.output.fileoutputformat.outputdir</name>
-                    <value>/user/${userName}/${examplesRoot}/apps/childwf/${outputDir}</value>
+                    <value>/user/${wf:conf('user.name')}/${examplesRoot}/apps/childwf/${outputDir}</value>
                 </property>
             </configuration>
-            <file>/user/${userName}/${examplesRoot}/apps/childwf/lib/wordcount.jar</file>
+            <file>/user/${wf:conf('user.name')}/${examplesRoot}/apps/childwf/lib/wordcount.jar</file>
         </map-reduce>
         <ok to="end"/>
         <error to="fail"/>

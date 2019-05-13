@@ -12,22 +12,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Maps Oozie start node to Airflow's DAG"""
-from typing import Set
-
-from mappers.base_mapper import BaseMapper
+"""Converts variable name to pythonic one"""
+import re
 
 
-class StartMapper(BaseMapper):
-    def required_imports(self) -> Set[str]:
-        return set()
-
-    def convert_to_text(self) -> str:
-        return ""
-
-    def on_parse_finish(self, workflow):
-        super().on_parse_finish(self)
-        del workflow.nodes[self.name]
-        workflow.relations -= {
-            relation for relation in workflow.relations if relation.from_task_variable_name == self.name
-        }
+def convert_to_python_variable(name: str):
+    # Replace all hyphens with underscores
+    name = name.replace("-", "_")
+    # Remove invalid characters
+    name = re.sub("[^0-9a-zA-Z_]", "", name)
+    # Remove leading characters until we find a letter or underscore
+    name = re.sub("^[^a-zA-Z_]+", "", name)
+    return name

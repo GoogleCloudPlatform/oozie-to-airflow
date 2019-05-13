@@ -14,7 +14,7 @@
 # limitations under the License.
 """Maps Oozie pig node to Airflow's DAG"""
 import os
-from typing import Dict, Set
+from typing import Dict, Set, Union, List
 from xml.etree.ElementTree import Element
 
 from airflow.utils.trigger_rule import TriggerRule
@@ -33,36 +33,32 @@ class PigMapper(ActionMapper, PrepareMixin):
     Converts a Pig Oozie node to an Airflow task.
     """
 
-    properties: Dict[str, str]
-    params_dict: Dict[str, str]
-
     def __init__(
         self,
         oozie_node: Element,
         name: str,
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
-        params=None,
+        properties=None,
         **kwargs,
     ):
-        ActionMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, **kwargs)
-        if params is None:
-            params = dict()
-        self.params = params
+        ActionMapper.__init__(
+            self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, properties=properties, **kwargs
+        )
         self.trigger_rule = trigger_rule
-        self.properties = {}
-        self.params_dict = {}
-        self.file_extractor = FileExtractor(oozie_node=oozie_node, params=params)
-        self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, params=params)
+        self.params_dict: Dict[str, Union[List[str], str]] = {}
+        self.file_extractor = FileExtractor(oozie_node=oozie_node, properties=properties)
+        self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, properties=properties)
         self._parse_oozie_node()
 
     def _parse_oozie_node(self):
         res_man_text = self.oozie_node.find("resource-manager").text
         name_node_text = self.oozie_node.find("name-node").text
         script = self.oozie_node.find("script").text
-        self.resource_manager = el_utils.replace_el_with_var(res_man_text, params=self.params, quote=False)
-        self.name_node = el_utils.replace_el_with_var(name_node_text, params=self.params, quote=False)
-        self.script_file_name = el_utils.replace_el_with_var(script, params=self.params, quote=False)
-        self._parse_config()
+        self.resource_manager = el_utils.convert_el_string_to_fstring(
+            res_man_text, properties=self.properties
+        )
+        self.name_node = el_utils.convert_el_string_to_fstring(name_node_text, properties=self.properties)
+        self.script_file_name = el_utils.replace_el_with_property_values(script, properties=self.properties)
         self._parse_params()
         self.files, self.hdfs_files = self.file_extractor.parse_node()
         self.archives, self.hdfs_archives = self.archive_extractor.parse_node()
@@ -72,18 +68,20 @@ class PigMapper(ActionMapper, PrepareMixin):
         if param_nodes:
             self.params_dict = {}
             for node in param_nodes:
-                param = el_utils.replace_el_with_var(node.text, params=self.params, quote=False)
+                param = el_utils.convert_el_string_to_fstring(node.text, properties=self.properties)
                 key, value = param.split("=")
                 self.params_dict[key] = value
 
     def convert_to_text(self) -> str:
-        prepare_command = self.get_prepare_command(self.oozie_node, self.params)
+        prepare_command, prepare_arguments = self.get_prepare_command_with_arguments(
+            self.oozie_node, self.properties
+        )
         tasks = [
             Task(
-                task_id=self.name + "_prepare",
+                task_id=self.name + "-prepare",
                 template_name="prepare.tpl",
                 trigger_rule=self.trigger_rule,
-                template_params=dict(prepare_command=prepare_command),
+                template_params=dict(prepare_command=prepare_command, prepare_arguments=prepare_arguments),
             ),
             Task(
                 task_id=self.name,
@@ -96,7 +94,7 @@ class PigMapper(ActionMapper, PrepareMixin):
                 ),
             ),
         ]
-        relations = [Relation(from_task_id=self.name + "_prepare", to_task_id=self.name)]
+        relations = [Relation(from_task_id=self.name + "-prepare", to_task_id=self.name)]
         return render_template(template_name="action.tpl", tasks=tasks, relations=relations)
 
     def _add_symlinks(self, destination_pig_file):
@@ -115,7 +113,7 @@ class PigMapper(ActionMapper, PrepareMixin):
     def _copy_pig_script_with_path_injection(self, destination_pig_file_path, source_pig_file_path):
         os.makedirs(os.path.dirname(destination_pig_file_path), exist_ok=True)
         with open(destination_pig_file_path, "w") as destination_pig_file:
-            with open(source_pig_file_path, "r") as source_pig_file:
+            with open(source_pig_file_path) as source_pig_file:
                 pig_script = source_pig_file.read()
                 if self.files or self.archives:
                     self._add_symlinks(destination_pig_file)
@@ -133,4 +131,4 @@ class PigMapper(ActionMapper, PrepareMixin):
 
     @property
     def first_task_id(self):
-        return "{task_id}_prepare".format(task_id=self.name)
+        return "{task_id}-prepare".format(task_id=self.name)

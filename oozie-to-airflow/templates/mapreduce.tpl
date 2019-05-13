@@ -14,24 +14,24 @@
   limitations under the License.
  #}
 
-{{ task_id }} = dataproc_operator.DataProcHadoopOperator(
-    task_id={{ task_id | tojson }},
-    trigger_rule={{ trigger_rule | tojson }},
-    main_class=PARAMS['hadoop_main_class'],
+{{ task_variable_name }} = dataproc_operator.DataProcHadoopOperator(
+    task_id='{{ task_id }}',
+    trigger_rule='{{ trigger_rule }}',
+    main_class=CTX['hadoop_main_class'],
     arguments=[
-        {{ properties['mapreduce.input.fileinputformat.inputdir'] | tojson }},
-        {{ properties['mapreduce.output.fileoutputformat.outputdir'] | tojson }}
+        CTX['mapreduce.input.fileinputformat.inputdir'],
+        CTX['mapreduce.output.fileoutputformat.outputdir']
     ],
     {% if hdfs_files %}
-    files={{ hdfs_files | tojson }},
+    files=[{% for file in hdfs_files %}f'{{ file }}', {% endfor %}],
     {% endif %}
     {% if hdfs_archives %}
-    archives={{ hdfs_archives | tojson }},
+    archives=[{% for archive in hdfs_archives %}f'{{ archive }}', {% endfor %}],
     {% endif %}
-    cluster_name=PARAMS['dataproc_cluster'],
-    dataproc_hadoop_properties={{ properties }},
-    dataproc_hadoop_jars=PARAMS['hadoop_jars'],
-    gcp_conn_id=PARAMS['gcp_conn_id'],
-    region=PARAMS['gcp_region'],
-    dataproc_job_id={{ task_id | tojson }}
+    cluster_name=CTX['dataproc_cluster'],
+    dataproc_hadoop_properties={{ '{' }}{% for property, value in properties.items() %}'{{ property }}': f'{{value}}', {% endfor %}{{ '}' }},
+    dataproc_hadoop_jars=CTX['hadoop_jars'].split(','),
+    gcp_conn_id=CTX['gcp_conn_id'],
+    region=CTX['gcp_region'],
+    dataproc_job_id=f'{{ task_id }}'
 )

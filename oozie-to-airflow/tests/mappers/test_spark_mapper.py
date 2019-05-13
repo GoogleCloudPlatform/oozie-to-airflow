@@ -25,7 +25,7 @@ from converter.primitives import Task, Relation
 from mappers import spark_mapper
 from utils.xml_utils import find_nodes_by_tag
 
-EXAMPLE_PARAMS = {"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3", "nameNode": "hdfs://"}
+EXAMPLE_PROPERTIES = {"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3", "nameNode": "hdfs://"}
 
 # language=XML
 EXAMPLE_XML_WITH_PREPARE = """
@@ -68,21 +68,20 @@ EXAMPLE_XML_WITHOUT_PREPARE = """
     <name>Spark Examples</name>
     <mode>client</mode>
     <class>org.apache.spark.examples.mllib.JavaALS</class>
-    <jar>/user/${userName}/${examplesRoot}/apps/spark/lib/oozie-examples-4.3.0.jar</jar>
+    <jar>/user/${wf:conf('user.name')}/${examplesRoot}/apps/spark/lib/oozie-examples-4.3.0.jar</jar>
     <spark-opts>
     --executor-memory 20G --num-executors 50
     --conf spark.executor.extraJavaOptions="-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
     </spark-opts>
     <arg>inputpath=hdfs:///input/file.txt</arg>
     <arg>value=2</arg>
-    <arg>/user/${userName}/${examplesRoot}/apps/spark/lib/oozie-examples-4.3.0.jar</arg>
+    <arg>/user/${wf:conf('user.name')}/${examplesRoot}/apps/spark/lib/oozie-examples-4.3.0.jar</arg>
 </spark>
 """
-EXAMPLE_PARAMS = {
+EXAMPLE_PROPERTIES = {
     "dataproc_cluster": "my-cluster",
     "gcp_region": "europe-west3",
     "nameNode": "hdfs://",
-    "userName": "test_user",
     "examplesRoot": "examples",
 }
 
@@ -92,7 +91,7 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
         spark_node = ET.fromstring(EXAMPLE_XML_WITH_PREPARE)
         mapper = self._get_spark_mapper(spark_node)
         # make sure everything is getting initialized correctly
-        self.assertEqual("test_id", mapper.name)
+        self.assertEqual("test-id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(spark_node, mapper.oozie_node)
 
@@ -110,18 +109,18 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
 
         self.assertEqual(kwargs["template_name"], "action.tpl")
         self.assertEqual(
-            tasks,
             [
                 Task(
-                    task_id="test_id_prepare",
+                    task_id="test-id-prepare",
                     template_name="prepare.tpl",
                     template_params={
                         "prepare_command": "$DAGS_FOLDER/../data/prepare.sh -c my-cluster -r europe-west3 "
-                        '-d "/tmp/d_path" -m "/tmp/mk_path"'
+                        '-d "{}" -m "{}"',
+                        "prepare_arguments": ["hdfs:///tmp/d_path", "hdfs:///tmp/mk_path"],
                     },
                 ),
                 Task(
-                    task_id="test_id",
+                    task_id="test-id",
                     template_name="spark.tpl",
                     template_params={
                         "main_jar": None,
@@ -131,6 +130,10 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
                         "files": [],
                         "job_name": "Spark Examples",
                         "dataproc_spark_properties": {
+                            "dataproc_cluster": "my-cluster",
+                            "gcp_region": "europe-west3",
+                            "nameNode": "hdfs://",
+                            "examplesRoot": "examples",
                             "mapred.compress.map.output": "true",
                             "spark.executor.extraJavaOptions": "-XX:+HeapDumpOnOutOfMemoryError "
                             "-XX:HeapDumpPath=/tmp",
@@ -139,9 +142,10 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
                     },
                 ),
             ],
+            tasks,
         )
 
-        self.assertEqual(relations, [Relation(from_task_id="test_id_prepare", to_task_id="test_id")])
+        self.assertEqual(relations, [Relation(from_task_id="test-id-prepare", to_task_id="test-id")])
 
     @mock.patch("mappers.spark_mapper.render_template", return_value="RETURN")
     def test_convert_to_text_without_prepare_node(self, render_template_mock):
@@ -158,10 +162,9 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
 
         self.assertEqual(kwargs["template_name"], "action.tpl")
         self.assertEqual(
-            tasks,
             [
                 Task(
-                    task_id="test_id",
+                    task_id="test-id",
                     template_name="spark.tpl",
                     template_params={
                         "main_jar": None,
@@ -169,22 +172,31 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
                         "arguments": [
                             "inputpath=hdfs:///input/file.txt",
                             "value=2",
-                            "/user/test_user/examples/apps/spark/lib/oozie-examples-4.3.0.jar",
+                            '/user/{el_wf_functions.wf_conf(CTX, "user.name")}/'
+                            '{CTX["examplesRoot"]}'
+                            "/apps/spark/lib/oozie-examples-4.3.0.jar",
                         ],
                         "archives": [],
                         "files": [],
                         "job_name": "Spark Examples",
                         "dataproc_spark_properties": {
+                            "dataproc_cluster": "my-cluster",
+                            "gcp_region": "europe-west3",
+                            "nameNode": "hdfs://",
+                            "examplesRoot": "examples",
                             "mapred.compress.map.output": "true",
                             "spark.executor.extraJavaOptions": "-XX:+HeapDumpOnOutOfMemoryError "
                             "-XX:HeapDumpPath=/tmp",
                         },
                         "dataproc_spark_jars": [
-                            "/user/test_user/examples/apps/spark/lib/oozie-examples-4.3.0.jar"
+                            '/user/{el_wf_functions.wf_conf(CTX, "user.name")}/'
+                            '{CTX["examplesRoot"]}'
+                            "/apps/spark/lib/oozie-examples-4.3.0.jar"
                         ],
                     },
                 )
             ],
+            tasks,
         )
         self.assertEqual(relations, [])
 
@@ -194,12 +206,25 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
                 "--executor-memory 20G --num-executors 50 --conf "
                 'spark.executor.extraJavaOptions="-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"',
                 {
+                    "dataproc_cluster": "my-cluster",
+                    "examplesRoot": "examples",
+                    "gcp_region": "europe-west3",
+                    "nameNode": "hdfs://",
                     "mapred.compress.map.output": "true",
                     "spark.executor.extraJavaOptions": "-XX:+HeapDumpOnOutOfMemoryError "
                     "-XX:HeapDumpPath=/tmp",
                 },
             ),
-            ("AAA", {"mapred.compress.map.output": "true"}),
+            (
+                "AAA",
+                {
+                    "dataproc_cluster": "my-cluster",
+                    "examplesRoot": "examples",
+                    "gcp_region": "europe-west3",
+                    "nameNode": "hdfs://",
+                    "mapred.compress.map.output": "true",
+                },
+            ),
             (
                 '--conf key1=value --conf key2="value1 value2" '
                 '--conf dup="value1 value2" --conf dup="value3 value4"',
@@ -207,6 +232,10 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
                     "dup": "value3 value4",
                     "key1": "value",
                     "key2": "value1 value2",
+                    "dataproc_cluster": "my-cluster",
+                    "examplesRoot": "examples",
+                    "gcp_region": "europe-west3",
+                    "nameNode": "hdfs://",
                     "mapred.compress.map.output": "true",
                 },
             ),
@@ -237,6 +266,9 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
     @staticmethod
     def _get_spark_mapper(spark_node):
         mapper = spark_mapper.SparkMapper(
-            oozie_node=spark_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=EXAMPLE_PARAMS
+            oozie_node=spark_node,
+            name="test-id",
+            trigger_rule=TriggerRule.DUMMY,
+            properties=EXAMPLE_PROPERTIES,
         )
         return mapper

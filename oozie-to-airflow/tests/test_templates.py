@@ -132,7 +132,7 @@ class TemplateTestMixin:
         in result of the template rendering. The new value is selected randomly. The operation is
         performed recursively.
 
-        This test allows you to check if all the parameters specified in the `DEFAULT_TEMPLATE_PARAMS` field
+        This test allows you to check if all the properties specified in the `DEFAULT_TEMPLATE_PARAMS` field
         are used in the template specified by the `TEMPLATE_NAME` field.
         """
         original_view = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
@@ -146,7 +146,7 @@ class TemplateTestMixin:
                 self.assertNotEqual(
                     original_view,
                     mutated_view,
-                    f"Uncorrelated template params: {path}, Mutated view: {mutated_view}",
+                    f"Uncorrelated template properties: {path}, Mutated view: {mutated_view}",
                 )
             elif isinstance(current_value, dict):
                 for key, _ in current_value.items():
@@ -177,9 +177,10 @@ class DecisionTemplateTestCase(unittest.TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "decision.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = dict(
-        task_id="AAA",
+        task_id="aaa",
+        task_variable_name="AAA",
         trigger_rule=TriggerRule.DUMMY,
-        case_dict={"first_not_null('', '')": "task1", "'True'": "task2", "default": "task3"},
+        case_dict={"first_not_null('', '')": "task1", "True": "task2", "default": "task3"},
     )
 
     def test_minimal_green_path(self):
@@ -190,17 +191,23 @@ class DecisionTemplateTestCase(unittest.TestCase, TemplateTestMixin):
 class DummyTemplateTestCase(unittest.TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "dummy.tpl"
 
-    DEFAULT_TEMPLATE_PARAMS = dict(task_id="AAA", trigger_rule=TriggerRule.DUMMY)
+    DEFAULT_TEMPLATE_PARAMS = dict(task_id="aaa", task_variable_name="AAA", trigger_rule=TriggerRule.DUMMY)
 
     def test_minimal_green_path(self):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
         self.assertValidPython(res)
 
 
-class FsOpTempalteTestCase(unittest.TestCase, TemplateTestMixin):
+class FsOpTemplateTestCase(unittest.TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "fs_op.tpl"
 
-    DEFAULT_TEMPLATE_PARAMS = {"task_id": "AAA", "pig_command": "AAA", "trigger_rule": TriggerRule.DUMMY}
+    DEFAULT_TEMPLATE_PARAMS = {
+        "task_id": "aaa",
+        "task_variable_name": "AAA",
+        "trigger_rule": "dummy",
+        "pig_command": "AAA",
+        "arguments": ["hdfs://localhost:8032/tmp"],
+    }
 
     def test_minimal_green_path(self):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
@@ -215,7 +222,7 @@ class FsOpTempalteTestCase(unittest.TestCase, TemplateTestMixin):
 class KillTemplateTestCase(unittest.TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "kill.tpl"
 
-    DEFAULT_TEMPLATE_PARAMS = dict(task_id="AAA", trigger_rule=TriggerRule.DUMMY)
+    DEFAULT_TEMPLATE_PARAMS = dict(task_id="aaa", task_variable_name="AAA", trigger_rule=TriggerRule.DUMMY)
 
     def test_minimal_green_path(self):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
@@ -226,7 +233,8 @@ class MapReduceTemplateTestCase(unittest.TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "mapreduce.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = {
-        "task_id": "AA",
+        "task_id": "aaa",
+        "task_variable_name": "AAA",
         "trigger_rule": "dummy",
         "properties": {
             "mapred.mapper.new-api": "true",
@@ -259,7 +267,8 @@ class PigTemplateTestCase(unittest.TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "pig.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = {
-        "task_id": "AA",
+        "task_id": "aaa",
+        "task_variable_name": "AAA",
         "trigger_rule": "dummy",
         "properties": {"mapred.job.queue.name": "${queueName}", "mapred.map.output.compress": "false"},
         "params_dict": {
@@ -281,8 +290,8 @@ class PigTemplateTestCase(unittest.TestCase, TemplateTestMixin):
 
     @parameterized.expand(
         [
-            ({"params": {'AA"': "AAA"}},),
-            ({"params": {"AA": 'A"AA'}},),
+            ({"properties": {'AA"': "AAA"}},),
+            ({"properties": {"AA": 'A"AA'}},),
             ({"command": 'A"'},),
             ({"user": 'A"'},),
             ({"host": 'A"'},),
@@ -297,7 +306,13 @@ class PigTemplateTestCase(unittest.TestCase, TemplateTestMixin):
 class PrepareTemplateTestCase(unittest.TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "prepare.tpl"
 
-    DEFAULT_TEMPLATE_PARAMS = {"task_id": "AAA", "prepare_command": "AAAA", "trigger_rule": "dummy"}
+    DEFAULT_TEMPLATE_PARAMS = {
+        "task_id": "aaa",
+        "task_variable_name": "AAA",
+        "trigger_rule": "dummy",
+        "prepare_command": "AAAA",
+        "prepare_arguments": ["properties", "properties"],
+    }
 
     def test_green_path(self):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
@@ -333,7 +348,12 @@ class RelationsTemplateTestCase(unittest.TestCase, TemplateTestMixin):
 class ShellTemplateTestCase(unittest.TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "shell.tpl"
 
-    DEFAULT_TEMPLATE_PARAMS = {"task_id": "AAA", "pig_command": "AAAA", "trigger_rule": "dummy"}
+    DEFAULT_TEMPLATE_PARAMS = {
+        "task_id": "aaa",
+        "task_variable_name": "AAA",
+        "trigger_rule": "dummy",
+        "pig_command": "AAAA",
+    }
 
     def test_green_path(self):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
@@ -350,7 +370,9 @@ class SparkTemplateTestCase(unittest.TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "spark.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = {
-        "task_id": "AA",
+        "task_id": "aaa",
+        "task_variable_name": "AAA",
+        "trigger_rule": "dummy",
         "archives": [],
         "arguments": ["inputpath=hdfs:///input/file.txt", "value=2"],
         "dataproc_spark_jars": ["/lib/spark-examples_2.10-1.1.0.jar"],
@@ -362,7 +384,6 @@ class SparkTemplateTestCase(unittest.TestCase, TemplateTestMixin):
         "job_name": "Spark Examples",
         "main_class": "org.apache.spark.examples.mllib.JavaALS",
         "main_jar": None,
-        "trigger_rule": "dummy",
     }
 
     def test_green_path(self):
@@ -386,8 +407,8 @@ class SparkTemplateTestCase(unittest.TestCase, TemplateTestMixin):
 
     @parameterized.expand(
         [
-            ({"params": {'AA"': "AAA"}},),
-            ({"params": {"AA": 'A"AA'}},),
+            ({"properties": {'AA"': "AAA"}},),
+            ({"properties": {"AA": 'A"AA'}},),
             ({"name": 'A"'},),
             ({"command": 'A"'},),
             ({"user": 'A"'},),
@@ -405,8 +426,9 @@ class SshTemplateTestCase(unittest.TestCase, TemplateTestMixin):
 
     DEFAULT_TEMPLATE_PARAMS = {
         "task_id": "AA",
-        "params": {},
+        "task_variable_name": "aaa",
         "trigger_rule": "dummy",
+        "properties": {},
         "command": "ls -l -a",
         "user": "user",
         "host": "apache.org",
@@ -416,7 +438,7 @@ class SshTemplateTestCase(unittest.TestCase, TemplateTestMixin):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
         self.assertValidPython(res)
 
-    @parameterized.expand([({"params": None},)])
+    @parameterized.expand([({"properties": None},)])
     def test_optional_parameters(self, mutation):
         template_params = mutate(self.DEFAULT_TEMPLATE_PARAMS, mutation)
         res = render_template(self.TEMPLATE_NAME, **template_params)
@@ -424,11 +446,10 @@ class SshTemplateTestCase(unittest.TestCase, TemplateTestMixin):
 
     @parameterized.expand(
         [
-            ({"params": {'AA"': "AAA"}},),
-            ({"params": {"AA": 'A"AA'}},),
-            ({"command": 'A"'},),
-            ({"user": 'A"'},),
-            ({"host": 'A"'},),
+            ({"command": 'COMMAND"'},),
+            ({"command": "COMMAND\\'\""},),
+            ({"user": "USER\\'\""},),
+            ({"host": 'USER"'},),
         ]
     )
     def test_escape_character(self, mutation):
@@ -440,7 +461,12 @@ class SshTemplateTestCase(unittest.TestCase, TemplateTestMixin):
 class SubwfTemplateTestCase(unittest.TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "subwf.tpl"
 
-    DEFAULT_TEMPLATE_PARAMS = {"task_id": "test_id", "app_name": "AAA", "trigger_rule": "dummy"}
+    DEFAULT_TEMPLATE_PARAMS = {
+        "task_id": "test-id",
+        "task_variable_name": "TEST_ID",
+        "trigger_rule": "dummy",
+        "app_name": "AAA",
+    }
 
     def test_green_path(self):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)

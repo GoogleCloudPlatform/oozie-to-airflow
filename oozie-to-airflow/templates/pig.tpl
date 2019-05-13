@@ -14,14 +14,14 @@
   limitations under the License.
  #}
 
-{{ task_id }} = dataproc_operator.DataProcPigOperator(
-    task_id={{ task_id | tojson }},
-    trigger_rule={{ trigger_rule | tojson }},
-    query_uri='{}/{}'.format(PARAMS['gcp_uri_prefix'], {{ script_file_name | tojson }}),
-    variables={{ params_dict }},
-    dataproc_pig_properties={{ properties }},
-    cluster_name=PARAMS['dataproc_cluster'],
-    gcp_conn_id=PARAMS['gcp_conn_id'],
-    region=PARAMS['gcp_region'],
-    dataproc_job_id={{ task_id | tojson }}
+{{ task_variable_name }} = dataproc_operator.DataProcPigOperator(
+    query_uri='{}/{}'.format(CTX['gcp_uri_prefix'], f'{{ script_file_name }}'),
+    task_id='{{ task_id }}',
+    trigger_rule='{{ trigger_rule }}',
+    variables={{ '{' }}{% for param, value in params_dict.items() %}'{{ param }}': f'{{value}}', {% endfor %}{{ '}' }},
+    dataproc_pig_properties={{ '{' }}{% for property, value in properties.items() %}'{{ property }}': f'{{value}}', {% endfor %}{{ '}' }},
+    cluster_name=CTX['dataproc_cluster'],
+    gcp_conn_id=CTX['gcp_conn_id'],
+    region=CTX['gcp_region'],
+    dataproc_job_id=f'{{ task_id }}'
 )

@@ -37,36 +37,40 @@ class ShellMapper(ActionMapper, PrepareMixin):
         self,
         oozie_node: ET.Element,
         name: str,
+        properties: Dict[str, str],
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
-        params: Dict[str, str] = None,
         **kwargs,
     ):
-        ActionMapper.__init__(self, oozie_node, name, trigger_rule, **kwargs)
-        if params is None:
-            params = {}
-        self.params = params
+        ActionMapper.__init__(
+            self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, properties=properties, **kwargs
+        )
         self.trigger_rule = trigger_rule
         self._parse_oozie_node()
 
     def _parse_oozie_node(self):
         res_man_text = self.oozie_node.find("resource-manager").text
         name_node_text = self.oozie_node.find("name-node").text
-        self.resource_manager = el_utils.replace_el_with_var(res_man_text, params=self.params, quote=False)
-        self.name_node = el_utils.replace_el_with_var(name_node_text, params=self.params, quote=False)
-        self._parse_config()
+        self.resource_manager = el_utils.convert_el_string_to_fstring(
+            res_man_text, properties=self.properties
+        )
+        self.name_node = el_utils.convert_el_string_to_fstring(name_node_text, properties=self.properties)
         cmd_node = self.oozie_node.find("exec")
         arg_nodes = self.oozie_node.findall("argument")
         cmd = " ".join([cmd_node.text] + [x.text for x in arg_nodes])
-        self.bash_command = el_utils.convert_el_to_jinja(cmd, quote=False)
-        self.pig_command = f"sh {shlex.quote(self.bash_command)}"
+        self.bash_command = el_utils.convert_el_string_to_fstring(cmd, properties=self.properties)
+        quoted_command = shlex.quote(self.bash_command)
+        escaped_quoted_command = el_utils.escape_string_with_python_escapes(quoted_command)
+        self.pig_command = f"sh {escaped_quoted_command}"
 
     def convert_to_text(self) -> str:
-        prepare_command = self.get_prepare_command(self.oozie_node, self.params)
+        prepare_command, prepare_arguments = self.get_prepare_command_with_arguments(
+            self.oozie_node, self.properties
+        )
         tasks = [
             Task(
-                task_id=self.name + "_prepare",
+                task_id=self.name + "-prepare",
                 template_name="prepare.tpl",
-                template_params=dict(prepare_command=prepare_command),
+                template_params=dict(prepare_command=prepare_command, prepare_arguments=prepare_arguments),
             ),
             Task(
                 task_id=self.name,
@@ -74,7 +78,7 @@ class ShellMapper(ActionMapper, PrepareMixin):
                 template_params=dict(pig_command=self.pig_command),
             ),
         ]
-        relations = [Relation(from_task_id=self.name + "_prepare", to_task_id=self.name)]
+        relations = [Relation(from_task_id=self.name + "-prepare", to_task_id=self.name)]
         return render_template(template_name="action.tpl", tasks=tasks, relations=relations)
 
     def required_imports(self) -> Set[str]:
@@ -82,4 +86,4 @@ class ShellMapper(ActionMapper, PrepareMixin):
 
     @property
     def first_task_id(self):
-        return "{task_id}_prepare".format(task_id=self.name)
+        return "{task_id}-prepare".format(task_id=self.name)

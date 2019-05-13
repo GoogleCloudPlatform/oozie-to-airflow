@@ -38,17 +38,33 @@ class SSHMapper(ActionMapper):
         self,
         oozie_node: Element,
         name: str,
+        properties: Dict[str, str],
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
-        params: Dict[str, str] = None,
         template: str = "ssh.tpl",
         **kwargs,
     ):
-        ActionMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, **kwargs)
-
-        if params is None:
-            params = {}
+        ActionMapper.__init__(
+            self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, properties=properties, **kwargs
+        )
         self.template = template
 
+        self.command = self.get_command()
+        self.user, self.host = self.get_user_host()
+
+    def get_user_host(self):
+        host = self.oozie_node.find("host")
+        if host is None or not host.text:
+            raise Exception("Missing host node in SSH action: {}".format(self.oozie_node))
+        host_key = el_utils.replace_el_with_property_values(host.text, properties=self.properties)
+        # the <user> node is formatted like [USER]@[HOST]
+        if host_key in self.properties:
+            host_key = self.properties[host_key]
+        # Since airflow separates user and host, we can't use jinja templating.
+        # We must check if it is in properties.
+        user_host = host_key.split("@")
+        return user_host[0], user_host[1]
+
+    def get_command(self):
         cmd_node = self.oozie_node.find("command")
         arg_nodes = self.oozie_node.findall("args")
         if cmd_node is None or not cmd_node.text:
@@ -56,21 +72,7 @@ class SSHMapper(ActionMapper):
         cmd = cmd_node.text
         args = (x.text if x.text else "" for x in arg_nodes)
         cmd = " ".join(shlex.quote(x) for x in [cmd, *args])
-
-        self.command = el_utils.convert_el_to_jinja(cmd, quote=True)
-        host = self.oozie_node.find("host")
-        if host is None:
-            raise Exception("Missing host node in SSH action: {}".format(self.oozie_node))
-        host_key = el_utils.strip_el(host.text)
-        # the <user> node is formatted like [USER]@[HOST]
-        if host_key in params:
-            host_key = params[host_key]
-
-        # Since ariflow separates user and host, we can't use jinja templating.
-        # We must check if it is in params.
-        user_host = host_key.split("@")
-        self.user = user_host[0]
-        self.host = user_host[1]
+        return el_utils.convert_el_string_to_fstring(cmd, properties=self.properties)
 
     def convert_to_text(self) -> str:
         tasks = [
@@ -79,7 +81,7 @@ class SSHMapper(ActionMapper):
                 template_name="ssh.tpl",
                 trigger_rule=self.trigger_rule,
                 template_params=dict(
-                    params=self.params, command=self.command, user=self.user, host=self.host
+                    properties=self.properties, command=self.command, user=self.user, host=self.host
                 ),
             )
         ]

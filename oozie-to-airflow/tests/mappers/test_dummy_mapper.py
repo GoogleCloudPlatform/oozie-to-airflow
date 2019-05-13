@@ -29,7 +29,7 @@ class TestDummyMapper(unittest.TestCase):
     def test_create_mapper(self):
         mapper = self._get_dummy_mapper()
         # make sure everything is getting initialized correctly
-        self.assertEqual("test_id", mapper.name)
+        self.assertEqual("test-id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
 
     @mock.patch("mappers.dummy_mapper.render_template", return_value="RETURN")
@@ -44,7 +44,7 @@ class TestDummyMapper(unittest.TestCase):
         relations = kwargs["relations"]
 
         self.assertEqual(kwargs["template_name"], "action.tpl")
-        self.assertEqual(tasks, [Task(task_id="test_id", template_name="dummy.tpl")])
+        self.assertEqual(tasks, [Task(task_id="test-id", template_name="dummy.tpl")])
         self.assertEqual(relations, [])
 
     def test_required_imports(self):
@@ -55,5 +55,5 @@ class TestDummyMapper(unittest.TestCase):
 
     def _get_dummy_mapper(self):
         return dummy_mapper.DummyMapper(
-            oozie_node=self.oozie_node, name="test_id", trigger_rule=TriggerRule.DUMMY
+            oozie_node=self.oozie_node, name="test-id", trigger_rule=TriggerRule.DUMMY, properties={}
         )

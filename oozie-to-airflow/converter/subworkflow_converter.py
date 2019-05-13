@@ -13,15 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Converts sub-workflows of Oozie to Airflow"""
-import json
 import textwrap
-from typing import TextIO, Dict, Type, Set
+from typing import Dict, Set, TextIO
 
 from converter.oozie_converter import OozieConverter, INDENT
 from converter.parsed_node import ParsedNode
 from converter.primitives import Relation
-from mappers.action_mapper import ActionMapper
-from mappers.base_mapper import BaseMapper
 
 
 # pylint: disable=too-few-public-methods
@@ -33,8 +30,6 @@ class OozieSubworkflowConverter(OozieConverter):
         dag_name: str,
         input_directory_path: str,
         output_directory_path: str,
-        action_mapper: Dict[str, Type[ActionMapper]],
-        control_mapper: Dict[str, Type[BaseMapper]],
         user: str = None,
         start_days_ago: int = None,
         schedule_interval: str = None,
@@ -45,8 +40,6 @@ class OozieSubworkflowConverter(OozieConverter):
             dag_name=dag_name,
             input_directory_path=input_directory_path,
             output_directory_path=output_directory_path,
-            action_mapper=action_mapper,
-            control_mapper=control_mapper,
             user=user,
             start_days_ago=start_days_ago,
             schedule_interval=schedule_interval,
@@ -57,10 +50,14 @@ class OozieSubworkflowConverter(OozieConverter):
         self, depends: Set[str], file: TextIO, nodes: Dict[str, ParsedNode], relations: Set[Relation]
     ) -> None:
         self.write_dependencies(file, depends)
-        file.write("PARAMS = " + json.dumps(self.params, indent=INDENT) + "\n\n")
+        self.write_properties(file=file, properties=self.properties)
         file.write("\ndef sub_dag(parent_dag_name, child_dag_name, start_date, schedule_interval):\n")
         self.write_dag_header(
-            file, self.dag_name, self.schedule_interval, self.start_days_ago, template="dag_subwf.tpl"
+            file=file,
+            dag_name=self.dag_name,
+            schedule_interval=self.schedule_interval,
+            start_days_ago=self.start_days_ago,
+            template="dag_subwf.tpl",
         )
         self.write_nodes(file, nodes, indent=INDENT + 4)
         file.write("\n\n")

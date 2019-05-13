@@ -14,15 +14,16 @@
 # limitations under the License.
 """Maps FS node to Airflow's DAG"""
 
-import shlex
-from typing import Set, List
+from typing import Set, Dict, List, Tuple
 from xml.etree.ElementTree import Element
+
+from airflow.utils.trigger_rule import TriggerRule
 
 from converter.primitives import Task
 from mappers.action_mapper import ActionMapper
 from utils.relation_utils import chain
 from utils.template_utils import render_template
-from utils.el_utils import normalize_path
+from utils.el_utils import normalize_path_by_adding_hdfs_if_needed
 
 ACTION_TYPE = "fs"
 
@@ -42,59 +43,57 @@ FS_TAG_PERMISSIONS = "permissions"
 FS_TAG_GROUP = "group"
 
 
-def prepare_mkdir_command(node: Element, params):
-    path = normalize_path(node.attrib[FS_TAG_PATH], params)
-    command = "fs -mkdir -p {path}".format(path=shlex.quote(path))
-    return command
+def prepare_mkdir_command(node: Element, properties: Dict[str, str]) -> Tuple[str, List[str]]:
+    path = normalize_path_by_adding_hdfs_if_needed(node.attrib[FS_TAG_PATH], properties)
+    command = "fs -mkdir -p \\'{}\\'"
+    return command, [path]
 
 
-def prepare_delete_command(node: Element, params):
-    path = normalize_path(node.attrib[FS_TAG_PATH], params)
-    command = "fs -rm -r {path}".format(path=shlex.quote(path))
+def prepare_delete_command(node: Element, properties: Dict[str, str]) -> Tuple[str, List[str]]:
+    path = normalize_path_by_adding_hdfs_if_needed(node.attrib[FS_TAG_PATH], properties)
+    command = "fs -rm -r \\'{}\\'"
 
-    return command
-
-
-def prepare_move_command(node: Element, params):
-    source = normalize_path(node.attrib[FS_TAG_SOURCE], params)
-    target = normalize_path(node.attrib[FS_TAG_TARGET], params, allow_no_schema=True)
-
-    command = "fs -mv {source} {target}".format(source=shlex.quote(source), target=shlex.quote(target))
-    return command
+    return command, [path]
 
 
-def prepare_chmod_command(node: Element, params):
-    path = normalize_path(node.attrib[FS_TAG_PATH], params)
+def prepare_move_command(node: Element, properties: Dict[str, str]) -> Tuple[str, List[str]]:
+    source = normalize_path_by_adding_hdfs_if_needed(node.attrib[FS_TAG_SOURCE], properties)
+    target = normalize_path_by_adding_hdfs_if_needed(
+        node.attrib[FS_TAG_TARGET], properties, allow_no_schema=True
+    )
+
+    command = "fs -mv \\'{}\\' \\'{}\\'"
+    return command, [source, target]
+
+
+def prepare_chmod_command(node: Element, properties: Dict[str, str]) -> Tuple[str, List[str]]:
+    path = normalize_path_by_adding_hdfs_if_needed(node.attrib[FS_TAG_PATH], properties)
     permission = node.attrib[FS_TAG_PERMISSIONS]
     # TODO: Add support for dirFiles Reference: GH issues #80
     # dirFiles = bool_value(node, FS_TAG _DIRFILES)
     recursive = node.find(FS_TAG_RECURSIVE) is not None
     extra_param = "-R" if recursive else ""
 
-    command = "fs -chmod {extra} {permission} {path}".format(
-        extra=extra_param, path=shlex.quote(path), permission=shlex.quote(permission)
-    )
-    return command
+    command = "fs -chmod {} \\'{}\\' \\'{}\\'"
+    return command, [extra_param, permission, path]
 
 
-def prepare_touchz_command(node: Element, params):
-    path = normalize_path(node.attrib[FS_TAG_PATH], params)
+def prepare_touchz_command(node: Element, properties: Dict[str, str]) -> Tuple[str, List[str]]:
+    path = normalize_path_by_adding_hdfs_if_needed(node.attrib[FS_TAG_PATH], properties)
 
-    command = "fs -touchz {path}".format(path=shlex.quote(path))
-    return command
+    command = "fs -touchz \\'{}\\'"
+    return command, [path]
 
 
-def prepare_chgrp_command(node: Element, params):
-    path = normalize_path(node.attrib[FS_TAG_PATH], params)
+def prepare_chgrp_command(node: Element, properties: Dict[str, str]) -> Tuple[str, List[str]]:
+    path = normalize_path_by_adding_hdfs_if_needed(node.attrib[FS_TAG_PATH], properties)
     group = node.attrib[FS_TAG_GROUP]
 
     recursive = node.find(FS_TAG_RECURSIVE) is not None
     extra_param = "-R" if recursive else ""
 
-    command = "fs -chgrp {extra} {group} {path}".format(
-        extra=extra_param, group=shlex.quote(group), path=shlex.quote(path)
-    )
-    return command
+    command = "fs -chgrp {} \\'{}\\' \\'{}\\'"
+    return command, [extra_param, group, path]
 
 
 FS_OPERATION_MAPPERS = {
@@ -112,11 +111,18 @@ class FsMapper(ActionMapper):
     Converts a FS Oozie node to an Airflow task.
     """
 
-    tasks: List[Task]
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.tasks = []
+    def __init__(
+        self,
+        oozie_node: Element,
+        name: str,
+        properties: Dict[str, str],
+        trigger_rule: str = TriggerRule.ALL_SUCCESS,
+        **kwargs,
+    ):
+        super().__init__(
+            oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, properties=properties, **kwargs
+        )
+        self.tasks: List[Task] = []
 
     def on_parse_node(self):
         super().on_parse_node()
@@ -132,11 +138,7 @@ class FsMapper(ActionMapper):
         return render_template(template_name="action.tpl", tasks=self.tasks, relations=chain(self.tasks))
 
     def required_imports(self) -> Set[str]:
-        return {
-            "from airflow.operators import dummy_operator",
-            "from airflow.operators import bash_operator",
-            "import shlex",
-        }
+        return {"from airflow.operators import dummy_operator", "from airflow.operators import bash_operator"}
 
     @property
     def first_task_id(self):
@@ -149,12 +151,16 @@ class FsMapper(ActionMapper):
     def parse_fs_action(self, index: int, node: Element):
         tag_name = node.tag
         tasks_count = len(self.oozie_node)
-        task_id = self.name if tasks_count == 1 else f"{self.name}_fs_{index}_{tag_name}"
+        task_id = self.name if tasks_count == 1 else f"{self.name}-fs-{index}-{tag_name}"
         mapper_fn = FS_OPERATION_MAPPERS.get(tag_name)
 
         if not mapper_fn:
             raise Exception("Unknown FS operation: {}".format(tag_name))
 
-        pig_command = mapper_fn(node, self.params)
+        pig_command, arguments = mapper_fn(node, self.properties)
 
-        return Task(task_id=task_id, template_name="fs_op.tpl", template_params=dict(pig_command=pig_command))
+        return Task(
+            task_id=task_id,
+            template_name="fs_op.tpl",
+            template_params=dict(pig_command=pig_command, arguments=arguments),
+        )

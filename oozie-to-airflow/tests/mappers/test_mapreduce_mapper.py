@@ -75,41 +75,18 @@ class TestMapReduceMapper(unittest.TestCase):
 """
         self.mapreduce_node = ET.fromstring(mapreduce_node_str)
 
-    def test_create_mapper_no_jinja(self):
-        mapper = self._get_mapreduce_mapper()
-        # make sure everything is getting initialized correctly
-        self.assertEqual("test_id", mapper.name)
-        self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
-        self.assertEqual(self.mapreduce_node, mapper.oozie_node)
-        self.assertEqual("hdfs://", mapper.name_node)
-        self.assertEqual("${queueName}", mapper.properties["mapred.job.queue.name"])
-        self.assertEqual("WordCount$Map", mapper.properties["mapreduce.job.map.class"])
-        self.assertEqual("WordCount$Reduce", mapper.properties["mapreduce.job.reduce.class"])
-        self.assertEqual("org.apache.hadoop.io.Text", mapper.properties["mapreduce.job.output.key.class"])
-        self.assertEqual(
-            "org.apache.hadoop.io.IntWritable", mapper.properties["mapreduce.job.output.value.class"]
-        )
-        self.assertEqual(
-            "/user/mapred/${examplesRoot}/mapreduce/input",
-            mapper.properties["mapreduce.input.fileinputformat.inputdir"],
-        )
-        self.assertEqual(
-            "/user/mapred/${examplesRoot}/mapreduce/output",
-            mapper.properties["mapreduce.output.fileoutputformat.outputdir"],
-        )
-
     def test_create_mapper_jinja(self):
         # test jinja templating
-        params = {"nameNode": "hdfs://", "queueName": "myQueue", "examplesRoot": "examples"}
+        properties = {"nameNode": "hdfs://", "queueName": "myQueue", "examplesRoot": "examples"}
 
-        mapper = self._get_mapreduce_mapper(params=params)
+        mapper = self._get_mapreduce_mapper(properties=properties)
 
         # make sure everything is getting initialized correctly
-        self.assertEqual("test_id", mapper.name)
+        self.assertEqual("test-id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.mapreduce_node, mapper.oozie_node)
         self.assertEqual("hdfs://", mapper.name_node)
-        self.assertEqual("myQueue", mapper.properties["mapred.job.queue.name"])
+        self.assertEqual('{CTX["queueName"]}', mapper.properties["mapred.job.queue.name"])
         self.assertEqual("WordCount$Map", mapper.properties["mapreduce.job.map.class"])
         self.assertEqual("WordCount$Reduce", mapper.properties["mapreduce.job.reduce.class"])
         self.assertEqual("org.apache.hadoop.io.Text", mapper.properties["mapreduce.job.output.key.class"])
@@ -117,11 +94,11 @@ class TestMapReduceMapper(unittest.TestCase):
             "org.apache.hadoop.io.IntWritable", mapper.properties["mapreduce.job.output.value.class"]
         )
         self.assertEqual(
-            "/user/mapred/examples/mapreduce/input",
+            '/user/mapred/{CTX["examplesRoot"]}/mapreduce/input',
             mapper.properties["mapreduce.input.fileinputformat.inputdir"],
         )
         self.assertEqual(
-            "/user/mapred/examples/mapreduce/output",
+            '/user/mapred/{CTX["examplesRoot"]}/mapreduce/output',
             mapper.properties["mapreduce.output.fileoutputformat.outputdir"],
         )
 
@@ -129,12 +106,14 @@ class TestMapReduceMapper(unittest.TestCase):
     def test_convert_to_text(self, render_template_mock):
         mapper = mapreduce_mapper.MapReduceMapper(
             oozie_node=self.mapreduce_node,
-            name="test_id",
+            name="test-id",
             trigger_rule=TriggerRule.DUMMY,
-            params={
+            properties={
                 "nameNode": "hdfs://",
                 "dataproc_cluster": "my-cluster",
                 "gcp_region": "europe-west3",
+                "queueName": "default",
+                "examplesRoot": "examples",
                 "hadoop_jars": "hdfs:///user/mapred/examples/mapreduce/lib/wordcount.jar",
                 "hadoop_main_class": "WordCount",
             },
@@ -150,32 +129,39 @@ class TestMapReduceMapper(unittest.TestCase):
 
         self.assertEqual(kwargs["template_name"], "action.tpl")
         self.assertEqual(
-            tasks,
             [
                 Task(
-                    task_id="test_id_prepare",
+                    task_id="test-id-prepare",
                     template_name="prepare.tpl",
                     template_params={
-                        "prepare_command": "$DAGS_FOLDER/../data/prepare.sh -c my-cluster "
-                        '-r europe-west3 -d "/examples/mapreduce/output"'
+                        "prepare_command": "$DAGS_FOLDER/../data/prepare.sh"
+                        ' -c my-cluster -r europe-west3 -d "{}"',
+                        "prepare_arguments": ['{CTX["nameNode"]}/examples/mapreduce/output'],
                     },
                 ),
                 Task(
-                    task_id="test_id",
+                    task_id="test-id",
                     template_name="mapreduce.tpl",
                     template_params={
                         "properties": {
+                            "nameNode": "hdfs://",
+                            "dataproc_cluster": "my-cluster",
+                            "gcp_region": "europe-west3",
+                            "queueName": "default",
+                            "examplesRoot": "examples",
+                            "hadoop_jars": "hdfs:///user/mapred/examples/mapreduce/lib/wordcount.jar",
+                            "hadoop_main_class": "WordCount",
                             "mapred.mapper.new-api": "true",
                             "mapred.reducer.new-api": "true",
-                            "mapred.job.queue.name": "${queueName}",
+                            "mapred.job.queue.name": '{CTX["queueName"]}',
                             "mapreduce.job.map.class": "WordCount$Map",
                             "mapreduce.job.reduce.class": "WordCount$Reduce",
                             "mapreduce.job.output.key.class": "org.apache.hadoop.io.Text",
                             "mapreduce.job.output.value.class": "org.apache.hadoop.io.IntWritable",
-                            "mapreduce.input.fileinputformat.inputdir": "/user/mapred/${examplesRoot}"
-                            "/mapreduce/input",
-                            "mapreduce.output.fileoutputformat.outputdir": "/user/mapred/${examplesRoot}"
-                            "/mapreduce/output",
+                            "mapreduce.input.fileinputformat.inputdir": "/user/mapred/"
+                            '{CTX["examplesRoot"]}/mapreduce/input',
+                            "mapreduce.output.fileoutputformat.outputdir": "/user/mapred/"
+                            '{CTX["examplesRoot"]}/mapreduce/output',
                         },
                         "params_dict": {},
                         "hdfs_files": [],
@@ -183,16 +169,21 @@ class TestMapReduceMapper(unittest.TestCase):
                     },
                 ),
             ],
+            tasks,
         )
-        self.assertEqual(relations, [Relation(from_task_id="test_id_prepare", to_task_id="test_id")])
+        self.assertEqual(relations, [Relation(from_task_id="test-id-prepare", to_task_id="test-id")])
 
     def test_required_imports(self):
-        mapper = self._get_mapreduce_mapper()
+        properties = {"nameNode": "hdfs://", "queueName": "myQueue", "examplesRoot": "examples"}
+        mapper = self._get_mapreduce_mapper(properties=properties)
         imps = mapper.required_imports()
         imp_str = "\n".join(imps)
         ast.parse(imp_str)
 
-    def _get_mapreduce_mapper(self, params=None):
+    def _get_mapreduce_mapper(self, properties=None):
         return mapreduce_mapper.MapReduceMapper(
-            oozie_node=self.mapreduce_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=params
+            oozie_node=self.mapreduce_node,
+            name="test-id",
+            trigger_rule=TriggerRule.DUMMY,
+            properties=properties,
         )

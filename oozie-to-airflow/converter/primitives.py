@@ -14,53 +14,72 @@
 # limitations under the License.
 """Class for Airflow relation"""
 from collections import OrderedDict
-from typing import Set, Optional, Dict, NamedTuple, Any
+from typing import Any, Dict, Optional, Set
+
+from orderedset import OrderedSet
 
 from airflow.utils.trigger_rule import TriggerRule
 
-# Pylint and flake8 does not understand forward references
-# https://www.python.org/dev/peps/pep-0484/#forward-references
-from converter import parsed_node  # noqa: F401 pylint: disable=unused-import
 from utils.template_utils import render_template
+from utils.variable_name import convert_to_python_variable
 
 
-class Relation(NamedTuple):
+class Relation:
     """Class for Airflow relation"""
 
-    from_task_id: str
-    to_task_id: str
+    def __init__(self, from_task_id: str, to_task_id: str):
+        self.from_task_id: str = from_task_id
+        self.to_task_id: str = to_task_id
+
+    @property
+    def from_task_variable_name(self):
+        return convert_to_python_variable(self.from_task_id)
+
+    @property
+    def to_task_variable_name(self):
+        return convert_to_python_variable(self.to_task_id)
+
+    def __eq__(self, other):
+        if not isinstance(other, Relation):
+            # don't attempt to compare against unrelated types
+            return NotImplemented
+
+        return self.from_task_id == other.from_task_id and self.to_task_id == other.to_task_id
+
+    def __hash__(self):
+        return hash((self.from_task_id, self.to_task_id))
+
+    def __repr__(self):
+        items = ("%s = %r" % (k, v) for k, v in self.__dict__.items())
+        return "<%s: {%s}>" % (self.__class__.__name__, ", ".join(items))
 
 
 # This is a container for data, so it does not contain public methods intentionally.
 class Workflow:  # pylint: disable=too-few-public-methods
     """Class for Workflow"""
 
-    dag_name: Optional[str]
-    input_directory_path: str
-    output_directory_path: str
-    relations: Set[Relation]
-    nodes: Dict[str, "parsed_node.ParsedNode"]
-    dependencies: Set[str]  # TODO: Check is set likely maintain insertion order (Python 3.6 ?)
-
     def __init__(self, input_directory_path, output_directory_path, dag_name=None) -> None:
-        self.input_directory_path = input_directory_path
-        self.output_directory_path = output_directory_path
-        self.dag_name = dag_name
-        self.relations = set()
+        self.input_directory_path: str = input_directory_path
+        self.output_directory_path: str = output_directory_path
+        self.dag_name: Optional[str] = dag_name
+        self.relations: Set[Relation] = set()
         # Dictionary is ordered purely for output being somewhat ordered the
         # same as how Oozie workflow was parsed.
-        self.nodes = OrderedDict()
+        from converter.parsed_node import ParsedNode
+
+        self.nodes: Dict[str, ParsedNode] = OrderedDict()
         # These are the general dependencies required that every operator
         # requires.
-        self.dependencies = {
-            "import datetime",
-            "from airflow import models",
-            "from airflow.utils.trigger_rule import TriggerRule",
-            "from airflow.utils import dates",
-            "from o2a_libs.el_basic_functions import * ",
-            "from o2a_libs.el_wf_functions import * ",
-            "from airflow.utils import dates",
-        }
+        self.dependencies: OrderedSet[str] = OrderedSet(
+            [
+                "from typing import NamedTuple, Dict",
+                "import datetime",
+                "from o2a_libs import el_basic_functions, el_wf_functions, ctx",
+                "from airflow import models",
+                "from airflow.utils.trigger_rule import TriggerRule",
+                "from airflow.utils import dates",
+            ]
+        )
 
     def __repr__(self) -> str:
         return (
@@ -79,15 +98,21 @@ class Workflow:  # pylint: disable=too-few-public-methods
 class Task:  # pylint: disable=too-few-public-methods
     """Class for Airflow Task"""
 
-    task_id: str
-    template_name: str
-    template_params: Dict[str, Any]
-
-    def __init__(self, task_id, template_name, trigger_rule=TriggerRule.DUMMY, template_params=None):
-        self.task_id = task_id
-        self.template_name = template_name
+    def __init__(
+        self,
+        task_id: str,
+        template_name: str,
+        trigger_rule=TriggerRule.DUMMY,
+        template_params: Dict[str, Any] = None,
+    ):
+        self.task_id: str = task_id
+        self.template_name: str = template_name
         self.trigger_rule = trigger_rule
-        self.template_params = template_params or {}
+        self.template_params: Dict[str, Any] = template_params or {}
+
+    @property
+    def task_variable_name(self):
+        return convert_to_python_variable(self.task_id)
 
     @property
     def rendered_template(self):
@@ -95,13 +120,16 @@ class Task:  # pylint: disable=too-few-public-methods
             template_name=self.template_name,
             task_id=self.task_id,
             trigger_rule=self.trigger_rule,
+            task_variable_name=self.task_variable_name,
             **self.template_params,
         )
 
     def __repr__(self) -> str:
         return (
-            f'Task(task_id="{self.task_id}", template_name="{self.template_name}", '
-            f'trigger_rule="{self.trigger_rule}", template_params={self.template_params})'
+            f'Task(task_id="{self.task_id}", '
+            f'template_name="{self.template_name}", '
+            f'trigger_rule="{self.trigger_rule}", '
+            f"template_params={self.template_params}, "
         )
 
     def __eq__(self, other):

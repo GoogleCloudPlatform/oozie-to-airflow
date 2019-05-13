@@ -14,7 +14,7 @@
   limitations under the License.
  #}
 
-{{ task_id }} = dummy_operator.DummyOperator(
-    task_id={{ task_id | tojson }},
-    trigger_rule={{ trigger_rule | tojson }}
+{{ task_variable_name }} = dummy_operator.DummyOperator(
+    task_id='{{ task_id }}',
+    trigger_rule=r'{{ trigger_rule}}'
 )

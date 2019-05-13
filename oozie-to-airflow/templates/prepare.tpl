@@ -13,9 +13,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
  #}
-
-{{ task_id }} = bash_operator.BashOperator(
-    task_id={{ task_id | tojson }},
-    trigger_rule={{ trigger_rule | tojson }},
-    bash_command={{ prepare_command | tojson }},
-)
+{{ task_variable_name }} = bash_operator.BashOperator(
+    task_id='{{ task_id }}',
+    trigger_rule='{{ trigger_rule }}',
+    bash_command='{{ prepare_command }}'.format({% for parameter in prepare_arguments %}f'{{ parameter }}',{% endfor %}))

@@ -39,9 +39,9 @@
         <pig>
             <resource-manager>${resourceManager}</resource-manager>
             <name-node>${nameNode}</name-node>
-            <prepare> <!-- TODO: replace userName with wf:user when we have it implemented -->
-                <delete path="${nameNode}/user/${userName}/${examplesRoot}/apps/pig/output-data"/>
-                <mkdir path="${nameNode}/user/${userName}/${examplesRoot}/apps/pig/created-folder"/>
+            <prepare>
+                <delete path="${nameNode}/user/${wf:conf('user.name')}/${examplesRoot}/apps/pig/output-data"/>
+                <mkdir path="${nameNode}/user/${wf:conf('user.name')}/${examplesRoot}/apps/pig/created-folder"/>
             </prepare>
             <configuration>
                 <property>
@@ -54,10 +54,10 @@
                 </property>
             </configuration>
             <script>id.pig</script>
-            <param>INPUT=/user/${userName}/${examplesRoot}/apps/pig/input-data/test-data.txt</param>
-            <param>OUTPUT=/user/${userName}/${examplesRoot}/apps/pig/output-data/</param>
+            <param>INPUT=/user/${wf:conf('user.name')}/${examplesRoot}/apps/pig/input-data/test-data.txt</param>
+            <param>OUTPUT=/user/${wf:conf('user.name')}/${examplesRoot}/apps/pig/output-data/</param>
             <file>test_dir/test.txt#test_link.txt</file>
-            <file>/user/${userName}/${examplesRoot}/apps/pig/test_dir/test2.zip#test_link.zip</file>
+            <file>/user/${wf:conf('user.name')}/${examplesRoot}/apps/pig/test_dir/test2.zip#test_link.zip</file>
             <archive>test_dir/test2.zip#test_zip_dir</archive>
             <archive>test_dir/test3.zip#test3_zip_dir</archive>
         </pig>

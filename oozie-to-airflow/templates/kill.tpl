@@ -14,8 +14,8 @@
   limitations under the License.
  #}
 
-{{ task_id }} = bash_operator.BashOperator(
-    task_id={{ task_id | tojson }},
-    trigger_rule={{ trigger_rule | tojson }},
+{{ task_variable_name }} = bash_operator.BashOperator(
+    task_id='{{ task_id }}',
+    trigger_rule='{{ trigger_rule }}',
     bash_command='exit 1',
 )

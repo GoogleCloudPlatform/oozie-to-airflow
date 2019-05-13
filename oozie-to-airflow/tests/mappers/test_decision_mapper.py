@@ -42,11 +42,11 @@ class TestDecisionMapper(unittest.TestCase):
     def test_create_mapper(self):
         mapper = self._get_decision_mapper()
         # make sure everything is getting initialized correctly
-        self.assertEqual("test_id", mapper.name)
+        self.assertEqual("test-id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.decision_node, mapper.oozie_node)
         # test conversion from Oozie EL to Jinja
-        self.assertEqual("first_not_null('', '')", next(iter(mapper.case_dict)))
+        self.assertEqual('{el_basic_functions.first_not_null("", "")}', next(iter(mapper.case_dict)))
 
     @mock.patch("mappers.decision_mapper.render_template", return_value="RETURN")
     def test_convert_to_text(self, render_template_mock):
@@ -67,11 +67,15 @@ class TestDecisionMapper(unittest.TestCase):
             tasks,
             [
                 Task(
-                    task_id="test_id",
+                    task_id="test-id",
                     template_name="decision.tpl",
                     template_params={
                         "case_dict": OrderedDict(
-                            [("first_not_null('', '')", "task1"), ("'True'", "task2"), ("default", "task3")]
+                            [
+                                ('{el_basic_functions.first_not_null("", "")}', "task1"),
+                                ("True", "task2"),
+                                ("default", "task3"),
+                            ]
                         )
                     },
                 )
@@ -87,5 +91,5 @@ class TestDecisionMapper(unittest.TestCase):
 
     def _get_decision_mapper(self):
         return decision_mapper.DecisionMapper(
-            oozie_node=self.decision_node, name="test_id", trigger_rule=TriggerRule.DUMMY
+            oozie_node=self.decision_node, name="test-id", trigger_rule=TriggerRule.DUMMY, properties={}
         )

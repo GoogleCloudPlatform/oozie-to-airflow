@@ -24,6 +24,8 @@ import uuid
 # noinspection PyPackageRequirements
 from typing import Type, Dict, Set
 
+from orderedset import OrderedSet
+
 from airflow.utils.trigger_rule import TriggerRule
 import utils.xml_utils
 from converter.constants import HDFS_FOLDER
@@ -37,15 +39,11 @@ from mappers.base_mapper import BaseMapper
 class OozieParser:
     """Parses XML of an Oozie workflow"""
 
-    control_map: Dict[str, Type[BaseMapper]]
-    action_map: Dict[str, Type[ActionMapper]]
-    params: Dict[str, str]
-
     def __init__(
         self,
         input_directory_path: str,
         output_directory_path: str,
-        params: Dict[str, str],
+        properties: Dict[str, str],
         action_mapper: Dict[str, Type[ActionMapper]],
         control_mapper: Dict[str, Type[BaseMapper]],
         dag_name: str = None,
@@ -56,7 +54,7 @@ class OozieParser:
             output_directory_path=output_directory_path,
         )
         self.workflow_file = os.path.join(input_directory_path, HDFS_FOLDER, "workflow.xml")
-        self.params = params
+        self.properties = properties
         self.action_map = action_mapper
         self.control_map = control_mapper
 
@@ -83,7 +81,7 @@ class OozieParser:
         Thus it gets mapped to a dummy node that always completes.
         """
         map_class = self.control_map["end"]
-        mapper = map_class(oozie_node=end_node, name=end_node.attrib["name"])
+        mapper = map_class(oozie_node=end_node, name=end_node.attrib["name"], properties=self.properties)
         p_node = ParsedNode(mapper)
 
         mapper.on_parse_node()
@@ -105,7 +103,7 @@ class OozieParser:
         """
         map_class = self.control_map["fork"]
         fork_name = fork_node.attrib["name"]
-        mapper = map_class(oozie_node=fork_node, name=fork_name)
+        mapper = map_class(oozie_node=fork_node, name=fork_name, properties=self.properties)
         p_node = ParsedNode(mapper)
 
         mapper.on_parse_node()
@@ -139,7 +137,7 @@ class OozieParser:
         schema perfectly.
         """
         map_class = self.control_map["join"]
-        mapper = map_class(oozie_node=join_node, name=join_node.attrib["name"])
+        mapper = map_class(oozie_node=join_node, name=join_node.attrib["name"], properties=self.properties)
 
         p_node = ParsedNode(mapper)
         p_node.add_downstream_node_name(join_node.attrib["to"])
@@ -175,7 +173,9 @@ class OozieParser:
         </decision>
         """
         map_class = self.control_map["decision"]
-        mapper = map_class(oozie_node=decision_node, name=decision_node.attrib["name"])
+        mapper = map_class(
+            oozie_node=decision_node, name=decision_node.attrib["name"], properties=self.properties
+        )
 
         p_node = ParsedNode(mapper)
         for cases in decision_node[0]:
@@ -207,7 +207,7 @@ class OozieParser:
         mapper = map_class(
             oozie_node=action_operation_node,
             name=action_node.attrib["name"],
-            params=self.params,
+            properties=self.properties,
             dag_name=self.workflow.dag_name,
             action_mapper=self.action_map,
             control_mapper=self.control_map,
@@ -280,24 +280,13 @@ class OozieParser:
             self.parse_decision_node(node)
 
     def parse_workflow(self):
-        """Parses workflow replacing invalid characters in the names of the nodes"""
+        """Parses workflow stripping out namespaces"""
         tree = ET.parse(self.workflow_file)
         root = tree.getroot()
         for node in tree.iter():
             # Strip namespaces
             node.tag = node.tag.split("}")[1][0:]
-
-            # Change names to python syntax
-            if "name" in node.attrib:
-                node.attrib["name"] = node.attrib["name"].replace("-", "_")
-            if "to" in node.attrib:
-                node.attrib["to"] = node.attrib["to"].replace("-", "_")
-            if "error" in node.attrib:
-                node.attrib["error"] = node.attrib["error"].replace("-", "_")
-            if "start" in node.attrib:
-                node.attrib["start"] = node.attrib["start"].replace("-", "_")
-
-        logging.info("Stripped namespaces, and replaced invalid characters.")
+        logging.info("Stripped namespaces.")
 
         for node in root:
             logging.debug(f"Parsing node: {node}")
@@ -351,7 +340,7 @@ class OozieParser:
     def get_relations(self) -> Set[Relation]:
         return self.workflow.relations
 
-    def get_dependencies(self) -> Set[str]:
+    def get_dependencies(self) -> OrderedSet:
         return self.workflow.dependencies
 
     def get_nodes(self) -> Dict[str, ParsedNode]:
