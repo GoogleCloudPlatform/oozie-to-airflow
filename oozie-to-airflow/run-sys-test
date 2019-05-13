@@ -61,11 +61,32 @@ export DATAPROC_USER=${DATAPROC_USER:=${USER:=example_user}}
 
 RUN_SSH_COMMAND="false"
 
+SETUP_CONFIGURATION="false"
+
 SETUP_AUTOCOMPLETE="false"
 
 COMPOSER_WEB_UI_URL=""
 
 VERBOSE="false"
+
+function setup_configuration {
+    read -p "Enter Composer name [${COMPOSER_NAME}]: " input
+    COMPOSER_NAME=${input:-COMPOSER_NAME}
+
+    read -p "Enter Composer location [${COMPOSER_LOCATION}]: " input
+    COMPOSER_LOCATION=${input:-COMPOSER_LOCATION}
+
+    read -p "Enter Dataproc cluster name [${DATAPROC_CLUSTER_NAME}]: " input
+    DATAPROC_CLUSTER_NAME=${input:-DATAPROC_CLUSTER_NAME}
+
+    read -p "Enter GCP Region [${GCP_REGION}]: " input
+    GCP_REGION=${input:-GCP_REGION}
+
+    "${MY_DIR}/confirm" "Do you want to configure additional options?"
+
+    read -p "Enter the name of the bucket that is used to store DAGs [${COMPOSER_DAG_BUCKET}]: " input
+    COMPOSER_DAG_BUCKET=${input:-COMPOSER_DAG_BUCKET}
+}
 
 function prepare_configuration {
     if [[ ! -f "${LOCAL_CONFIGURATION_PROPERTIES_TEMPLATE}" ]]; then
@@ -186,6 +207,9 @@ Optional commands to execute:
 
 -A, --setup-autocomplete
         Sets up autocomplete for run-sys-tests
+
+-X, --setup-configuration
+        Sets up configuration for run-sys-tests
 
 """
 }
@@ -356,6 +380,12 @@ do
       echo "Running SSH to master"
       echo
       shift ;;
+    -X|--setup-configuration)
+      export SETUP_CONFIGURATION="true"
+      echo
+      echo "Setting up configuration"
+      echo
+      shift ;;
     -A|--setup-autocomplete)
       export SETUP_AUTOCOMPLETE="true"
       echo
@@ -520,6 +550,11 @@ if [[ ${RUN_SSH_COMMAND} == "true" ]]; then
     fetch_dataproc_environment_info
     # shellcheck disable=SC2068
     ssh_to_cluster_master $@
+    exit
+fi
+
+if [[ ${SETUP_CONFIGURATION} == "true" ]]; then
+    setup_configuration
     exit
 fi
 

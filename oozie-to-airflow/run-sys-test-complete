@@ -16,7 +16,7 @@
 _MY_LINKED_DIR="$( cd "$( dirname "$(readlink "${BASH_SOURCE[0]}" )" )" && pwd )"
 
 _SHORT_OPTIONS="
-h a: p: C: L: b: c: m: r: z: v A S
+h a: p: C: L: b: c: m: r: z: v X A S
 "
 
 _ALLOWED_PHASES=" prepare-configuration convert prepare-dataproc test-composer test-oozie "
@@ -25,7 +25,7 @@ _ALLOWED_APPLICATIONS=" $(ls "${_MY_LINKED_DIR}/examples" | xargs) "
 
 _LONG_OPTIONS="
 help application: composer-name: composer-location: phase: bucket: cluster:
-region: verbose setup-autocomplete ssh-to-cluster-master
+region: verbose setup-configuration setup-autocomplete ssh-to-cluster-master
 "
 
 # Note on OSX bash has no associative arrays (Bash 3.2) so we have to fake it
