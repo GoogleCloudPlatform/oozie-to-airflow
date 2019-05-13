@@ -36,19 +36,19 @@ function read_from_file {
 
 
 DATAPROC_CLUSTER_NAME=$(read_from_file DATAPROC_CLUSTER_NAME)
-export DATAPROC_CLUSTER_NAME=${DATAPROC_CLUSTER_NAME:=oozie-51}
+export DATAPROC_CLUSTER_NAME=${DATAPROC_CLUSTER_NAME:=}
 
 GCP_REGION=$(read_from_file GCP_REGION)
-export GCP_REGION=${GCP_REGION:=europe-west3}
+export GCP_REGION=${GCP_REGION:=}
 
 COMPOSER_NAME=$(read_from_file COMPOSER_NAME)
-export COMPOSER_NAME=${COMPOSER_NAME:=o2a-integration}
+export COMPOSER_NAME=${COMPOSER_NAME:=}
 
 COMPOSER_LOCATION=$(read_from_file COMPOSER_LOCATION)
-export COMPOSER_LOCATION=${COMPOSER_LOCATION:=europe-west1}
+export COMPOSER_LOCATION=${COMPOSER_LOCATION:=}
 
 COMPOSER_DAG_BUCKET=$(read_from_file COMPOSER_DAG_BUCKET)
-export COMPOSER_DAG_BUCKET=${COMPOSER_DAG_BUCKET:=europe-west1-o2a-integratio-f690ede2-bucket}
+export COMPOSER_DAG_BUCKET=${COMPOSER_DAG_BUCKET:=}
 
 LOCAL_APP_NAME=$(read_from_file LOCAL_APP_NAME)
 export LOCAL_APP_NAME=${LOCAL_APP_NAME:=}
@@ -246,7 +246,7 @@ function setup_autocomplete {
     if [[ "${RES}" == "0" ]]; then
         echo "Bash dir already created"
     else
-        "${MY_DIR}/confirm" "This will create ~/.bash_completion.d/ directory and modify ~/.bash_profile file"
+        "${MY_DIR}/confirm" "This will create ~/.bash_completion.d/ directory and modify ~/.bash_profile file. Are you sure?"
         echo
         echo
         mkdir -pv ~/.bash_completion.d
@@ -414,6 +414,17 @@ function ssh_to_cluster_master {
     gcloud compute ssh "${DATAPROC_CLUSTER_MASTER}" --zone "${DATAPROC_MASTER_ZONE}" -- $@
 }
 
+function verify_configuration {
+    if [[ -z "${COMPOSER_NAME}" ]] || [[ -z "${COMPOSER_LOCATION}" ]] \
+    || [[ -z "${DATAPROC_CLUSTER_NAME}" ]] || [[ -z "${GCP_REGION}" ]]; then
+        echo "It looks like you are launching this setup for the first time."
+        echo ""
+        echo "Starting the configuration wizard."
+        echo ""
+        setup_configuration
+    fi
+}
+
 function verify_arguments {
     if [[ ${LOCAL_APP_NAME} == "" ]]; then
         echo
@@ -545,6 +556,8 @@ function fetch_dataproc_environment_info {
 if [[ ${VERBOSE} == "true" ]]; then
     set -x
 fi
+
+verify_configuration
 
 if [[ ${RUN_SSH_COMMAND} == "true" ]]; then
     fetch_dataproc_environment_info
