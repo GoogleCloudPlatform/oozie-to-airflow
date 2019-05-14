@@ -48,7 +48,7 @@ COMPOSER_LOCATION=$(read_from_file COMPOSER_LOCATION)
 export COMPOSER_LOCATION=${COMPOSER_LOCATION:=europe-west1}
 
 COMPOSER_DAG_BUCKET=$(read_from_file COMPOSER_DAG_BUCKET)
-export COMPOSER_DAG_BUCKET=${COMPOSER_DAG_BUCKET:=europe-west1-o2a-integratio-f690ede2-bucket}
+export COMPOSER_DAG_BUCKET=${COMPOSER_DAG_BUCKET:=""}
 
 LOCAL_APP_NAME=$(read_from_file LOCAL_APP_NAME)
 export LOCAL_APP_NAME=${LOCAL_APP_NAME:=}
@@ -489,10 +489,12 @@ function test_oozie {
 function fetch_composer_environment_info {
     header "Fetching information about the Composer environment"
     echo
-    COMPOSER_DAG_BUCKET=$(gcloud beta composer environments describe "${COMPOSER_NAME}" --location "${COMPOSER_LOCATION}" --format='value(config.dagGcsPrefix)')
-    COMPOSER_DAG_BUCKET=${COMPOSER_DAG_BUCKET%/dags}
-    COMPOSER_DAG_BUCKET=${COMPOSER_DAG_BUCKET#gs://}
-    echo "DAG Bucket: ${COMPOSER_DAG_BUCKET}"
+    if [[ -z "${COMPOSER_DAG_BUCKET}" ]]; then
+        COMPOSER_DAG_BUCKET=$(gcloud beta composer environments describe "${COMPOSER_NAME}" --location "${COMPOSER_LOCATION}" --format='value(config.dagGcsPrefix)')
+        COMPOSER_DAG_BUCKET=${COMPOSER_DAG_BUCKET%/dags}
+        COMPOSER_DAG_BUCKET=${COMPOSER_DAG_BUCKET#gs://}
+        echo "DAG Bucket: ${COMPOSER_DAG_BUCKET}"
+    fi
     COMPOSER_WEB_UI_URL=$(gcloud beta composer environments describe "${COMPOSER_NAME}" --location "${COMPOSER_LOCATION}" --format='value(config.airflowUri)')
     echo "WEB UI URL: ${COMPOSER_WEB_UI_URL}"
     echo
