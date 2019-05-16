@@ -22,17 +22,15 @@ from airflow.utils.trigger_rule import TriggerRule
 # Pylint and flake8 does not understand forward references
 # https://www.python.org/dev/peps/pep-0484/#forward-references
 from mappers import base_mapper  # noqa: F401 pylint: disable=unused-import
-from converter import primitives  # noqa: F401 pylint: disable=unused-import
 
 
 class ParsedNode:
     """Class for parsed Oozie workflow node"""
 
+    from converter.primitives import Task, Relation
+
     def __init__(
-        self,
-        mapper: "base_mapper.BaseMapper",
-        tasks: List["primitives.Task"] = None,
-        relations: List["primitives.Relation"] = None,
+        self, mapper: "base_mapper.BaseMapper", tasks: List[Task] = None, relations: List[Relation] = None
     ):
         self.mapper = mapper
         self.downstream_names: List[str] = []
