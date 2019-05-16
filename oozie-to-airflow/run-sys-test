@@ -412,21 +412,21 @@ function verify_arguments {
 
 function header {
     echo
-    SEPARATOR_WIDTH=${COLUMNS:=140}
-    printf '#%.0s' $(seq ${SEPARATOR_WIDTH})
+    SEPARATOR_WIDTH=$(tput cols)
+    printf '#%.0s' $(seq "${SEPARATOR_WIDTH}")
     echo
     echo "#    $1"
-    printf '#%.0s' $(seq ${SEPARATOR_WIDTH})
+    printf '#%.0s' $(seq "${SEPARATOR_WIDTH}")
     echo
     echo
     set -x
 }
 
 function footer {
-    SEPARATOR_WIDTH=${COLUMNS:=140}
     set +x
+    SEPARATOR_WIDTH=$(tput cols)
     echo
-    printf '#%.0s' $(seq ${SEPARATOR_WIDTH})
+    printf '#%.0s' $(seq "${SEPARATOR_WIDTH}")
     echo
     echo
 }
