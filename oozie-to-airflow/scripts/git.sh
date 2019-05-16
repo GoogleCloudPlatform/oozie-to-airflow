@@ -46,7 +46,7 @@ Flags:
         An SSH key that will be used to authorize access to the repository.
 
 -d, --destination-path
-        Location on HDFS, where the repository will be upload.
+        Location on HDFS, where the repository will be uploaded.
 
 -c, --cluster <CLUSTER>
         Cluster used to run the operations on.
