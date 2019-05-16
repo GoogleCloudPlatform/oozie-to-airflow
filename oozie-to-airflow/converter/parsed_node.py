@@ -27,18 +27,16 @@ from mappers import base_mapper  # noqa: F401 pylint: disable=unused-import
 class ParsedNode:
     """Class for parsed Oozie workflow node"""
 
-    from converter.primitives import Task, Relation
+    def __init__(self, mapper: "base_mapper.BaseMapper", tasks=None, relations=None):
+        from converter.primitives import Task, Relation
 
-    def __init__(
-        self, mapper: "base_mapper.BaseMapper", tasks: List[Task] = None, relations: List[Relation] = None
-    ):
         self.mapper = mapper
         self.downstream_names: List[str] = []
         self.is_error: bool = False
         self.is_ok: bool = False
         self.error_xml: Optional[str] = None
-        self.tasks = tasks or []
-        self.relations = relations or []
+        self.tasks: List[Task] = tasks or []
+        self.relations: List[Relation] = relations or []
 
     def add_downstream_node_name(self, node_name: str):
         """
