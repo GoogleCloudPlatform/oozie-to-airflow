@@ -14,8 +14,8 @@
   limitations under the License.
  #}
 
-{%- for depedency in dependencies %}
-{{ depedency }}
+{%- for dependency in dependencies %}
+{{ dependency }}
 {% endfor %}
 
 PARAMS = {{ params | tojson }}

@@ -106,7 +106,7 @@ class OozieConverter:
     @staticmethod
     def convert_nodes(nodes: Dict[str, ParsedNode]):
         """
-        For each oozie node, converts it into relations and internal relations
+        For each Oozie node, converts it into relations and internal relations
 
         It uses the mapper, which is stored in ParsedNode. The result is saved in ParsedNode.tasks
         and ParsedNode.relations
@@ -138,7 +138,7 @@ class OozieConverter:
 
     def copy_extra_assets(self, nodes: Dict[str, ParsedNode]):
         """
-        Copies additional assets needed to execute a workflow, eg Pig scripts
+        Copies additional assets needed to execute a workflow, eg. Pig scripts.
         """
         for node in nodes.values():
             logging.info(f"Copies additional assets for the node: {node.mapper.name}")
@@ -149,7 +149,7 @@ class OozieConverter:
 
     def render_workflow(self, workflow: Workflow):
         """
-        Creates text representation of the workflow
+        Creates text representation of the workflow.
         """
         converted_params: Dict[str, Union[List[str], str]] = {
             x: comma_separated_string_to_list(y) for x, y in self.params.items()
