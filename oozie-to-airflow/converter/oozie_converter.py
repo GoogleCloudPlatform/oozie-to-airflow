@@ -106,7 +106,7 @@ class OozieConverter:
     @staticmethod
     def convert_nodes(nodes: Dict[str, ParsedNode]):
         """
-        For each Oozie node, converts it into relations and internal relations
+        For each Oozie node, converts it into relations and internal relations.
 
         It uses the mapper, which is stored in ParsedNode. The result is saved in ParsedNode.tasks
         and ParsedNode.relations
