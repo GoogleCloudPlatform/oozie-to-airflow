@@ -25,7 +25,6 @@ from converter.primitives import Task, Relation
 from mappers.action_mapper import ActionMapper
 from mappers.prepare_mixin import PrepareMixin
 
-from utils.template_utils import render_template
 from utils.xml_utils import get_text_or_default
 
 TAG_GIT_URI = "git-uri"

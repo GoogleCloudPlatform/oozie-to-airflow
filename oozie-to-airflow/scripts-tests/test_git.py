@@ -15,7 +15,7 @@
 """"
 Tests for git action shell script
 
-Tests tests the external applications. Replaces the "gcloud" external app with a "mock" script.
+Tests the external applications. Replaces the "gcloud" external app with a "mock" script.
 This script saves all its calls along with script name and arguments to the log file specified by the
 environment variable "COMMAND_EXECUTION_LOG".
 This allows checking the validity of the external program call by analyzing the log file.
@@ -67,7 +67,7 @@ class ShellScriptTestCase(unittest.TestCase):
     """
     Prepares the environment for script tests.
 
-    It also provides additional methods that make it easier to write tests
+    It also provides additional methods that make it easier to write tests.
     """
 
     def setUp(self):
@@ -95,8 +95,6 @@ class ShellScriptTestCase(unittest.TestCase):
         process = subprocess.run(
             args=["bash", "-c", command], shell=False, stdout=subprocess.PIPE, stderr=subprocess.PIPE
         )
-        print(process.stdout.decode())
-        print(process.stderr.decode())
 
         return process.returncode
 

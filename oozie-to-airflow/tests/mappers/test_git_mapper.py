@@ -15,7 +15,6 @@
 """Tests Spark Mapper"""
 import ast
 import unittest
-from unittest import mock
 from xml.etree import ElementTree as ET
 
 from airflow.utils.trigger_rule import TriggerRule
@@ -136,7 +135,6 @@ class TestGitMapper(unittest.TestCase):
 
         tasks, relations = mapper.to_tasks_and_relations()
 
-        self.assertEqual(kwargs["template_name"], "action.tpl")
         self.assertEqual(
             tasks,
             [
