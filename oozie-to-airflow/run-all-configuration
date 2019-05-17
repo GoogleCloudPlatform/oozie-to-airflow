@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,21 +12,11 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-language: python
-env:
-  - SLUGIFY_USES_TEXT_UNIDECODE=yes
-python:
-  - "3.6"
-cache: pip
-before_install: cd oozie-to-airflow
-install:
-  - pip uninstall -y mock
-  - pip install -r ../requirements.txt
-  - sudo apt-get install coreutils libxml2-utils
-script:
-  - ./run-all-configuration
-  - pre-commit run --all-files
-  - ./run-all-conversions
-after_success:
-  - bash <(curl -s https://codecov.io/bash)
+set -euo pipefail
+MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+pushd "${MY_DIR}"
+for EXAMPLE in $(cd examples; ls)
+do
+    ./run-sys-test --phase prepare-configuration -a "${EXAMPLE}"
+done
+popd
