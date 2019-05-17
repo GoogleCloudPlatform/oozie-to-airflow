@@ -23,7 +23,8 @@ from parameterized import parameterized
 from airflow.utils.trigger_rule import TriggerRule
 
 from converter.parsed_node import ParsedNode
-from converter.primitives import Task, Relation
+from converter.task import Task
+from converter.relation import Relation
 from mappers.dummy_mapper import DummyMapper
 from utils.template_utils import render_template
 

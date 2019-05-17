@@ -28,7 +28,8 @@ from airflow.utils.trigger_rule import TriggerRule
 import utils.xml_utils
 from converter.constants import HDFS_FOLDER
 from converter.parsed_node import ParsedNode
-from converter.primitives import Relation, Workflow
+from converter.workflow import Workflow
+from converter.relation import Relation
 from mappers.action_mapper import ActionMapper
 from mappers.base_mapper import BaseMapper
 

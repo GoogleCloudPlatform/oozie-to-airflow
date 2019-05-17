@@ -24,7 +24,9 @@ from converter.oozie_converter import OozieConverter
 from converter.mappers import CONTROL_MAP, ACTION_MAP
 from converter.parsed_node import ParsedNode
 
-from converter.primitives import Relation, Task, Workflow
+from converter.task import Task
+from converter.workflow import Workflow
+from converter.relation import Relation
 from mappers.dummy_mapper import DummyMapper
 
 

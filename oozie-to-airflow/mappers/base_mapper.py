@@ -18,9 +18,8 @@ from xml.etree.ElementTree import Element
 
 import airflow.utils.trigger_rule
 
-# Pylint and flake8 does not understand forward references
-# https://www.python.org/dev/peps/pep-0484/#forward-references
-from converter import primitives  # noqa: F401 pylint: disable=unused-import
+from converter.relation import Relation
+from converter.task import Task
 
 
 class BaseMapper:
@@ -42,7 +41,7 @@ class BaseMapper:
         self.name = name
         self.trigger_rule = trigger_rule
 
-    def to_tasks_and_relations(self) -> Tuple[List["primitives.Task"], List["primitives.Relation"]]:
+    def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
         """
         Convert oozie node to tasks and relations.
         """

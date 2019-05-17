@@ -27,7 +27,7 @@ import black
 from converter import parser
 from converter.constants import HDFS_FOLDER
 from converter.parsed_node import ParsedNode
-from converter.primitives import Workflow
+from converter.workflow import Workflow
 from mappers.action_mapper import ActionMapper
 from mappers.base_mapper import BaseMapper
 from utils import el_utils

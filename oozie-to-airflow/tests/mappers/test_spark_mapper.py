@@ -20,7 +20,8 @@ from xml.etree import ElementTree as ET
 from parameterized import parameterized
 from airflow.utils.trigger_rule import TriggerRule
 
-from converter.primitives import Task, Relation
+from converter.task import Task
+from converter.relation import Relation
 from mappers import spark_mapper
 from utils.xml_utils import find_nodes_by_tag
 

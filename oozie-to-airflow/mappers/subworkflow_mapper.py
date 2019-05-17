@@ -21,7 +21,7 @@ from xml.etree.ElementTree import Element
 from airflow.utils.trigger_rule import TriggerRule
 
 from converter.oozie_converter import OozieConverter
-from converter.primitives import Task
+from converter.task import Task
 from mappers.action_mapper import ActionMapper
 from mappers.base_mapper import BaseMapper
 from tests.utils.test_paths import EXAMPLES_PATH

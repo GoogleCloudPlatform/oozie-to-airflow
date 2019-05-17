@@ -19,7 +19,8 @@ import xml.etree.ElementTree as ET
 from airflow.utils.trigger_rule import TriggerRule
 
 from converter.exceptions import ParseException
-from converter.primitives import Relation, Task
+from converter.task import Task
+from converter.relation import Relation
 from mappers.action_mapper import ActionMapper
 from mappers.prepare_mixin import PrepareMixin
 from utils import xml_utils, el_utils
