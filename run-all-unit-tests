@@ -14,9 +14,8 @@
 # limitations under the License.
 set -euo pipefail
 MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-pushd "${MY_DIR}"
-for EXAMPLE in $(cd examples; ls)
-do
-    ./run-sys-test --phase prepare-configuration -a "${EXAMPLE}"
-done
+
+pushd "${MY_DIR}/oozie-to-airflow"
+pytest --cov="${MY_DIR}/oozie-to-airflow" tests
+mv .coverage ..
 popd
