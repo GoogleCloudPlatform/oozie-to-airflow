@@ -15,12 +15,10 @@
 set -euo pipefail
 MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 pushd "${MY_DIR}"
-for EXAMPLE in $(cd examples; ls)
+for EXAMPLE in $(cd oozie-to-airflow/examples; ls)
 do
-    ./run-sys-test --phase prepare-configuration -a "${EXAMPLE}"
+    echo "Preparing configuration for ${EXAMPLE}"
+    "${MY_DIR}/run-sys-test" --phase prepare-configuration -a "${EXAMPLE}" >/dev/null
 done
-for EXAMPLE in $(cd examples; ls)
-do
-    ./run-sys-test --phase convert -a "${EXAMPLE}"
-done
+
 popd

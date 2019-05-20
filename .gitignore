@@ -10,11 +10,11 @@ __pycache__
 .coverage
 
 .mypy_cache
-/oozie-to-airflow/output
-/oozie-to-airflow/.DATAPROC_CLUSTER_NAME
-/oozie-to-airflow/.GCP_REGION
-/oozie-to-airflow/.PHASE
-/oozie-to-airflow/.COMPOSER_LOCATION
-/oozie-to-airflow/.LOCAL_APP_NAME
-/oozie-to-airflow/.COMPOSER_DAG_BUCKET
-/oozie-to-airflow/.COMPOSER_NAME
+output
+.DATAPROC_CLUSTER_NAME
+.GCP_REGION
+.PHASE
+.COMPOSER_LOCATION
+.LOCAL_APP_NAME
+.COMPOSER_DAG_BUCKET
+.COMPOSER_NAME

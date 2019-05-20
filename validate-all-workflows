@@ -15,7 +15,4 @@
 set -euo pipefail
 MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-pushd "${MY_DIR}"
-pytest --cov="${MY_DIR}" tests
-mv .coverage ..
-popd
+find "${MY_DIR}" -name 'workflow.xml' -print0 | xargs -0 "${MY_DIR}/validate-workflows"

@@ -15,9 +15,6 @@
 set -euo pipefail
 MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-# shellcheck disable=SC2206
-WORKFLOWS=( $@ )
-
 FAILED_WORKFLOWS=""
 VERBOSE=${VERBOSE:=""}
 XMLLINT_EXTRA_PARAMS=""
@@ -26,7 +23,7 @@ if [[ "${VERBOSE}" != "" ]]; then
     XMLLINT_EXTRA_PARAMS="--load-trace"
 fi
 
-for WORKFLOW in "${WORKFLOWS[@]}"; do
+for WORKFLOW in "$@"; do
     echo
     echo "Validating ${WORKFLOW}"
     echo
