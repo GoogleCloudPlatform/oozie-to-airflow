@@ -11,110 +11,94 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
+---
 repos:
--   repo: https://github.com/ambv/black
-    rev: 19.3b0
+  - repo: https://github.com/ambv/black
+    rev: "19.3b0"
     hooks:
-    - id: black
-      name: Formats python files using black
-      language_version: python3.6
--   repo: https://github.com/Lucas-C/pre-commit-hooks
-    sha: v1.1.6
+      - id: black
+        name: Formats python files using black
+        language_version: python3.6
+  - repo: https://github.com/Lucas-C/pre-commit-hooks
+    sha: "v1.1.6"
     hooks:
-        -   id: insert-license
-            name: Add licence for all XML, md files
-            files: \.xml$|\.md$
-            args:
-                - --comment-style
-                - <!--| | -->
-        -   id: insert-license
-            name: Add licence for all .pig files
-            files: \.pig$
-            args:
-                - --comment-style
-                - "-- "
-        -   id: insert-license
-            name: Add licence for all python/yaml/property files
-            files: \.py$|\.properties$|\.yaml$|\.yml$
-        -   id: insert-license
-            name: Add licence for all Jinja templates
-            files: \.tpl$
-            args:
-                - --comment-style
-                - "{# | | #}"
-        -   id: forbid-tabs
--   repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v2.1.0
+      - id: insert-license
+        name: Add licence for all XML, md files
+        files: \.xml$|\.md$
+        args:
+          - --comment-style
+          - <!--| | -->
+      - id: insert-license
+        name: Add licence for all .pig files
+        files: \.pig$
+        args:
+          - --comment-style
+          - "-- "
+      - id: insert-license
+        name: Add licence for all python/yaml/property files
+        files: \.py$|\.properties$|\.yaml$|\.yml$
+      - id: insert-license
+        name: Add licence for all Jinja templates
+        files: \.tpl$
+        args:
+          - --comment-style
+          - "{# | | #}"
+      - id: forbid-tabs
+  - repo: local
     hooks:
-    - id: flake8
-    - id: check-executables-have-shebangs
-    - id: check-merge-conflict
-    - id: check-xml
-    - id: check-yaml
-    - id: debug-statements
-    - id: detect-private-key
-    - id: fix-encoding-pragma
-    - id: end-of-file-fixer
-    - id: mixed-line-ending
-    - id: requirements-txt-fixer
-    - id: trailing-whitespace
--   repo: meta
+      - id: yamllint
+        name: yamllint
+        entry: yamllint -c yamllint-config.yml .
+        language: python
+        types: [file, yaml]
+  - repo: https://github.com/pre-commit/pre-commit-hooks
+    rev: "v2.1.0"
     hooks:
-    - id: check-hooks-apply
-    - id: check-useless-excludes
--   repo: git://github.com/luismayta/pre-commit-mypy
-    rev: 0.1.1
+      - id: flake8
+      - id: check-executables-have-shebangs
+      - id: check-merge-conflict
+      - id: check-xml
+      - id: debug-statements
+      - id: detect-private-key
+      - id: fix-encoding-pragma
+      - id: end-of-file-fixer
+      - id: mixed-line-ending
+      - id: requirements-txt-fixer
+      - id: trailing-whitespace
+  - repo: meta
     hooks:
-    -   id: mypy
+      - id: check-hooks-apply
+      - id: check-useless-excludes
+  - repo: git://github.com/luismayta/pre-commit-mypy
+    rev: "0.1.1"
+    hooks:
+      - id: mypy
         name: Checks typing annotations consistency with mypy
--   repo: https://github.com/pre-commit/mirrors-pylint
-    rev: 'v2.3.1'
+  - repo: https://github.com/pre-commit/mirrors-pylint
+    rev: "v2.3.1"
     hooks:
-        -   id: pylint
-            name: Checks for common programming errors with pylint
--   repo: local
+      - id: pylint
+        name: Checks for common programming errors with pylint
+  - repo: local
     hooks:
-    -   id: pytest
+      - id: pytest
         name: Runs all unit tests with pytest
         entry: oozie-to-airflow/run-all-unit-tests
         language: script
         pass_filenames: false
         always_run: true
-    -   id: check-bash-syntax
+      - id: check-bash-syntax
         name: Check Shell scripts syntax corectness
         language: docker_image
         entry: koalaman/shellcheck:stable -e SC1091 -e SC2181
         types: [shell]
-    -   id: forbid-unicode-non-breaking-spaces
-        name: Detect unicode non-breaking space character U+00A0 aka M-BM-
-        language: system
-        entry: perl -ne 'print if $m = /\xc2\xa0/; $t ||= $m; END{{exit $t}}'
-        files: \.py$
-    -   id: remove-unicode-non-breaking-spaces
-        name: Remove unicode non-breaking space character U+00A0 aka M-BM-
-        language: system
-        entry: perl -pi* -e 's/\xc2\xa0/ /g && ($t = 1) && print STDERR $_; END{{exit
-            $t}}'
-        files: \.py$
-    -   id: forbid-en-dashes
-        name: Detect the EXTREMELY confusing unicode character U+2013
-        language: system
-        entry: perl -ne 'print if $m = /\xe2\x80\x93/; $t ||= $m; END{{exit $t}}'
-        files: \.py$
-    -   id: remove-en-dashes
-        name: Remove the EXTREMELY confusing unicode character U+2013
-        language: system
-        entry: perl -pi* -e 's/\xe2\x80\x93/-/g && ($t = 1) && print STDERR $_; END{{exit
-            $t}}'
-        files: \.py$
-    -   id: validate-all-workflows
+      - id: validate-all-workflows
         name: Validates all oozie workflows
         language: system
         entry: oozie-to-airflow/validate-all-workflows
         files: \workflow.xml$
--   repo: https://github.com/Lucas-C/pre-commit-hooks-safety
-    sha: v1.1.0
+  - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
+    sha: "v1.1.0"
     hooks:
-        -   id: python-safety-dependencies-check
-            name: Checks for security vulnerabilities in dependencies
+      - id: python-safety-dependencies-check
+        name: Checks for security vulnerabilities in dependencies
