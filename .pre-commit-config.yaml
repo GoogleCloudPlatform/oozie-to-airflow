@@ -25,6 +25,7 @@ repos:
       - id: insert-license
         name: Add licence for all XML, md files
         files: \.xml$|\.md$
+        exclude: ^\.github/.*$
         args:
           - --comment-style
           - <!--| | -->
@@ -44,6 +45,13 @@ repos:
           - --comment-style
           - "{# | | #}"
       - id: forbid-tabs
+  - repo: local
+    hooks:
+      - id: yamllint
+        name: yamllint
+        entry: yamllint -c yamllint-config.yml .
+        language: python
+        types: [file, yaml]
   - repo: local
     hooks:
       - id: yamllint
