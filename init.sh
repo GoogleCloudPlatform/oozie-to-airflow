@@ -33,4 +33,4 @@ EOF
 export SLUGIFY_USES_TEXT_UNIDECODE=yes
 
 # Install required dependencies
-pip install -r "${MY_DIR}/../requirements.txt"
+pip install -r "${MY_DIR}/requirements.txt"

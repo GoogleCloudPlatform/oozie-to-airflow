@@ -279,14 +279,13 @@ if [[ "${J2_PRESENT}" != "0" ]]; then
     exit 1
 fi
 
-PARAMS=$(getopt \
+if ! PARAMS=$(getopt \
     -o "${_SHORT_OPTIONS:=}" \
     -l "${_LONG_OPTIONS:=}" \
     --name "$CMDNAME" -- "$@")
-
-if [[ $? -ne 0 ]]
 then
     usage
+    exit 1
 fi
 
 
@@ -519,6 +518,8 @@ function fetch_dataproc_environment_info {
     footer
 }
 
+pushd "${MY_DIR}"
+
 if [[ ${VERBOSE} == "true" ]]; then
     set -x
 fi
@@ -535,18 +536,18 @@ if [[ ${SETUP_AUTOCOMPLETE} == "true" ]]; then
     exit
 fi
 
-LOCAL_BASE_DIR=${MY_DIR}
+LOCAL_BASE_DIR="${MY_DIR}/oozie-to-airflow"
 LOCAL_EXAMPLE_DIR=examples
 
 RANDOM_PREFIX=$(echo $RANDOM $RANDOM $RANDOM $RANDOM $RANDOM | md5sum | cut -c -8)
 
 
-LOCAL_APP_DIR=${LOCAL_BASE_DIR}/${LOCAL_EXAMPLE_DIR}/${LOCAL_APP_NAME}
+LOCAL_APP_DIR="${LOCAL_BASE_DIR}/${LOCAL_EXAMPLE_DIR}/${LOCAL_APP_NAME}"
 
-LOCAL_OUTPUT_DIR=${LOCAL_BASE_DIR}/output/${LOCAL_APP_NAME}
-LOCAL_O2A_LIBS_DIR=${LOCAL_BASE_DIR}/o2a_libs
-LOCAL_SCRIPTS_DIR=${LOCAL_BASE_DIR}/scripts
-OUTPUT_DAG_NAME=test_${LOCAL_APP_NAME}_dag
+LOCAL_OUTPUT_DIR="${LOCAL_BASE_DIR}/output/${LOCAL_APP_NAME}"
+LOCAL_O2A_LIBS_DIR="${LOCAL_BASE_DIR}/o2a_libs"
+LOCAL_SCRIPTS_DIR="${LOCAL_BASE_DIR}/scripts"
+OUTPUT_DAG_NAME="test_${LOCAL_APP_NAME}_dag"
 
 LOCAL_CONFIGURATION_PROPERTIES_TEMPLATE=${LOCAL_APP_DIR}/configuration.template.properties
 LOCAL_CONFIGURATION_PROPERTIES=${LOCAL_APP_DIR}/configuration.properties
@@ -599,3 +600,5 @@ elif [[ "${PHASE}" == "test-oozie" ]]; then
 fi
 
 set +x
+
+popd
