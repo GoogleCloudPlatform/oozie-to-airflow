@@ -25,7 +25,7 @@ from converter.primitives import Task, Relation
 from mappers.action_mapper import ActionMapper
 from mappers.prepare_mixin import PrepareMixin
 
-from utils.xml_utils import get_text_or_default
+from utils.xml_utils import get_tag_el_text
 
 TAG_GIT_URI = "git-uri"
 TAG_BRANCH = "branch"
@@ -75,11 +75,11 @@ class GitMapper(ActionMapper, PrepareMixin):
         self.trigger_rule = trigger_rule
 
     def on_parse_node(self):
-        git_uri = get_text_or_default(self.oozie_node, TAG_GIT_URI, self.params)
-        git_branch = get_text_or_default(self.oozie_node, TAG_BRANCH, self.params)
-        destination_uri = get_text_or_default(self.oozie_node, TAG_DESTINATION_URI, self.params)
+        git_uri = get_tag_el_text(self.oozie_node, TAG_GIT_URI, self.params)
+        git_branch = get_tag_el_text(self.oozie_node, TAG_BRANCH, self.params)
+        destination_uri = get_tag_el_text(self.oozie_node, TAG_DESTINATION_URI, self.params)
         destination_path = urlparse(destination_uri).path
-        key_path_uri = get_text_or_default(self.oozie_node, TAG_KEY_PATH, self.params)
+        key_path_uri = get_tag_el_text(self.oozie_node, TAG_KEY_PATH, self.params)
         key_path = urlparse(key_path_uri).path
         self.bash_command = prepare_git_command(
             git_uri=git_uri, git_branch=git_branch, destination_path=destination_path, key_path=key_path

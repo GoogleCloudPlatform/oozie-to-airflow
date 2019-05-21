@@ -85,9 +85,9 @@ class ShellScriptTestCase(unittest.TestCase):
         command_calls = []
         if path.isfile(self.log_file):
             with open(self.log_file) as file:
-                # Delete trailing the new line
-                file_contnet = file.read()[:-1]
-                command_calls = file_contnet.split("\n")
+                # Delete the trailing the new line
+                file_content = file.read()[:-1]
+                command_calls = file_content.split("\n")
         return command_calls
 
     @staticmethod
