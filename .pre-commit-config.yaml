@@ -91,7 +91,7 @@ repos:
                '--remove-unused-variable', '--recursive']
       - id: pytest
         name: Runs all unit tests with pytest
-        entry: ./bin/run-all-unit-tests
+        entry: ./bin/o2a-run-all-unit-tests
         language: script
         pass_filenames: false
         always_run: true
@@ -103,7 +103,7 @@ repos:
       - id: validate-all-workflows
         name: Validates all oozie workflows
         language: system
-        entry: ./bin/validate-all-workflows
+        entry: ./bin/o2a-validate-all-workflows
         files: \workflow.xml$
   - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
     sha: "v1.1.0"

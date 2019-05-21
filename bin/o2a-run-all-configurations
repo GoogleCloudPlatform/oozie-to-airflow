@@ -20,7 +20,7 @@ pushd "${O2A_DIR}"
 for EXAMPLE in $(cd examples; ls)
 do
     echo "Preparing configuration for ${EXAMPLE}"
-    "${MY_DIR}/run-sys-test" --phase prepare-configuration -a "${EXAMPLE}" >/dev/null
+    "${MY_DIR}/o2a-run-sys-test" --phase prepare-configuration -a "${EXAMPLE}" >/dev/null
 done
 
 popd

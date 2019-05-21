@@ -16,5 +16,14 @@ set -euo pipefail
 MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 O2A_DIR="$( cd "${MY_DIR}/.." && pwd )"
 
+pushd "${O2A_DIR}"
 
-find "${O2A_DIR}" -name 'workflow.xml' -print0 | xargs -0 "${MY_DIR}/validate-workflows"
+for EXAMPLE in $(cd examples; ls)
+do
+    "${MY_DIR}/o2a-run-sys-test" --phase prepare-configuration -a "${EXAMPLE}"
+done
+for EXAMPLE in $(cd examples; ls)
+do
+    "${MY_DIR}/o2a-run-sys-test" --phase convert -a "${EXAMPLE}"
+done
+popd

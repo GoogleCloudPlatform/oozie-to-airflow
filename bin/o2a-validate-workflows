@@ -16,6 +16,12 @@ set -euo pipefail
 MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 O2A_DIR="$( cd "${MY_DIR}/.." && pwd )"
 
+if [[ -d "${O2A_DIR}/o2a/schema/" ]]; then
+    SCHEMA_DIR="${O2A_DIR}/o2a/schema"
+else
+    SCHEMA_DIR="$(python3 -c 'import os; import o2a; print(os.path.dirname(o2a.__file__))')/schema"
+fi
+
 FAILED_WORKFLOWS=""
 VERBOSE=${VERBOSE:=""}
 XMLLINT_EXTRA_PARAMS=""
@@ -30,7 +36,7 @@ for WORKFLOW in "$@"; do
     echo
     set +e
     # Note - if you add new actions add the schema for this action to "all-schemas-1.0.xsd"
-    xmllint --noout ${XMLLINT_EXTRA_PARAMS} --schema "${O2A_DIR}/schema/all-schemas-1.0.xsd" "${WORKFLOW}"
+    xmllint --noout ${XMLLINT_EXTRA_PARAMS} --schema "${SCHEMA_DIR}/all-schemas-1.0.xsd" "${WORKFLOW}"
     ERR=$?
     set -e
     if [[ ${ERR} != "0" ]]; then

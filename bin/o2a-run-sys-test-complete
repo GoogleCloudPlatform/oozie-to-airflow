@@ -70,8 +70,8 @@ function _listcontains {
   return 1
 }
 
-# A completion function for run-
-function _comp_run_sys_test {
+# A completion function for o2a-run-sys-test
+function _comp_o2a_run_sys_test {
     local ALL_OPTIONS=""
     local EXTRA_ARG_OPTIONS=""
     local OPTION
@@ -119,4 +119,4 @@ function _comp_run_sys_test {
 
 _build_options
 
-complete -F _comp_run_sys_test run-sys-test
+complete -F _comp_o2a_run_sys_test o2a-run-sys-test
