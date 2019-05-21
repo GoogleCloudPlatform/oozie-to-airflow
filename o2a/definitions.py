@@ -17,3 +17,12 @@ import os
 
 ROOT_DIR = os.path.dirname(os.path.abspath(__file__))
 TPL_PATH = os.path.join(ROOT_DIR, "templates/")
+
+O2A_PROJECT_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
+EXAMPLES_PATH = os.path.join(O2A_PROJECT_PATH, "examples")
+
+# Mapper examples
+EXAMPLE_DEMO_PATH = os.path.join(EXAMPLES_PATH, "demo")
+EXAMPLE_EL_PATH = os.path.join(EXAMPLES_PATH, "el")
+EXAMPLE_PIG_PATH = os.path.join(EXAMPLES_PATH, "pig")
+EXAMPLE_SUBWORKFLOW_PATH = os.path.join(EXAMPLES_PATH, "subwf")

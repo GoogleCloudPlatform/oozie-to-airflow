@@ -22,9 +22,9 @@ from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.oozie_converter import OozieConverter
 from o2a.converter.task import Task
+from o2a.definitions import EXAMPLES_PATH
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.mappers.base_mapper import BaseMapper
-from o2a.tests.utils.test_paths import EXAMPLES_PATH
 from o2a.utils import el_utils, xml_utils
 
 

@@ -18,11 +18,11 @@ O2A_DIR="$( cd "${MY_DIR}/.." && pwd )"
 
 pushd "${O2A_DIR}"
 
-for EXAMPLE in $(cd o2a/examples; ls)
+for EXAMPLE in $(cd examples; ls)
 do
     "${MY_DIR}/run-sys-test" --phase prepare-configuration -a "${EXAMPLE}"
 done
-for EXAMPLE in $(cd o2a/examples; ls)
+for EXAMPLE in $(cd examples; ls)
 do
     "${MY_DIR}/run-sys-test" --phase convert -a "${EXAMPLE}"
 done

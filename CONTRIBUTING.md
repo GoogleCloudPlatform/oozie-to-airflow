@@ -131,7 +131,7 @@ You can check all commands of pre-commit framework at https://pre-commit.com/
 ## Running Unit Tests
 
 While you are in your local virtualenv, you can run the unit tests. Currently, the test directory is
-set up in a such a way that the folders in [tests](o2a/tests) directory mirrors the
+set up in a such a way that the folders in [tests](tests) directory mirrors the
 structure of the [o2a](o2a) directory.
 
 Unit tests are run automatically in Travis CI and when you have pre-commit hooks installed.
@@ -145,7 +145,7 @@ It is also executed during automated tests.
 ## Dependency graphs
 
 You can generate dependency graphs automatically from the code via
-[generate-depdency-graph](bin/generate-dependency-graph) but you need `graphviz` installed locally.
+[generate-dependency-graph](bin/generate-dependency-graph) but you need `graphviz` installed locally.
 
 The latest dependencies generated:
 ![dependency graph](images/o2a-dependencies.png)
@@ -225,9 +225,9 @@ List of jobs with their statuses can be also shown by issuing `oozie jobs` comma
 Oozie to Airflow has a set of system tests that test end-2-end functionality of conversion and execution
 of workflows using Cloud environment with Cloud Dataproc and Cloud Composer.
 
-We can run examples defined in examples folder as system tests. The system tests use an existing
-Composer, Dataproc cluster and Oozie run in the Dataproc cluster to prepare HDFS application folder structure
-and trigger the tests automatically.
+We can run examples defined in the [examples](examples) folder as system tests. The system tests
+use an existing Composer, Dataproc cluster and Oozie run in the Dataproc cluster to prepare HDFS
+application folder structure and trigger the tests automatically.
 
 You can run the tests using this command:
 

@@ -25,9 +25,9 @@ from o2a.converter import parser
 from o2a.converter import parsed_node
 from o2a.converter.mappers import ACTION_MAP, CONTROL_MAP
 from o2a.converter.relation import Relation
+from o2a.definitions import EXAMPLE_DEMO_PATH, EXAMPLES_PATH
 from o2a.mappers import dummy_mapper, pig_mapper
 from o2a.mappers import ssh_mapper
-from o2a.tests.utils.test_paths import EXAMPLE_DEMO_PATH, EXAMPLES_PATH
 
 
 class TestOozieParser(unittest.TestCase):

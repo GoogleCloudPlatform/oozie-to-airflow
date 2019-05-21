@@ -23,8 +23,8 @@ from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.mappers import CONTROL_MAP, ACTION_MAP
 from o2a.converter.task import Task
+from o2a.definitions import EXAMPLE_SUBWORKFLOW_PATH
 from o2a.mappers import subworkflow_mapper
-from o2a.tests.utils.test_paths import EXAMPLE_SUBWORKFLOW_PATH
 
 
 class TestSubworkflowMapper(TestCase):

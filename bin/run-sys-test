@@ -141,9 +141,9 @@ for example application: ${LOCAL_APP_NAME}"
 
 function prepare_composer {
     header "Prepares Composer by copying reusable library files"
-    gsutil cp -r "${LOCAL_SCRIPTS_DIR}/*" "gs://${COMPOSER_DAG_BUCKET}/data/"
-    gsutil cp -r "${SOURCE_O2A_DIR}/__init__.py" "gs://${COMPOSER_DAG_BUCKET}/dags/o2a/__init__.py"
-    gsutil cp -r "${LOCAL_O2A_LIBS_DIR}/*" "gs://${COMPOSER_DAG_BUCKET}/dags/o2a/o2a_libs/"
+    gsutil -m cp -r "${LOCAL_SCRIPTS_DIR}/*" "gs://${COMPOSER_DAG_BUCKET}/data/"
+    gsutil cp -r "${LOCAL_O2A_PROJECT_DIR}/o2a/__init__.py" "gs://${COMPOSER_DAG_BUCKET}/dags/o2a/__init__.py"
+    gsutil -m cp -r "${LOCAL_O2A_LIBS_DIR}/*.py" "gs://${COMPOSER_DAG_BUCKET}/dags/o2a/o2a_libs/"
     footer
 }
 
@@ -544,16 +544,16 @@ if [[ ${SETUP_AUTOCOMPLETE} == "true" ]]; then
 fi
 
 LOCAL_O2A_BIN_SCRIPT="${MY_DIR}/o2a"
-SOURCE_O2A_DIR="${O2A_DIR}/o2a"
+LOCAL_O2A_PROJECT_DIR="${O2A_DIR}"
 LOCAL_EXAMPLE_DIR=examples
 
 RANDOM_PREFIX=$(echo $RANDOM $RANDOM $RANDOM $RANDOM $RANDOM | md5sum | cut -c -8)
 
-LOCAL_APP_DIR="${SOURCE_O2A_DIR}/${LOCAL_EXAMPLE_DIR}/${LOCAL_APP_NAME}"
+LOCAL_APP_DIR="${LOCAL_O2A_PROJECT_DIR}/${LOCAL_EXAMPLE_DIR}/${LOCAL_APP_NAME}"
 
 LOCAL_OUTPUT_DIR="${O2A_DIR}/output/${LOCAL_APP_NAME}"
-LOCAL_O2A_LIBS_DIR="${SOURCE_O2A_DIR}/o2a_libs"
-LOCAL_SCRIPTS_DIR="${SOURCE_O2A_DIR}/scripts"
+LOCAL_O2A_LIBS_DIR="${LOCAL_O2A_PROJECT_DIR}/o2a/o2a_libs"
+LOCAL_SCRIPTS_DIR="${LOCAL_O2A_PROJECT_DIR}/scripts"
 OUTPUT_DAG_NAME="test_${LOCAL_APP_NAME}_dag"
 
 LOCAL_CONFIGURATION_PROPERTIES_TEMPLATE=${LOCAL_APP_DIR}/configuration.template.properties

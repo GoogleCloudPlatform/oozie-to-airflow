@@ -17,7 +17,7 @@ MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 O2A_DIR="$( cd "${MY_DIR}/.." && pwd )"
 
 pushd "${O2A_DIR}"
-for EXAMPLE in $(cd o2a/examples; ls)
+for EXAMPLE in $(cd examples; ls)
 do
     echo "Preparing configuration for ${EXAMPLE}"
     "${MY_DIR}/run-sys-test" --phase prepare-configuration -a "${EXAMPLE}" >/dev/null

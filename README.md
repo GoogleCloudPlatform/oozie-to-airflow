@@ -115,7 +115,7 @@ There are a few differences noted below:
 * See [requirements.txt](requirements.txt)
 
 Additionally the shell script included in the directory, `init.sh`, can
-be ran to set up the dependencies and ready your machine to run the examples.
+be executed to set up the dependencies and have your local machine ready to convert the examples.
 
 ```bash
 # Allow init.sh to execute
@@ -338,7 +338,7 @@ parsed by the Airflow workers and then available to all DAGs.
 
 # Examples
 
-All examples can be found in the `examples/` directory.
+All examples can be found in the [examples](examples) directory.
 
 * [Demo](#demo-example)
 * [SSH](#ssh-example)
