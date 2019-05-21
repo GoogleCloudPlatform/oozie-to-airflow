@@ -61,6 +61,20 @@ class prepare_git_command_TestCase(unittest.TestCase):
             "--git-uri GIT_URI --destination-path /DEST_PATH/ --branch GIT_BRANCH --key-path /KEY/PATH",
         )
 
+    def test_should_escape_special_characters(self):
+        command = prepare_git_command(
+            git_uri="GIT_'\"URI",
+            git_branch="GIT'\"_BRANCH",
+            destination_path="/DEST_PA'\"TH/",
+            key_path="/KEY/'\"PATH",
+        )
+        self.assertEqual(
+            command,
+            "$DAGS_FOLDER/../data/git.sh --cluster {dataproc_cluster} --region {gcp_region} "
+            "--git-uri 'GIT_'\"'\"'\"URI' --destination-path '/DEST_PA'\"'\"'\"TH/' "
+            "--branch 'GIT'\"'\"'\"_BRANCH' --key-path '/KEY/'\"'\"'\"PATH'",
+        )
+
     def test_without_branch(self):
         command = prepare_git_command(
             git_uri="GIT_URI", git_branch=None, destination_path="/DEST_PATH/", key_path="/KEY/PATH"

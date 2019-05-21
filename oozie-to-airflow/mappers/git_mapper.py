@@ -42,7 +42,7 @@ def prepare_git_command(
         "--cluster {dataproc_cluster} "
         "--region {gcp_region} "
         f"--git-uri {shlex.quote(git_uri)} "
-        f"--destination-path {destination_path}"
+        f"--destination-path {shlex.quote(destination_path)}"
     )
 
     if git_branch:
