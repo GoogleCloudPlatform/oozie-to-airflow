@@ -87,8 +87,27 @@ The environment can be setup via the virtualenv setup
 for example. While in the virtualenv, you need to run [init.sh](init.sh) script to
 install all requirements and check python version.
 
-Note! You need to run [run-all-configuration](run-all-configuration) script once before you attempt to run unit
+Note! You need to run [run-all-configurations](bin/run-all-configurations) script once before you attempt to run unit
 tests and examples. This script generates configuration from the templates
+
+## Adding bin directory to your PATH
+
+You can add the [bin](bin) subdirectory to your PATH, then all the scripts below can be run without adding
+bin path.
+
+You can do it for example by adding similar line to your `.bash_profile`
+or `bin/postactivate` from your virtual environment:
+
+```bash
+export PATH=${PATH}:<INSERT_PATH_TO_YOUR_OOZIE_PROJECT>/bin
+```
+
+Otherwise you need to run them from the bin subdirectory - prepending it with the path, for example:
+```bash
+./bin/o2a --help
+```
+
+In all the examples below it is assumed that the [bin](bin) directory is in your PATH.
 
 ## Static code analysis and pre-commit hooks
 
@@ -112,21 +131,21 @@ You can check all commands of pre-commit framework at https://pre-commit.com/
 ## Running Unit Tests
 
 While you are in your local virtualenv, you can run the unit tests. Currently, the test directory is
-set up in a such a way that the folders in [tests](oozie-to-airflow/tests) directory mirrors the
-structure of the (oozie-to-airflow)[oozie-to-airflow] directory.
+set up in a such a way that the folders in [tests](tests) directory mirrors the
+structure of the [o2a](o2a) directory.
 
 Unit tests are run automatically in Travis CI and when you have pre-commit hooks installed.
-You can also run all unit tests using [run-all-unit-tests](run-all-unit-tests) script.
+You can also run all unit tests using [run-all-unit-tests](bin/run-all-unit-tests) script.
 
 ## Running all example conversions
 
-All example conversions can by run via the [run-all-conversions](run-all-conversions) script.
+All example conversions can by run via the [run-all-conversions](bin/run-all-conversions) script.
 It is also executed during automated tests.
 
 ## Dependency graphs
 
 You can generate dependency graphs automatically from the code via
-[generate-depdency-graph](generate-dependency-graph) but you need `graphviz` installed locally.
+[generate-dependency-graph](bin/generate-dependency-graph) but you need `graphviz` installed locally.
 
 The latest dependencies generated:
 ![dependency graph](images/o2a-dependencies.png)
@@ -206,13 +225,13 @@ List of jobs with their statuses can be also shown by issuing `oozie jobs` comma
 Oozie to Airflow has a set of system tests that test end-2-end functionality of conversion and execution
 of workflows using Cloud environment with Cloud Dataproc and Cloud Composer.
 
-We can run examples defined in examples folder as system tests. The system tests use an existing
-Composer, Dataproc cluster and Oozie run in the Dataproc cluster to prepare HDFS application folder structure
-and trigger the tests automatically.
+We can run examples defined in the [examples](examples) folder as system tests. The system tests
+use an existing Composer, Dataproc cluster and Oozie run in the Dataproc cluster to prepare HDFS
+application folder structure and trigger the tests automatically.
 
 You can run the tests using this command:
 
-`./run-sys-tests --application <APPLICATION> --phase <PHASE>`
+`run-sys-tests --application <APPLICATION> --phase <PHASE>`
 
 Default phase is convert - it only converts the oozie workflow to Airflow DAG without running the tests
 on either Oozie nor Composer
@@ -234,9 +253,10 @@ Flags:
 
 -a, --application <APPLICATION>
         Application (from examples dir) to run the tests on. Must be specified unless -S or -A are specified.
+        One of [ childwf decision demo el fs git mapreduce pig shell spark ssh subwf ]
 
 -p, --phase <PHASE>
-        Phase of the test to run. One of [ convert prepare-dataproc prepare-composer test-composer test-oozie ]. Defaults to convert.
+        Phase of the test to run. One of [ prepare-configuration convert prepare-dataproc test-composer test-oozie ]. Defaults to convert.
 
 -C, --composer-name <COMPOSER_NAME>
         Composer instance used to run the operations on. Defaults to o2a-integration
@@ -307,24 +327,24 @@ The typical scenario to run the tests are:
 
 Running application via Oozie:
 ```
-./run-sys-test --phase prepare-dataproc --application <APP> --cluster <CLUSTER>
+run-sys-test --phase prepare-dataproc --application <APP> --cluster <CLUSTER>
 
-./run-sys-test --phase test-oozie
+run-sys-test --phase test-oozie
 ```
 
 Running application via composer:
 ```
-./run-sys-test --phase prepare-dataproc --application <APP> --cluster <CLUSTER>
+run-sys-test --phase prepare-dataproc --application <APP> --cluster <CLUSTER>
 
-./run-sys-test --phase test-composer
+run-sys-test --phase test-composer
 ```
 
 ### Running system tests with sub-workflows
 
 In order to run system tests with sub-workflows you need to have the sub-workflow application already
 present in HDFS, therefore you need to run at least
-`./run-sys-test --phase prepare-dataproc --application <SUBWORKFLOW_APP>`
+`run-sys-test --phase prepare-dataproc --application <SUBWORKFLOW_APP>`
 
 For example in case of the demo application, you need to run at least once
-`./run-sys-test --phase prepare-dataproc --application childwf` because `childwf` is used as sub-workflow
+`run-sys-test --phase prepare-dataproc --application childwf` because `childwf` is used as sub-workflow
 in the demo application.

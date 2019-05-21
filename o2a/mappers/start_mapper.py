@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,20 +12,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
----
-language: python
-env:
-  - SLUGIFY_USES_TEXT_UNIDECODE=yes
-python:
-  - "3.6"
-cache: pip
-install:
-  - pip uninstall -y mock
-  - pip install -r requirements.txt
-  - sudo apt-get install coreutils libxml2-utils
-script:
-  - ./bin/run-all-configurations
-  - pre-commit run --all-files
-  - ./bin/run-all-conversions
-after_success:
-  - bash <(curl -s https://codecov.io/bash)
+"""Maps Oozie start node to Airflow's DAG"""
+from typing import Set
+
+from o2a.mappers.base_mapper import BaseMapper
+
+
+class StartMapper(BaseMapper):
+    def required_imports(self) -> Set[str]:
+        return set()
+
+    def to_tasks_and_relations(self):
+        return [], []
+
+    def on_parse_finish(self, workflow):
+        super().on_parse_finish(self)
+        del workflow.nodes[self.name]
+        workflow.relations -= {
+            relation for relation in workflow.relations if relation.from_task_id == self.name
+        }

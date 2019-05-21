@@ -1,0 +1,58 @@
+#!/usr/bin/env bash
+# Copyright 2019 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+set -euo pipefail
+MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+O2A_DIR="$( cd "${MY_DIR}/.." && pwd )"
+
+FAILED_WORKFLOWS=""
+VERBOSE=${VERBOSE:=""}
+XMLLINT_EXTRA_PARAMS=""
+
+if [[ "${VERBOSE}" != "" ]]; then
+    XMLLINT_EXTRA_PARAMS="--load-trace"
+fi
+
+for WORKFLOW in "$@"; do
+    echo
+    echo "Validating ${WORKFLOW}"
+    echo
+    set +e
+    # Note - if you add new actions add the schema for this action to "all-schemas-1.0.xsd"
+    xmllint --noout ${XMLLINT_EXTRA_PARAMS} --schema "${O2A_DIR}/schema/all-schemas-1.0.xsd" "${WORKFLOW}"
+    ERR=$?
+    set -e
+    if [[ ${ERR} != "0" ]]; then
+        FAILED_WORKFLOWS="${FAILED_WORKFLOWS} ${WORKFLOW}"
+    fi
+done
+
+
+if [[ "${FAILED_WORKFLOWS}" != "" ]]; then
+    echo
+    echo
+    echo "Some workflows failed validation:"
+    echo
+    for WORKFLOW in ${FAILED_WORKFLOWS}
+    do
+        echo "${WORKFLOW}"
+    done
+    echo
+    echo
+    exit 1
+else
+    echo
+    echo "Workflows validated properly"
+    echo
+fi

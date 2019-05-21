@@ -1,0 +1,122 @@
+#!/usr/bin/env bash
+
+# Copyright 2019 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+_SHORT_OPTIONS="
+h a: p: C: L: b: c: m: r: z: v A S
+"
+
+_ALLOWED_PHASES=" prepare-configuration convert prepare-dataproc test-composer test-oozie "
+# shellcheck disable=SC2011
+_ALLOWED_APPLICATIONS=" childwf decision demo el fs git mapreduce pig shell spark ssh subwf "
+
+_LONG_OPTIONS="
+help application: composer-name: composer-location: phase: bucket: cluster:
+region: verbose setup-autocomplete ssh-to-cluster-master
+"
+
+# Note on OSX bash has no associative arrays (Bash 3.2) so we have to fake it
+
+_KNOWN_VALUES=""
+
+function _get_known_values {
+    case "$1" in
+        -a | --application )
+            _KNOWN_VALUES=${_ALLOWED_APPLICATIONS} ;;
+        -p | --phase )
+            _KNOWN_VALUES=${_ALLOWED_PHASES} ;;
+        *)
+            _KNOWN_VALUES=""
+    esac
+}
+
+_GETOPT_SHORT_OPTIONS=""
+_GETOPT_LONG_OPTIONS=""
+
+function _build_options {
+    local SEPARATOR=""
+    local OPTION
+
+    for OPTION in ${_SHORT_OPTIONS}
+    do
+        _GETOPT_SHORT_OPTIONS="${_GETOPT_SHORT_OPTIONS}${SEPARATOR}${OPTION}"
+        SEPARATOR=","
+    done
+
+    SEPARATOR=""
+    for OPTION in ${_LONG_OPTIONS}
+    do
+        _GETOPT_LONG_OPTIONS="${_GETOPT_LONG_OPTIONS}${SEPARATOR}${OPTION}"
+        SEPARATOR=","
+    done
+}
+
+function _listcontains {
+  local WORD
+  for WORD in $1; do
+    [[ "${WORD}" = "$2" ]] && return 0
+  done
+  return 1
+}
+
+# A completion function for run-
+function _comp_run_sys_test {
+    local ALL_OPTIONS=""
+    local EXTRA_ARG_OPTIONS=""
+    local OPTION
+    local GETOPT_OPTION
+    local LAST_COMMAND_PREFIX
+    local PREVIOUS_COMMAND
+
+    for OPTION in ${_SHORT_OPTIONS}
+    do
+        LAST_CHAR="${OPTION:$((${#OPTION}-1)):1}"
+        GETOPT_OPTION='-'${OPTION//:/}
+        if [[ "${LAST_CHAR}" == ":" ]]; then
+            EXTRA_ARG_OPTIONS="${EXTRA_ARG_OPTIONS} ${GETOPT_OPTION}"
+        fi
+        ALL_OPTIONS="${ALL_OPTIONS} ${GETOPT_OPTION}"
+    done
+    for OPTION in ${_LONG_OPTIONS}
+    do
+        LAST_CHAR="${OPTION:$((${#OPTION}-1)):1}"
+        GETOPT_OPTION='--'${OPTION//:/}
+        ALL_OPTIONS="${ALL_OPTIONS} ${GETOPT_OPTION}"
+        if [[ "${LAST_CHAR}" == ":" ]]; then
+            EXTRA_ARG_OPTIONS="${EXTRA_ARG_OPTIONS} ${GETOPT_OPTION}"
+        fi
+    done
+
+    LAST_COMMAND_PREFIX="${COMP_WORDS[${#COMP_WORDS[@]}-1]}"
+    # shellcheck disable=SC2071
+    if [[ ${#COMP_WORDS[@]} > 1 ]]; then
+        PREVIOUS_COMMAND="${COMP_WORDS[${#COMP_WORDS[@]}-2]}"
+    else
+        PREVIOUS_COMMAND=""
+    fi
+
+    if _listcontains "${EXTRA_ARG_OPTIONS}" "${PREVIOUS_COMMAND}"; then
+        COMPREPLY=()
+        _get_known_values "${PREVIOUS_COMMAND}"
+        # shellcheck disable=SC2207
+        COMPREPLY+=($(compgen -W "${_KNOWN_VALUES}" -- "${LAST_COMMAND_PREFIX}"))
+    else
+        # shellcheck disable=SC2207
+        COMPREPLY+=($(compgen -W "${ALL_OPTIONS}" -- "${LAST_COMMAND_PREFIX}"))
+    fi
+}
+
+_build_options
+
+complete -F _comp_run_sys_test run-sys-test
