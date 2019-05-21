@@ -5,16 +5,9 @@
 # Python
 __pycache__
 *.pyc
-/oozie-to-airflow/oozie-to-airflow.iml
 
 .coverage
 
 .mypy_cache
+.run-sys-test-cache-dir
 output
-.DATAPROC_CLUSTER_NAME
-.GCP_REGION
-.PHASE
-.COMPOSER_LOCATION
-.LOCAL_APP_NAME
-.COMPOSER_DAG_BUCKET
-.COMPOSER_NAME

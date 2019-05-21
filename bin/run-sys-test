@@ -1,0 +1,610 @@
+#!/usr/bin/env bash
+
+# Copyright 2019 Google LLC
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+# http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
+MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+set -euo pipefail
+O2A_DIR="$( cd "${MY_DIR}/.." && pwd )"
+
+RUN_TEST_CACHE_DIR="${O2A_DIR}/.run-sys-test-cache-dir"
+
+mkdir -pv "${RUN_TEST_CACHE_DIR}"
+
+# Update short and long options in the complete script
+# This way autocomplete will work automagically with all options
+# shellcheck source=run-sys-test-complete
+. "${MY_DIR}/run-sys-test-complete"
+
+
+CMDNAME="$(basename -- "$0")"
+
+function save_to_file {
+    # shellcheck disable=SC2005
+    echo "$(eval echo "\$$1")" > "${RUN_TEST_CACHE_DIR}/.$1"
+}
+
+function read_from_file {
+    cat "${RUN_TEST_CACHE_DIR}/.$1" 2>/dev/null || true
+}
+
+
+DATAPROC_CLUSTER_NAME=$(read_from_file DATAPROC_CLUSTER_NAME)
+export DATAPROC_CLUSTER_NAME=${DATAPROC_CLUSTER_NAME:=oozie-51}
+
+GCP_REGION=$(read_from_file GCP_REGION)
+export GCP_REGION=${GCP_REGION:=europe-west3}
+
+COMPOSER_NAME=$(read_from_file COMPOSER_NAME)
+export COMPOSER_NAME=${COMPOSER_NAME:=o2a-integration}
+
+COMPOSER_LOCATION=$(read_from_file COMPOSER_LOCATION)
+export COMPOSER_LOCATION=${COMPOSER_LOCATION:=europe-west1}
+
+COMPOSER_DAG_BUCKET=$(read_from_file COMPOSER_DAG_BUCKET)
+export COMPOSER_DAG_BUCKET=${COMPOSER_DAG_BUCKET:=""}
+
+LOCAL_APP_NAME=$(read_from_file LOCAL_APP_NAME)
+export LOCAL_APP_NAME=${LOCAL_APP_NAME:=}
+
+PHASE=$(read_from_file PHASE)
+export PHASE=${PHASE:=convert}
+
+DATAPROC_USER=$(read_from_file DATAPROC_USER)
+export DATAPROC_USER=${DATAPROC_USER:=${USER:=example_user}}
+
+RUN_SSH_COMMAND="false"
+
+SETUP_AUTOCOMPLETE="false"
+
+COMPOSER_WEB_UI_URL=""
+
+VERBOSE="false"
+
+function prepare_configuration {
+    if [[ ! -f "${LOCAL_CONFIGURATION_PROPERTIES_TEMPLATE}" ]]; then
+        echo
+        echo "The file ${LOCAL_CONFIGURATION_PROPERTIES_TEMPLATE} does not exist."
+        echo "Skipping preparing configuration"
+        echo
+    else
+        echo
+        echo "Preparing ${LOCAL_CONFIGURATION_PROPERTIES} "
+        echo "     from ${LOCAL_CONFIGURATION_PROPERTIES_TEMPLATE}."
+        echo
+        export DATAPROC_CLUSTER_NAME GCP_REGION COMPOSER_DAG_BUCKET
+        echo
+        echo "Cluster name: ${DATAPROC_CLUSTER_NAME}"
+        echo "Region: ${GCP_REGION}"
+        echo
+        j2 "${LOCAL_CONFIGURATION_PROPERTIES_TEMPLATE}" \
+              -e DATAPROC_CLUSTER_NAME \
+              -e GCP_REGION \
+              -e COMPOSER_DAG_BUCKET \
+              -e DATAPROC_USER \
+              -e LOCAL_APP_NAME \
+              -o "${LOCAL_CONFIGURATION_PROPERTIES}"
+    fi
+}
+
+function prepare_dataproc {
+    HDFS_REMOTE_ALL_APPS_DIR=/user/${DATAPROC_USER}/examples/apps
+    HDFS_REMOTE_APP_DIR=${HDFS_REMOTE_ALL_APPS_DIR}/${LOCAL_APP_NAME}
+    header "Prepare HDFS ${HDFS_REMOTE_APP_DIR} via master's ${REMOTE_FILESYSTEM_ALL_APPS_DIR} \
+for example application: ${LOCAL_APP_NAME}"
+
+    run_command "rm -rf ${REMOTE_FILESYSTEM_APP_DIR}"
+    if [[ -d "${LOCAL_APP_DIR}/hdfs" ]]; then
+        if [[ ! -f "${LOCAL_APP_DIR}/hdfs/workflow.xml" ]]; then
+            echo
+            echo "Missing ${LOCAL_APP_DIR}/hdfs/workflow.xml file"
+            echo
+            exit 1
+        fi
+        run_command "mkdir -p \"${REMOTE_FILESYSTEM_ALL_APPS_DIR}\""
+        scp_folder "${LOCAL_APP_DIR}/hdfs/" "${REMOTE_FILESYSTEM_APP_DIR}"
+    else
+        echo
+        echo "Missing ${LOCAL_APP_DIR}/hdfs folder. It should contain at least workflow.xml"
+        echo
+        exit 1
+    fi
+
+    LOCAL_APP_PROPERTIES="/tmp/${LOCAL_APP_NAME}_${RANDOM_PREFIX}_job.properties"
+
+    # Overwrite job properties with the dataproc cluster master
+
+    sed -e "s/^nameNode.*$/nameNode=hdfs:\/\/${DATAPROC_CLUSTER_MASTER}:8020/" \
+        -e "s/^resourceManager.*$/resourceManager=${DATAPROC_CLUSTER_MASTER}:8032/" \
+        -e "s/\${user\.name}/${DATAPROC_USER}/" \
+        "${LOCAL_APP_DIR}/job.properties"  > "${LOCAL_APP_PROPERTIES}"
+    scp_file "${LOCAL_APP_PROPERTIES}" "${REMOTE_FILESYSTEM_APP_PROPERTIES}"
+
+    submit_pig "fs -rm -r -f ${HDFS_REMOTE_APP_DIR}"
+    submit_pig "fs -mkdir -p ${HDFS_REMOTE_ALL_APPS_DIR}"
+
+    # Note! The target will be /user/${user.name}/${examplesRoot}/apps/<TEST_APP>
+    submit_pig "fs -copyFromLocal ${REMOTE_FILESYSTEM_APP_DIR} ${HDFS_REMOTE_APP_DIR}"
+    footer
+}
+
+function prepare_composer {
+    header "Prepares Composer by copying reusable library files"
+    gsutil cp -r "${LOCAL_SCRIPTS_DIR}/*" "gs://${COMPOSER_DAG_BUCKET}/data/"
+    gsutil cp -r "${SOURCE_O2A_DIR}/__init__.py" "gs://${COMPOSER_DAG_BUCKET}/dags/o2a/__init__.py"
+    gsutil cp -r "${LOCAL_O2A_LIBS_DIR}/*" "gs://${COMPOSER_DAG_BUCKET}/dags/o2a/o2a_libs/"
+    footer
+}
+
+usage() {
+      echo """
+
+Usage: ${CMDNAME} [FLAGS] [-A|-S]
+
+Executes prepare or run phase for integration testing of O2A converter.
+
+Flags:
+
+-h, --help
+        Shows this help message.
+
+-a, --application <APPLICATION>
+        Application (from examples dir) to run the tests on. Must be specified unless -S or -A are specified.
+
+-p, --phase <PHASE>
+        Phase of the test to run. One of [${_ALLOWED_PHASES}]. Defaults to ${PHASE}.
+
+-C, --composer-name <COMPOSER_NAME>
+        Composer instance used to run the operations on. Defaults to ${COMPOSER_NAME}
+
+-L, --composer-location <COMPOSER_LOCATION>
+        Composer locations. Defaults to ${COMPOSER_LOCATION}
+
+-c, --cluster <CLUSTER>
+        Cluster used to run the operations on. Defaults to ${DATAPROC_CLUSTER_NAME}
+
+-b, --bucket <BUCKET>
+        Airflow Composer DAG bucket used. Defaults to bucket that is used by Composer.
+
+-r, --region <REGION>
+        GCP Region where the cluster is located. Defaults to ${GCP_REGION}
+
+-v, --verbose
+        Add even more verbosity when running the script.
+
+
+Optional commands to execute:
+
+
+-S, --ssh-to-cluster-master
+        SSH to dataproc's cluster master. Arguments after -- are passed to gcloud ssh command as extra args.
+
+-A, --setup-autocomplete
+        Sets up autocomplete for run-sys-tests
+
+"""
+}
+
+echo
+
+set +e
+
+getopt -T >/dev/null
+GETOPT_RETVAL=$?
+
+if [[ $(uname -s) == 'Darwin' ]] ; then
+    command -v gstat >/dev/null
+    STAT_PRESENT=$?
+else
+    command -v stat >/dev/null
+    STAT_PRESENT=$?
+fi
+
+command -v j2 > /dev/null
+J2_PRESENT=$?
+
+set -e
+
+function setup_autocomplete {
+    echo
+    echo "Installing bash completion for local user"
+    echo
+    set +e
+    # shellcheck disable=SC2088
+    grep "~/.bash_completion.d" ~/.bash_profile >/dev/null 2>&1
+    RES=$?
+    set -e
+    if [[ "${RES}" == "0" ]]; then
+        echo "Bash dir already created"
+    else
+        "${MY_DIR}/confirm" "This will create ~/.bash_completion.d/ directory and modify ~/.bash_profile file"
+        echo
+        echo
+        mkdir -pv ~/.bash_completion.d
+        touch ~/.bash_profile
+        cat >>~/.bash_profile <<"EOF"
+for BCFILE in ~/.bash_completion.d/* ; do
+. ${BCFILE}
+done
+EOF
+    fi
+    ln -sf "${MY_DIR}/run-sys-test-complete" ~/.bash_completion.d/
+    echo
+    echo
+    echo The run-set-tests completion installed to ~/.bash_completion.d/run-sys-test-complete
+    echo
+    echo
+    echo "Please re-enter bash or run '. ~/.bash_completion.d/run-sys-test-complete'"
+    echo
+}
+
+####################  Parsing options/arguments
+if [[ ${GETOPT_RETVAL} != 4 || "${STAT_PRESENT}" != "0" ]]; then
+    echo
+    if [[ $(uname -s) == 'Darwin' ]] ; then
+        echo "You are running ${CMDNAME} in OSX environment"
+        echo "And you need to install gnu commands"
+        echo
+        echo "Run 'brew install gnu-getopt coreutils'"
+        echo
+        echo "Then link the gnu-getopt to become default as suggested by brew by typing:"
+        echo "echo 'export PATH=\"/usr/local/opt/gnu-getopt/bin:\$PATH\"' >> ~/.bash_profile"
+        echo ". ~/.bash_profile"
+        echo
+        echo "Login and logout afterwards"
+        echo
+    else
+        echo "You do not have necessary tools in your path (getopt, stat). Please install the"
+        echo "Please install latest/GNU version of getopt and coreutils."
+        echo "This can usually be done with 'apt install util-linux coreutils'"
+    fi
+    echo
+    exit 1
+fi
+
+####################  Parsing options/arguments
+if [[ "${J2_PRESENT}" != "0" ]]; then
+    echo
+    echo "ERROR! j2 client for jinja2 processing is not present on path"
+    echo
+    echo
+    echo "Please make sure that you are within virtualenv prepared with 'pip install -r requirements.txt'"
+    echo
+    echo
+    exit 1
+fi
+
+if ! PARAMS=$(getopt \
+    -o "${_SHORT_OPTIONS:=}" \
+    -l "${_LONG_OPTIONS:=}" \
+    --name "$CMDNAME" -- "$@")
+then
+    usage
+    exit 1
+fi
+
+
+eval set -- "${PARAMS}"
+unset PARAMS
+
+# Parse Flags.
+# Please update short and long options in the run-sys-complete script
+# This way autocomplete will work out-of-the-box
+while true
+do
+  case "${1}" in
+    -h|--help)
+      usage;
+      exit 0 ;;
+    -a|--application)
+      export LOCAL_APP_NAME="${2}";
+      echo
+      echo "Application to test: ${LOCAL_APP_NAME}"
+      echo
+      shift 2 ;;
+    -C|--composer-name)
+      export COMPOSER_NAME="${2}";
+      echo
+      echo "Composer name: ${COMPOSER_NAME}"
+      echo
+      shift 2 ;;
+    -L|--composer-location)
+      export COMPOSER_LOCATION="${2}";
+      echo
+      echo "Composer location: ${COMPOSER_LOCATION}"
+      echo
+      shift 2 ;;
+    -p|--phase)
+      export PHASE="${2}";
+      echo
+      echo "Phase to run: ${PHASE}"
+      echo
+      shift 2 ;;
+    -b|--bucket)
+      export COMPOSER_DAG_BUCKET="${2}";
+      echo
+      echo "Composer Bucket where DAGs are stored: ${COMPOSER_DAG_BUCKET}"
+      echo
+      shift 2 ;;
+    -c|--cluster)
+      export DATAPROC_CLUSTER_NAME="${2}";
+      echo
+      echo "Cluster to run test on: ${DATAPROC_CLUSTER_NAME}"
+      echo
+      shift 2 ;;
+    -r|--region)
+      export GCP_REGION="${2}";
+      echo
+      echo "Region where cluster is located: ${GCP_REGION}"
+      echo
+      shift 2 ;;
+    -v|--verbose)
+      export VERBOSE="true";
+      echo
+      echo "Verbosity turned on"
+      echo
+      shift ;;
+    -S|--ssh-to-cluster-master)
+      export RUN_SSH_COMMAND="true"
+      echo
+      echo "Running SSH to master"
+      echo
+      shift ;;
+    -A|--setup-autocomplete)
+      export SETUP_AUTOCOMPLETE="true"
+      echo
+      echo "Setting up autocomplete"
+      echo
+      shift ;;
+    --)
+      shift ;
+      break ;;
+    *)
+      usage
+      echo
+      echo "ERROR: Unknown argument ${1}"
+      echo
+      exit 1
+      ;;
+  esac
+done
+
+function ssh_to_cluster_master {
+    echo
+    echo "SSH to cluster master ${DATAPROC_CLUSTER_MASTER} in zone ${DATAPROC_MASTER_ZONE}"
+    echo
+    set -x
+    # shellcheck disable=SC2068
+    gcloud compute ssh "${DATAPROC_CLUSTER_MASTER}" --zone "${DATAPROC_MASTER_ZONE}" -- $@
+}
+
+function verify_arguments {
+    if [[ ${LOCAL_APP_NAME} == "" ]]; then
+        echo
+        echo "ERROR! You have not specified an application with --application switch"
+        echo
+        exit 1
+    fi
+
+    #################### Check python version ##########################################
+    if [[ ${_ALLOWED_PHASES:=} != *" ${PHASE} "* ]]; then
+        echo
+        echo "ERROR! Allowed phases are [${_ALLOWED_PHASES}]. Used: '${PHASE}'"
+        echo
+        usage
+        exit 1
+    fi
+
+    if [[ ${_ALLOWED_APPLICATIONS:=} != *" ${LOCAL_APP_NAME} "* ]]; then
+        echo
+        echo "ERROR! Allowed applications are [${_ALLOWED_APPLICATIONS}]. Used: '${LOCAL_APP_NAME}'"
+        echo
+        usage
+        exit 1
+    fi
+}
+
+function header {
+    echo
+    SEPARATOR_WIDTH=$(tput cols)
+    printf '#%.0s' $(seq "${SEPARATOR_WIDTH}")
+    echo
+    echo "#    $1"
+    printf '#%.0s' $(seq "${SEPARATOR_WIDTH}")
+    echo
+    echo
+    set -x
+}
+
+function footer {
+    set +x
+    SEPARATOR_WIDTH=$(tput cols)
+    echo
+    printf '#%.0s' $(seq "${SEPARATOR_WIDTH}")
+    echo
+    echo
+}
+
+
+function run_command {
+    gcloud compute ssh "${DATAPROC_CLUSTER_MASTER}" --zone="${DATAPROC_MASTER_ZONE}" --command "${1}"
+}
+
+function scp_folder {
+    gcloud compute scp --zone="${DATAPROC_MASTER_ZONE}" --recurse "${1}" "${DATAPROC_CLUSTER_MASTER}:${2}"
+}
+
+function scp_file {
+    gcloud compute scp --zone="${DATAPROC_MASTER_ZONE}" "${1}" "${DATAPROC_CLUSTER_MASTER}:${2}"
+}
+
+function submit_pig {
+    gcloud dataproc jobs submit pig --cluster="${DATAPROC_CLUSTER_NAME}" --region="${GCP_REGION}" \
+        --execute "${1}"
+}
+
+function convert {
+    header "Convert workflow.xml to Airflow's ${OUTPUT_DAG_NAME}.py dag for example: ${LOCAL_APP_NAME}"
+    "${LOCAL_O2A_BIN_SCRIPT}" -i "${LOCAL_APP_DIR}" -o "${LOCAL_OUTPUT_DIR}" -u "${DATAPROC_USER}" \
+       -d "${OUTPUT_DAG_NAME}"
+    python -m py_compile "${LOCAL_OUTPUT_DIR}/${OUTPUT_DAG_NAME}.py"
+    footer
+}
+
+function test_composer {
+    header "Triggers example application on Composer: ${LOCAL_APP_NAME}"
+    gsutil cp -r "${LOCAL_OUTPUT_DIR}/*" "gs://${COMPOSER_DAG_BUCKET}/dags/"
+
+    gcloud composer environments run "${COMPOSER_NAME}" --location "${COMPOSER_LOCATION}" list_dags
+    gcloud composer environments run "${COMPOSER_NAME}" --location "${COMPOSER_LOCATION}" trigger_dag\
+       -- "${OUTPUT_DAG_NAME}"
+    echo
+    echo "You can check the progress at the address: ${COMPOSER_WEB_UI_URL}"
+    echo
+    footer
+}
+
+function test_oozie {
+    header "Triggers example application on Oozie: ${LOCAL_APP_NAME}"
+    JOB_ID_LINE=$(run_command "sudo oozie job --config ${REMOTE_FILESYSTEM_APP_PROPERTIES} -run" | tee /dev/tty | grep '^job: ')
+    # Skip prefix
+    # "job: " = 5 characters
+    JOB_ID="${JOB_ID_LINE:5}"
+    set +x
+    echo "You can run the following commands cluster to see the job status"
+    echo
+    echo "${CMDNAME} -S -- oozie job -info ${JOB_ID}"
+    echo "${CMDNAME} -S -- oozie job -log ${JOB_ID}"
+    echo
+    echo "Follow instructions of setting up the proxy in dataproc cluster console to observe the job"
+    echo
+    echo "Once you setup the proxy, hadoop interface will be available in the browser with proxy at:"
+    echo "http://${DATAPROC_CLUSTER_MASTER}:8088"
+    echo
+    footer
+    echo
+}
+
+function fetch_composer_environment_info {
+    header "Fetching information about the Composer environment"
+    echo
+    if [[ -z "${COMPOSER_DAG_BUCKET}" ]]; then
+        COMPOSER_DAG_BUCKET=$(gcloud beta composer environments describe "${COMPOSER_NAME}" --location "${COMPOSER_LOCATION}" --format='value(config.dagGcsPrefix)')
+        COMPOSER_DAG_BUCKET=${COMPOSER_DAG_BUCKET%/dags}
+        COMPOSER_DAG_BUCKET=${COMPOSER_DAG_BUCKET#gs://}
+        echo "DAG Bucket: ${COMPOSER_DAG_BUCKET}"
+    fi
+    COMPOSER_WEB_UI_URL=$(gcloud beta composer environments describe "${COMPOSER_NAME}" --location "${COMPOSER_LOCATION}" --format='value(config.airflowUri)')
+    echo "WEB UI URL: ${COMPOSER_WEB_UI_URL}"
+    echo
+    footer
+}
+
+function fetch_dataproc_environment_info {
+    header "Fetching information about the Dataproc environment"
+    echo
+    DATAPROC_CLUSTER_MASTER=$(gcloud dataproc clusters describe "${DATAPROC_CLUSTER_NAME}" --region="${GCP_REGION}" --format='value(config.masterConfig.instanceNames[0])')
+    DATAPROC_MASTER_ZONE=$(gcloud dataproc clusters describe "${DATAPROC_CLUSTER_NAME}" --region="${GCP_REGION}" --format='value(config.gceClusterConfig.zoneUri.basename())')
+    DATAPROC_USER=$(run_command "whoami")
+    REMOTE_FILESYSTEM_ALL_APPS_DIR=/home/${DATAPROC_USER}/o2a
+    REMOTE_FILESYSTEM_APP_DIR=${REMOTE_FILESYSTEM_ALL_APPS_DIR}/${LOCAL_APP_NAME}
+    REMOTE_FILESYSTEM_APP_PROPERTIES=${REMOTE_FILESYSTEM_ALL_APPS_DIR}/${LOCAL_APP_NAME}.properties
+    echo
+    footer
+}
+
+pushd "${O2A_DIR}"
+
+if [[ ${VERBOSE} == "true" ]]; then
+    set -x
+fi
+
+if [[ ${RUN_SSH_COMMAND} == "true" ]]; then
+    fetch_dataproc_environment_info
+    # shellcheck disable=SC2068
+    ssh_to_cluster_master $@
+    exit
+fi
+
+if [[ ${SETUP_AUTOCOMPLETE} == "true" ]]; then
+    setup_autocomplete
+    exit
+fi
+
+LOCAL_O2A_BIN_SCRIPT="${MY_DIR}/o2a"
+SOURCE_O2A_DIR="${O2A_DIR}/o2a"
+LOCAL_EXAMPLE_DIR=examples
+
+RANDOM_PREFIX=$(echo $RANDOM $RANDOM $RANDOM $RANDOM $RANDOM | md5sum | cut -c -8)
+
+LOCAL_APP_DIR="${SOURCE_O2A_DIR}/${LOCAL_EXAMPLE_DIR}/${LOCAL_APP_NAME}"
+
+LOCAL_OUTPUT_DIR="${O2A_DIR}/output/${LOCAL_APP_NAME}"
+LOCAL_O2A_LIBS_DIR="${SOURCE_O2A_DIR}/o2a_libs"
+LOCAL_SCRIPTS_DIR="${SOURCE_O2A_DIR}/scripts"
+OUTPUT_DAG_NAME="test_${LOCAL_APP_NAME}_dag"
+
+LOCAL_CONFIGURATION_PROPERTIES_TEMPLATE=${LOCAL_APP_DIR}/configuration.template.properties
+LOCAL_CONFIGURATION_PROPERTIES=${LOCAL_APP_DIR}/configuration.properties
+
+verify_arguments
+
+if _listcontains "${_ALLOWED_PHASES}" "${PHASE}"; then
+    echo "Running phase: ${PHASE}"
+else
+    echo
+    echo "Wrong phase specified"
+    echo
+    exit 1
+fi
+
+
+save_to_file LOCAL_APP_NAME
+save_to_file COMPOSER_NAME
+save_to_file COMPOSER_LOCATION
+save_to_file PHASE
+save_to_file COMPOSER_DAG_BUCKET
+save_to_file DATAPROC_CLUSTER_NAME
+save_to_file GCP_REGION
+
+if [[ "${PHASE}" == "prepare-configuration" ]]; then
+    prepare_configuration
+    # We only want to prepare configuration
+    exit 0
+fi
+
+if [[ "${PHASE}" == "convert" ]]; then
+    # in case we only convert locally we do not fetch dataproc info (user, cluster master)
+    # nor composer environment info and we rely on locally entered data
+    prepare_configuration
+    convert
+elif [[ "${PHASE}" == "prepare-dataproc" ]]; then
+    fetch_dataproc_environment_info
+    prepare_configuration
+    prepare_dataproc
+elif [[ "${PHASE}" == "test-composer" ]]; then
+    fetch_dataproc_environment_info
+    fetch_composer_environment_info
+    prepare_configuration
+    convert
+    prepare_composer
+    test_composer
+elif [[ "${PHASE}" == "test-oozie" ]]; then
+    fetch_dataproc_environment_info
+    test_oozie
+fi
+
+set +x
+
+popd

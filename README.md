@@ -124,20 +124,37 @@ $ chmod +x init.sh
 $ ./init.sh
 ```
 
+## Adding bin directory to your PATH
+
+You can add the [bin](bin) subdirectory to your PATH, then all the scripts below can be run without adding
+bin path.
+
+You can do it for example by adding similar line to your `.bash_profile`:
+
+```bash
+export PATH=${PATH}:<INSERT_PATH_TO_YOUR_OOZIE_PROJECT>/bin
+```
+
+Otherwise you need to run them from the bin subdirectory - prepending it with the path, for example:
+```bash
+./bin/o2a --help
+```
+
+In all the examples below it assumed that the [bin](bin) directory is in your PATH.
+
 ## Running the conversion
 
 You can run the program (minimally) by calling:
-`python o2a.py -i <INPUT_APPLICATION_FOLDER> -o <OUTPUT_FOLDER_PATH>`
+`o2a -i <INPUT_APPLICATION_FOLDER> -o <OUTPUT_FOLDER_PATH>`
 
 Example:
-`python o2a.py -i examples/demo -o output/demo`
+`o2a -i examples/demo -o output/demo`
 
-This is the full usage guide, available by running `python o2a.py -h`
+This is the full usage guide, available by running `o2a -h`
 
 ```
-usage: o2a.py [-h] -i INPUT_DIRECTORY_PATH -o OUTPUT_DIRECTORY_PATH
-              [-d DAG_NAME] [-u USER] [-s START_DAYS_AGO]
-              [-v SCHEDULE_INTERVAL]
+usage: o2a [-h] -i INPUT_DIRECTORY_PATH -o OUTPUT_DIRECTORY_PATH [-d DAG_NAME]
+           [-u USER] [-s START_DAYS_AGO] [-v SCHEDULE_INTERVAL]
 
 Convert Apache Oozie workflows to Apache Airflow workflows.
 
@@ -345,7 +362,7 @@ is there.
 
 The demo can be run as:
 
-`python o2a.py -i examples/demo -o output/demo`
+`o2a -i examples/demo -o output/demo`
 
 This will parse and write to an output file in the `output/demo` directory.
 
@@ -363,7 +380,7 @@ Additionally subworkflow is generated in  `/output/ssh/subdag_test.py`.
 
 The childwf example is sub-workflow for the `demo` example. It can be run as:
 
-`python o2a.py -i examples/childwf -o output/childwf`
+`o2a -i examples/childwf -o output/childwf`
 
 Make sure to first copy `examples/subwf/configuration.template.properties`, rename it as
 `configuration.properties` and fill in with configuration data.
@@ -379,7 +396,7 @@ No known limitations.
 
 The ssh example can be run as:
 
-`python o2a.py -i examples/ssh -o output/ssh`
+`o2a -i examples/ssh -o output/ssh`
 
 This will convert the specified Oozie XML and write the output into the
 specified output directory, in this case `output/ssh/test_ssh_dag.py`.
@@ -421,7 +438,7 @@ No known limitations.
 
 The MapReduce example can be run as:
 
-`python o2a.py -i examples/mapreduce -o output/mapreduce`
+`o2a -i examples/mapreduce -o output/mapreduce`
 
 Make sure to first copy `examples/mapreduce/configuration.template.properties`, rename it as
 `configuration.properties` and fill in with configuration data.
@@ -464,7 +481,7 @@ Streaming and pipes are currently not supported.
 
 The FS example can be run as:
 
-`python o2a.py -i examples/fs -o output/fs`
+`o2a -i examples/fs -o output/fs`
 
 Make sure to first copy `examples/fs/configuration.template.properties`, rename it as
 `configuration.properties` and fill in with configuration data.
@@ -482,7 +499,7 @@ Not all FS operations are currently idempotent. This will be fixed.
 
 The Pig example can be run as:
 
-`python o2a.py -i examples/pig -o output/pig`
+`o2a -i examples/pig -o output/pig`
 
 Make sure to first copy `examples/pig/configuration.template.properties`, rename it as
 `configuration.properties` and fill in with configuration data.
@@ -511,7 +528,7 @@ inline action configuration, i.e. using the `<configuration>` tag in the workflo
 
 The Shell example can be run as:
 
-`python o2a.py -i examples/shell -o output/shell`
+`o2a -i examples/shell -o output/shell`
 
 Make sure to first copy `examples/shell/configuration.template.properties`, rename it as
 `configuration.properties` and fill in with configuration data.
@@ -547,7 +564,7 @@ Currently there is no way specify the shell launcher configuration (it is ignore
 
 The Shell example can be run as:
 
-`python o2a.py -i examples/spark -o output/spark`
+`o2a -i examples/spark -o output/spark`
 
 Make sure to first copy `/examples/spark/configuration.template.properties`, rename it as
 `configuration.properties` and fill in with configuration data.
@@ -582,7 +599,7 @@ The following elements are not supported: `job-tracker`, `name-node`, `master`, 
 
 The Sub-workflow example can be run as:
 
-`python o2a.py -i examples/subwf -o output/subwf`
+`o2a -i examples/subwf -o output/subwf`
 
 Make sure to first copy `examples/subwf/configuration.template.properties`, rename it as
 `configuration.properties` and fill in with configuration data.
@@ -603,7 +620,7 @@ per DAG folder. This will be fixed soon.
 
 The decision example can be run as:
 
-`python o2a.py -i examples/decision -o output/decision`
+`o2a -i examples/decision -o output/decision`
 
 Make sure to first copy `examples/decision/configuration.template.properties`, rename it as
 `configuration.properties` and fill in with configuration data.
@@ -621,7 +638,7 @@ hard-coded for now. Once EL functions are implemented, the condition in the exam
 ## EL Example
 
 The Oozie Expression Language (EL) example can be run as:
-`python o2a.py -i examples/el -o output/el`
+`o2a -i examples/el -o output/el`
 
 This will showcase the ability to use the `o2a_libs` directory to map EL functions
 to Python methods. This example assumes that the user has a valid Apache Airflow
