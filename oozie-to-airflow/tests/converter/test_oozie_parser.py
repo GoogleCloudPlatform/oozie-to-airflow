@@ -45,13 +45,11 @@ class TestOozieParser(unittest.TestCase):
     def test_parse_kill_node(self, on_parse_node_mock):
         node_name = "kill_name"
         # language=XML
-        kill_string = """
+        kill_string = f"""
 <kill name="{node_name}">
     <message>kill-text-to-log</message>
 </kill>
-""".format(
-            node_name=node_name
-        )
+"""
         self.parser.parse_kill_node(ET.fromstring(kill_string))
 
         self.assertIn(node_name, self.parser.workflow.nodes)
@@ -64,7 +62,7 @@ class TestOozieParser(unittest.TestCase):
     def test_parse_end_node(self, on_parse_node_mock):
         node_name = "end_name"
         # language=XML
-        end_node_str = "<end name='{node_name}'/>".format(node_name=node_name)
+        end_node_str = f"<end name='{node_name}'/>"
 
         end = ET.fromstring(end_node_str)
         self.parser.parse_end_node(end)
@@ -80,7 +78,7 @@ class TestOozieParser(unittest.TestCase):
     def test_parse_fork_node(self, parse_node_mock, on_parse_node_mock):
         node_name = "fork_name"
         # language=XML
-        root_string = """
+        root_string = f"""
 <root>
     <fork name="{node_name}">
         <path start="task1" />
@@ -91,16 +89,13 @@ class TestOozieParser(unittest.TestCase):
     <join name="join" to="end_node" />
     <end name="end_node" />
 </root>
-""".format(
-            node_name=node_name
-        )
+"""
         root = ET.fromstring(root_string)
         fork = root.find("fork")
         node1, node2 = root.findall("action")[0:2]
         self.parser.parse_fork_node(root, fork)
         node = self.parser.workflow.nodes[node_name]
-        self.assertIn("task1", node.get_downstreams())
-        self.assertIn("task2", node.get_downstreams())
+        self.assertEqual(["task1", "task2"], node.get_downstreams())
         self.assertIn(node_name, self.parser.workflow.nodes)
         parse_node_mock.assert_any_call(root, node1)
         parse_node_mock.assert_any_call(root, node2)
@@ -114,15 +109,13 @@ class TestOozieParser(unittest.TestCase):
         node_name = "join_name"
         end_name = "end_name"
         # language=XML
-        join_str = '<join name="{node_name}" to="{end_name}" />'.format(
-            node_name=node_name, end_name=end_name
-        )
+        join_str = f"<join name='{node_name}' to='{end_name}' />"
         join = ET.fromstring(join_str)
         self.parser.parse_join_node(join)
 
         node = self.parser.workflow.nodes[node_name]
         self.assertIn(node_name, self.parser.workflow.nodes)
-        self.assertIn(end_name, node.get_downstreams())
+        self.assertEqual([end_name], node.get_downstreams())
         for depend in node.mapper.required_imports():
             self.assertIn(depend, self.parser.workflow.dependencies)
 
@@ -132,7 +125,7 @@ class TestOozieParser(unittest.TestCase):
     def test_parse_decision_node(self, on_parse_node_mock):
         node_name = "decision_node"
         # language=XML
-        decision_str = """
+        decision_str = f"""
 <decision name="{node_name}">
     <switch>
         <case to="down1">${{fs:fileSize(secondjobOutputDir) gt 10 * GB}}</case>
@@ -140,17 +133,13 @@ class TestOozieParser(unittest.TestCase):
         <default to="end1" />
     </switch>
     </decision>
-""".format(
-            node_name=node_name
-        )
+"""
         decision = ET.fromstring(decision_str)
         self.parser.parse_decision_node(decision)
 
         p_op = self.parser.workflow.nodes[node_name]
         self.assertIn(node_name, self.parser.workflow.nodes)
-        self.assertIn("down1", p_op.get_downstreams())
-        self.assertIn("down2", p_op.get_downstreams())
-        self.assertIn("end1", p_op.get_downstreams())
+        self.assertEqual(["down1", "down2", "end1"], p_op.get_downstreams())
         for depend in p_op.mapper.required_imports():
             self.assertIn(depend, self.parser.workflow.dependencies)
 
@@ -163,13 +152,13 @@ class TestOozieParser(unittest.TestCase):
         node_name = "start_node_1234"
         end_name = "end_name"
         # language=XML
-        start_node_str = "<start to='{end_name}'/>".format(end_name=end_name)
+        start_node_str = f"<start to='{end_name}'/>"
         start = ET.fromstring(start_node_str)
         self.parser.parse_start_node(start)
 
         p_op = self.parser.workflow.nodes[node_name]
         self.assertIn(node_name, self.parser.workflow.nodes)
-        self.assertIn(end_name, p_op.get_downstreams())
+        self.assertEqual([end_name], p_op.get_downstreams())
         for depend in p_op.mapper.required_imports():
             self.assertIn(depend, self.parser.workflow.dependencies)
 
@@ -180,7 +169,7 @@ class TestOozieParser(unittest.TestCase):
         self.parser.action_map = {"ssh": ssh_mapper.SSHMapper}
         node_name = "action_name"
         # language=XML
-        action_string = """
+        action_string = f"""
 <action name='{node_name}'>
     <ssh>
         <host>user@apache.org</host>
@@ -192,15 +181,13 @@ class TestOozieParser(unittest.TestCase):
     <ok to='end1'/>
     <error to='fail1'/>
 </action>
-""".format(
-            node_name=node_name
-        )
+"""
         action_node = ET.fromstring(action_string)
         self.parser.parse_action_node(action_node)
 
         p_op = self.parser.workflow.nodes[node_name]
         self.assertIn(node_name, self.parser.workflow.nodes)
-        self.assertIn("end1", p_op.get_downstreams())
+        self.assertEqual(["end1"], p_op.get_downstreams())
         self.assertEqual("fail1", p_op.get_error_downstream_name())
         for depend in p_op.mapper.required_imports():
             self.assertIn(depend, self.parser.workflow.dependencies)
@@ -211,7 +198,7 @@ class TestOozieParser(unittest.TestCase):
         node_name = "pig-node"
         self.parser.params = {"nameNode": "myNameNode"}
         # language=XML
-        action_string = """
+        action_string = f"""
 <action name='{node_name}'>
     <pig>
         <resource-manager>myResManager</resource-manager>
@@ -223,15 +210,13 @@ class TestOozieParser(unittest.TestCase):
     <ok to='end1'/>
     <error to='fail1'/>
 </action>
-""".format(
-            node_name=node_name
-        )
+"""
         action_node = ET.fromstring(action_string)
         self.parser.parse_action_node(action_node)
 
         p_op = self.parser.workflow.nodes[node_name]
         self.assertIn(node_name, self.parser.workflow.nodes)
-        self.assertIn("end1", p_op.get_downstreams())
+        self.assertEqual(["end1"], p_op.get_downstreams())
         self.assertEqual("fail1", p_op.get_error_downstream_name())
         for depend in p_op.mapper.required_imports():
             self.assertIn(depend, self.parser.workflow.dependencies)
@@ -246,7 +231,7 @@ class TestOozieParser(unittest.TestCase):
         }
         node_name = "mr-node"
         # language=XML
-        xml = """
+        xml = f"""
 <action name='{node_name}'>
     <map-reduce>
         <name-node>hdfs://</name-node>
@@ -257,15 +242,12 @@ class TestOozieParser(unittest.TestCase):
     <ok to="end"/>
     <error to="fail"/>
 </action>
-""".format(
-            node_name=node_name
-        )
-
+"""
         action_node = ET.fromstring(xml)
         self.parser.parse_action_node(action_node)
         self.assertIn(node_name, self.parser.workflow.nodes)
         mr_node = self.parser.workflow.nodes[node_name]
-        self.assertIn("end", mr_node.get_downstreams())
+        self.assertEqual(["end"], mr_node.get_downstreams())
         self.assertEqual("fail", mr_node.get_error_downstream_name())
         for depend in mr_node.mapper.required_imports():
             self.assertIn(depend, self.parser.workflow.dependencies)
@@ -286,15 +268,13 @@ class TestOozieParser(unittest.TestCase):
     <ok to="end1" />
     <error to="fail1" />
 </action>
-""".format(
-            node_name=node_name
-        )
+"""
         action = ET.fromstring(action_str)
         self.parser.parse_action_node(action)
 
         p_op = self.parser.workflow.nodes[node_name]
         self.assertIn(node_name, self.parser.workflow.nodes)
-        self.assertIn("end1", p_op.get_downstreams())
+        self.assertEqual(["end1"], p_op.get_downstreams())
         self.assertEqual("fail1", p_op.get_error_downstream_name())
         for depend in p_op.mapper.required_imports():
             self.assertIn(depend, self.parser.workflow.dependencies)
