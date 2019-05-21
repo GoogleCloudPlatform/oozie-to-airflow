@@ -1,3 +1,4 @@
+#!/usr/bin/env bash
 # Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -11,20 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
----
-language: python
-env:
-  - SLUGIFY_USES_TEXT_UNIDECODE=yes WITH_COVERAGE=true
-python:
-  - "3.6"
-cache: pip
-install:
-  - pip uninstall -y mock
-  - pip install -r requirements.txt
-  - sudo apt-get install coreutils libxml2-utils
-script:
-  - ./bin/o2a-run-all-configurations
-  - pre-commit run --all-files
-  - ./bin/o2a-run-all-conversions
-after_success:
-  - bash <(curl -s https://codecov.io/bash)
+set -euo pipefail
+MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+O2A_DIR="$( cd "${MY_DIR}/.." && pwd )"
+
+
+find "${O2A_DIR}" -name 'workflow.xml' -print0 | xargs -0 "${MY_DIR}/o2a-validate-workflows"

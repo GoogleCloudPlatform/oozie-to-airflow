@@ -30,7 +30,9 @@ from os import environ, symlink, path, remove
 from parameterized import parameterized
 
 MOCK_APP_PATH = path.abspath(path.join(path.dirname(__file__), "mock"))
-GIT_SH_FILE = path.abspath(path.join(path.dirname(__file__), path.pardir, path.pardir, "scripts", "git.sh"))
+GIT_SH_FILE = path.abspath(
+    path.join(path.dirname(__file__), path.pardir, path.pardir, "o2a", "scripts", "git.sh")
+)
 
 
 # pylint: disable=invalid-name

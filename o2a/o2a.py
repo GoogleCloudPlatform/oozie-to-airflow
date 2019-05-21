@@ -17,8 +17,10 @@ import argparse
 import logging
 import os
 import sys
-import subprocess
-from subprocess import CalledProcessError
+
+# pylint: disable=no-name-in-module
+from distutils.spawn import find_executable
+from subprocess import CalledProcessError, check_call
 
 from o2a.converter.mappers import ACTION_MAP, CONTROL_MAP
 from o2a.converter.oozie_converter import OozieConverter
@@ -28,6 +30,19 @@ from o2a.utils.constants import CONFIGURATION_PROPERTIES, WORKFLOW_XML
 INDENT = 4
 
 PROJECT_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
+
+
+def get_o2a_validate_workflows_script():
+    # If the o2a-validate-workflows script is present in the project or on the path
+    # use it to validate the workflow
+    validate_workflows_script = os.path.join(PROJECT_PATH, "bin", "o2a-validate-workflows")
+    if not os.path.isfile(validate_workflows_script):
+        validate_workflows_script = find_executable("o2a-validate-workflows")
+        if not os.path.isfile(validate_workflows_script):
+            logging.info(f"Skipping workflow validation as the {validate_workflows_script} is missing")
+            return None
+    logging.info(f"Found o2a-validate-workflows script at {validate_workflows_script}. Validating workflow")
+    return validate_workflows_script
 
 
 # pylint: disable=missing-docstring
@@ -59,18 +74,15 @@ Otherwise please provide it.
 ########################################################################################
         """
         )
-    # If the validate-workflows script is present int the project path - use it to validate the workflow
-    validate_workflows_script = os.path.join(PROJECT_PATH, "bin", "validate-workflows")
-    if os.path.isfile(validate_workflows_script):
+    validate_workflows_script = get_o2a_validate_workflows_script()
+    if validate_workflows_script:
         try:
-            subprocess.check_call(
-                [validate_workflows_script, f"{input_directory_path}/{HDFS_FOLDER}/{WORKFLOW_XML}"]
-            )
+            check_call([validate_workflows_script, f"{input_directory_path}/{HDFS_FOLDER}/{WORKFLOW_XML}"])
         except CalledProcessError:
-            logging.error("Workflow failed schema validation. Please correct the workflow XML and try again.")
+            logging.error(
+                "Workflow failed schema validation. " "Please correct the workflow XML and try again."
+            )
             exit(1)
-    else:
-        logging.info(f"Skipping workflow validation as the {validate_workflows_script} is missing")
     os.makedirs(output_directory_path, exist_ok=True)
 
     converter = OozieConverter(

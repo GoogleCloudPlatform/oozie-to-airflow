@@ -18,14 +18,14 @@ MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 set -euo pipefail
 O2A_DIR="$( cd "${MY_DIR}/.." && pwd )"
 
-RUN_TEST_CACHE_DIR="${O2A_DIR}/.run-sys-test-cache-dir"
+RUN_TEST_CACHE_DIR="${O2A_DIR}/.o2a-run-sys-test-cache-dir"
 
 mkdir -pv "${RUN_TEST_CACHE_DIR}"
 
 # Update short and long options in the complete script
 # This way autocomplete will work automagically with all options
-# shellcheck source=run-sys-test-complete
-. "${MY_DIR}/run-sys-test-complete"
+# shellcheck source=o2a-run-sys-test-complete
+. "${MY_DIR}/o2a-run-sys-test-complete"
 
 
 CMDNAME="$(basename -- "$0")"
@@ -192,7 +192,7 @@ Optional commands to execute:
         SSH to dataproc's cluster master. Arguments after -- are passed to gcloud ssh command as extra args.
 
 -A, --setup-autocomplete
-        Sets up autocomplete for run-sys-tests
+        Sets up autocomplete for o2a-run-sys-tests
 
 """
 }
@@ -229,7 +229,7 @@ function setup_autocomplete {
     if [[ "${RES}" == "0" ]]; then
         echo "Bash dir already created"
     else
-        "${MY_DIR}/confirm" "This will create ~/.bash_completion.d/ directory and modify ~/.bash_profile file"
+        "${MY_DIR}/o2a-confirm" "This will create ~/.bash_completion.d/ directory and modify ~/.bash_profile file"
         echo
         echo
         mkdir -pv ~/.bash_completion.d
@@ -240,13 +240,13 @@ for BCFILE in ~/.bash_completion.d/* ; do
 done
 EOF
     fi
-    ln -sf "${MY_DIR}/run-sys-test-complete" ~/.bash_completion.d/
+    ln -sf "${MY_DIR}/o2a-run-sys-test-complete" ~/.bash_completion.d/
     echo
     echo
-    echo The run-set-tests completion installed to ~/.bash_completion.d/run-sys-test-complete
+    echo The o2a-run-sys-test completion installed to ~/.bash_completion.d/o2a-run-sys-test-complete
     echo
     echo
-    echo "Please re-enter bash or run '. ~/.bash_completion.d/run-sys-test-complete'"
+    echo "Please re-enter bash or run '. ~/.bash_completion.d/o2a-run-sys-test-complete'"
     echo
 }
 
@@ -300,7 +300,7 @@ eval set -- "${PARAMS}"
 unset PARAMS
 
 # Parse Flags.
-# Please update short and long options in the run-sys-complete script
+# Please update short and long options in the o2a-run-sys-test-complete script
 # This way autocomplete will work out-of-the-box
 while true
 do
@@ -457,8 +457,14 @@ function submit_pig {
 
 function convert {
     header "Convert workflow.xml to Airflow's ${OUTPUT_DAG_NAME}.py dag for example: ${LOCAL_APP_NAME}"
-    "${LOCAL_O2A_BIN_SCRIPT}" -i "${LOCAL_APP_DIR}" -o "${LOCAL_OUTPUT_DIR}" -u "${DATAPROC_USER}" \
-       -d "${OUTPUT_DAG_NAME}"
+    if [[ ${WITH_COVERAGE} == "true" ]];  then
+        coverage run -a \
+        "${LOCAL_O2A_BIN_SCRIPT}" -i "${LOCAL_APP_DIR}" -o "${LOCAL_OUTPUT_DIR}" -u "${DATAPROC_USER}" \
+           -d "${OUTPUT_DAG_NAME}"
+    else
+        "${LOCAL_O2A_BIN_SCRIPT}" -i "${LOCAL_APP_DIR}" -o "${LOCAL_OUTPUT_DIR}" -u "${DATAPROC_USER}" \
+           -d "${OUTPUT_DAG_NAME}"
+    fi
     python -m py_compile "${LOCAL_OUTPUT_DIR}/${OUTPUT_DAG_NAME}.py"
     footer
 }
@@ -543,6 +549,7 @@ if [[ ${SETUP_AUTOCOMPLETE} == "true" ]]; then
     exit
 fi
 
+WITH_COVERAGE=${WITH_COVERAGE:="false"}
 LOCAL_O2A_BIN_SCRIPT="${MY_DIR}/o2a"
 LOCAL_O2A_PROJECT_DIR="${O2A_DIR}"
 LOCAL_EXAMPLE_DIR=examples
@@ -553,7 +560,7 @@ LOCAL_APP_DIR="${LOCAL_O2A_PROJECT_DIR}/${LOCAL_EXAMPLE_DIR}/${LOCAL_APP_NAME}"
 
 LOCAL_OUTPUT_DIR="${O2A_DIR}/output/${LOCAL_APP_NAME}"
 LOCAL_O2A_LIBS_DIR="${LOCAL_O2A_PROJECT_DIR}/o2a/o2a_libs"
-LOCAL_SCRIPTS_DIR="${LOCAL_O2A_PROJECT_DIR}/scripts"
+LOCAL_SCRIPTS_DIR="${LOCAL_O2A_PROJECT_DIR}/o2a/scripts"
 OUTPUT_DAG_NAME="test_${LOCAL_APP_NAME}_dag"
 
 LOCAL_CONFIGURATION_PROPERTIES_TEMPLATE=${LOCAL_APP_DIR}/configuration.template.properties

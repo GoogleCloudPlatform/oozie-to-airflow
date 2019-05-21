@@ -10,20 +10,20 @@
 # Unless required by applicable law or agreed to in writing, software
 # distributed under the License is distributed on an "AS IS" BASIS,
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-# See the License for the specific language governing permissions and
+# See the License for the specific language governing permissions andsc
 # limitations under the License.
 set -euo pipefail
 MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 O2A_DIR="$( cd "${MY_DIR}/.." && pwd )"
 
 pushd "${O2A_DIR}"
-
-for EXAMPLE in $(cd examples; ls)
-do
-    "${MY_DIR}/run-sys-test" --phase prepare-configuration -a "${EXAMPLE}"
-done
-for EXAMPLE in $(cd examples; ls)
-do
-    "${MY_DIR}/run-sys-test" --phase convert -a "${EXAMPLE}"
-done
+echo
+"${MY_DIR}/o2a-confirm" "Preparing package"
+echo
+rm -rvf dist/*
+python3 setup.py sdist bdist_wheel
+echo
+"${MY_DIR}/o2a-confirm" "Uploading to production PyPi"
+echo
+python3 -m twine upload --repository-url https://upload.pypi.org/legacy/ dist/*
 popd

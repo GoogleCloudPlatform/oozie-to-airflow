@@ -18,3 +18,4 @@ O2A_DIR="$( cd "${MY_DIR}/.." && pwd )"
 
 pushd "${O2A_DIR}"
 pytest --cov="${O2A_DIR}" tests
+popd
