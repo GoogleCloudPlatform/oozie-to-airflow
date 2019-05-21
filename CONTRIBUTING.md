@@ -14,15 +14,16 @@
   limitations under the License.
  -->
 
-# Table of contents
+Table of Contents
+=================
 
- [Table of contents](#table-of-contents)
+* [Table of Contents](#table-of-contents)
 * [How to Contribute](#how-to-contribute)
   * [Contributor License Agreement](#contributor-license-agreement)
   * [Code reviews](#code-reviews)
   * [Community Guidelines](#community-guidelines)
 * [Architecture of the solution](#architecture-of-the-solution)
-* [Local Development environment](#local-development-environment)
+* [Local development environment](#local-development-environment)
   * [Local environment setup](#local-environment-setup)
   * [Static code analysis and pre\-commit hooks](#static-code-analysis-and-pre-commit-hooks)
   * [Running Unit Tests](#running-unit-tests)
@@ -35,10 +36,13 @@
     * [Creating Dataproc cluster](#creating-dataproc-cluster)
   * [Running system tests](#running-system-tests)
     * [System tests](#system-tests)
-    * [Re\-running the system tests](#re-running-the-system-tests)
+    * [Caching latest used parameters by run\-sys\-test](#caching-latest-used-parameters-by-run-sys-test)
     * [Test phases](#test-phases)
     * [Test scenarios](#test-scenarios)
     * [Running system tests with sub\-workflows](#running-system-tests-with-sub-workflows)
+    * [Packaging the application and uploading to PyPi](#packaging-the-application-and-uploading-to-pypi)
+
+Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go)
 
 # How to Contribute
 
@@ -74,7 +78,7 @@ The latest documentation about design of Oozie To Airflow converter can be found
 [The Design Document](https://docs.google.com/document/d/1DmXn7iAj0H0eekiPBCDTH_VgN4jC8wWF7N-XLkejNj0/edit).
 Please take a look to understand how the conversion process works.
 
-# Local Development environment
+# Local development environment
 
 You can easily setup your local environment to modify the code and run tests and conversions.
 The unit tests and conversion can be all run locally and they do not require Oozie-enabled cluster nor
@@ -84,30 +88,26 @@ running Apache Airflow instance.
 
 The environment can be setup via the virtualenv setup
 (you can create one using [virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/)
-for example. While in the virtualenv, you need to run [init.sh](init.sh) script to
-install all requirements and check python version.
+for example.
 
-Note! You need to run [run-all-configurations](bin/run-all-configurations) script once before you attempt to run unit
-tests and examples. This script generates configuration from the templates
+While in your virtualenv, you can install all the requirements via `pip install -r requirements.txt`.
 
-## Adding bin directory to your PATH
-
-You can add the [bin](bin) subdirectory to your PATH, then all the scripts below can be run without adding
-bin path.
-
-You can do it for example by adding similar line to your `.bash_profile`
+You can add the [bin](bin) subdirectory to your
+PATH, then all the scripts below can be run without adding `./bin` prefix.
+This can be done for example by adding similar line to your `.bash_profile`
 or `bin/postactivate` from your virtual environment:
 
 ```bash
 export PATH=${PATH}:<INSERT_PATH_TO_YOUR_OOZIE_PROJECT>/bin
 ```
 
-Otherwise you need to run them from the bin subdirectory - prepending it with the path, for example:
+Otherwise you need to run all the scripts from the bin subdirectory, for example:
+
 ```bash
 ./bin/o2a --help
 ```
 
-In all the examples below it is assumed that the [bin](bin) directory is in your PATH.
+In all the example commands below it is assumed that the [bin](bin) directory is in your PATH.
 
 ## Static code analysis and pre-commit hooks
 
@@ -135,17 +135,17 @@ set up in a such a way that the folders in [tests](tests) directory mirrors the
 structure of the [o2a](o2a) directory.
 
 Unit tests are run automatically in Travis CI and when you have pre-commit hooks installed.
-You can also run all unit tests using [run-all-unit-tests](bin/run-all-unit-tests) script.
+You can also run all unit tests using [o2a-run-all-unit-tests](bin/o2a-run-all-unit-tests) script.
 
 ## Running all example conversions
 
-All example conversions can by run via the [run-all-conversions](bin/run-all-conversions) script.
+All example conversions can by run via the [o2a-run-all-conversions](bin/o2a-run-all-conversions) script.
 It is also executed during automated tests.
 
 ## Dependency graphs
 
 You can generate dependency graphs automatically from the code via
-[generate-dependency-graph](bin/generate-dependency-graph) but you need `graphviz` installed locally.
+[o2a-generate-dependency-graph](bin/o2a-generate-dependency-graph) but you need `graphviz` installed locally.
 
 The latest dependencies generated:
 ![dependency graph](images/o2a-dependencies.png)
@@ -167,7 +167,7 @@ environment:
 * python version 3 (3.6.6)
 * machine n1-standard-1
 * node count: 3
-* Additional pypi packages:
+* Additional PyPi packages:
     * sshtunnel==0.1.4
 
 ### Cloud Dataproc Cluster with Oozie
@@ -231,7 +231,7 @@ application folder structure and trigger the tests automatically.
 
 You can run the tests using this command:
 
-`run-sys-tests --application <APPLICATION> --phase <PHASE>`
+`o2a-run-sys-tests --application <APPLICATION> --phase <PHASE>`
 
 Default phase is convert - it only converts the oozie workflow to Airflow DAG without running the tests
 on either Oozie nor Composer
@@ -242,7 +242,7 @@ with `-A` option - this way you do not have to remember all the options.
 Current options:
 
 ```
-Usage: run-sys-test [FLAGS] [-A|-S]
+Usage: o2a-run-sys-test [FLAGS] [-A|-S]
 
 Executes prepare or run phase for integration testing of O2A converter.
 
@@ -284,7 +284,7 @@ Optional commands to execute:
         SSH to dataproc's cluster master. Arguments after -- are passed to gcloud ssh command as extra args.
 
 -A, --setup-autocomplete
-        Sets up autocomplete for run-sys-tests
+        Sets up autocomplete for o2a-run-sys-tests
 ```
 
 ### Caching latest used parameters by run-sys-test
@@ -321,24 +321,34 @@ The typical scenario to run the tests are:
 
 Running application via Oozie:
 ```
-run-sys-test --phase prepare-dataproc --application <APP> --cluster <CLUSTER>
+o2a-run-sys-test --phase prepare-dataproc --application <APP> --cluster <CLUSTER>
 
-run-sys-test --phase test-oozie
+o2a-run-sys-test --phase test-oozie
 ```
 
 Running application via composer:
 ```
-run-sys-test --phase prepare-dataproc --application <APP> --cluster <CLUSTER>
+o2a-run-sys-test --phase prepare-dataproc --application <APP> --cluster <CLUSTER>
 
-run-sys-test --phase test-composer
+o2a-run-sys-test --phase test-composer
 ```
 
 ### Running system tests with sub-workflows
 
 In order to run system tests with sub-workflows you need to have the sub-workflow application already
 present in HDFS, therefore you need to run at least
-`run-sys-test --phase prepare-dataproc --application <SUBWORKFLOW_APP>`
+`o2a-run-sys-test --phase prepare-dataproc --application <SUBWORKFLOW_APP>`
 
 For example in case of the demo application, you need to run at least once
-`run-sys-test --phase prepare-dataproc --application childwf` because `childwf` is used as sub-workflow
+`o2a-run-sys-test --phase prepare-dataproc --application childwf` because `childwf` is used as sub-workflow
 in the demo application.
+
+### Packaging the application and uploading to PyPi
+
+In order to upload a new version to PyPi you need to have the appropriate credentials. There are scripts that
+package the application and upload it to the test or to the production PyPi instance:
+
+* [o2a-package-upload-test](bin/o2a-package-upload-test) - prepares and uploads the prepared package to the test PyPi
+* [o2a-package-upload](bin/o2a-package-upload) - prepares and uploads the prepared package to the production PyPi
+
+Make sure to update the version of the package in [setup.py](setup.py) before preparing/updating.

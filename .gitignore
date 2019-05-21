@@ -9,5 +9,9 @@ __pycache__
 .coverage
 
 .mypy_cache
-.run-sys-test-cache-dir
+.o2a-run-sys-test-cache-dir
 output
+/build/
+/dist/
+*.egg-info/
+/.eggs/
