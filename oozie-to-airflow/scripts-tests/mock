@@ -1,0 +1,18 @@
+#!/usr/bin/env bash
+
+# Saves all calls along with script name and arguments to the log file specified by the
+# environment variable "COMMAND_EXECUTION_LOG".
+# For further information, see the file: test-git.py
+
+if [[ -z "$COMMAND_EXECUTION_LOG" ]]; then
+    echo "You should set \$COMMAND_EXECUTION_LOG variable to enable logging."
+    exit 1
+fi
+
+function shell_quote_array() {
+    printf "%q " "$@"
+}
+
+ESCAPED_ARGS="$(shell_quote_array "${@}")"
+
+echo "$(basename "$0")" "${ESCAPED_ARGS}" >> "$COMMAND_EXECUTION_LOG"

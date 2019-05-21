@@ -1,4 +1,4 @@
-#!/usr/bin/env bash
+# -*- coding: utf-8 -*-
 # Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,10 +12,3 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-set -euo pipefail
-MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
-
-pushd "${MY_DIR}/oozie-to-airflow"
-pytest --cov="${MY_DIR}/oozie-to-airflow" tests scripts-tests
-mv .coverage ..
-popd

@@ -3,5 +3,6 @@
     <import namespace="uri:oozie:workflow:1.0" schemaLocation="oozie-workflow-1.0.xsd"/>
     <import namespace="uri:oozie:shell-action:1.0" schemaLocation="shell-action-1.0.xsd"/>
     <import namespace="uri:oozie:ssh-action:0.2" schemaLocation="ssh-action-0.2.xsd"/>
+    <import namespace="uri:oozie:git-action:0.2" schemaLocation="git-action-1.0.xsd"/>
     <import namespace="uri:oozie:spark-action:1.0" schemaLocation="spark-action-1.0.xsd"/>
 </schema>
