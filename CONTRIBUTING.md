@@ -252,9 +252,10 @@ Flags:
 
 -a, --application <APPLICATION>
         Application (from examples dir) to run the tests on. Must be specified unless -S or -A are specified.
+        One of [ childwf decision demo el fs git mapreduce pig shell spark ssh subwf ]
 
 -p, --phase <PHASE>
-        Phase of the test to run. One of [ convert prepare-dataproc prepare-composer test-composer test-oozie ]. Defaults to convert.
+        Phase of the test to run. One of [ prepare-configuration convert prepare-dataproc test-composer test-oozie ]. Defaults to convert.
 
 -C, --composer-name <COMPOSER_NAME>
         Composer instance used to run the operations on. Defaults to o2a-integration
