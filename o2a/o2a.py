@@ -27,6 +27,8 @@ from o2a.utils.constants import CONFIGURATION_PROPERTIES, WORKFLOW_XML
 
 INDENT = 4
 
+PROJECT_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), os.path.pardir))
+
 
 # pylint: disable=missing-docstring
 def main():
@@ -57,13 +59,18 @@ Otherwise please provide it.
 ########################################################################################
         """
         )
-
-    try:
-        subprocess.check_call(["validate-workflows", f"{input_directory_path}/{HDFS_FOLDER}/{WORKFLOW_XML}"])
-    except CalledProcessError:
-        logging.error("Workflow failed schema validation. Please correct the workflow XML and try again.")
-        exit(1)
-
+    # If the validate-workflows script is present int the project path - use it to validate the workflow
+    validate_workflows_script = os.path.join(PROJECT_PATH, "bin", "validate-workflows")
+    if os.path.isfile(validate_workflows_script):
+        try:
+            subprocess.check_call(
+                [validate_workflows_script, f"{input_directory_path}/{HDFS_FOLDER}/{WORKFLOW_XML}"]
+            )
+        except CalledProcessError:
+            logging.error("Workflow failed schema validation. Please correct the workflow XML and try again.")
+            exit(1)
+    else:
+        logging.info(f"Skipping workflow validation as the {validate_workflows_script} is missing")
     os.makedirs(output_directory_path, exist_ok=True)
 
     converter = OozieConverter(

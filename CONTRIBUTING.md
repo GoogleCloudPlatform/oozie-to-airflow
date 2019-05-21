@@ -95,7 +95,8 @@ tests and examples. This script generates configuration from the templates
 You can add the [bin](bin) subdirectory to your PATH, then all the scripts below can be run without adding
 bin path.
 
-You can do it for example by adding similar line to your `.bash_profile`:
+You can do it for example by adding similar line to your `.bash_profile`
+or `bin/postactivate` from your virtual environment:
 
 ```bash
 export PATH=${PATH}:<INSERT_PATH_TO_YOUR_OOZIE_PROJECT>/bin
@@ -106,7 +107,7 @@ Otherwise you need to run them from the bin subdirectory - prepending it with th
 ./bin/o2a --help
 ```
 
-In all the examples below it assumed that the [bin](bin) directory is in your PATH.
+In all the examples below it is assumed that the [bin](bin) directory is in your PATH.
 
 ## Static code analysis and pre-commit hooks
 
