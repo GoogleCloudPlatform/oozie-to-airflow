@@ -21,7 +21,8 @@ from urllib.parse import urlparse
 
 from airflow.utils.trigger_rule import TriggerRule
 
-from converter.primitives import Task, Relation
+from converter.relation import Relation
+from converter.task import Task
 from mappers.action_mapper import ActionMapper
 from mappers.prepare_mixin import PrepareMixin
 

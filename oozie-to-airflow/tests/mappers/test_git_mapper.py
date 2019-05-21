@@ -19,7 +19,8 @@ from xml.etree import ElementTree as ET
 
 from airflow.utils.trigger_rule import TriggerRule
 
-from converter.primitives import Task, Relation
+from converter.relation import Relation
+from converter.task import Task
 from mappers import git_mapper
 from mappers.git_mapper import prepare_git_command
 
