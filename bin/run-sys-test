@@ -161,6 +161,7 @@ Flags:
 
 -a, --application <APPLICATION>
         Application (from examples dir) to run the tests on. Must be specified unless -S or -A are specified.
+        One of [${_ALLOWED_APPLICATIONS}]
 
 -p, --phase <PHASE>
         Phase of the test to run. One of [${_ALLOWED_PHASES}]. Defaults to ${PHASE}.

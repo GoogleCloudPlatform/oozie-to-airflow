@@ -20,10 +20,10 @@ import sys
 import subprocess
 from subprocess import CalledProcessError
 
-from .converter.mappers import ACTION_MAP, CONTROL_MAP
-from .converter.oozie_converter import OozieConverter
-from .converter.constants import HDFS_FOLDER
-from .utils.constants import CONFIGURATION_PROPERTIES, WORKFLOW_XML
+from o2a.converter.mappers import ACTION_MAP, CONTROL_MAP
+from o2a.converter.oozie_converter import OozieConverter
+from o2a.converter.constants import HDFS_FOLDER
+from o2a.utils.constants import CONFIGURATION_PROPERTIES, WORKFLOW_XML
 
 INDENT = 4
 

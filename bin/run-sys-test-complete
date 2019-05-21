@@ -13,14 +13,13 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-_MY_LINKED_DIR="$( cd "$( dirname "$(readlink "${BASH_SOURCE[0]}" )" )" && pwd )"
 _SHORT_OPTIONS="
 h a: p: C: L: b: c: m: r: z: v A S
 "
 
 _ALLOWED_PHASES=" prepare-configuration convert prepare-dataproc test-composer test-oozie "
 # shellcheck disable=SC2011
-_ALLOWED_APPLICATIONS=" $(ls "${_MY_LINKED_DIR}/../o2a/examples" | xargs) "
+_ALLOWED_APPLICATIONS=" childwf decision demo el fs git mapreduce pig shell spark ssh subwf "
 
 _LONG_OPTIONS="
 help application: composer-name: composer-location: phase: bucket: cluster:
