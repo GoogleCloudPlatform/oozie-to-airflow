@@ -15,12 +15,13 @@
 """Tests Oozie Converter"""
 
 import io
+import sys
 from pathlib import Path
 from unittest import mock, TestCase
 from xml.etree import ElementTree as ET
 
 from o2a import o2a
-from o2a.converter.oozie_converter import OozieConverter
+from o2a.converter.oozie_converter import OozieConverter, AutoflakeArgs
 from o2a.converter.mappers import CONTROL_MAP, ACTION_MAP
 from o2a.converter.parsed_node import ParsedNode
 
@@ -58,7 +59,8 @@ class TestOozieConverter(TestCase):
     @mock.patch("o2a.converter.oozie_converter.render_template", return_value="AAA")
     @mock.patch("builtins.open", return_value=io.StringIO())
     @mock.patch("o2a.converter.oozie_converter.black")
-    def test_create_dag_file(self, black_mock, open_mock, _):
+    @mock.patch("o2a.converter.oozie_converter.fix_file")
+    def test_create_dag_file(self, autoflake_fix_file_mock, black_mock, open_mock, _):
         workflow = Workflow(
             dag_name="A",
             input_directory_path="in_dir",
@@ -72,6 +74,20 @@ class TestOozieConverter(TestCase):
         open_mock.assert_called_once_with("/tmp/test_dag.py", "w")
         black_mock.format_file_in_place.assert_called_once_with(
             Path("/tmp/test_dag.py"), fast=mock.ANY, mode=mock.ANY, write_back=mock.ANY
+        )
+        autoflake_fix_file_mock.assert_called_once_with(
+            "/tmp/test_dag.py",
+            args=AutoflakeArgs(
+                remove_all_unused_imports=True,
+                ignore_init_module_imports=False,
+                remove_duplicate_keys=False,
+                remove_unused_variables=True,
+                in_place=True,
+                imports=None,
+                expand_star_imports=False,
+                check=False,
+            ),
+            standard_out=sys.stdout,
         )
 
     @mock.patch("o2a.converter.oozie_converter.render_template", return_value="TEXT_CONTENT")
