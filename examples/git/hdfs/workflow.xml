@@ -41,7 +41,7 @@
             <prepare>
                 <delete path="${nameNode}/user/${userName}/${examplesRoot}/apps/git/repo"/>
             </prepare>
-            <git-uri>https://github.com/GoogleCloudPlatform/cloud-composer.git</git-uri>
+            <git-uri>https://github.com/GoogleCloudPlatform/oozie-to-airflow.git</git-uri>
             <branch>master</branch>
             <destination-uri>${nameNode}/user/${userName}/${examplesRoot}/apps/git/repo</destination-uri>
         </git>
