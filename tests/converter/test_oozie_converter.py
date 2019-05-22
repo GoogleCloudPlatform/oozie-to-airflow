@@ -76,7 +76,12 @@ class TestOozieConverter(TestCase):
     @mock.patch("o2a.converter.oozie_converter.parser.OozieParser.parse_workflow")
     @mock.patch("o2a.converter.oozie_converter.black")
     @mock.patch("o2a.converter.oozie_converter.fix_file")
-    def test_convert(self, autoflake_fix_file_mock, black_mock, parse_workflow_mock):
+    @mock.patch("o2a.converter.oozie_converter.SortImports")
+    def test_convert(self,
+                     sort_imports_mock,
+                     autoflake_fix_file_mock,
+                     black_mock,
+                     parse_workflow_mock):
         # Given
         workflow = Workflow(
             dag_name="A",
@@ -108,6 +113,7 @@ class TestOozieConverter(TestCase):
             ),
             standard_out=sys.stdout,
         )
+        sort_imports_mock.assert_called_once_with("/tmp/test_dag.py")
 
     @mock.patch("o2a.converter.oozie_converter.render_template", return_value="TEXT_CONTENT")
     def test_write_dag_file(self, render_template_mock):
@@ -127,7 +133,7 @@ class TestOozieConverter(TestCase):
 
         render_template_mock.assert_called_once_with(
             dag_name="test_dag",
-            dependencies=["import awesome_stuff"],
+            dependencies={"import awesome_stuff"},
             nodes=[nodes["TASK_1"]],
             params={"user.name": "USER"},
             relations={Relation(from_task_id="TASK_1", to_task_id="TASK_2")},

@@ -39,7 +39,7 @@ def mutate(parent: Dict[str, Any], mutations: Dict[str, Any]) -> Dict[str, Any]:
 
     :Example::
 
-    .. code-block:: pycon
+    .. code-block:: python
 
         In [0]: target = { 'a': { 'b': { 'c': 3 } } }
 
@@ -48,7 +48,7 @@ def mutate(parent: Dict[str, Any], mutations: Dict[str, Any]) -> Dict[str, Any]:
 
     :Example::
 
-    .. code-block:: pycon
+    .. code-block:: python
 
         In [0]: target = { 'a': { 'b': { 'c': 3 } } }
 
@@ -73,7 +73,7 @@ def get_value_by_path(target: Any, path: List[Union[str, int]]) -> Any:
 
     :Example:
 
-    .. code-block:: pycon
+    .. code-block:: python
 
         In [0]: target = { 'a': { 'b': { 'c': 3 } } }
         Out[0]: {'a': [{'b': {'c': 'AAA'}}]}
@@ -103,7 +103,7 @@ def set_value_by_path(target: Any, path: List[Union[str, int]], value: Any) -> N
 
     :Example::
 
-    .. code-block:: pycon
+    .. code-block:: python
 
         In [0]: target = { 'a': [{ 'b': { 'c': 3 } }] }
 
@@ -125,6 +125,7 @@ def set_value_by_path(target: Any, path: List[Union[str, int]], value: Any) -> N
 
 
 class TemplateTestMixin:
+    # noinspection PyPep8Naming
     # pylint: disable=invalid-name
     def assertValidPython(self, code):
         self.assertTrue(ast.parse(code))
@@ -420,7 +421,7 @@ class WorkflowTemplateTestCase(TestCase, TemplateTestMixin):
 
     DEFAULT_TEMPLATE_PARAMS = dict(
         dag_name="test_dag",
-        dependencies=["import awesome_stuff"],
+        dependencies={"import awesome_stuff"},
         nodes=[
             ParsedNode(
                 mock.MagicMock(spec=DummyMapper),
@@ -445,7 +446,7 @@ class SubWorkflowTemplateTestCase(TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "subworkflow.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = dict(
-        dependencies=["import awesome_stuff"],
+        dependencies={"import awesome_stuff"},
         nodes=[
             ParsedNode(
                 mock.MagicMock(spec=DummyMapper),

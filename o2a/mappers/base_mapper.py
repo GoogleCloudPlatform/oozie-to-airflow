@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Base mapper - it is a base class for all mappers actions, and logic alike"""
-from typing import Set, Tuple, List
+from typing import Tuple, List, Set
 from xml.etree.ElementTree import Element
 
 import airflow.utils.trigger_rule

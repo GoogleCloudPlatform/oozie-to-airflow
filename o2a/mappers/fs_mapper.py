@@ -15,7 +15,8 @@
 """Maps FS node to Airflow's DAG"""
 
 import shlex
-from typing import Set, List
+from typing import List, Set
+
 from xml.etree.ElementTree import Element
 
 from o2a.converter.task import Task
@@ -132,9 +133,9 @@ class FsMapper(ActionMapper):
 
     def required_imports(self) -> Set[str]:
         return {
+            "import shlex",
             "from airflow.operators import dummy_operator",
             "from airflow.operators import bash_operator",
-            "import shlex",
         }
 
     @property

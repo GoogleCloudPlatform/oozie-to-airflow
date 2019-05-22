@@ -26,7 +26,7 @@ def chain(ops: Sequence[Task]) -> List[Relation]:
 
     ** Example: **
 
-    :codeblock: pycon
+    :codeblock: python
         >>> tasks = [
         ...     Task(task_id="task_a", template_name="task_a.tpl"),
         ...     Task(task_id="task_b", template_name="task_b.tpl"),

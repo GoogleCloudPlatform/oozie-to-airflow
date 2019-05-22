@@ -24,6 +24,8 @@ import os
 
 import logging
 
+from isort import SortImports
+
 import black
 from autoflake import fix_file
 
@@ -116,6 +118,7 @@ class OozieConverter:
         self.convert_nodes(workflow.nodes)
         self.create_dag_file(workflow)
         self.format_with_black()
+        self.sort_imports()
         self.remove_unused_imports()
         self.copy_extra_assets(workflow.nodes)
 
@@ -173,6 +176,9 @@ class OozieConverter:
             write_back=black.WriteBack.YES,
         )
 
+    def sort_imports(self):
+        SortImports(self.output_dag_name)
+
     def copy_extra_assets(self, nodes: Dict[str, ParsedNode]):
         """
         Copies additional assets needed to execute a workflow, eg. Pig scripts.
@@ -199,6 +205,6 @@ class OozieConverter:
             params=converted_params,
             relations=workflow.relations,
             nodes=list(workflow.nodes.values()),
-            dependencies=sorted(workflow.dependencies),
+            dependencies=workflow.dependencies,
         )
         return dag_file
