@@ -82,6 +82,13 @@ repos:
         name: Checks for common programming errors with pylint
   - repo: local
     hooks:
+      - id: autoflake
+        name: Autoflake - removes unused imports and variables
+        entry: autoflake
+        language: python
+        files: \.py$
+        args: ['--in-place', '--remove-all-unused-imports',
+               '--remove-unused-variable', '--recursive']
       - id: pytest
         name: Runs all unit tests with pytest
         entry: ./bin/run-all-unit-tests
