@@ -125,6 +125,7 @@ def set_value_by_path(target: Any, path: List[Union[str, int]], value: Any) -> N
 
 
 class TemplateTestMixin:
+    # noinspection PyPep8Naming
     # pylint: disable=invalid-name
     def assertValidPython(self, code):
         self.assertTrue(ast.parse(code))
@@ -420,7 +421,7 @@ class WorkflowTemplateTestCase(TestCase, TemplateTestMixin):
 
     DEFAULT_TEMPLATE_PARAMS = dict(
         dag_name="test_dag",
-        dependencies=["import awesome_stuff"],
+        dependencies={"import awesome_stuff"},
         nodes=[
             ParsedNode(
                 mock.MagicMock(spec=DummyMapper),
@@ -445,7 +446,7 @@ class SubWorkflowTemplateTestCase(TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "subworkflow.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = dict(
-        dependencies=["import awesome_stuff"],
+        dependencies={"import awesome_stuff"},
         nodes=[
             ParsedNode(
                 mock.MagicMock(spec=DummyMapper),

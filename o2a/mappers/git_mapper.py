@@ -14,7 +14,7 @@
 # limitations under the License.
 """Maps Shell action into Airflow's DAG"""
 import shlex
-from typing import Dict, Set, Optional
+from typing import Dict, Optional, Set
 
 import xml.etree.ElementTree as ET
 from urllib.parse import urlparse

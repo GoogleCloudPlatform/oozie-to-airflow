@@ -29,7 +29,7 @@ class Workflow:  # pylint: disable=too-few-public-methods
     output_directory_path: str
     relations: Set[Relation]
     nodes: Dict[str, ParsedNode]
-    dependencies: Set[str]  # TODO: Check is set likely maintain insertion order (Python 3.6 ?)
+    dependencies: Set[str]
 
     def __init__(
         self,
@@ -51,11 +51,10 @@ class Workflow:  # pylint: disable=too-few-public-methods
         # requires.
         self.dependencies = dependencies or {
             "import datetime",
-            "from airflow import models",
-            "from airflow.utils.trigger_rule import TriggerRule",
-            "from airflow.utils import dates",
             "from o2a.o2a_libs.el_basic_functions import * ",
             "from o2a.o2a_libs.el_wf_functions import * ",
+            "from airflow import models",
+            "from airflow.utils.trigger_rule import TriggerRule",
             "from airflow.utils import dates",
         }
 

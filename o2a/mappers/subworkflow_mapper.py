@@ -15,7 +15,8 @@
 """Maps subworkflow of Oozie to Airflow's sub-dag"""
 import logging
 import os
-from typing import Set, Dict, Type
+from typing import Dict, Set, Type
+
 from xml.etree.ElementTree import Element
 
 from airflow.utils.trigger_rule import TriggerRule
