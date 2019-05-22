@@ -13,10 +13,9 @@
   See the License for the specific language governing permissions and
   limitations under the License.
  #}
-
-{%- for dependency in dependencies %}
+{% for dependency in dependencies %}
 {{ dependency }}
-{% endfor %}
+{%- endfor %}
 
 PARAMS = {{ params | tojson }}
 

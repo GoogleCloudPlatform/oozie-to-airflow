@@ -14,7 +14,8 @@
 # limitations under the License.
 """Maps decision node to Airflow's DAG"""
 import collections
-from typing import Dict, Set, List
+from typing import Dict, List, Set
+
 from xml.etree.ElementTree import Element
 
 from airflow.utils.trigger_rule import TriggerRule
