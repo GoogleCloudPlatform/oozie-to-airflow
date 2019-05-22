@@ -16,12 +16,12 @@
 
 # Oozie to Airflow
 
-[![Build Status](https://travis-ci.org/GoogleCloudPlatform/cloud-composer.svg?branch=master)](https://travis-ci.org/GoogleCloudPlatform/cloud-composer)
-[![codecov](https://codecov.io/gh/GoogleCloudPlatform/cloud-composer/branch/master/graph/badge.svg)](https://codecov.io/gh/GoogleCloudPlatform/cloud-composer)
+[![Build Status](https://travis-ci.org/GoogleCloudPlatform/oozie-to-airflow.svg?branch=master)](https://travis-ci.org/GoogleCloudPlatform/cloud-composer)
+[![codecov](https://codecov.io/gh/GoogleCloudPlatform/oozie-to-airflow/branch/master/graph/badge.svg)](https://codecov.io/gh/GoogleCloudPlatform/oozie-to-airflow)
 [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/ambv/black)
 [![License](https://img.shields.io/badge/License-Apache%202.0-blue.svg)](https://opensource.org/licenses/Apache-2.0)
-[![Updates](https://pyup.io/repos/github/GoogleCloudPlatform/cloud-composer/shield.svg)](https://pyup.io/repos/github/GoogleCloudPlatform/cloud-composer/)
-[![Python 3](https://pyup.io/repos/github/GoogleCloudPlatform/cloud-composer/python-3-shield.svg)](https://pyup.io/repos/github/GoogleCloudPlatform/cloud-composer/)
+[![Updates](https://pyup.io/repos/github/GoogleCloudPlatform/oozie-to-airflow/shield.svg)](https://pyup.io/repos/github/GoogleCloudPlatform/oozie-to-airflow/)
+[![Python 3](https://pyup.io/repos/github/GoogleCloudPlatform/oozie-to-airflow/python-3-shield.svg)](https://pyup.io/repos/github/GoogleCloudPlatform/oozie-to-airflow/)
 
 A tool to easily convert between [Apache Oozie](http://oozie.apache.org/) workflows
 and [Apache Airflow](https://airflow.apache.org) workflows.
