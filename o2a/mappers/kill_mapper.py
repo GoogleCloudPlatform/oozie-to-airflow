@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Kill mapper - maps the workflow end"""
-from typing import Set, List
+from typing import List, Set
 
 from o2a.converter.task import Task
 from o2a.converter.workflow import Workflow

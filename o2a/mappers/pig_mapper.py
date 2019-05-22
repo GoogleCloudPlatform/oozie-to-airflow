@@ -15,6 +15,7 @@
 """Maps Oozie pig node to Airflow's DAG"""
 import os
 from typing import Dict, Set
+
 from xml.etree.ElementTree import Element
 
 from airflow.utils.trigger_rule import TriggerRule
