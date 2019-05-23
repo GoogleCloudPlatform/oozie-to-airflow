@@ -15,7 +15,7 @@
  #}
 
 
-{{ task_id }} = dataproc_operator.DataProcSparkOperator(
+{{ task_id | to_var }} = dataproc_operator.DataProcSparkOperator(
     task_id={{ task_id | tojson }},
     trigger_rule={{ trigger_rule | tojson }},
     {% if main_jar %}main_jar={{ main_jar | tojson }},{% endif %}

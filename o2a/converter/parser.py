@@ -288,16 +288,6 @@ class OozieParser:
             # Strip namespaces
             node.tag = node.tag.split("}")[1][0:]
 
-            # Change names to python syntax
-            if "name" in node.attrib:
-                node.attrib["name"] = node.attrib["name"].replace("-", "_")
-            if "to" in node.attrib:
-                node.attrib["to"] = node.attrib["to"].replace("-", "_")
-            if "error" in node.attrib:
-                node.attrib["error"] = node.attrib["error"].replace("-", "_")
-            if "start" in node.attrib:
-                node.attrib["start"] = node.attrib["start"].replace("-", "_")
-
         logging.info("Stripped namespaces, and replaced invalid characters.")
 
         for node in root:

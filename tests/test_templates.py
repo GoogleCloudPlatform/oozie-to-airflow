@@ -175,6 +175,12 @@ class DecisionTemplateTestCase(TestCase, TemplateTestMixin):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
         self.assertValidPython(res)
 
+    @parameterized.expand([({"task_id": 'AA"AA"\''},), ({"trigger_rule": 'AA"AA"\''},)])
+    def test_escape_character(self, mutation):
+        template_params = mutate(self.DEFAULT_TEMPLATE_PARAMS, mutations=mutation)
+        res = render_template(self.TEMPLATE_NAME, **template_params)
+        self.assertValidPython(res)
+
 
 class DummyTemplateTestCase(TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "dummy.tpl"
@@ -195,8 +201,11 @@ class FsOpTempalteTestCase(TestCase, TemplateTestMixin):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
         self.assertValidPython(res)
 
-    def test_quote_escape(self):
-        template_params = {**self.DEFAULT_TEMPLATE_PARAMS, **dict(pig_command='AA"AA"')}
+    @parameterized.expand(
+        [({"pig_command": 'AA"AA"\''},), ({"task_id": 'AA"AA"\''},), ({"trigger_rule": 'AA"AA"\''},)]
+    )
+    def test_escape_character(self, mutation):
+        template_params = mutate(self.DEFAULT_TEMPLATE_PARAMS, mutations=mutation)
         res = render_template(self.TEMPLATE_NAME, **template_params)
         self.assertValidPython(res)
 
@@ -208,6 +217,12 @@ class KillTemplateTestCase(TestCase, TemplateTestMixin):
 
     def test_minimal_green_path(self):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
+        self.assertValidPython(res)
+
+    @parameterized.expand([({"task_id": 'AA"AA"\''},), ({"trigger_rule": 'AA"AA"\''},)])
+    def test_escape_character(self, mutation):
+        template_params = mutate(self.DEFAULT_TEMPLATE_PARAMS, mutations=mutation)
+        res = render_template(self.TEMPLATE_NAME, **template_params)
         self.assertValidPython(res)
 
 
@@ -241,6 +256,12 @@ class MapReduceTemplateTestCase(TestCase, TemplateTestMixin):
     def test_optional_parameters(self, mutation):
         template_params = mutate(self.DEFAULT_TEMPLATE_PARAMS, mutation)
         res = render_template("mapreduce.tpl", **template_params)
+        self.assertValidPython(res)
+
+    @parameterized.expand([({"task_id": 'AA"AA"\''},), ({"trigger_rule": 'AA"AA"\''},)])
+    def test_escape_character(self, mutation):
+        template_params = mutate(self.DEFAULT_TEMPLATE_PARAMS, mutations=mutation)
+        res = render_template(self.TEMPLATE_NAME, **template_params)
         self.assertValidPython(res)
 
 
@@ -292,7 +313,9 @@ class PrepareTemplateTestCase(TestCase, TemplateTestMixin):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
         self.assertValidPython(res)
 
-    @parameterized.expand([({"prepare_command": 'A"'},), ({"prepare_command": 'AAAAA"'},)])
+    @parameterized.expand(
+        [({"task_id": 'AA"AA"\''},), ({"trigger_rule": 'AA"AA"\''},), ({"prepare_command": 'AAAAA"'},)]
+    )
     def test_escape_character(self, mutation):
         template_params = mutate(self.DEFAULT_TEMPLATE_PARAMS, mutation)
         res = render_template(self.TEMPLATE_NAME, **template_params)
@@ -355,6 +378,8 @@ class SparkTemplateTestCase(TestCase, TemplateTestMixin):
 
     @parameterized.expand(
         [
+            ({"task_id": 'AA"AA"\''},),
+            ({"trigger_rule": 'AA"AA"\''},),
             ({"params": {'AA"': "AAA"}},),
             ({"params": {"AA": 'A"AA'}},),
             ({"name": 'A"'},),
@@ -393,6 +418,8 @@ class SshTemplateTestCase(TestCase, TemplateTestMixin):
 
     @parameterized.expand(
         [
+            ({"task_id": 'AA"AA"\''},),
+            ({"trigger_rule": 'AA"AA"\''},),
             ({"params": {'AA"': "AAA"}},),
             ({"params": {"AA": 'A"AA'}},),
             ({"command": 'A"'},),
@@ -413,6 +440,12 @@ class SubwfTemplateTestCase(TestCase, TemplateTestMixin):
 
     def test_green_path(self):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
+        self.assertValidPython(res)
+
+    @parameterized.expand([({"task_id": 'AA"AA"\''},), ({"trigger_rule": 'AA"AA"\''},)])
+    def test_escape_character(self, mutation):
+        template_params = mutate(self.DEFAULT_TEMPLATE_PARAMS, mutation)
+        res = render_template(self.TEMPLATE_NAME, **template_params)
         self.assertValidPython(res)
 
 

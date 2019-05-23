@@ -13,7 +13,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
  #}
-{{ task_id }} = bash_operator.BashOperator(
+{{ task_id | to_var }} = bash_operator.BashOperator(
     task_id={{ task_id | tojson }},
     trigger_rule={{ trigger_rule | tojson }},
     bash_command="gcloud dataproc jobs submit pig --cluster={dataproc_cluster} --region={gcp_region} --execute {pig_command}".format(
