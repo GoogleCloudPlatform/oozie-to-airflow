@@ -58,9 +58,8 @@ class TestOozieConverter(TestCase):
 
     @mock.patch("o2a.converter.oozie_converter.render_template", return_value="AAA")
     @mock.patch("builtins.open", return_value=io.StringIO())
-    @mock.patch("o2a.converter.oozie_converter.black")
-    @mock.patch("o2a.converter.oozie_converter.fix_file")
-    def test_create_dag_file(self, autoflake_fix_file_mock, black_mock, open_mock, _):
+    def test_create_dag_file(self, open_mock, _):
+        # Given
         workflow = Workflow(
             dag_name="A",
             input_directory_path="in_dir",
@@ -69,9 +68,28 @@ class TestOozieConverter(TestCase):
             nodes=dict(AAA=ParsedNode(DummyMapper(ET.Element("dummy"), name="AAA"))),
             dependencies={"import AAAA"},
         )
-
+        # When
         self.converter.create_dag_file(workflow)
+        # Then
         open_mock.assert_called_once_with("/tmp/test_dag.py", "w")
+
+    @mock.patch("o2a.converter.oozie_converter.parser.OozieParser.parse_workflow")
+    @mock.patch("o2a.converter.oozie_converter.black")
+    @mock.patch("o2a.converter.oozie_converter.fix_file")
+    def test_convert(self, autoflake_fix_file_mock, black_mock, parse_workflow_mock):
+        # Given
+        workflow = Workflow(
+            dag_name="A",
+            input_directory_path="in_dir",
+            output_directory_path="out_dir",
+            relations={Relation(from_task_id="AAA", to_task_id="BBB")},
+            nodes=dict(AAA=ParsedNode(DummyMapper(ET.Element("dummy"), name="AAA"))),
+            dependencies={"import AAAA"},
+        )
+        parse_workflow_mock.return_value = workflow
+        # When
+        self.converter.convert()
+        parse_workflow_mock.assert_called_once_with()
         black_mock.format_file_in_place.assert_called_once_with(
             Path("/tmp/test_dag.py"), fast=mock.ANY, mode=mock.ANY, write_back=mock.ANY
         )

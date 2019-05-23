@@ -115,6 +115,8 @@ class OozieConverter:
         workflow = self.parser.workflow
         self.convert_nodes(workflow.nodes)
         self.create_dag_file(workflow)
+        self.format_with_black()
+        self.remove_unused_imports()
         self.copy_extra_assets(workflow.nodes)
 
     @staticmethod
@@ -146,11 +148,10 @@ class OozieConverter:
             logging.info(f"Saving to file: {file_name}")
             dag_content = self.render_workflow(workflow)
             file.write(dag_content)
-        black.format_file_in_place(
-            Path(file_name), mode=black.FileMode(line_length=110), fast=False, write_back=black.WriteBack.YES
-        )
+
+    def remove_unused_imports(self):
         fix_file(
-            file_name,
+            self.output_dag_name,
             args=AutoflakeArgs(
                 remove_all_unused_imports=True,
                 ignore_init_module_imports=False,
@@ -162,6 +163,14 @@ class OozieConverter:
                 check=False,
             ),
             standard_out=sys.stdout,
+        )
+
+    def format_with_black(self):
+        black.format_file_in_place(
+            Path(self.output_dag_name),
+            mode=black.FileMode(line_length=110),
+            fast=False,
+            write_back=black.WriteBack.YES,
         )
 
     def copy_extra_assets(self, nodes: Dict[str, ParsedNode]):
