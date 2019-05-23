@@ -39,7 +39,7 @@ def mutate(parent: Dict[str, Any], mutations: Dict[str, Any]) -> Dict[str, Any]:
 
     :Example::
 
-    .. code-block:: python
+    .. code-block:: pycon
 
         In [0]: target = { 'a': { 'b': { 'c': 3 } } }
 
@@ -48,7 +48,7 @@ def mutate(parent: Dict[str, Any], mutations: Dict[str, Any]) -> Dict[str, Any]:
 
     :Example::
 
-    .. code-block:: python
+    .. code-block:: pycon
 
         In [0]: target = { 'a': { 'b': { 'c': 3 } } }
 
@@ -73,7 +73,7 @@ def get_value_by_path(target: Any, path: List[Union[str, int]]) -> Any:
 
     :Example:
 
-    .. code-block:: python
+    .. code-block:: pycon
 
         In [0]: target = { 'a': { 'b': { 'c': 3 } } }
         Out[0]: {'a': [{'b': {'c': 'AAA'}}]}
@@ -103,7 +103,7 @@ def set_value_by_path(target: Any, path: List[Union[str, int]], value: Any) -> N
 
     :Example::
 
-    .. code-block:: python
+    .. code-block:: pycon
 
         In [0]: target = { 'a': [{ 'b': { 'c': 3 } }] }
 
