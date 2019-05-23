@@ -14,7 +14,7 @@
   limitations under the License.
  #}
 
-{{ task_id }} = dataproc_operator.DataProcPigOperator(
+{{ task_id | to_var }} = dataproc_operator.DataProcPigOperator(
     task_id={{ task_id | tojson }},
     trigger_rule={{ trigger_rule | tojson }},
     query_uri='{}/{}'.format(PARAMS['gcp_uri_prefix'], {{ script_file_name | tojson }}),
