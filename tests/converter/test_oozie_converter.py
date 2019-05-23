@@ -89,6 +89,7 @@ class TestOozieConverter(TestCase):
         parse_workflow_mock.return_value = workflow
         # When
         self.converter.convert()
+        # Then
         parse_workflow_mock.assert_called_once_with()
         black_mock.format_file_in_place.assert_called_once_with(
             Path("/tmp/test_dag.py"), fast=mock.ANY, mode=mock.ANY, write_back=mock.ANY
