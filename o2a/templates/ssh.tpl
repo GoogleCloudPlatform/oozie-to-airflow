@@ -14,16 +14,16 @@
   limitations under the License.
  #}
 
-{{ task_id }}_hook = ssh_hook.SSHHook(
+{{ task_id | to_var }}_hook = ssh_hook.SSHHook(
     ssh_conn_id='ssh_default',
     username={{ user | tojson }},
     remote_host={{ host | tojson }},
 )
 
-{{ task_id }} = ssh_operator.SSHOperator(
+{{ task_id | to_var }} = ssh_operator.SSHOperator(
     task_id={{ task_id | tojson }},
     trigger_rule={{ trigger_rule | tojson }},
-    ssh_hook={{ task_id }}_hook,
+    ssh_hook={{ task_id | to_var }}_hook,
     params=PARAMS,
     command={{ command | tojson }},
 )

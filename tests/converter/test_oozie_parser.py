@@ -417,11 +417,11 @@ class TestOozieExamples(unittest.TestCase):
             (
                 WorkflowTestCase(
                     name="decision",
-                    node_names={"decision_node", "first", "end", "kill"},
+                    node_names={"decision-node", "first", "end", "kill"},
                     relations={
-                        Relation(from_task_id="decision_node", to_task_id="end"),
-                        Relation(from_task_id="decision_node", to_task_id="first"),
-                        Relation(from_task_id="decision_node", to_task_id="kill"),
+                        Relation(from_task_id="decision-node", to_task_id="end"),
+                        Relation(from_task_id="decision-node", to_task_id="first"),
+                        Relation(from_task_id="decision-node", to_task_id="kill"),
                     },
                     params={"nameNode": "hdfs://"},
                 ),
@@ -430,25 +430,25 @@ class TestOozieExamples(unittest.TestCase):
                 WorkflowTestCase(
                     name="demo",
                     node_names={
-                        "fork_node",
-                        "pig_node",
-                        "subworkflow_node",
-                        "shell_node",
-                        "join_node",
-                        "decision_node",
-                        "hdfs_node",
+                        "fork-node",
+                        "pig-node",
+                        "subworkflow-node",
+                        "shell-node",
+                        "join-node",
+                        "decision-node",
+                        "hdfs-node",
                         "end",
                     },
                     relations={
-                        Relation(from_task_id="decision_node", to_task_id="end"),
-                        Relation(from_task_id="decision_node", to_task_id="hdfs_node"),
-                        Relation(from_task_id="fork_node", to_task_id="pig_node_prepare"),
-                        Relation(from_task_id="fork_node", to_task_id="shell_node_prepare"),
-                        Relation(from_task_id="fork_node", to_task_id="subworkflow_node"),
-                        Relation(from_task_id="join_node", to_task_id="decision_node"),
-                        Relation(from_task_id="pig_node", to_task_id="join_node"),
-                        Relation(from_task_id="shell_node", to_task_id="join_node"),
-                        Relation(from_task_id="subworkflow_node", to_task_id="join_node"),
+                        Relation(from_task_id="decision-node", to_task_id="end"),
+                        Relation(from_task_id="decision-node", to_task_id="hdfs-node"),
+                        Relation(from_task_id="fork-node", to_task_id="pig-node_prepare"),
+                        Relation(from_task_id="fork-node", to_task_id="shell-node_prepare"),
+                        Relation(from_task_id="fork-node", to_task_id="subworkflow-node"),
+                        Relation(from_task_id="join-node", to_task_id="decision-node"),
+                        Relation(from_task_id="pig-node", to_task_id="join-node"),
+                        Relation(from_task_id="shell-node", to_task_id="join-node"),
+                        Relation(from_task_id="subworkflow-node", to_task_id="join-node"),
                     },
                     params={"nameNode": "hdfs://", "dataproc_cluster": "AAA"},
                 ),
@@ -464,20 +464,20 @@ class TestOozieExamples(unittest.TestCase):
             (
                 WorkflowTestCase(
                     name="fs",
-                    node_names={"chmod", "mkdir", "fs_node", "delete", "move", "touchz", "chgrp", "join"},
+                    node_names={"chmod", "mkdir", "fs-node", "delete", "move", "touchz", "chgrp", "join"},
                     relations={
-                        Relation(from_task_id="fs_node", to_task_id="chgrp_fs_0_mkdir"),
-                        Relation(from_task_id="fs_node", to_task_id="delete_fs_0_mkdir"),
-                        Relation(from_task_id="fs_node", to_task_id="chmod_fs_0_mkdir"),
-                        Relation(from_task_id="fs_node", to_task_id="touchz"),
-                        Relation(from_task_id="fs_node", to_task_id="mkdir"),
-                        Relation(from_task_id="fs_node", to_task_id="move_fs_0_mkdir"),
-                        Relation(from_task_id="mkdir", to_task_id="join"),
-                        Relation(from_task_id="delete_fs_1_delete", to_task_id="join"),
-                        Relation(from_task_id="move_fs_1_move", to_task_id="join"),
-                        Relation(from_task_id="touchz", to_task_id="join"),
                         Relation(from_task_id="chgrp_fs_1_chgrp", to_task_id="join"),
                         Relation(from_task_id="chmod_fs_7_chmod", to_task_id="join"),
+                        Relation(from_task_id="delete_fs_1_delete", to_task_id="join"),
+                        Relation(from_task_id="fs-node", to_task_id="chgrp_fs_0_mkdir"),
+                        Relation(from_task_id="fs-node", to_task_id="chmod_fs_0_mkdir"),
+                        Relation(from_task_id="fs-node", to_task_id="delete_fs_0_mkdir"),
+                        Relation(from_task_id="fs-node", to_task_id="mkdir"),
+                        Relation(from_task_id="fs-node", to_task_id="move_fs_0_mkdir"),
+                        Relation(from_task_id="fs-node", to_task_id="touchz"),
+                        Relation(from_task_id="mkdir", to_task_id="join"),
+                        Relation(from_task_id="move_fs_1_move", to_task_id="join"),
+                        Relation(from_task_id="touchz", to_task_id="join"),
                     },
                     params={"hostname": "AAAA@BBB", "nameNode": "hdfs://localhost:8020/"},
                 ),
@@ -485,7 +485,7 @@ class TestOozieExamples(unittest.TestCase):
             (
                 WorkflowTestCase(
                     name="mapreduce",
-                    node_names={"mr_node"},
+                    node_names={"mr-node"},
                     relations=set(),
                     params={"dataproc_cluster": "A", "gcp_region": "B", "nameNode": "hdfs://"},
                 ),
@@ -493,20 +493,20 @@ class TestOozieExamples(unittest.TestCase):
             (
                 WorkflowTestCase(
                     name="pig",
-                    node_names={"pig_node"},
+                    node_names={"pig-node"},
                     relations=set(),
                     params={"oozie.wf.application.path": "hdfs://", "nameNode": "hdfs://"},
                 ),
             ),
             (
                 WorkflowTestCase(
-                    name="shell", node_names={"shell_node"}, relations=set(), params={"nameNode": "hdfs://"}
+                    name="shell", node_names={"shell-node"}, relations=set(), params={"nameNode": "hdfs://"}
                 ),
             ),
             (
                 WorkflowTestCase(
                     name="spark",
-                    node_names={"spark_node"},
+                    node_names={"spark-node"},
                     relations=set(),
                     params={"dataproc_cluster": "A", "gcp_region": "B", "nameNode": "hdfs://"},
                 ),
@@ -519,7 +519,7 @@ class TestOozieExamples(unittest.TestCase):
                     params={"hostname": "AAAA@BBB", "nameNode": "hdfs://"},
                 ),
             ),
-            (WorkflowTestCase(name="subwf", node_names={"subworkflow_node"}, relations=set(), params={}),),
+            (WorkflowTestCase(name="subwf", node_names={"subworkflow-node"}, relations=set(), params={}),),
         ],
         name_func=lambda func, num, p: f"{func.__name__}_{num}_{p.args[0].name}",
     )

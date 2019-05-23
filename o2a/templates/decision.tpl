@@ -14,7 +14,7 @@
   limitations under the License.
  #}
 
-def {{ task_id }}_decision():
+def {{ task_id | to_var }}_decision():
 {% for key, val in case_dict.items() -%}
 {%- if loop.first %}
     if {{ key }}:
@@ -31,8 +31,8 @@ def {{ task_id }}_decision():
 {%- endfor %}
 
 
-{{ task_id }} = python_operator.BranchPythonOperator(
+{{ task_id | to_var }} = python_operator.BranchPythonOperator(
     task_id={{ task_id | tojson }},
     trigger_rule={{ trigger_rule | tojson }},
-    python_callable={{ task_id }}_decision,
+    python_callable={{ task_id | to_var }}_decision,
 )

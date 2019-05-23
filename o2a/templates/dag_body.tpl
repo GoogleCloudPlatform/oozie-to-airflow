@@ -18,10 +18,10 @@
     {{ task.rendered_template }}
 {% endfor %}
 {%- for relation in node.relations %}
-{{ relation.from_task_id }}.set_downstream({{ relation.to_task_id }})
+{{ relation.from_task_id | to_var }}.set_downstream({{ relation.to_task_id | to_var }})
 {% endfor %}
 {% endfor %}
 
 {%- for relation in relations %}
-{{ relation.from_task_id }}.set_downstream({{ relation.to_task_id }})
+{{ relation.from_task_id | to_var }}.set_downstream({{ relation.to_task_id | to_var}})
 {% endfor %}
