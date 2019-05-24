@@ -34,24 +34,20 @@ class PigMapper(ActionMapper, PrepareMixin):
     Converts a Pig Oozie node to an Airflow task.
     """
 
-    properties: Dict[str, str]
-    params_dict: Dict[str, str]
-
     def __init__(
         self,
         oozie_node: Element,
         name: str,
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
-        params=None,
+        params: Dict[str, str] = None,
         **kwargs,
     ):
         ActionMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, **kwargs)
         if params is None:
             params = dict()
         self.params = params
-        self.trigger_rule = trigger_rule
-        self.properties = {}
-        self.params_dict = {}
+        self.properties: Dict[str, str] = {}
+        self.params_dict: Dict[str, str] = {}
         self.file_extractor = FileExtractor(oozie_node=oozie_node, params=params)
         self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, params=params)
         self._parse_oozie_node()

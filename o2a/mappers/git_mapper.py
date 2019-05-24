@@ -16,8 +16,8 @@
 import shlex
 from typing import Dict, Optional, Set
 
-import xml.etree.ElementTree as ET
 from urllib.parse import urlparse
+from xml.etree.ElementTree import Element
 
 from airflow.utils.trigger_rule import TriggerRule
 
@@ -59,21 +59,19 @@ class GitMapper(ActionMapper, PrepareMixin):
     Converts a Shell Oozie action to an Airflow task.
     """
 
-    bash_command: str
-
     def __init__(
         self,
-        oozie_node: ET.Element,
+        oozie_node: Element,
         name: str,
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
         params: Dict[str, str] = None,
         **kwargs,
     ):
-        ActionMapper.__init__(self, oozie_node, name, trigger_rule, **kwargs)
+        ActionMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, **kwargs)
         if params is None:
             params = {}
         self.params = params
-        self.trigger_rule = trigger_rule
+        self.bash_command: Optional[str] = None
 
     def on_parse_node(self):
         git_uri = get_tag_el_text(self.oozie_node, TAG_GIT_URI, self.params)

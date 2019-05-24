@@ -112,11 +112,9 @@ class FsMapper(ActionMapper):
     Converts a FS Oozie node to an Airflow task.
     """
 
-    tasks: List[Task]
-
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.tasks = []
+        self.tasks: List[Task] = []
 
     def on_parse_node(self):
         super().on_parse_node()

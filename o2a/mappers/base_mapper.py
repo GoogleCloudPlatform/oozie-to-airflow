@@ -13,10 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Base mapper - it is a base class for all mappers actions, and logic alike"""
-from typing import Tuple, List, Set
+from typing import Tuple, List, Set, Dict
 from xml.etree.ElementTree import Element
 
-import airflow.utils.trigger_rule
+from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.relation import Relation
 from o2a.converter.task import Task
@@ -30,8 +30,8 @@ class BaseMapper:
         self,
         oozie_node: Element,
         name: str,
-        trigger_rule=airflow.utils.trigger_rule.TriggerRule.ALL_SUCCESS,
-        params=None,
+        trigger_rule: str = TriggerRule.ALL_SUCCESS,
+        params: Dict[str, str] = None,
         **kwargs,
     ):
         if params is None:

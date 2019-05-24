@@ -35,8 +35,6 @@ class SubworkflowMapper(ActionMapper):
     Converts a Sub-workflow Oozie node to an Airflow task.
     """
 
-    properties: Dict[str, str]
-
     # pylint: disable=too-many-arguments
     def __init__(
         self,
@@ -57,7 +55,7 @@ class SubworkflowMapper(ActionMapper):
         self.params = params
         self.task_id = name
         self.trigger_rule = trigger_rule
-        self.properties = {}
+        self.properties: Dict[str, str] = {}
         self.input_directory_path = input_directory_path
         self.output_directory_path = output_directory_path
         self.dag_name = dag_name

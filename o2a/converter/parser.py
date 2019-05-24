@@ -38,10 +38,6 @@ from o2a.mappers.base_mapper import BaseMapper
 class OozieParser:
     """Parses XML of an Oozie workflow"""
 
-    control_map: Dict[str, Type[BaseMapper]]
-    action_map: Dict[str, Type[ActionMapper]]
-    params: Dict[str, str]
-
     def __init__(
         self,
         input_directory_path: str,
