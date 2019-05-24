@@ -19,7 +19,7 @@ from unittest import mock
 from xml.etree.ElementTree import Element
 from airflow.utils.trigger_rule import TriggerRule
 
-from o2a.converter.parsed_node import ParsedNode
+from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.task import Task
 from o2a.converter.workflow import Workflow
 from o2a.converter.relation import Relation
@@ -52,9 +52,9 @@ class TestKillMapper(unittest.TestCase):
 
         mapper = self._get_kill_mapper(name="fail_task")
 
-        workflow.nodes["task"] = ParsedNode(mock.Mock(autospec=BaseMapper))
-        workflow.nodes["fail_task"] = ParsedNode(mapper)
-        workflow.nodes["success_task"] = ParsedNode(mock.Mock(autospec=BaseMapper))
+        workflow.nodes["task"] = ParsedActionNode(mock.Mock(autospec=BaseMapper))
+        workflow.nodes["fail_task"] = ParsedActionNode(mapper)
+        workflow.nodes["success_task"] = ParsedActionNode(mock.Mock(autospec=BaseMapper))
         workflow.nodes["success_task"].set_is_ok(True)
         workflow.nodes["fail_task"].set_is_error(True)
 

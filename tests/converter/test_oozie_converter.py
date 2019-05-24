@@ -23,7 +23,7 @@ from xml.etree import ElementTree as ET
 from o2a import o2a
 from o2a.converter.oozie_converter import OozieConverter, AutoflakeArgs
 from o2a.converter.mappers import CONTROL_MAP, ACTION_MAP
-from o2a.converter.parsed_node import ParsedNode
+from o2a.converter.parsed_action_node import ParsedActionNode
 
 from o2a.converter.task import Task
 from o2a.converter.workflow import Workflow
@@ -65,7 +65,7 @@ class TestOozieConverter(TestCase):
             input_directory_path="in_dir",
             output_directory_path="out_dir",
             relations={Relation(from_task_id="AAA", to_task_id="BBB")},
-            nodes=dict(AAA=ParsedNode(DummyMapper(ET.Element("dummy"), name="AAA"))),
+            nodes=dict(AAA=ParsedActionNode(DummyMapper(ET.Element("dummy"), name="AAA"))),
             dependencies={"import AAAA"},
         )
         # When
@@ -84,7 +84,7 @@ class TestOozieConverter(TestCase):
             input_directory_path="in_dir",
             output_directory_path="out_dir",
             relations={Relation(from_task_id="AAA", to_task_id="BBB")},
-            nodes=dict(AAA=ParsedNode(DummyMapper(ET.Element("dummy"), name="AAA"))),
+            nodes=dict(AAA=ParsedActionNode(DummyMapper(ET.Element("dummy"), name="AAA"))),
             dependencies={"import AAAA"},
         )
         parse_workflow_mock.return_value = workflow
@@ -114,7 +114,7 @@ class TestOozieConverter(TestCase):
     @mock.patch("o2a.converter.oozie_converter.render_template", return_value="TEXT_CONTENT")
     def test_write_dag_file(self, render_template_mock):
         relations = {Relation(from_task_id="TASK_1", to_task_id="TASK_2")}
-        nodes = dict(TASK_1=ParsedNode(DummyMapper(ET.Element("dummy"), name="TASK_1")))
+        nodes = dict(TASK_1=ParsedActionNode(DummyMapper(ET.Element("dummy"), name="TASK_1")))
         dependencies = {"import awesome_stuff"}
         workflow = Workflow(
             input_directory_path="/tmp/input_directory",
@@ -152,8 +152,8 @@ class TestOozieConverter(TestCase):
         mapper_1 = mock.MagicMock(**{"to_tasks_and_relations.return_value": (tasks_1, relations_1)})
         mapper_2 = mock.MagicMock(**{"to_tasks_and_relations.return_value": (tasks_2, relations_2)})
 
-        node_1 = ParsedNode(mapper=mapper_1)
-        node_2 = ParsedNode(mapper=mapper_2)
+        node_1 = ParsedActionNode(mapper=mapper_1)
+        node_2 = ParsedActionNode(mapper=mapper_2)
         nodes = dict(TASK_1=node_1, TASK_2=node_2)
 
         self.converter.convert_nodes(nodes=nodes)

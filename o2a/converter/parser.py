@@ -27,7 +27,7 @@ from typing import Type, Dict
 from airflow.utils.trigger_rule import TriggerRule
 from o2a.utils import xml_utils
 from o2a.converter.constants import HDFS_FOLDER
-from o2a.converter.parsed_node import ParsedNode
+from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.workflow import Workflow
 from o2a.converter.relation import Relation
 from o2a.mappers.action_mapper import ActionMapper
@@ -70,7 +70,7 @@ class OozieParser:
         mapper = map_class(
             oozie_node=kill_node, name=kill_node.attrib["name"], trigger_rule=TriggerRule.ONE_FAILED
         )
-        p_node = ParsedNode(mapper)
+        p_node = ParsedActionNode(mapper)
 
         mapper.on_parse_node()
 
@@ -85,7 +85,7 @@ class OozieParser:
         """
         map_class = self.control_map["end"]
         mapper = map_class(oozie_node=end_node, name=end_node.attrib["name"])
-        p_node = ParsedNode(mapper)
+        p_node = ParsedActionNode(mapper)
 
         mapper.on_parse_node()
 
@@ -107,7 +107,7 @@ class OozieParser:
         map_class = self.control_map["fork"]
         fork_name = fork_node.attrib["name"]
         mapper = map_class(oozie_node=fork_node, name=fork_name)
-        p_node = ParsedNode(mapper)
+        p_node = ParsedActionNode(mapper)
 
         mapper.on_parse_node()
 
@@ -142,7 +142,7 @@ class OozieParser:
         map_class = self.control_map["join"]
         mapper = map_class(oozie_node=join_node, name=join_node.attrib["name"])
 
-        p_node = ParsedNode(mapper)
+        p_node = ParsedActionNode(mapper)
         p_node.add_downstream_node_name(join_node.attrib["to"])
 
         mapper.on_parse_node()
@@ -178,7 +178,7 @@ class OozieParser:
         map_class = self.control_map["decision"]
         mapper = map_class(oozie_node=decision_node, name=decision_node.attrib["name"])
 
-        p_node = ParsedNode(mapper)
+        p_node = ParsedActionNode(mapper)
         for cases in decision_node[0]:
             p_node.add_downstream_node_name(cases.attrib["to"])
 
@@ -216,7 +216,7 @@ class OozieParser:
             output_directory_path=self.workflow.output_directory_path,
         )
 
-        p_node = ParsedNode(mapper)
+        p_node = ParsedActionNode(mapper)
         ok_node = action_node.find("ok")
         if ok_node is None:
             raise Exception("Missing ok node in {}".format(action_node))
@@ -248,7 +248,7 @@ class OozieParser:
         start_name = "start_node_" + str(uuid.uuid4())[:4]
         mapper = map_class(oozie_node=start_node, name=start_name)
 
-        p_node = ParsedNode(mapper)
+        p_node = ParsedActionNode(mapper)
         p_node.add_downstream_node_name(start_node.attrib["to"])
 
         mapper.on_parse_node()
@@ -302,7 +302,7 @@ class OozieParser:
 
     def create_relations(self) -> None:
         """
-        Given a dictionary of task_ids and ParsedNodes,
+        Given a dictionary of task_ids and ParsedActionNodes,
         returns a set of logical connectives for each task in Airflow.
 
         :return: Set with strings of task's downstream nodes.

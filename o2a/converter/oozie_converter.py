@@ -31,7 +31,7 @@ from autoflake import fix_file
 
 from o2a.converter import parser
 from o2a.converter.constants import HDFS_FOLDER
-from o2a.converter.parsed_node import ParsedNode
+from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.workflow import Workflow
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.mappers.base_mapper import BaseMapper
@@ -123,12 +123,12 @@ class OozieConverter:
         self.copy_extra_assets(workflow.nodes)
 
     @staticmethod
-    def convert_nodes(nodes: Dict[str, ParsedNode]):
+    def convert_nodes(nodes: Dict[str, ParsedActionNode]):
         """
         For each Oozie node, converts it into relations and internal relations.
 
-        It uses the mapper, which is stored in ParsedNode. The result is saved in ParsedNode.tasks
-        and ParsedNode.relations
+        It uses the mapper, which is stored in ParsedActionNode. The result is saved in ParsedActionNode.tasks
+        and ParsedActionNode.relations
         """
         logging.info("Converting nodes to tasks and inner relations")
         for p_node in nodes.values():
@@ -179,7 +179,7 @@ class OozieConverter:
     def sort_imports(self):
         SortImports(self.output_dag_name)
 
-    def copy_extra_assets(self, nodes: Dict[str, ParsedNode]):
+    def copy_extra_assets(self, nodes: Dict[str, ParsedActionNode]):
         """
         Copies additional assets needed to execute a workflow, eg. Pig scripts.
         """
