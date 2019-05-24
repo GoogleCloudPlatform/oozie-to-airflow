@@ -53,12 +53,6 @@ class DecisionMapper(BaseMapper):
     </workflow-app>
     """
 
-    oozie_node: Element
-    task_id: str
-    trigger_rule: str
-    params: Dict[str, str]
-    case_dict: Dict[str, str]
-
     def __init__(
         self,
         oozie_node: Element,
@@ -69,15 +63,12 @@ class DecisionMapper(BaseMapper):
         BaseMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule)
         if params is None:
             params = {}
-        self.oozie_node = oozie_node
-        self.name = name
-        self.trigger_rule = trigger_rule
-        self.params = params
+        self.params: Dict[str, str] = params
         self._get_cases()
 
     def _get_cases(self):
         switch_node = self.oozie_node[0]
-        self.case_dict = collections.OrderedDict()
+        self.case_dict: Dict[str, str] = collections.OrderedDict()
         for case in switch_node:
             if "case" in case.tag:
                 case_text = convert_el_to_jinja(case.text.strip(), quote=True)

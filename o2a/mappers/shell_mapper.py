@@ -15,8 +15,7 @@
 """Maps Shell action into Airflow's DAG"""
 import shlex
 from typing import Dict, Set
-
-import xml.etree.ElementTree as ET
+from xml.etree.ElementTree import Element
 
 from airflow.utils.trigger_rule import TriggerRule
 
@@ -34,17 +33,16 @@ class ShellMapper(ActionMapper, PrepareMixin):
 
     def __init__(
         self,
-        oozie_node: ET.Element,
+        oozie_node: Element,
         name: str,
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
         params: Dict[str, str] = None,
         **kwargs,
     ):
-        ActionMapper.__init__(self, oozie_node, name, trigger_rule, **kwargs)
+        ActionMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, **kwargs)
         if params is None:
             params = {}
         self.params = params
-        self.trigger_rule = trigger_rule
         self._parse_oozie_node()
 
     def _parse_oozie_node(self):

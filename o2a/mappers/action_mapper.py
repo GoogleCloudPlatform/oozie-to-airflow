@@ -14,9 +14,11 @@
 # limitations under the License.
 """Base class for all action nappers"""
 from typing import Dict
+from xml.etree.ElementTree import Element
+
+from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.mappers.base_mapper import BaseMapper
-
 from o2a.utils import xml_utils, el_utils
 
 
@@ -25,7 +27,10 @@ from o2a.utils import xml_utils, el_utils
 class ActionMapper(BaseMapper):
     """Base class for all action mappers"""
 
-    properties: Dict[str, str] = {}
+    def __init__(self, oozie_node: Element, name: str, trigger_rule: str = TriggerRule.ALL_SUCCESS, **kwargs):
+        super().__init__(oozie_node, name, **kwargs)
+        self.properties: Dict[str, str] = {}
+        self.trigger_rule: str = trigger_rule
 
     def _parse_config(self):
         config = self.oozie_node.find("configuration")

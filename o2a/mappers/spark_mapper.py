@@ -13,7 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Maps Spark action to Airflow Dag"""
-from typing import Dict, Set, List
+from typing import Dict, Set, List, Optional
+
 import xml.etree.ElementTree as ET
 
 from airflow.utils.trigger_rule import TriggerRule
@@ -42,13 +43,6 @@ SPARK_TAG_JAR = "jar"
 class SparkMapper(ActionMapper, PrepareMixin):
     """Maps Spark Action"""
 
-    application_args: List[str]
-    conf: Dict[str, str]
-    hdfs_archives: List[str]
-    hdfs_files: List[str]
-    dataproc_jars: List[str]
-    jars: List[str]
-
     def __init__(
         self,
         oozie_node: ET.Element,
@@ -57,21 +51,20 @@ class SparkMapper(ActionMapper, PrepareMixin):
         params: Dict[str, str] = None,
         **kwargs,
     ):
-        ActionMapper.__init__(self, oozie_node, name, trigger_rule, **kwargs)
+        ActionMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, **kwargs)
         self.params = params or {}
-        self.trigger_rule = trigger_rule
         self.java_class = ""
         self.java_jar = ""
-        self.job_name = None
-        self.jars = []
-        self.properties = {}
-        self.application_args = []
+        self.job_name: Optional[str] = None
+        self.jars: List[str] = []
+        self.properties: Dict[str, str] = {}
+        self.application_args: List[str] = []
         self.file_extractor = FileExtractor(oozie_node=oozie_node, params=self.params)
         self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, params=self.params)
         self.prepare_command = None
-        self.hdfs_files = []
-        self.hdfs_archives = []
-        self.dataproc_jars = []
+        self.hdfs_files: List[str] = []
+        self.hdfs_archives: List[str] = []
+        self.dataproc_jars: List[str] = []
 
     def on_parse_node(self):
 
@@ -91,7 +84,7 @@ class SparkMapper(ActionMapper, PrepareMixin):
         job_xml_nodes = xml_utils.find_nodes_by_tag(self.oozie_node, SPARK_TAG_JOB_XML)
 
         for xml_file in job_xml_nodes:
-            tree = ET.parse(xml_file.text)
+            tree = ET.parse(source=xml_file.text)
             self.properties.update(self._parse_config_node(tree.getroot()))
 
         config_nodes = xml_utils.find_nodes_by_tag(self.oozie_node, SPARK_TAG_CONFIGURATION)
@@ -139,7 +132,7 @@ class SparkMapper(ActionMapper, PrepareMixin):
         --conf key1=value
         --conf key2="value1 value2"
         """
-        conf = {}
+        conf: Dict[str, str] = {}
         if spark_opts_node.text:
             spark_opts = spark_opts_node.text.split("--")[1:]
         else:

@@ -24,11 +24,13 @@ from o2a.utils.template_utils import render_template
 class Task:  # pylint: disable=too-few-public-methods
     """Class for Airflow Task"""
 
-    task_id: str
-    template_name: str
-    template_params: Dict[str, Any]
-
-    def __init__(self, task_id, template_name, trigger_rule=TriggerRule.DUMMY, template_params=None):
+    def __init__(
+        self,
+        task_id: str,
+        template_name: str,
+        trigger_rule: str = TriggerRule.DUMMY,
+        template_params: Dict[str, Any] = None,
+    ):
         self.task_id = task_id
         self.template_name = template_name
         self.trigger_rule = trigger_rule

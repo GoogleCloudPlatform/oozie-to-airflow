@@ -14,7 +14,7 @@
 # limitations under the License.
 """Workflow"""
 from collections import OrderedDict
-from typing import Optional, Set, Dict
+from typing import Set, Dict
 
 from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.relation import Relation
@@ -24,21 +24,14 @@ from o2a.converter.relation import Relation
 class Workflow:  # pylint: disable=too-few-public-methods
     """Class for Workflow"""
 
-    dag_name: Optional[str]
-    input_directory_path: str
-    output_directory_path: str
-    relations: Set[Relation]
-    nodes: Dict[str, ParsedActionNode]
-    dependencies: Set[str]
-
     def __init__(
         self,
-        input_directory_path,
-        output_directory_path,
-        dag_name=None,
-        relations=None,
-        nodes=None,
-        dependencies=None,
+        input_directory_path: str,
+        output_directory_path: str,
+        dag_name: str = None,
+        relations: Set[Relation] = None,
+        nodes: Dict[str, ParsedActionNode] = None,
+        dependencies: Set[str] = None,
     ) -> None:
         self.input_directory_path = input_directory_path
         self.output_directory_path = output_directory_path
