@@ -22,7 +22,7 @@ from xml.etree import ElementTree as ET
 from parameterized import parameterized
 
 from o2a.converter import parser
-from o2a.converter import parsed_node
+from o2a.converter import parsed_action_node
 from o2a.converter.mappers import ACTION_MAP, CONTROL_MAP
 from o2a.converter.relation import Relation
 from o2a.definitions import EXAMPLE_DEMO_PATH, EXAMPLES_PATH
@@ -332,13 +332,19 @@ class TestOozieParser(unittest.TestCase):
 
     def test_create_relations(self):
         oozie_node = ET.Element("dummy")
-        op1 = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task1"))
+        op1 = parsed_action_node.ParsedActionNode(
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task1")
+        )
         op1.downstream_names = ["task2", "task3"]
         op1.error_xml = "fail1"
-        op2 = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task2"))
+        op2 = parsed_action_node.ParsedActionNode(
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task2")
+        )
         op2.downstream_names = ["task3", "task4"]
         op2.error_xml = "fail1"
-        op3 = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task3"))
+        op3 = parsed_action_node.ParsedActionNode(
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task3")
+        )
         op3.downstream_names = ["end1"]
         op3.error_xml = "fail1"
         op4 = mock.Mock(
@@ -349,8 +355,12 @@ class TestOozieParser(unittest.TestCase):
                 "get_error_downstream_name.return_value": "fail1",
             }
         )
-        end = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=oozie_node, name="end1"))
-        fail = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=oozie_node, name="fail1"))
+        end = parsed_action_node.ParsedActionNode(
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="end1")
+        )
+        fail = parsed_action_node.ParsedActionNode(
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="fail1")
+        )
         op_dict = {"task1": op1, "task2": op2, "task3": op3, "task4": op4, "end1": end, "fail1": fail}
         self.parser.workflow.nodes.update(op_dict)
         self.parser.create_relations()
@@ -375,17 +385,27 @@ class TestOozieParser(unittest.TestCase):
 
     def test_update_trigger_rules(self):
         oozie_node = ET.Element("dummy")
-        op1 = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task1"))
+        op1 = parsed_action_node.ParsedActionNode(
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task1")
+        )
         op1.downstream_names = ["task2", "task3"]
         op1.error_xml = "fail1"
-        op2 = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task2"))
+        op2 = parsed_action_node.ParsedActionNode(
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task2")
+        )
         op2.downstream_names = ["task3"]
         op2.error_xml = "fail1"
-        op3 = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task3"))
+        op3 = parsed_action_node.ParsedActionNode(
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task3")
+        )
         op3.downstream_names = ["end1"]
         op3.error_xml = "fail1"
-        end = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=oozie_node, name="end1"))
-        fail = parsed_node.ParsedNode(dummy_mapper.DummyMapper(oozie_node=oozie_node, name="fail1"))
+        end = parsed_action_node.ParsedActionNode(
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="end1")
+        )
+        fail = parsed_action_node.ParsedActionNode(
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="fail1")
+        )
         op_dict = {"task1": op1, "task2": op2, "task3": op3, "end1": end, "fail1": fail}
 
         self.parser.workflow.nodes.update(op_dict)

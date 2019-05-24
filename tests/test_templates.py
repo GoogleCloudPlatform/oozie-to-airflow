@@ -22,7 +22,7 @@ from unittest import mock, TestCase
 from parameterized import parameterized
 from airflow.utils.trigger_rule import TriggerRule
 
-from o2a.converter.parsed_node import ParsedNode
+from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.task import Task
 from o2a.converter.relation import Relation
 from o2a.mappers.dummy_mapper import DummyMapper
@@ -456,7 +456,7 @@ class WorkflowTemplateTestCase(TestCase, TemplateTestMixin):
         dag_name="test_dag",
         dependencies={"import awesome_stuff"},
         nodes=[
-            ParsedNode(
+            ParsedActionNode(
                 mock.MagicMock(spec=DummyMapper),
                 tasks=[
                     Task(task_id="first_task", template_name="dummy.tpl"),
@@ -481,7 +481,7 @@ class SubWorkflowTemplateTestCase(TestCase, TemplateTestMixin):
     DEFAULT_TEMPLATE_PARAMS = dict(
         dependencies={"import awesome_stuff"},
         nodes=[
-            ParsedNode(
+            ParsedActionNode(
                 mock.MagicMock(spec=DummyMapper),
                 tasks=[
                     Task(task_id="first_task", template_name="dummy.tpl"),

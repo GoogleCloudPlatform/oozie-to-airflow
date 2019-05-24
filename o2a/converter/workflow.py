@@ -16,7 +16,7 @@
 from collections import OrderedDict
 from typing import Optional, Set, Dict
 
-from o2a.converter.parsed_node import ParsedNode
+from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.relation import Relation
 
 
@@ -28,7 +28,7 @@ class Workflow:  # pylint: disable=too-few-public-methods
     input_directory_path: str
     output_directory_path: str
     relations: Set[Relation]
-    nodes: Dict[str, ParsedNode]
+    nodes: Dict[str, ParsedActionNode]
     dependencies: Set[str]
 
     def __init__(
