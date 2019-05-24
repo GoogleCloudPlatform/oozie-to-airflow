@@ -19,7 +19,7 @@ from unittest import mock
 from xml.etree.ElementTree import Element
 from airflow.utils.trigger_rule import TriggerRule
 
-from o2a.converter.parsed_node import ParsedNode
+from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.workflow import Workflow
 from o2a.converter.relation import Relation
 from o2a.mappers.base_mapper import BaseMapper
@@ -52,8 +52,8 @@ class TestStartMapper(unittest.TestCase):
 
         mapper = self._get_start_mapper(name="first_task")
 
-        workflow.nodes["first_task"] = ParsedNode(mock.Mock(autospec=BaseMapper))
-        workflow.nodes["second_task"] = ParsedNode(mapper)
+        workflow.nodes["first_task"] = ParsedActionNode(mock.Mock(autospec=BaseMapper))
+        workflow.nodes["second_task"] = ParsedActionNode(mapper)
 
         workflow.relations = {Relation(from_task_id="first_task", to_task_id="second_task")}
 

@@ -22,7 +22,7 @@ from airflow.utils.trigger_rule import TriggerRule
 from o2a.mappers.base_mapper import BaseMapper
 
 
-class ParsedNode:
+class ParsedActionNode:
     """Class for parsed Oozie workflow node"""
 
     def __init__(self, mapper: BaseMapper, tasks=None, relations=None):
@@ -60,7 +60,7 @@ class ParsedNode:
 
     def __repr__(self) -> str:
         return (
-            f"ParsedNode(mapper={repr(self.mapper)}, downstream_names={self.downstream_names}, "
+            f"ParsedActionNode(mapper={repr(self.mapper)}, downstream_names={self.downstream_names}, "
             f"is_error={self.is_error}, is_ok={self.is_ok}, error_xml={self.error_xml})"
         )
 

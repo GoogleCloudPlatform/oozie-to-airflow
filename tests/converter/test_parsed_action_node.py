@@ -19,15 +19,15 @@ from xml.etree.ElementTree import Element
 
 from airflow.utils.trigger_rule import TriggerRule
 
-from o2a.converter import parsed_node
+from o2a.converter import parsed_action_node
 from o2a.mappers import dummy_mapper
 
 
-class TestParsedNode(unittest.TestCase):
+class TestParseActiondNode(unittest.TestCase):
     def setUp(self):
         oozie_node = Element("dummy")
         op1 = dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task1")
-        self.p_node = parsed_node.ParsedNode(op1)
+        self.p_node = parsed_action_node.ParsedActionNode(op1)
 
     def test_add_downstream_node_name(self):
         self.p_node.add_downstream_node_name("task1")
@@ -67,12 +67,12 @@ class TestParsedNode(unittest.TestCase):
 class TestParserNodeMultipleOperators(unittest.TestCase):
     def test_first_task_id(self):
         op1 = mock.Mock(**{"first_task_id": "first_task_id"})
-        p_node = parsed_node.ParsedNode(op1)
+        p_node = parsed_action_node.ParsedActionNode(op1)
 
         self.assertEqual("first_task_id", p_node.first_task_id)
 
     def test_last_task_id(self):
         op1 = mock.Mock(**{"last_task_id": "last_task_id"})
-        p_node = parsed_node.ParsedNode(op1)
+        p_node = parsed_action_node.ParsedActionNode(op1)
 
         self.assertEqual("last_task_id", p_node.last_task_id)
