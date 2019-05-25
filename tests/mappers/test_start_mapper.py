@@ -48,7 +48,7 @@ class TestStartMapper(unittest.TestCase):
         ast.parse(imp_str)
 
     def test_on_parse_finish(self):
-        workflow = Workflow(input_directory_path=None, output_directory_path=None, dag_name=None)
+        workflow = Workflow(input_directory_path="", output_directory_path="", dag_name="BBB")
 
         mapper = self._get_start_mapper(name="first_task")
 
@@ -63,5 +63,5 @@ class TestStartMapper(unittest.TestCase):
         self.assertEqual(workflow.relations, set())
 
     def _get_start_mapper(self, name="test_id"):
-        mapper = StartMapper(oozie_node=self.oozie_node, name=name, trigger_rule=TriggerRule.DUMMY)
+        mapper = StartMapper(oozie_node=self.oozie_node, name=name, dag_name="BBB")
         return mapper

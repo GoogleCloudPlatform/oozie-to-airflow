@@ -12,13 +12,10 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
- #}
-
+#}
 {{ task_id | to_var }} = bash_operator.BashOperator(
-    task_id={{ task_id | tojson }},
-    trigger_rule={{ trigger_rule | tojson }},
-    bash_command={{ bash_command | tojson }}.format(
-        dataproc_cluster=PARAMS['dataproc_cluster'],
-        gcp_region=PARAMS['gcp_region']
-    ),
+    task_id='{{ task_id | python_escape }}',
+    trigger_rule='{{ trigger_rule | python_escape }}',
+    bash_command={% include "git_command.tpl" %},
+    params={% include "property_set.tpl" %},
 )

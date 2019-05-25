@@ -13,9 +13,13 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 #}
-{{ task_id | to_var }} = bash_operator.BashOperator(
-    task_id='{{ task_id | python_escape }}',
-    trigger_rule='{{ trigger_rule | python_escape }}',
-    bash_command={% include "pig_command.tpl" %} % shlex.quote('{{ pig_command | python_escape }}'),
-    params={% include "property_set.tpl" %},
-)
+{% if (action_node_properties is defined) and (action_node_properties | length != 0) -%}
+    PropertySet(
+        configuration_properties=CONFIGURATION_PROPERTIES,
+        job_properties=JOB_PROPERTIES,
+        action_node_properties={{ action_node_properties | tojson }})
+{% else -%}
+    PropertySet(
+        configuration_properties=CONFIGURATION_PROPERTIES,
+        job_properties=JOB_PROPERTIES)
+{% endif %}

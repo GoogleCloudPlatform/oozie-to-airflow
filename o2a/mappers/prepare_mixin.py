@@ -13,9 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Prepare node mixin"""
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 import xml.etree.ElementTree as ET
 
+from o2a.converter.task import Task
+from o2a.o2a_libs.property_utils import PropertySet
 from o2a.utils import xml_utils
 from o2a.utils.el_utils import normalize_path
 
@@ -27,24 +29,25 @@ class PrepareMixin:
     def has_prepare(oozie_node):
         return bool(xml_utils.find_nodes_by_tag(oozie_node, "prepare"))
 
-    def get_prepare_command(self, oozie_node: ET.Element, params: Dict[str, str]):
-        # In BashOperator in Composer we can't read from $DAGS_FOLDER (~/dags) - permission denied.
-        # However we can read from ~/data -> /home/airflow/gcs/data.
-        # The easiest way to access it is using the $DAGS_FOLDER env variable.
-        delete_paths, mkdir_paths = self.parse_prepare_node(oozie_node, params)
-        if delete_paths or mkdir_paths:
+    def get_prepare_task(self, oozie_node: ET.Element, name: str, trigger_rule: str, property_set) -> Task:
+        delete_paths, mkdir_paths = self.parse_prepare_node(oozie_node, property_set=property_set)
+        delete = None
+        mkdir = None
+        if not delete_paths and not mkdir_paths:
+            raise Exception(f"There is neither delete nor mkdir in the {oozie_node}'s prepare.")
+        if delete_paths:
             delete = " ".join(delete_paths)
+        if mkdir_paths:
             mkdir = " ".join(mkdir_paths)
-            return "$DAGS_FOLDER/../data/prepare.sh -c {0} -r {1}{2}{3}".format(
-                params["dataproc_cluster"],
-                params["gcp_region"],
-                ' -d "{}"'.format(delete) if delete else "",
-                ' -m "{}"'.format(mkdir) if mkdir else "",
-            )
-        return ""
+        return Task(
+            task_id=name + "_prepare",
+            template_name="prepare.tpl",
+            trigger_rule=trigger_rule,
+            template_params=dict(delete=delete, mkdir=mkdir),
+        )
 
     @staticmethod
-    def parse_prepare_node(oozie_node: ET.Element, params: Dict[str, str]) -> Tuple[List[str], List[str]]:
+    def parse_prepare_node(oozie_node: ET.Element, property_set: PropertySet) -> Tuple[List[str], List[str]]:
         """
         <prepare>
             <delete path="[PATH]"/>
@@ -60,7 +63,7 @@ class PrepareMixin:
             # If there exists a prepare node, there will only be one, according
             # to oozie xml schema
             for node in prepare_nodes[0]:
-                node_path = normalize_path(node.attrib["path"], params=params)
+                node_path = normalize_path(node.attrib["path"], property_set=property_set)
                 if node.tag == "delete":
                     delete_paths.append(node_path)
                 else:

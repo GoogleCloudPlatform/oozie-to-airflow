@@ -13,9 +13,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 #}
-{{ task_id | to_var }} = bash_operator.BashOperator(
-    task_id='{{ task_id | python_escape }}',
-    trigger_rule='{{ trigger_rule | python_escape }}',
-    bash_command={% include "pig_command.tpl" %} % shlex.quote('{{ pig_command | python_escape }}'),
-    params={% include "property_set.tpl" %},
-)
+"gcloud dataproc jobs submit pig "
+"--cluster={{ '{{' }}params.configuration_properties['dataproc_cluster']{{ '}}' }} "
+"--region={{ '{{' }}params.configuration_properties['gcp_region']{{ '}}' }} "
+"--execute %s"

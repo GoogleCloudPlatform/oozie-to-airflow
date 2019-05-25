@@ -16,7 +16,7 @@
 import re
 
 
-def convert_to_python_variable(name: str):
+def convert_to_python_variable(name: str) -> str:
     """
     Creates an identifier that is a valid variable name in Python language.
     """

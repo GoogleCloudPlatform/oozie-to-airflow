@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Maps Oozie pig node to Airflow's DAG"""
-from typing import Dict, Set
+from typing import Dict, Set, Tuple, List
 from xml.etree.ElementTree import Element
 
 from airflow.utils.trigger_rule import TriggerRule
@@ -36,26 +36,34 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
         self,
         oozie_node: Element,
         name: str,
+        dag_name: str,
+        job_properties: Dict[str, str],
+        configuration_properties: Dict[str, str],
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
-        params: Dict[str, str] = None,
         **kwargs,
     ):
-        ActionMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, **kwargs)
-        if params is None:
-            params = dict()
-        self.params = params
-        self.properties: Dict[str, str] = {}
+        ActionMapper.__init__(
+            self,
+            oozie_node=oozie_node,
+            name=name,
+            dag_name=dag_name,
+            trigger_rule=trigger_rule,
+            job_properties=job_properties,
+            configuration_properties=configuration_properties,
+            **kwargs,
+        )
         self.params_dict: Dict[str, str] = {}
-        self.file_extractor = FileExtractor(oozie_node=oozie_node, params=params)
-        self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, params=params)
+        self.file_extractor = FileExtractor(oozie_node=oozie_node, property_set=self.property_set)
+        self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, property_set=self.property_set)
         self.name_node = None
         self.hdfs_files = None
         self.hdfs_archives = None
 
     def on_parse_node(self):
         name_node_text = self.oozie_node.find("name-node").text
-        self.name_node = el_utils.replace_el_with_var(name_node_text, params=self.params, quote=False)
-        self._parse_config()
+        self.name_node = el_utils.replace_el_with_var(
+            name_node_text, property_set=self.property_set, quote=False
+        )
         self._parse_params()
         _, self.hdfs_files = self.file_extractor.parse_node()
         _, self.hdfs_archives = self.archive_extractor.parse_node()
@@ -65,37 +73,35 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
         if param_nodes:
             self.params_dict = {}
             for node in param_nodes:
-                param = el_utils.replace_el_with_var(node.text, params=self.params, quote=False)
+                param = el_utils.replace_el_with_var(node.text, property_set=self.property_set, quote=False)
                 key, value = param.split("=", 1)
                 self.params_dict[key] = value
 
-    def to_tasks_and_relations(self):
-        tasks = [
-            Task(
-                task_id=self.name,
-                template_name="mapreduce.tpl",
-                trigger_rule=self.trigger_rule,
-                template_params=dict(
-                    properties=self.properties,
-                    params_dict=self.params_dict,
-                    hdfs_files=self.hdfs_files,
-                    hdfs_archives=self.hdfs_archives,
-                ),
-            )
-        ]
-        relations = []
+    def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
+        action_task = Task(
+            task_id=self.name,
+            template_name="mapreduce.tpl",
+            trigger_rule=self.trigger_rule,
+            template_params=dict(
+                job_properties=self.job_properties,
+                configuration_properties=self.configuration_properties,
+                action_node_properties=self.action_node_properties,
+                params_dict=self.params_dict,
+                hdfs_files=self.hdfs_files,
+                hdfs_archives=self.hdfs_archives,
+            ),
+        )
+        tasks: List[Task] = [action_task]
+        relations: List[Relation] = []
         if self.has_prepare(self.oozie_node):
-            prepare_command = self.get_prepare_command(self.oozie_node, self.params)
-            tasks.insert(
-                0,
-                Task(
-                    task_id=self.name + "_prepare",
-                    template_name="prepare.tpl",
-                    trigger_rule=self.trigger_rule,
-                    template_params=dict(prepare_command=prepare_command),
-                ),
+            prepare_task = self.get_prepare_task(
+                oozie_node=self.oozie_node,
+                name=self.name,
+                trigger_rule=self.trigger_rule,
+                property_set=self.property_set,
             )
-            relations = [Relation(from_task_id=self.name + "_prepare", to_task_id=self.name)]
+            tasks = [prepare_task, action_task]
+            relations = [Relation(from_task_id=prepare_task.task_id, to_task_id=self.name)]
         return tasks, relations
 
     @staticmethod

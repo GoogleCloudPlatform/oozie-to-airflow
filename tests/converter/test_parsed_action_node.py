@@ -26,7 +26,7 @@ from o2a.mappers import dummy_mapper
 class TestParseActiondNode(unittest.TestCase):
     def setUp(self):
         oozie_node = Element("dummy")
-        op1 = dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task1")
+        op1 = dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task1", dag_name="BBB")
         self.p_node = parsed_action_node.ParsedActionNode(op1)
 
     def test_add_downstream_node_name(self):

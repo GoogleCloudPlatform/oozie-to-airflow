@@ -34,7 +34,7 @@ class Task:  # pylint: disable=too-few-public-methods
         self.task_id = task_id
         self.template_name = template_name
         self.trigger_rule = trigger_rule
-        self.template_params = template_params or {}
+        self.template_params: Dict[str, Any] = template_params or {}
 
     @property
     def rendered_template(self):
@@ -47,8 +47,10 @@ class Task:  # pylint: disable=too-few-public-methods
 
     def __repr__(self) -> str:
         return (
-            f'Task(task_id="{self.task_id}", template_name="{self.template_name}", '
-            f'trigger_rule="{self.trigger_rule}", template_params={self.template_params})'
+            f'Task(task_id="{self.task_id}", '
+            f'template_name="{self.template_name}", '
+            f'trigger_rule="{self.trigger_rule}", '
+            f"template_params={self.template_params})"
         )
 
     def __eq__(self, other):

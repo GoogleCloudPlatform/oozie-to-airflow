@@ -110,7 +110,7 @@ class GitTestCase(ShellScriptTestCase):
                 "--cluster CLUSTER"
             )
 
-        self.assertEqual(return_code, 0)
+        self.assertEqual(0, return_code)
 
         list_of_command = self.get_command_calls()
 
@@ -141,7 +141,7 @@ class GitTestCase(ShellScriptTestCase):
                 "--cluster CLUSTER --key-path KEY_PATH"
             )
 
-        self.assertEqual(return_code, 0)
+        self.assertEqual(0, return_code)
 
         list_of_command = self.get_command_calls()
 
@@ -154,7 +154,7 @@ class GitTestCase(ShellScriptTestCase):
             )
         )
 
-        self.assertEqual(len(list_of_command), 5)
+        self.assertEqual(5, len(list_of_command))
 
         self.assertIn("fs\\ -copyToLocal", list_of_command[0])
 
@@ -178,11 +178,11 @@ class GitTestCase(ShellScriptTestCase):
                 "--cluster CLUSTER --branch development"
             )
 
-        self.assertEqual(return_code, 0)
+        self.assertEqual(0, return_code)
 
         list_of_command = self.get_command_calls()
 
-        self.assertEqual(len(list_of_command), 3)
+        self.assertEqual(3, len(list_of_command))
 
         self.assertIn("development", list_of_command[0])
 
@@ -198,4 +198,4 @@ class GitTestCase(ShellScriptTestCase):
         with mock_app("gcloud"):
             return_code = self.run_bash_command(command)
 
-        self.assertEqual(return_code, 1)
+        self.assertEqual(1, return_code)

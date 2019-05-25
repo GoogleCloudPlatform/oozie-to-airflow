@@ -24,11 +24,11 @@ from o2a.mappers import fs_mapper
 class chainTestCase(unittest.TestCase):
     def test_empty(self):
         relations = fs_mapper.chain([])
-        self.assertEqual(relations, [])
+        self.assertEqual([], relations)
 
     def test_one(self):
         relations = fs_mapper.chain([Task(task_id="A", template_name="")])
-        self.assertEqual(relations, [])
+        self.assertEqual([], relations)
 
     def test_multiple(self):
         relations = fs_mapper.chain(
@@ -40,10 +40,10 @@ class chainTestCase(unittest.TestCase):
             ]
         )
         self.assertEqual(
-            relations,
             [
                 Relation(from_task_id="task_1", to_task_id="task_2"),
                 Relation(from_task_id="task_2", to_task_id="task_3"),
                 Relation(from_task_id="task_3", to_task_id="task_4"),
             ],
+            relations,
         )

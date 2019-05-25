@@ -65,7 +65,7 @@ class TestOozieConverter(TestCase):
             input_directory_path="in_dir",
             output_directory_path="out_dir",
             relations={Relation(from_task_id="AAA", to_task_id="BBB")},
-            nodes=dict(AAA=ParsedActionNode(DummyMapper(Element("dummy"), name="AAA"))),
+            nodes=dict(AAA=ParsedActionNode(DummyMapper(Element("dummy"), name="AAA", dag_name="BBB"))),
             dependencies={"import AAAA"},
         )
         # When
@@ -84,7 +84,7 @@ class TestOozieConverter(TestCase):
             input_directory_path="in_dir",
             output_directory_path="out_dir",
             relations={Relation(from_task_id="AAA", to_task_id="BBB")},
-            nodes=dict(AAA=ParsedActionNode(DummyMapper(Element("dummy"), name="AAA"))),
+            nodes=dict(AAA=ParsedActionNode(DummyMapper(Element("dummy"), name="AAA", dag_name="BBB"))),
             dependencies={"import AAAA"},
         )
         parse_workflow_mock.return_value = workflow
@@ -114,7 +114,7 @@ class TestOozieConverter(TestCase):
     @mock.patch("o2a.converter.oozie_converter.render_template", return_value="TEXT_CONTENT")
     def test_write_dag_file(self, render_template_mock):
         relations = {Relation(from_task_id="TASK_1", to_task_id="TASK_2")}
-        nodes = dict(TASK_1=ParsedActionNode(DummyMapper(Element("dummy"), name="TASK_1")))
+        nodes = dict(TASK_1=ParsedActionNode(DummyMapper(Element("dummy"), name="TASK_1", dag_name="BBB")))
         dependencies = {"import awesome_stuff"}
         workflow = Workflow(
             input_directory_path="/tmp/input_directory",
@@ -131,7 +131,8 @@ class TestOozieConverter(TestCase):
             dag_name="test_dag",
             dependencies={"import awesome_stuff"},
             nodes=[nodes["TASK_1"]],
-            params={"user.name": "USER"},
+            job_properties={"user.name": "USER"},
+            configuration_properties={},
             relations={Relation(from_task_id="TASK_1", to_task_id="TASK_2")},
             schedule_interval=None,
             start_days_ago=None,

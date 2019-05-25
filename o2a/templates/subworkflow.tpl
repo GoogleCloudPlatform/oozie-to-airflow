@@ -12,12 +12,22 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
- #}
+#}
 {% for dependency in dependencies %}
 {{ dependency }}
-{%- endfor %}
+{% endfor %}
 
-PARAMS = {{ params | tojson }}
+JOB_PROPERTIES={
+   {% for key, value in job_properties.items() %}
+       '{{key | python_escape}}': {% if value is none %}None{% else %}'{{ value | python_escape }}'{% endif %},
+   {% endfor %}
+}
+
+CONFIGURATION_PROPERTIES={
+   {% for key, value in configuration_properties.items() %}
+       '{{key | python_escape}}': {% if value is none %}None{% else %}'{{ value | python_escape }}'{% endif %},
+   {% endfor %}
+}
 
 def sub_dag(parent_dag_name, child_dag_name, start_date, schedule_interval):
     with models.DAG(

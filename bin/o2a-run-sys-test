@@ -123,7 +123,7 @@ for example application: ${LOCAL_APP_NAME}"
 
     LOCAL_APP_PROPERTIES="/tmp/${LOCAL_APP_NAME}_${RANDOM_PREFIX}_job.properties"
 
-    # Overwrite job properties with the dataproc cluster master
+    # Overwrite job job_properties with the dataproc cluster master
 
     sed -e "s/^nameNode.*$/nameNode=hdfs:\/\/${DATAPROC_CLUSTER_MASTER}:8020/" \
         -e "s/^resourceManager.*$/resourceManager=${DATAPROC_CLUSTER_MASTER}:8032/" \

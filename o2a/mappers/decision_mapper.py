@@ -14,7 +14,7 @@
 # limitations under the License.
 """Maps decision node to Airflow's DAG"""
 import collections
-from typing import Dict, List, Set
+from typing import Dict, List, Set, Tuple
 
 from xml.etree.ElementTree import Element
 
@@ -57,13 +57,22 @@ class DecisionMapper(BaseMapper):
         self,
         oozie_node: Element,
         name: str,
+        dag_name: str,
+        job_properties: Dict[str, str],
+        configuration_properties: Dict[str, str],
         trigger_rule: str = TriggerRule.ALL_DONE,
-        params: Dict[str, str] = None,
+        **kwargs: Dict,
     ):
-        BaseMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule)
-        if params is None:
-            params = {}
-        self.params: Dict[str, str] = params
+        BaseMapper.__init__(
+            self,
+            oozie_node=oozie_node,
+            name=name,
+            dag_name=dag_name,
+            trigger_rule=trigger_rule,
+            job_properties=job_properties,
+            configuration_properties=configuration_properties,
+            **kwargs,
+        )
         self._get_cases()
 
     def _get_cases(self):
@@ -76,7 +85,7 @@ class DecisionMapper(BaseMapper):
             else:  # Default return value
                 self.case_dict["default"] = case.attrib["to"]
 
-    def to_tasks_and_relations(self):
+    def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
         tasks = [
             Task(
                 task_id=self.name,

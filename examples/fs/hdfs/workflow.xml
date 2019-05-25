@@ -33,6 +33,12 @@
     </action>
     <action name="delete">
         <fs>
+            <configuration>
+                <property>
+                    <name>test.property.node</name>
+                    <value>${nameNode}</value>
+                </property>
+            </configuration>
             <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/test-delete-1'/>
             <delete path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/test-delete-1'/>
         </fs>

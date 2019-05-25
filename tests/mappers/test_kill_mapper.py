@@ -39,7 +39,7 @@ class TestKillMapper(unittest.TestCase):
 
     def test_to_tasks_and_relations(self):
         mapper = kill_mapper.KillMapper(
-            oozie_node=self.oozie_node, name="test_id", trigger_rule=TriggerRule.DUMMY
+            oozie_node=self.oozie_node, name="test_id", trigger_rule=TriggerRule.DUMMY, dag_name="BBB"
         )
 
         tasks, relations = mapper.to_tasks_and_relations()
@@ -48,7 +48,7 @@ class TestKillMapper(unittest.TestCase):
         self.assertEqual(relations, [])
 
     def test_on_parse_finish(self):
-        workflow = Workflow(input_directory_path=None, output_directory_path=None, dag_name=None)
+        workflow = Workflow(input_directory_path="", output_directory_path="", dag_name="BBB")
 
         mapper = self._get_kill_mapper(name="fail_task")
 
@@ -75,4 +75,6 @@ class TestKillMapper(unittest.TestCase):
         ast.parse(imp_str)
 
     def _get_kill_mapper(self, name="test_id"):
-        return kill_mapper.KillMapper(oozie_node=self.oozie_node, name=name, trigger_rule=TriggerRule.DUMMY)
+        return kill_mapper.KillMapper(
+            oozie_node=self.oozie_node, name=name, trigger_rule=TriggerRule.DUMMY, dag_name="BBB"
+        )

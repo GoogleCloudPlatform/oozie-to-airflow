@@ -12,10 +12,10 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
- #}
+#}
 
 {{ task_id | to_var }} = SubDagOperator(
-    task_id={{ task_id | tojson }},
-    trigger_rule={{ trigger_rule | tojson }},
-    subdag=subdag_{{ app_name }}.sub_dag(dag.dag_id, {{ task_id | tojson }}, dag.start_date, dag.schedule_interval),
+    task_id='{{ task_id | python_escape }}',
+    trigger_rule='{{ trigger_rule | python_escape }}',
+    subdag=subdag_{{ app_name | to_var }}.sub_dag(dag.dag_id, '{{ task_id | python_escape }}', dag.start_date, dag.schedule_interval),
 )

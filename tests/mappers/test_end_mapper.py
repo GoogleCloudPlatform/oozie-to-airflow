@@ -39,11 +39,9 @@ class TestEndMapper(unittest.TestCase):
 
     def test_convert_tasks_and_relations(self):
         mapper = self._get_end_mapper()
-
         tasks, relations = mapper.to_tasks_and_relations()
-
-        self.assertEqual(tasks, [Task(task_id="test_id", template_name="dummy.tpl")])
-        self.assertEqual(relations, [])
+        self.assertEqual([Task(task_id="test_id", template_name="dummy.tpl")], tasks)
+        self.assertEqual([], relations)
 
     def test_required_imports(self):
         mapper = self._get_end_mapper()
@@ -52,7 +50,7 @@ class TestEndMapper(unittest.TestCase):
         ast.parse(imp_str)
 
     def test_on_parse_finish_simple_should_remove_end_node(self):
-        workflow = Workflow(input_directory_path=None, output_directory_path=None, dag_name=None)
+        workflow = Workflow(input_directory_path="", output_directory_path="", dag_name="BBB")
 
         mapper = self._get_end_mapper("second_task")
 
@@ -63,11 +61,11 @@ class TestEndMapper(unittest.TestCase):
 
         mapper.on_parse_finish(workflow)
 
-        self.assertEqual(set(workflow.nodes.keys()), {"first_task"})
-        self.assertEqual(workflow.relations, set())
+        self.assertEqual({"first_task"}, set(workflow.nodes.keys()))
+        self.assertEqual(set(), workflow.relations)
 
     def test_on_parse_finish_decision_should_not_remove_end_node(self):
-        workflow = Workflow(input_directory_path=None, output_directory_path=None, dag_name=None)
+        workflow = Workflow(input_directory_path="", output_directory_path="", dag_name="BBB")
 
         mapper = self._get_end_mapper("end_task")
 
@@ -86,9 +84,11 @@ class TestEndMapper(unittest.TestCase):
 
         mapper.on_parse_finish(workflow)
 
-        self.assertEqual(set(workflow.nodes.keys()), {"first_task", "second_task", "end_task"})
-        self.assertEqual(workflow.relations, {Relation(from_task_id="first_task", to_task_id="end_task")})
+        self.assertEqual({"first_task", "second_task", "end_task"}, set(workflow.nodes.keys()))
+        self.assertEqual({Relation(from_task_id="first_task", to_task_id="end_task")}, workflow.relations)
 
     def _get_end_mapper(self, name="test_id"):
-        mapper = end_mapper.EndMapper(oozie_node=self.oozie_node, name=name, trigger_rule=TriggerRule.DUMMY)
+        mapper = end_mapper.EndMapper(
+            oozie_node=self.oozie_node, name=name, trigger_rule=TriggerRule.DUMMY, dag_name="BBB"
+        )
         return mapper

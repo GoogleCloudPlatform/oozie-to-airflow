@@ -13,19 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Null Mapper - used when there is a need to insert no-op node"""
-from typing import Set
-from xml.etree.ElementTree import Element
+from typing import Set, Tuple, List
 
-from airflow.utils.trigger_rule import TriggerRule
+from o2a.converter.relation import Relation
+from o2a.converter.task import Task
 from o2a.mappers.base_mapper import BaseMapper
 
 
 class NullMapper(BaseMapper):
-    def __init__(self, oozie_node: Element, name: str):
-        BaseMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=TriggerRule.DUMMY)
 
     # pylint: disable=no-self-use
-    def to_tasks_and_relations(self):
+    def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
         return [], []
 
     # pylint: disable=no-self-use

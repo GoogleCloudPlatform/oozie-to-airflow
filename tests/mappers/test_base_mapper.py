@@ -50,7 +50,12 @@ class TestBaseMapper(unittest.TestCase):
 """
         self.node = ET.fromstring(node_str)
         self.mapper = base_mapper.BaseMapper(
-            oozie_node=self.node, name="test_id", trigger_rule=TriggerRule.DUMMY
+            oozie_node=self.node,
+            name="test_id",
+            dag_name="BBB",
+            trigger_rule=TriggerRule.DUMMY,
+            job_properties={},
+            configuration_properties={},
         )
 
     def test_dummy_method(self):

@@ -13,7 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Base mapper - it is a base class for all mappers actions, and logic alike"""
-from typing import Tuple, List, Set, Dict
+from abc import ABC
+from copy import deepcopy
+from typing import Tuple, List, Set, Dict, Any
 from xml.etree.ElementTree import Element
 
 from airflow.utils.trigger_rule import TriggerRule
@@ -22,22 +24,24 @@ from o2a.converter.relation import Relation
 from o2a.converter.task import Task
 
 
-class BaseMapper:
+class BaseMapper(ABC):
     """The Base Mapper class - parent for all mappers."""
 
-    # pylint: disable=unused-argument
+    # pylint: disable = unused-argument
     def __init__(
         self,
         oozie_node: Element,
         name: str,
+        dag_name: str,
+        job_properties: Dict[str, str],
+        configuration_properties: Dict[str, str],
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
-        params: Dict[str, str] = None,
-        **kwargs,
+        **kwargs: Any,
     ):
-        if params is None:
-            params = {}
-        self.params = params
+        self.job_properties = deepcopy(job_properties)
+        self.configuration_properties = deepcopy(configuration_properties)
         self.oozie_node = oozie_node
+        self.dag_name = dag_name
         self.name = name
         self.trigger_rule = trigger_rule
 
@@ -92,3 +96,18 @@ class BaseMapper:
         :return: None
         """
         return None
+
+    def __repr__(self) -> str:
+        return (
+            f"{type(self).__name__}(name={self.name}, "
+            f"dag_name={self.dag_name}, "
+            f"oozie_node={self.oozie_node}, "
+            f"job_properties={self.job_properties}, "
+            f"configuration_properties={self.configuration_properties},"
+            f"trigger_rule={self.trigger_rule}) "
+        )
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.__dict__ == other.__dict__
+        return False

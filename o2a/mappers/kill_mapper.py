@@ -13,12 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Kill mapper - maps the workflow end"""
-from typing import List, Set
+from typing import List, Set, Tuple
+from xml.etree.ElementTree import Element
 
 from o2a.converter.task import Task
 from o2a.converter.workflow import Workflow
 from o2a.converter.relation import Relation
 from o2a.mappers.base_mapper import BaseMapper
+from o2a.utils.dict_utils import remove_key_from_dictionary_copy
 
 
 class KillMapper(BaseMapper):
@@ -26,7 +28,21 @@ class KillMapper(BaseMapper):
     Converts a Kill Oozie node to an Airflow task.
     """
 
-    def to_tasks_and_relations(self):
+    def __init__(self, oozie_node: Element, name: str, dag_name: str, **kwargs):
+        kwargs, job_properties = remove_key_from_dictionary_copy(kwargs, "job_properties", {})
+        kwargs, configuration_properties = remove_key_from_dictionary_copy(
+            kwargs, "configuration_properties", {}
+        )
+        super().__init__(
+            oozie_node=oozie_node,
+            name=name,
+            dag_name=dag_name,
+            job_properties=job_properties,
+            configuration_properties=configuration_properties,
+            **kwargs,
+        )
+
+    def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
         tasks = [Task(task_id=self.name, template_name="kill.tpl", trigger_rule=self.trigger_rule)]
         relations: List[Relation] = []
         return tasks, relations

@@ -12,27 +12,26 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
- #}
-
+#}
 def {{ task_id | to_var }}_decision():
-{% for key, val in case_dict.items() -%}
-{%- if loop.first %}
+{% for key, val in case_dict.items() %}
+{% if loop.first %}
     if {{ key }}:
         return "{{ val }}"
 {% endif %}
-{%- if not loop.first and not loop.last %}
+{% if not loop.first and not loop.last %}
     elif {{ key }}:
         return "{{ val }}"
 {% endif %}
-{%- if loop.last %}
+{% if loop.last %}
     else:
         return "{{ val }}"
-{%- endif %}
-{%- endfor %}
+{% endif %}
+{% endfor %}
 
 
 {{ task_id | to_var }} = python_operator.BranchPythonOperator(
-    task_id={{ task_id | tojson }},
-    trigger_rule={{ trigger_rule | tojson }},
+    task_id='{{ task_id | python_escape }}',
+    trigger_rule='{{ trigger_rule | python_escape }}',
     python_callable={{ task_id | to_var }}_decision,
 )

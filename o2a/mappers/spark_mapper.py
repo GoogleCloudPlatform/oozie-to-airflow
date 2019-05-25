@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Maps Spark action to Airflow Dag"""
-from typing import Dict, Set, List, Optional
+from typing import Dict, Set, List, Optional, Tuple
 
 import xml.etree.ElementTree as ET
 
@@ -47,60 +47,63 @@ class SparkMapper(ActionMapper, PrepareMixin):
         self,
         oozie_node: ET.Element,
         name: str,
+        job_properties: Dict[str, str],
+        configuration_properties: Dict[str, str],
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
-        params: Dict[str, str] = None,
         **kwargs,
     ):
-        ActionMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, **kwargs)
-        self.params = params or {}
+        ActionMapper.__init__(
+            self,
+            oozie_node=oozie_node,
+            name=name,
+            trigger_rule=trigger_rule,
+            job_properties=job_properties,
+            configuration_properties=configuration_properties,
+            **kwargs,
+        )
         self.java_class = ""
         self.java_jar = ""
         self.job_name: Optional[str] = None
         self.jars: List[str] = []
-        self.properties: Dict[str, str] = {}
         self.application_args: List[str] = []
-        self.file_extractor = FileExtractor(oozie_node=oozie_node, params=self.params)
-        self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, params=self.params)
-        self.prepare_command = None
+        self.file_extractor = FileExtractor(oozie_node=oozie_node, property_set=self.property_set)
+        self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, property_set=self.property_set)
         self.hdfs_files: List[str] = []
         self.hdfs_archives: List[str] = []
         self.dataproc_jars: List[str] = []
 
     def on_parse_node(self):
-
-        if self.has_prepare:
-            self.prepare_command = self.get_prepare_command(oozie_node=self.oozie_node, params=self.params)
-
         _, self.hdfs_files = self.file_extractor.parse_node()
         _, self.hdfs_archives = self.archive_extractor.parse_node()
 
-        self.java_jar = self._get_or_default(self.oozie_node, SPARK_TAG_JAR, None, params=self.params)
-        self.java_class = self._get_or_default(self.oozie_node, SPARK_TAG_CLASS, None, params=self.params)
+        self.java_jar = self._get_or_default(self.oozie_node, tag=SPARK_TAG_JAR)
+        self.java_class = self._get_or_default(self.oozie_node, tag=SPARK_TAG_CLASS)
         if self.java_class and self.java_jar:
             self.dataproc_jars = [self.java_jar]
             self.java_jar = None
-        self.job_name = self._get_or_default(self.oozie_node, SPARK_TAG_JOB_NAME, None, params=self.params)
+        self.job_name = self._get_or_default(self.oozie_node, tag=SPARK_TAG_JOB_NAME)
 
         job_xml_nodes = xml_utils.find_nodes_by_tag(self.oozie_node, SPARK_TAG_JOB_XML)
 
         for xml_file in job_xml_nodes:
             tree = ET.parse(source=xml_file.text)
-            self.properties.update(self._parse_config_node(tree.getroot()))
+            self.job_properties.update(self._parse_config_node(tree.getroot()))
 
         config_nodes = xml_utils.find_nodes_by_tag(self.oozie_node, SPARK_TAG_CONFIGURATION)
         if config_nodes:
-            self.properties.update(self._parse_config_node(config_nodes[0]))
+            self.job_properties.update(self._parse_config_node(config_nodes[0]))
 
         spark_opts = xml_utils.find_nodes_by_tag(self.oozie_node, SPARK_TAG_OPTS)
         if spark_opts:
-            self.properties.update(self._parse_spark_opts(spark_opts[0]))
+            self.job_properties.update(self._parse_spark_opts(spark_opts[0]))
 
         app_args = xml_utils.find_nodes_by_tag(self.oozie_node, SPARK_TAG_ARGS)
         for arg in app_args:
-            self.application_args.append(el_utils.replace_el_with_var(arg.text, self.params, quote=False))
+            self.application_args.append(
+                el_utils.replace_el_with_var(arg.text, self.property_set, quote=False)
+            )
 
-    @staticmethod
-    def _get_or_default(root: ET.Element, tag: str, default: str = None, params: Dict[str, str] = None):
+    def _get_or_default(self, root: ET.Element, tag: str, default: str = None):
         """
         If a node exists in the oozie_node with the tag specified in tag, it
         will attempt to replace the EL (if it exists) with the corresponding
@@ -110,9 +113,9 @@ class SparkMapper(ActionMapper, PrepareMixin):
         """
         var = xml_utils.find_nodes_by_tag(root, tag)
 
-        if var:
+        if var and var[0] is not None and var[0].text is not None:
             # Only check the first one
-            return el_utils.replace_el_with_var(var[0].text, params=params, quote=False)
+            return el_utils.replace_el_with_var(var[0].text, property_set=self.property_set, quote=False)
         return default
 
     @staticmethod
@@ -156,12 +159,7 @@ class SparkMapper(ActionMapper, PrepareMixin):
 
         return conf
 
-    def _get_tasks(self):
-        """
-        Returns the list of Airflow tasks that are the result of mapping
-
-        :return: list of Airflow tasks
-        """
+    def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
         action_task = Task(
             task_id=self.name,
             template_name="spark.tpl",
@@ -170,39 +168,24 @@ class SparkMapper(ActionMapper, PrepareMixin):
                 main_jar=self.java_jar,
                 main_class=self.java_class,
                 arguments=self.application_args,
-                archives=self.hdfs_archives,
-                files=self.hdfs_files,
+                hdfs_archives=self.hdfs_archives,
+                hdfs_files=self.hdfs_files,
                 job_name=self.job_name,
-                dataproc_spark_properties=self.properties,
+                dataproc_spark_properties=self.job_properties,
                 dataproc_spark_jars=self.dataproc_jars,
             ),
         )
-
-        if not self.has_prepare(self.oozie_node):
-            return [action_task]
-
-        prepare_task = Task(
-            task_id=self.name + "_prepare",
-            template_name="prepare.tpl",
-            template_params=dict(prepare_command=self.prepare_command),
-        )
-        return [prepare_task, action_task]
-
-    def _get_relations(self):
-        """
-        Returns the list of Airflow relations that are the result of mapping
-
-        :return: list of relations
-        """
-        return (
-            [Relation(from_task_id=self.name + "_prepare", to_task_id=self.name)]
-            if self.has_prepare(self.oozie_node)
-            else []
-        )
-
-    def to_tasks_and_relations(self):
-        tasks = self._get_tasks()
-        relations = self._get_relations()
+        tasks: List[Task] = [action_task]
+        relations: List[Relation] = []
+        if self.has_prepare(self.oozie_node):
+            prepare_task = self.get_prepare_task(
+                oozie_node=self.oozie_node,
+                name=self.name,
+                trigger_rule=self.trigger_rule,
+                property_set=self.property_set,
+            )
+            tasks = [prepare_task, action_task]
+            relations = [Relation(from_task_id=prepare_task.task_id, to_task_id=self.name)]
         return tasks, relations
 
     def required_imports(self) -> Set[str]:
@@ -214,5 +197,5 @@ class SparkMapper(ActionMapper, PrepareMixin):
         }
 
     @property
-    def first_task_id(self):
-        return self._get_tasks()[0].task_id
+    def first_task_id(self) -> str:
+        return f"{self.name}_prepare" if self.has_prepare(self.oozie_node) else self.name

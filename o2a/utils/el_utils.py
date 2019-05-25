@@ -13,14 +13,17 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Utilities used by EL functions"""
+import codecs
 import logging
 import os
 import re
-from typing import Dict, List, Optional, Union
+from copy import deepcopy
+from typing import List, Optional, Tuple, Union
 from urllib.parse import urlparse, ParseResult
 
 from o2a.converter.exceptions import ParseException
 from o2a.o2a_libs import el_basic_functions
+from o2a.o2a_libs.property_utils import PropertySet
 
 FN_MATCH = re.compile(r"\${\s?(\w+)\(([\w\s,\'\"\-]*)\)\s?\}")
 VAR_MATCH = re.compile(r"\${([\w.]+)}")
@@ -56,7 +59,7 @@ WF_EL_FUNCTIONS = {
 }
 
 
-def strip_el(el_function):
+def strip_el(el_function: str) -> str:
     """
     Given an el function or variable like ${ variable },
     strips out everything except for the variable.
@@ -65,9 +68,9 @@ def strip_el(el_function):
     return re.sub("[${}]", "", el_function).strip()
 
 
-def replace_el_with_var(el_function, params, quote=True):
+def replace_el_with_var(el_function: str, property_set: PropertySet, quote=True) -> str:
     """
-    Only supports a single variable
+    Only supports a single variable for now.
     """
     # Matches oozie EL variables e.g. ${hostname}
     var_match = VAR_MATCH.findall(el_function)
@@ -75,10 +78,11 @@ def replace_el_with_var(el_function, params, quote=True):
     jinjafied_el = el_function
     if var_match:
         for var in var_match:
-            if var in params:
-                jinjafied_el = jinjafied_el.replace("${" + var + "}", params[var])
-            else:
-                logging.info(f"Couldn't replace EL {var}")
+            try:
+                value = property_set[var]
+                jinjafied_el = jinjafied_el.replace("${" + var + "}", value)
+            except KeyError:
+                logging.info(f"The EL variable {var} was missing in the properties")
 
     return "'" + jinjafied_el + "'" if quote else jinjafied_el
 
@@ -108,7 +112,7 @@ def convert_el_to_jinja(oozie_el, quote=True):
     """
     Converts an EL with either a function or a variable to the form:
     Variable:
-        ${variable} -> {{ params.variable }}
+        ${variable} -> {{ job_properties.variable }}
         ${func()} -> mapped_func()
 
     Only supports a single variable or a single EL function.
@@ -128,49 +132,52 @@ def convert_el_to_jinja(oozie_el, quote=True):
         return jinjafied_el
     if var_match:
         for var in var_match:
-            jinjafied_el = jinjafied_el.replace("${" + var + "}", "{{ params." + var + " }}")
+            jinjafied_el = jinjafied_el.replace("${" + var + "}", "{{ job_properties." + var + " }}")
 
     return "'" + jinjafied_el + "'" if quote else jinjafied_el
 
 
-def parse_els(properties_file: Optional[str], prop_dict: Dict[str, str] = None):
+def parse_els(properties_file: Optional[str], property_set: PropertySet):
     """
-    Parses the properties file into a dictionary, if the value has
+    Parses the job_properties file into a dictionary, if the value has
     and EL function in it, it gets replaced with the corresponding
     value that has already been parsed. For example, a file like:
 
-    job.properties
+    job.job_properties
         host=user@google.com
         command=ssh ${host}
 
-    The params would be parsed like:
-        PARAMS = {
+    The job_properties would be parsed like:
+        PROPERTIES = {
         host: 'user@google.com',
         command='ssh user@google.com',
     }
     """
-    if prop_dict is None:
-        prop_dict = {}
+    copy_of_property_set = deepcopy(property_set)
+    properties_read_from_file = {}
     if properties_file:
         if os.path.isfile(properties_file):
-            with open(properties_file, "r") as prop_file:
+            with open(properties_file) as prop_file:
                 for line in prop_file.readlines():
                     if line.startswith("#") or line.startswith(" ") or line.startswith("\n"):
                         continue
                     else:
-                        _convert_line(line, prop_dict)
+                        key, value = _convert_line(line, property_set=copy_of_property_set)
+                        # Set the value of property in the copy of property set for further reference
+                        copy_of_property_set.action_node_properties[key] = value
+                        properties_read_from_file[key] = value
         else:
-            logging.warning(f"The properties file is missing: {properties_file}")
-    return prop_dict
+            logging.warning(f"The job_properties file is missing: {properties_file}")
+    return properties_read_from_file
 
 
-def _convert_line(line: str, prop_dict: Dict[str, str]) -> None:
+def _convert_line(line: str, property_set: PropertySet) -> Tuple[str, str]:
     """
-    Converts a line from the properties file and adds it to the properties dictionary.
+    Converts a line from the job_properties file and adds it to the job_properties dictionary.
     """
     key, value = line.split("=", 1)
-    value = replace_el_with_var(value.strip(), prop_dict, quote=False)
-    prop_dict[key.strip()] = value
+    value = replace_el_with_var(value.strip(), property_set=property_set, quote=False)
+    return key.strip(), value
 
 
 def comma_separated_string_to_list(line: str) -> Union[List[str], str]:
@@ -182,8 +189,9 @@ def comma_separated_string_to_list(line: str) -> Union[List[str], str]:
     return values[0] if len(values) <= 1 else values
 
 
-def normalize_path(url, params, allow_no_schema=False):
-    url_with_var = replace_el_with_var(url, params=params, quote=False)
+def normalize_path(url, property_set: PropertySet, allow_no_schema=False):
+    url_with_var = replace_el_with_var(url, property_set=property_set, quote=False)
+    url_with_var = replace_el_with_var(url_with_var, property_set=property_set, quote=False)
     url_parts: ParseResult = urlparse(url_with_var)
     allowed_schema = {"hdfs", ""} if allow_no_schema else {"hdfs"}
     if url_parts.scheme not in allowed_schema:
@@ -192,3 +200,8 @@ def normalize_path(url, params, allow_no_schema=False):
             f"hdfs://localhost:9200/path. Current value: {url_with_var}"
         )
     return url_parts.path
+
+
+def escape_string_with_python_escapes(string_to_escape: str) -> Optional[str]:
+    escaped_bytes, _ = codecs.escape_encode(string_to_escape.encode())  # type: ignore # C-Api level
+    return escaped_bytes.decode("utf-8")  # type: ignore
