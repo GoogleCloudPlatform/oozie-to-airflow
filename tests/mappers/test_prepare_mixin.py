@@ -19,7 +19,7 @@ from xml.etree import ElementTree as ET
 from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.task import Task
-from o2a.mappers import prepare_mixin
+from o2a.mappers.prepare_mixin import PrepareMixin
 from o2a.o2a_libs.property_utils import PropertySet
 
 
@@ -47,9 +47,9 @@ class TestPrepareMixin(unittest.TestCase):
 </pig>
 """
         pig_node_prepare = ET.fromstring(pig_node_prepare_str)
-
-        task = prepare_mixin.PrepareMixin().get_prepare_task(
-            oozie_node=pig_node_prepare,
+        mixin = PrepareMixin(pig_node_prepare)
+        self.assertTrue(mixin.has_prepare())
+        task = mixin.get_prepare_task(
             name="test_node",
             trigger_rule=TriggerRule.DUMMY,
             property_set=PropertySet(
@@ -77,12 +77,38 @@ class TestPrepareMixin(unittest.TestCase):
         # language=XML
         pig_node_str = "<pig><name-node>hdfs://</name-node></pig>"
         pig_node = ET.fromstring(pig_node_str)
-        with self.assertRaises(Exception):
-            prepare_mixin.PrepareMixin().get_prepare_task(
-                oozie_node=pig_node,
-                name="task",
-                trigger_rule=TriggerRule.DUMMY,
-                property_set=PropertySet(
-                    configuration_properties=configuration_properties, job_properties=job_properties
-                ),
-            )
+        mixin = PrepareMixin(pig_node)
+        self.assertFalse(mixin.has_prepare())
+        prepare_task = mixin.get_prepare_task(
+            name="task",
+            trigger_rule=TriggerRule.DUMMY,
+            property_set=PropertySet(
+                configuration_properties=configuration_properties, job_properties=job_properties
+            ),
+        )
+        self.assertIsNone(prepare_task)
+
+    def test_empty_prepare(self):
+        cluster = "my-cluster"
+        region = "europe-west3"
+        job_properties = {"nameNode": "hdfs://localhost:8020"}
+        configuration_properties = {"dataproc_cluster": cluster, "gcp_region": region}
+        # language=XML
+        pig_node_str = """
+<pig>
+    <name-node>hdfs://</name-node>
+    <prepare>
+    </prepare>
+</pig>
+"""
+        pig_node = ET.fromstring(pig_node_str)
+        mixin = PrepareMixin(pig_node)
+        self.assertFalse(mixin.has_prepare())
+        prepare_task = mixin.get_prepare_task(
+            name="task",
+            trigger_rule=TriggerRule.DUMMY,
+            property_set=PropertySet(
+                configuration_properties=configuration_properties, job_properties=job_properties
+            ),
+        )
+        self.assertIsNone(prepare_task)

@@ -76,6 +76,7 @@ class GitMapper(ActionMapper, PrepareMixin):
             property_set=property_set,
             **kwargs,
         )
+        PrepareMixin.__init__(self, oozie_node=oozie_node)
         self.git_uri: Optional[str] = None
         self.git_branch: Optional[str] = None
         self.destination_uri: Optional[str] = None
@@ -116,13 +117,10 @@ class GitMapper(ActionMapper, PrepareMixin):
         )
         tasks: List[Task] = [action_task]
         relations: List[Relation] = []
-        if self.has_prepare(self.oozie_node):
-            prepare_task = self.get_prepare_task(
-                oozie_node=self.oozie_node,
-                name=self.name,
-                trigger_rule=self.trigger_rule,
-                property_set=self.property_set,
-            )
+        prepare_task = self.get_prepare_task(
+            name=self.name, trigger_rule=self.trigger_rule, property_set=self.property_set
+        )
+        if prepare_task:
             relations = [Relation(prepare_task.task_id, to_task_id=self.name)]
             tasks = [prepare_task, action_task]
         return tasks, relations
@@ -132,4 +130,4 @@ class GitMapper(ActionMapper, PrepareMixin):
 
     @property
     def first_task_id(self) -> str:
-        return f"{self.name}_prepare" if self.has_prepare(self.oozie_node) else self.name
+        return f"{self.name}_prepare" if self.has_prepare() else self.name

@@ -48,6 +48,7 @@ class ShellMapper(ActionMapper, PrepareMixin):
             property_set=property_set,
             **kwargs,
         )
+        PrepareMixin.__init__(self, oozie_node=oozie_node)
         self._parse_oozie_node()
 
     def _parse_oozie_node(self):
@@ -75,13 +76,10 @@ class ShellMapper(ActionMapper, PrepareMixin):
         )
         tasks: List[Task] = [action_task]
         relations: List[Relation] = []
-        if self.has_prepare(oozie_node=self.oozie_node):
-            prepare_task = self.get_prepare_task(
-                oozie_node=self.oozie_node,
-                name=self.name,
-                trigger_rule=self.trigger_rule,
-                property_set=self.property_set,
-            )
+        prepare_task = self.get_prepare_task(
+            name=self.name, trigger_rule=self.trigger_rule, property_set=self.property_set
+        )
+        if prepare_task:
             tasks = [prepare_task, action_task]
             relations = [Relation(from_task_id=prepare_task.task_id, to_task_id=self.name)]
         return tasks, relations
@@ -91,4 +89,4 @@ class ShellMapper(ActionMapper, PrepareMixin):
 
     @property
     def first_task_id(self) -> str:
-        return f"{self.name}_prepare" if self.has_prepare(self.oozie_node) else self.name
+        return f"{self.name}_prepare" if self.has_prepare() else self.name
