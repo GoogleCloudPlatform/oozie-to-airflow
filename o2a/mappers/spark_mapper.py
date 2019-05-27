@@ -30,6 +30,8 @@ from o2a.utils.file_archive_extractors import FileExtractor, ArchiveExtractor
 
 
 # pylint: disable=too-many-instance-attributes
+from o2a.utils.xml_utils import get_tag_el_text
+
 SPARK_TAG_VALUE = "value"
 SPARK_TAG_NAME = "name"
 SPARK_TAG_ARGS = "arg"
@@ -75,12 +77,16 @@ class SparkMapper(ActionMapper, PrepareMixin):
         _, self.hdfs_files = self.file_extractor.parse_node()
         _, self.hdfs_archives = self.archive_extractor.parse_node()
 
-        self.java_jar = self._get_or_default(self.oozie_node, tag=SPARK_TAG_JAR)
-        self.java_class = self._get_or_default(self.oozie_node, tag=SPARK_TAG_CLASS)
+        self.java_jar = get_tag_el_text(self.oozie_node, property_set=self.property_set, tag=SPARK_TAG_JAR)
+        self.java_class = get_tag_el_text(
+            self.oozie_node, property_set=self.property_set, tag=SPARK_TAG_CLASS
+        )
         if self.java_class and self.java_jar:
             self.dataproc_jars = [self.java_jar]
             self.java_jar = None
-        self.job_name = self._get_or_default(self.oozie_node, tag=SPARK_TAG_JOB_NAME)
+        self.job_name = get_tag_el_text(
+            self.oozie_node, property_set=self.property_set, tag=SPARK_TAG_JOB_NAME
+        )
 
         spark_opts = xml_utils.find_nodes_by_tag(self.oozie_node, SPARK_TAG_OPTS)
         if spark_opts:
@@ -91,21 +97,6 @@ class SparkMapper(ActionMapper, PrepareMixin):
             self.application_args.append(
                 el_utils.replace_el_with_var(arg.text, self.property_set, quote=False)
             )
-
-    def _get_or_default(self, root: ET.Element, tag: str, default: str = None):
-        """
-        If a node exists in the oozie_node with the tag specified in tag, it
-        will attempt to replace the EL (if it exists) with the corresponding
-        variable. If no EL var is found, it just returns text. However, if the
-        tag is not found under oozie_node, then return default. If there are
-        more than one with the specified tag, it uses the first one found.
-        """
-        var = xml_utils.find_nodes_by_tag(root, tag)
-
-        if var and var[0] is not None and var[0].text is not None:
-            # Only check the first one
-            return el_utils.replace_el_with_var(var[0].text, property_set=self.property_set, quote=False)
-        return default
 
     @staticmethod
     def _parse_spark_opts(spark_opts_node: ET.Element):

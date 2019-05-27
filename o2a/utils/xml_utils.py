@@ -87,7 +87,9 @@ def find_nodes_by_attribute(root, attr, val, tag=None) -> List[ET.Element]:
     return matching_nodes
 
 
-def get_tag_el_text(root: ET.Element, tag: str, property_set: PropertySet, default: str) -> str:
+def get_tag_el_text(
+    root: ET.Element, tag: str, property_set: PropertySet, default: Optional[str] = None
+) -> Optional[str]:
     """
     If a node exists in the oozie_node with the tag specified in tag, it
     will attempt to replace the EL (if it exists) with the corresponding
