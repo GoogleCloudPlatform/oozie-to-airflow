@@ -44,7 +44,7 @@ class PrepareMkdirCommandTest(unittest.TestCase):
             ),
         ]
     )
-    def test_result(self, xml, command):
+    def test_prepare_mkdir_command(self, xml, command):
         node = ET.fromstring(xml)
         self.assertEqual(
             command,
@@ -70,7 +70,7 @@ class PrepareDeleteCommandTest(unittest.TestCase):
             ),
         ]
     )
-    def test_result(self, xml, command):
+    def test_prepare_delete_command(self, xml, command):
         node = ET.fromstring(xml)
         self.assertEqual(
             command,
@@ -103,7 +103,7 @@ class PrepareMoveCommandTest(unittest.TestCase):
             ),
         ]
     )
-    def test_result(self, xml, command):
+    def test_prepare_move_command(self, xml, command):
         node = ET.fromstring(xml)
         self.assertEqual(
             command,
@@ -142,7 +142,7 @@ class PrepareChmodCommandTest(unittest.TestCase):
             ),
         ]
     )
-    def test_result(self, xml, command):
+    def test_prepare_chmod_command(self, xml, command):
         node = ET.fromstring(xml)
         self.assertEqual(
             command,
@@ -168,7 +168,7 @@ class PrepareTouchzCommandTest(unittest.TestCase):
             ),
         ]
     )
-    def test_result(self, xml, command):
+    def test_prepare_touchz_command(self, xml, command):
         node = ET.fromstring(xml)
         self.assertEqual(
             command,
@@ -194,7 +194,7 @@ class PrepareChgrpCommandTest(unittest.TestCase):
             ),
         ]
     )
-    def test_result(self, xml, command):
+    def test_prepare_chgrp_command(self, xml, command):
         node = ET.fromstring(xml)
         self.assertEqual(
             command,
