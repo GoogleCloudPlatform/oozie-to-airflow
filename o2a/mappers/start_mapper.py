@@ -14,27 +14,15 @@
 # limitations under the License.
 """Maps Oozie start node to Airflow's DAG"""
 from typing import Set, Tuple, List
-from xml.etree.ElementTree import Element
 
-from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.relation import Relation
 from o2a.converter.task import Task
 from o2a.mappers.base_mapper import BaseMapper
-from o2a.o2a_libs.property_utils import PropertySet
 
 
 class StartMapper(BaseMapper):
     """Maps start node"""
-
-    def __init__(self, oozie_node: Element, name: str, dag_name: str):
-        super().__init__(
-            oozie_node=oozie_node,
-            name=name,
-            dag_name=dag_name,
-            property_set=PropertySet(job_properties={}, configuration_properties={}),
-            trigger_rule=TriggerRule.DUMMY,
-        )
 
     def required_imports(self) -> Set[str]:
         return set()

@@ -22,7 +22,7 @@ from xml.etree.ElementTree import Element
 
 from o2a import o2a
 from o2a.converter.oozie_converter import OozieConverter, AutoflakeArgs
-from o2a.converter.mappers import CONTROL_MAP, ACTION_MAP
+from o2a.converter.mappers import ACTION_MAP
 from o2a.converter.parsed_action_node import ParsedActionNode
 
 from o2a.converter.task import Task
@@ -38,7 +38,6 @@ class TestOozieConverter(TestCase):
             input_directory_path="/input_directory_path/",
             output_directory_path="/tmp",
             action_mapper=ACTION_MAP,
-            control_mapper=CONTROL_MAP,
             user="USER",
         )
 

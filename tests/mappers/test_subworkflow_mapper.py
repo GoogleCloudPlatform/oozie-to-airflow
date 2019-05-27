@@ -21,7 +21,7 @@ from xml.etree import ElementTree as ET
 
 from airflow.utils.trigger_rule import TriggerRule
 
-from o2a.converter.mappers import CONTROL_MAP, ACTION_MAP
+from o2a.converter.mappers import ACTION_MAP
 from o2a.converter.task import Task
 from o2a.definitions import EXAMPLE_SUBWORKFLOW_PATH
 from o2a.mappers import subworkflow_mapper
@@ -140,7 +140,6 @@ class TestSubworkflowMapper(TestCase):
             dag_name="test",
             action_mapper=ACTION_MAP,
             trigger_rule=TriggerRule.DUMMY,
-            control_mapper=CONTROL_MAP,
             property_set=PropertySet(
                 job_properties=self.main_properties, configuration_properties=self.configuration_properties
             ),

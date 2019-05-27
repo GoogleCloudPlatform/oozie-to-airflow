@@ -24,6 +24,7 @@ from o2a.converter.workflow import Workflow
 from o2a.converter.relation import Relation
 from o2a.mappers.base_mapper import BaseMapper
 from o2a.mappers.start_mapper import StartMapper
+from o2a.o2a_libs.property_utils import PropertySet
 
 
 class TestStartMapper(unittest.TestCase):
@@ -63,5 +64,11 @@ class TestStartMapper(unittest.TestCase):
         self.assertEqual(workflow.relations, set())
 
     def _get_start_mapper(self, name="test_id"):
-        mapper = StartMapper(oozie_node=self.oozie_node, name=name, dag_name="BBB")
+        mapper = StartMapper(
+            oozie_node=self.oozie_node,
+            name=name,
+            dag_name="BBB",
+            trigger_rule=TriggerRule.DUMMY,
+            property_set=PropertySet(configuration_properties={}, job_properties={}),
+        )
         return mapper

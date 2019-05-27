@@ -26,6 +26,11 @@ from typing import Type, Dict
 
 from airflow.utils.trigger_rule import TriggerRule
 
+from o2a.mappers.decision_mapper import DecisionMapper
+from o2a.mappers.dummy_mapper import DummyMapper
+from o2a.mappers.end_mapper import EndMapper
+from o2a.mappers.kill_mapper import KillMapper
+from o2a.mappers.start_mapper import StartMapper
 from o2a.o2a_libs.property_utils import PropertySet
 from o2a.utils import xml_utils
 from o2a.converter.constants import HDFS_FOLDER
@@ -33,7 +38,6 @@ from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.workflow import Workflow
 from o2a.converter.relation import Relation
 from o2a.mappers.action_mapper import ActionMapper
-from o2a.mappers.base_mapper import BaseMapper
 
 
 # noinspection PyDefaultArgument
@@ -46,7 +50,6 @@ class OozieParser:
         output_directory_path: str,
         property_set: PropertySet,
         action_mapper: Dict[str, Type[ActionMapper]],
-        control_mapper: Dict[str, Type[BaseMapper]],
         dag_name: str,
     ):
         self.workflow = Workflow(
@@ -57,15 +60,13 @@ class OozieParser:
         self.workflow_file = os.path.join(input_directory_path, HDFS_FOLDER, "workflow.xml")
         self.property_set = property_set
         self.action_map = action_mapper
-        self.control_map = control_mapper
 
     def parse_kill_node(self, kill_node: ET.Element):
         """
         When a workflow node reaches the `kill` node, it finishes in an error.
         A workflow definition may have zero or more kill nodes.
         """
-        map_class = self.control_map["kill"]
-        mapper = map_class(
+        mapper = KillMapper(
             oozie_node=kill_node,
             name=kill_node.attrib["name"],
             dag_name=self.workflow.dag_name,
@@ -85,8 +86,7 @@ class OozieParser:
         Upon reaching the end node, the workflow is considered completed successfully.
         Thus it gets mapped to a dummy node that always completes.
         """
-        map_class = self.control_map["end"]
-        mapper = map_class(oozie_node=end_node, name=end_node.attrib["name"], dag_name=self.workflow.dag_name)
+        mapper = EndMapper(oozie_node=end_node, name=end_node.attrib["name"], dag_name=self.workflow.dag_name)
         p_node = ParsedActionNode(mapper)
 
         mapper.on_parse_node()
@@ -106,9 +106,8 @@ class OozieParser:
         This will only parse well-formed xml-adhering workflows where all paths
         end at the join node.
         """
-        map_class = self.control_map["fork"]
         fork_name = fork_node.attrib["name"]
-        mapper = map_class(oozie_node=fork_node, name=fork_name, dag_name=self.workflow.dag_name)
+        mapper = DummyMapper(oozie_node=fork_node, name=fork_name, dag_name=self.workflow.dag_name)
         p_node = ParsedActionNode(mapper)
 
         mapper.on_parse_node()
@@ -141,8 +140,7 @@ class OozieParser:
         finish. As the parser we are assuming the Oozie workflow follows the
         schema perfectly.
         """
-        map_class = self.control_map["join"]
-        mapper = map_class(
+        mapper = DummyMapper(
             oozie_node=join_node, name=join_node.attrib["name"], dag_name=self.workflow.dag_name
         )
 
@@ -179,8 +177,7 @@ class OozieParser:
             </switch>
         </decision>
         """
-        map_class = self.control_map["decision"]
-        mapper = map_class(
+        mapper = DecisionMapper(
             oozie_node=decision_node,
             name=decision_node.attrib["name"],
             dag_name=self.workflow.dag_name,
@@ -220,7 +217,6 @@ class OozieParser:
             property_set=self.property_set,
             dag_name=self.workflow.dag_name,
             action_mapper=self.action_map,
-            control_mapper=self.control_map,
             input_directory_path=self.workflow.input_directory_path,
             output_directory_path=self.workflow.output_directory_path,
         )
@@ -252,10 +248,15 @@ class OozieParser:
 
         A workflow definition must have one start node.
         """
-        map_class = self.control_map["start"]
         # Theoretically this could cause conflicts, but it is very unlikely
         start_name = "start_node_" + str(uuid.uuid4())[:4]
-        mapper = map_class(oozie_node=start_node, name=start_name, dag_name=self.workflow.dag_name)
+        mapper = StartMapper(
+            oozie_node=start_node,
+            name=start_name,
+            dag_name=self.workflow.dag_name,
+            property_set=self.property_set,
+            trigger_rule=TriggerRule.DUMMY,
+        )
 
         p_node = ParsedActionNode(mapper)
         p_node.add_downstream_node_name(start_node.attrib["to"])

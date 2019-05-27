@@ -24,7 +24,7 @@ from parameterized import parameterized
 
 from o2a.converter import parser
 from o2a.converter import parsed_action_node
-from o2a.converter.mappers import ACTION_MAP, CONTROL_MAP
+from o2a.converter.mappers import ACTION_MAP
 from o2a.converter.relation import Relation
 
 from o2a.definitions import EXAMPLE_DEMO_PATH, EXAMPLES_PATH
@@ -42,7 +42,6 @@ class TestOozieParser(unittest.TestCase):
             output_directory_path="/tmp",
             property_set=property_set,
             action_mapper=ACTION_MAP,
-            control_mapper=CONTROL_MAP,
             dag_name="BBB",
         )
 
@@ -576,7 +575,6 @@ class TestOozieExamples(unittest.TestCase):
                 job_properties=case.job_properties, configuration_properties=case.configuration_properties
             ),
             action_mapper=ACTION_MAP,
-            control_mapper=CONTROL_MAP,
             dag_name="BBB",
         )
         current_parser.parse_workflow()
