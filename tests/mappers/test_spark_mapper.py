@@ -17,13 +17,12 @@ import ast
 import unittest
 from xml.etree import ElementTree as ET
 
-from parameterized import parameterized
 from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.task import Task
 from o2a.converter.relation import Relation
 from o2a.mappers import spark_mapper
-from o2a.utils.xml_utils import find_nodes_by_tag
+from o2a.o2a_libs.property_utils import PropertySet
 
 EXAMPLE_JOB_PROPERTIES = {"nameNode": "hdfs://", "userName": "test_user", "examplesRoot": "examples"}
 
@@ -115,13 +114,9 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
                         "hdfs_archives": [],
                         "hdfs_files": [],
                         "job_name": "Spark Examples",
-                        "dataproc_spark_properties": {
-                            "nameNode": "hdfs://",
-                            "userName": "test_user",
-                            "examplesRoot": "examples",
-                            "mapred.compress.map.output": "true",
+                        "spark_opts": {
                             "spark.executor.extraJavaOptions": "-XX:+HeapDumpOnOutOfMemoryError "
-                            "-XX:HeapDumpPath=/tmp",
+                            "-XX:HeapDumpPath=/tmp"
                         },
                         "dataproc_spark_jars": ["/lib/spark-examples_2.10-1.1.0.jar"],
                     },
@@ -155,13 +150,9 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
                         "hdfs_archives": [],
                         "hdfs_files": [],
                         "job_name": "Spark Examples",
-                        "dataproc_spark_properties": {
-                            "nameNode": "hdfs://",
-                            "userName": "test_user",
-                            "examplesRoot": "examples",
-                            "mapred.compress.map.output": "true",
+                        "spark_opts": {
                             "spark.executor.extraJavaOptions": "-XX:+HeapDumpOnOutOfMemoryError "
-                            "-XX:HeapDumpPath=/tmp",
+                            "-XX:HeapDumpPath=/tmp"
                         },
                         "dataproc_spark_jars": [
                             "/user/test_user/examples/apps/spark/lib/oozie-examples-4.3.0.jar"
@@ -172,55 +163,6 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
             tasks,
         )
         self.assertEqual(relations, [])
-
-    @parameterized.expand(
-        [
-            (
-                "--executor-memory 20G --num-executors 50 --conf "
-                'spark.executor.extraJavaOptions="-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"',
-                {
-                    "nameNode": "hdfs://",
-                    "userName": "test_user",
-                    "examplesRoot": "examples",
-                    "mapred.compress.map.output": "true",
-                    "spark.executor.extraJavaOptions": "-XX:+HeapDumpOnOutOfMemoryError "
-                    "-XX:HeapDumpPath=/tmp",
-                },
-            ),
-            (
-                "AAA",
-                {
-                    "nameNode": "hdfs://",
-                    "userName": "test_user",
-                    "examplesRoot": "examples",
-                    "mapred.compress.map.output": "true",
-                },
-            ),
-            (
-                '--conf key1=value --conf key2="value1 value2" '
-                '--conf dup="value1 value2" --conf dup="value3 value4"',
-                {
-                    "nameNode": "hdfs://",
-                    "userName": "test_user",
-                    "examplesRoot": "examples",
-                    "dup": "value3 value4",
-                    "key1": "value",
-                    "key2": "value1 value2",
-                    "mapred.compress.map.output": "true",
-                },
-            ),
-        ]
-    )
-    def test_to_tasks_and_relations_parse_spark_opts(self, spark_opts, job_properties):
-        spark_node = ET.fromstring(EXAMPLE_XML_WITHOUT_PREPARE)
-        spark_opts_node = find_nodes_by_tag(spark_node, spark_mapper.SPARK_TAG_OPTS)[0]
-        spark_opts_node.text = spark_opts
-        mapper = self._get_spark_mapper(spark_node)
-        mapper.on_parse_node()
-
-        tasks, _ = mapper.to_tasks_and_relations()
-
-        self.assertEqual(job_properties, tasks[0].template_params["dataproc_spark_properties"])
 
     def test_required_imports(self):
         spark_node = ET.fromstring(EXAMPLE_XML_WITHOUT_PREPARE)
@@ -236,7 +178,9 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
             name="test_id",
             dag_name="BBB",
             trigger_rule=TriggerRule.DUMMY,
-            job_properties=EXAMPLE_JOB_PROPERTIES,
-            configuration_properties=EXAMPLE_CONFIGURATION_PROPERTIES,
+            property_set=PropertySet(
+                job_properties=EXAMPLE_JOB_PROPERTIES,
+                configuration_properties=EXAMPLE_CONFIGURATION_PROPERTIES,
+            ),
         )
         return mapper

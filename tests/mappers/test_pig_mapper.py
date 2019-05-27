@@ -22,6 +22,7 @@ from airflow.utils.trigger_rule import TriggerRule
 from o2a.converter.task import Task
 from o2a.converter.relation import Relation
 from o2a.mappers import pig_mapper
+from o2a.o2a_libs.property_utils import PropertySet
 
 
 class TestPigMapper(unittest.TestCase):
@@ -72,7 +73,7 @@ class TestPigMapper(unittest.TestCase):
         self.assertEqual("localhost:8032", mapper.resource_manager)
         self.assertEqual("hdfs://", mapper.name_node)
         self.assertEqual("id.pig", mapper.script_file_name)
-        self.assertEqual("${queueName}", mapper.action_node_properties["mapred.job.queue.name"])
+        self.assertEqual("${queueName}", mapper.property_set.action_node_properties["mapred.job.queue.name"])
         self.assertEqual("/user/${wf:user()}/${examplesRoot}/input-data/text", mapper.params_dict["INPUT"])
         self.assertEqual(
             "/user/${wf:user()}/${examplesRoot}/output-data/demo/pig-node", mapper.params_dict["OUTPUT"]
@@ -104,7 +105,7 @@ class TestPigMapper(unittest.TestCase):
         self.assertEqual("localhost:9999", mapper.resource_manager)
         self.assertEqual("hdfs://", mapper.name_node)
         self.assertEqual("id_el.pig", mapper.script_file_name)
-        self.assertEqual("myQueue", mapper.action_node_properties["mapred.job.queue.name"])
+        self.assertEqual("myQueue", mapper.property_set.action_node_properties["mapred.job.queue.name"])
         self.assertEqual("/user/${wf:user()}/examples/input-data/text", mapper.params_dict["INPUT"])
         self.assertEqual(
             "/user/${wf:user()}/examples/output-data/demo/pig-node", mapper.params_dict["OUTPUT"]
@@ -133,15 +134,17 @@ class TestPigMapper(unittest.TestCase):
                     task_id="test_id",
                     template_name="pig.tpl",
                     template_params={
-                        "action_node_properties": {
-                            "mapred.job.queue.name": "${queueName}",
-                            "mapred.map.output.compress": "false",
-                        },
-                        "job_properties": {"nameNode": "hdfs://"},
-                        "configuration_properties": {
-                            "dataproc_cluster": "my-cluster",
-                            "gcp_region": "europe-west3",
-                        },
+                        "property_set": PropertySet(
+                            configuration_properties={
+                                "dataproc_cluster": "my-cluster",
+                                "gcp_region": "europe-west3",
+                            },
+                            job_properties={"nameNode": "hdfs://"},
+                            action_node_properties={
+                                "mapred.job.queue.name": "${queueName}",
+                                "mapred.map.output.compress": "false",
+                            },
+                        ),
                         "params_dict": {
                             "INPUT": "/user/${wf:user()}/${examplesRoot}/input-data/text",
                             "OUTPUT": "/user/${wf:user()}/${examplesRoot}/output-data/demo/pig-node",
@@ -178,7 +181,8 @@ class TestPigMapper(unittest.TestCase):
             name="test_id",
             dag_name="BBB",
             trigger_rule=TriggerRule.DUMMY,
-            job_properties=job_properties,
-            configuration_properties=configuration_properties,
+            property_set=PropertySet(
+                job_properties=job_properties, configuration_properties=configuration_properties
+            ),
         )
         return mapper

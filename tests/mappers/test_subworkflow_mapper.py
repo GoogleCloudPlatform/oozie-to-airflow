@@ -25,6 +25,7 @@ from o2a.converter.mappers import CONTROL_MAP, ACTION_MAP
 from o2a.converter.task import Task
 from o2a.definitions import EXAMPLE_SUBWORKFLOW_PATH
 from o2a.mappers import subworkflow_mapper
+from o2a.o2a_libs.property_utils import PropertySet
 
 
 class TestSubworkflowMapper(TestCase):
@@ -77,11 +78,15 @@ class TestSubworkflowMapper(TestCase):
         self.assertEqual("test_id", mapper.task_id)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.subworkflow_node, mapper.oozie_node)
-        self.assertEqual(self.main_properties, mapper.job_properties)
-        # Propagate config node is present, should forward config job_properties
         self.assertEqual(
-            {"examplesRoot": "examples", "nameNode": "hdfs://", "resourceManager": "localhost:8032"},
-            mapper.get_properties(),
+            {
+                "examplesRoot": "examples",
+                "nameNode": "hdfs://",
+                "oozie.wf.application.path": "hdfs:///user/pig/examples/pig",
+                "resourceManager": "localhost:8032",
+                "user.name": "potiuk",
+            },
+            mapper.property_set.job_properties,
         )
         self.assertTrue(os.path.isfile(self.SUBDAG_TEST_FILEPATH))
 
@@ -101,9 +106,9 @@ class TestSubworkflowMapper(TestCase):
         self.assertEqual("test_id", mapper.task_id)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.subworkflow_node, mapper.oozie_node)
-        self.assertEqual(self.main_properties, mapper.job_properties)
+        self.assertEqual(self.main_properties, mapper.property_set.job_properties)
         # Propagate config node is missing, should NOT forward config job_properties
-        self.assertEqual({}, mapper.get_properties())
+        self.assertEqual({}, mapper.get_property_set())
         self.assertTrue(os.path.isfile(self.SUBDAG_TEST_FILEPATH))
 
     @mock.patch("o2a.utils.el_utils.parse_els")
@@ -136,6 +141,7 @@ class TestSubworkflowMapper(TestCase):
             action_mapper=ACTION_MAP,
             trigger_rule=TriggerRule.DUMMY,
             control_mapper=CONTROL_MAP,
-            job_properties=self.main_properties,
-            configuration_properties=self.configuration_properties,
+            property_set=PropertySet(
+                job_properties=self.main_properties, configuration_properties=self.configuration_properties
+            ),
         )

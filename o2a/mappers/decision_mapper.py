@@ -23,6 +23,7 @@ from airflow.utils.trigger_rule import TriggerRule
 from o2a.converter.task import Task
 from o2a.converter.relation import Relation
 from o2a.mappers.base_mapper import BaseMapper
+from o2a.o2a_libs.property_utils import PropertySet
 from o2a.utils.el_utils import convert_el_to_jinja
 
 
@@ -58,8 +59,7 @@ class DecisionMapper(BaseMapper):
         oozie_node: Element,
         name: str,
         dag_name: str,
-        job_properties: Dict[str, str],
-        configuration_properties: Dict[str, str],
+        property_set: PropertySet = None,
         trigger_rule: str = TriggerRule.ALL_DONE,
         **kwargs: Dict,
     ):
@@ -68,9 +68,8 @@ class DecisionMapper(BaseMapper):
             oozie_node=oozie_node,
             name=name,
             dag_name=dag_name,
+            property_set=property_set or PropertySet(job_properties={}, configuration_properties={}),
             trigger_rule=trigger_rule,
-            job_properties=job_properties,
-            configuration_properties=configuration_properties,
             **kwargs,
         )
         self._get_cases()

@@ -13,13 +13,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Kill mapper - maps the workflow end"""
-from typing import List, Set, Tuple, Optional, Dict
+from typing import List, Optional, Set, Tuple
 from xml.etree.ElementTree import Element
 
 from o2a.converter.task import Task
 from o2a.converter.workflow import Workflow
 from o2a.converter.relation import Relation
 from o2a.mappers.base_mapper import BaseMapper
+from o2a.o2a_libs.property_utils import PropertySet
 
 
 class KillMapper(BaseMapper):
@@ -32,18 +33,14 @@ class KillMapper(BaseMapper):
         oozie_node: Element,
         name: str,
         dag_name: str,
-        job_properties: Optional[Dict[str, str]] = None,
-        configuration_properties: Optional[Dict[str, str]] = None,
+        property_set: Optional[PropertySet] = None,
         **kwargs,
     ):
-        not_none_job_properties: Dict[str, str] = job_properties or {}
-        not_none_configuration_properties: Dict[str, str] = configuration_properties or {}
         super().__init__(
             oozie_node=oozie_node,
             name=name,
             dag_name=dag_name,
-            job_properties=not_none_job_properties,
-            configuration_properties=not_none_configuration_properties,
+            property_set=property_set or PropertySet(job_properties={}, configuration_properties={}),
             **kwargs,
         )
 

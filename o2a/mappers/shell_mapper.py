@@ -14,7 +14,7 @@
 # limitations under the License.
 """Maps Shell action into Airflow's DAG"""
 import shlex
-from typing import Dict, Set, Tuple, List
+from typing import List, Set, Tuple
 from xml.etree.ElementTree import Element
 
 from airflow.utils.trigger_rule import TriggerRule
@@ -23,6 +23,7 @@ from o2a.converter.task import Task
 from o2a.converter.relation import Relation
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.mappers.prepare_mixin import PrepareMixin
+from o2a.o2a_libs.property_utils import PropertySet
 from o2a.utils import el_utils
 
 
@@ -35,8 +36,7 @@ class ShellMapper(ActionMapper, PrepareMixin):
         self,
         oozie_node: Element,
         name: str,
-        job_properties: Dict[str, str],
-        configuration_properties: Dict[str, str],
+        property_set: PropertySet,
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
         **kwargs,
     ):
@@ -45,8 +45,7 @@ class ShellMapper(ActionMapper, PrepareMixin):
             oozie_node=oozie_node,
             name=name,
             trigger_rule=trigger_rule,
-            job_properties=job_properties,
-            configuration_properties=configuration_properties,
+            property_set=property_set,
             **kwargs,
         )
         self._parse_oozie_node()
@@ -71,7 +70,7 @@ class ShellMapper(ActionMapper, PrepareMixin):
             task_id=self.name,
             template_name="shell.tpl",
             template_params=dict(
-                pig_command=self.pig_command, action_node_properties=self.action_node_properties
+                pig_command=self.pig_command, action_node_properties=self.property_set.action_node_properties
             ),
         )
         tasks: List[Task] = [action_task]

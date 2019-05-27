@@ -351,7 +351,7 @@ class SparkTemplateTestCase(TestCase, TemplateTestMixin):
         "hdfs_archives": [],
         "arguments": ["inputpath=hdfs:///input/file.txt", "value=2"],
         "dataproc_spark_jars": ["/lib/spark-examples_2.10-1.1.0.jar"],
-        "dataproc_spark_properties": {
+        "spark_opts": {
             "mapred.compress.map.output": "true",
             "spark.executor.extraJavaOptions": "-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp",
         },

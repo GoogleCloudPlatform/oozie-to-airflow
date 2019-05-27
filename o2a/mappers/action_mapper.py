@@ -36,21 +36,25 @@ class ActionMapper(BaseMapper, ABC):
         oozie_node: Element,
         name: str,
         dag_name: str,
-        job_properties: Dict[str, str],
-        configuration_properties: Dict[str, str],
+        property_set: PropertySet,
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
         **kwargs: Any,
     ):
         super().__init__(
-            oozie_node, name, dag_name, job_properties, configuration_properties, trigger_rule, **kwargs
+            oozie_node=oozie_node,
+            name=name,
+            dag_name=dag_name,
+            property_set=property_set,
+            trigger_rule=trigger_rule,
+            **kwargs,
         )
-        self.action_node_properties: Dict[str, str] = {}
 
     def on_parse_node(self):
         super().on_parse_node()
         self._parse_config()
 
     def _parse_config(self):
+        action_node_properties: Dict[str, str] = {}
         config = self.oozie_node.find("configuration")
         if config:
             property_set = self.property_set
@@ -61,12 +65,5 @@ class ActionMapper(BaseMapper, ABC):
                     value = el_utils.replace_el_with_var(
                         node.find("value").text, property_set=property_set, quote=False
                     )
-                    self.action_node_properties[name] = value
-
-    @property
-    def property_set(self):
-        return PropertySet(
-            configuration_properties=self.configuration_properties,
-            job_properties=self.job_properties,
-            action_node_properties=self.action_node_properties,
-        )
+                    action_node_properties[name] = value
+        self.property_set.action_node_properties = action_node_properties

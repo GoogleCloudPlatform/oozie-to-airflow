@@ -25,6 +25,8 @@ from o2a.mappers import git_mapper
 from o2a.mappers.git_mapper import prepare_git_command
 
 # language=XML
+from o2a.o2a_libs.property_utils import PropertySet
+
 EXAMPLE_XML = """
 <git name="git">
     <prepare>
@@ -137,7 +139,19 @@ class TestGitMapper(unittest.TestCase):
                         "destination_path": "/my_git_repo_directory",
                         "key_path_uri": "hdfs://name-node.second.company.com:8020/awesome-key/",
                         "key_path": "/awesome-key/",
-                        "action_node_properties": {},
+                        "property_set": PropertySet(
+                            configuration_properties={
+                                "dataproc_cluster": "my-cluster",
+                                "gcp_region": "europe-west3",
+                            },
+                            job_properties={
+                                "branch": "my-awesome-branch",
+                                "nameNode": "hdfs://",
+                                "userName": "test_user",
+                                "examplesRoot": "examples",
+                            },
+                            action_node_properties={},
+                        ),
                     },
                 ),
             ],
@@ -168,7 +182,19 @@ class TestGitMapper(unittest.TestCase):
                         "destination_path": "/my_git_repo_directory",
                         "key_path_uri": "hdfs://name-node.second.company.com:8020/awesome-key/",
                         "key_path": "/awesome-key/",
-                        "action_node_properties": {},
+                        "property_set": PropertySet(
+                            configuration_properties={
+                                "dataproc_cluster": "my-cluster",
+                                "gcp_region": "europe-west3",
+                            },
+                            job_properties={
+                                "branch": "my-awesome-branch",
+                                "nameNode": "hdfs://",
+                                "userName": "test_user",
+                                "examplesRoot": "examples",
+                            },
+                            action_node_properties={},
+                        ),
                     },
                 )
             ],
@@ -189,7 +215,9 @@ class TestGitMapper(unittest.TestCase):
             oozie_node=spark_node,
             name="test_id",
             dag_name="BBB",
-            job_properties=EXAMPLE_JOB_PROPERTIES,
-            configuration_properties=EXAMPLE_CONFIGURATION_PROPERTIES,
+            property_set=PropertySet(
+                job_properties=EXAMPLE_JOB_PROPERTIES,
+                configuration_properties=EXAMPLE_CONFIGURATION_PROPERTIES,
+            ),
         )
         return mapper

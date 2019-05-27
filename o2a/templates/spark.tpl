@@ -46,9 +46,9 @@
             {% endfor %}
         ],
     {% endif %}
-    {% if dataproc_spark_properties %}
+    {% if spark_opts %}
         dataproc_spark_properties={
-            {% for key, value in dataproc_spark_properties.items() %}
+            {% for key, value in spark_opts.items() %}
                 '{{key | python_escape}}': {% if value is none %}None{% else %}'{{ value | python_escape }}'{% endif %},
             {% endfor %}
         },

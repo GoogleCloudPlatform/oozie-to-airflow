@@ -518,6 +518,5 @@ def _get_fs_mapper(oozie_node):
         name="test_id",
         dag_name="BBB",
         trigger_rule=TriggerRule.DUMMY,
-        job_properties={"nameNode": "hdfs://"},
-        configuration_properties={},
+        property_set=PropertySet(job_properties={"nameNode": "hdfs://"}, configuration_properties={}),
     )

@@ -70,6 +70,7 @@ class OozieConverter:
         start_days_ago: int = None,
         schedule_interval: str = None,
         output_dag_name: str = None,
+        initial_property_set: PropertySet = None,
     ):
         """
         :param input_directory_path: Oozie workflow directory.
@@ -95,7 +96,9 @@ class OozieConverter:
             if output_dag_name
             else os.path.join(output_directory_path, self.dag_name) + ".py"
         )
-        self.job_properties = {"user.name": user or os.environ["USER"]}
+        # Propagate the configuration in case initial property set is passed
+        self.job_properties = {} if not initial_property_set else initial_property_set.job_properties
+        self.job_properties["user.name"] = user or os.environ["USER"]
         self.configuration_properties: Dict[str, str] = {}
         self.property_set = PropertySet(
             job_properties=self.job_properties,
@@ -107,8 +110,7 @@ class OozieConverter:
         self.parser = parser.OozieParser(
             input_directory_path=input_directory_path,
             output_directory_path=output_directory_path,
-            job_properties=self.job_properties,
-            configuration_properties=self.configuration_properties,
+            property_set=self.property_set,
             dag_name=dag_name,
             action_mapper=action_mapper,
             control_mapper=control_mapper,

@@ -15,13 +15,14 @@
 """Base mapper - it is a base class for all mappers actions, and logic alike"""
 from abc import ABC
 from copy import deepcopy
-from typing import Tuple, List, Set, Dict, Any
+from typing import Any, List, Set, Tuple
 from xml.etree.ElementTree import Element
 
 from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.relation import Relation
 from o2a.converter.task import Task
+from o2a.o2a_libs.property_utils import PropertySet
 
 
 class BaseMapper(ABC):
@@ -33,13 +34,11 @@ class BaseMapper(ABC):
         oozie_node: Element,
         name: str,
         dag_name: str,
-        job_properties: Dict[str, str],
-        configuration_properties: Dict[str, str],
+        property_set: PropertySet,
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
         **kwargs: Any,
     ):
-        self.job_properties = deepcopy(job_properties)
-        self.configuration_properties = deepcopy(configuration_properties)
+        self.property_set = deepcopy(property_set)
         self.oozie_node = oozie_node
         self.dag_name = dag_name
         self.name = name
@@ -102,8 +101,7 @@ class BaseMapper(ABC):
             f"{type(self).__name__}(name={self.name}, "
             f"dag_name={self.dag_name}, "
             f"oozie_node={self.oozie_node}, "
-            f"job_properties={self.job_properties}, "
-            f"configuration_properties={self.configuration_properties},"
+            f"property_set={self.property_set}, "
             f"trigger_rule={self.trigger_rule}) "
         )
 

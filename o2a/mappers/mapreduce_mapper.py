@@ -22,6 +22,7 @@ from o2a.converter.task import Task
 from o2a.converter.relation import Relation
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.mappers.prepare_mixin import PrepareMixin
+from o2a.o2a_libs.property_utils import PropertySet
 from o2a.utils import el_utils, xml_utils
 from o2a.utils.file_archive_extractors import ArchiveExtractor, FileExtractor
 
@@ -37,8 +38,7 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
         oozie_node: Element,
         name: str,
         dag_name: str,
-        job_properties: Dict[str, str],
-        configuration_properties: Dict[str, str],
+        property_set: PropertySet,
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
         **kwargs,
     ):
@@ -48,8 +48,7 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
             name=name,
             dag_name=dag_name,
             trigger_rule=trigger_rule,
-            job_properties=job_properties,
-            configuration_properties=configuration_properties,
+            property_set=property_set,
             **kwargs,
         )
         self.params_dict: Dict[str, str] = {}
@@ -84,9 +83,7 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
             template_name="mapreduce.tpl",
             trigger_rule=self.trigger_rule,
             template_params=dict(
-                job_properties=self.job_properties,
-                configuration_properties=self.configuration_properties,
-                action_node_properties=self.action_node_properties,
+                property_set=self.property_set,
                 params_dict=self.params_dict,
                 hdfs_files=self.hdfs_files,
                 hdfs_archives=self.hdfs_archives,

@@ -31,17 +31,16 @@ from o2a.definitions import EXAMPLE_DEMO_PATH, EXAMPLES_PATH
 
 from o2a.mappers import dummy_mapper, pig_mapper
 from o2a.mappers import ssh_mapper
+from o2a.o2a_libs.property_utils import PropertySet
 
 
 class TestOozieParser(unittest.TestCase):
     def setUp(self):
-        job_properties = {}
-        configuration_properties = {}
+        property_set = PropertySet(job_properties={}, configuration_properties={})
         self.parser = parser.OozieParser(
             input_directory_path=EXAMPLE_DEMO_PATH,
             output_directory_path="/tmp",
-            job_properties=job_properties,
-            configuration_properties=configuration_properties,
+            property_set=property_set,
             action_mapper=ACTION_MAP,
             control_mapper=CONTROL_MAP,
             dag_name="BBB",
@@ -202,7 +201,7 @@ class TestOozieParser(unittest.TestCase):
     def test_parse_action_node_pig_with_file_and_archive(self):
         self.parser.action_map = {"pig": pig_mapper.PigMapper}
         node_name = "pig-node"
-        self.parser.job_properties = {"nameNode": "myNameNode"}
+        self.parser.property_set.job_properties = {"nameNode": "myNameNode"}
         # language=XML
         action_string = f"""
 <action name='{node_name}'>
@@ -573,8 +572,9 @@ class TestOozieExamples(unittest.TestCase):
         current_parser = parser.OozieParser(
             input_directory_path=path.join(EXAMPLES_PATH, case.name),
             output_directory_path="/tmp",
-            job_properties=case.job_properties,
-            configuration_properties=case.configuration_properties,
+            property_set=PropertySet(
+                job_properties=case.job_properties, configuration_properties=case.configuration_properties
+            ),
             action_mapper=ACTION_MAP,
             control_mapper=CONTROL_MAP,
             dag_name="BBB",

@@ -25,6 +25,8 @@ import uuid
 from typing import Type, Dict
 
 from airflow.utils.trigger_rule import TriggerRule
+
+from o2a.o2a_libs.property_utils import PropertySet
 from o2a.utils import xml_utils
 from o2a.converter.constants import HDFS_FOLDER
 from o2a.converter.parsed_action_node import ParsedActionNode
@@ -42,8 +44,7 @@ class OozieParser:
         self,
         input_directory_path: str,
         output_directory_path: str,
-        job_properties: Dict[str, str],
-        configuration_properties: Dict[str, str],
+        property_set: PropertySet,
         action_mapper: Dict[str, Type[ActionMapper]],
         control_mapper: Dict[str, Type[BaseMapper]],
         dag_name: str,
@@ -54,8 +55,7 @@ class OozieParser:
             output_directory_path=output_directory_path,
         )
         self.workflow_file = os.path.join(input_directory_path, HDFS_FOLDER, "workflow.xml")
-        self.job_properties = job_properties
-        self.configuration_properties = configuration_properties
+        self.property_set = property_set
         self.action_map = action_mapper
         self.control_map = control_mapper
 
@@ -70,8 +70,7 @@ class OozieParser:
             name=kill_node.attrib["name"],
             dag_name=self.workflow.dag_name,
             trigger_rule=TriggerRule.ONE_FAILED,
-            job_properties=self.job_properties,
-            configuration_properties=self.configuration_properties,
+            property_set=self.property_set,
         )
         p_node = ParsedActionNode(mapper)
 
@@ -185,8 +184,7 @@ class OozieParser:
             oozie_node=decision_node,
             name=decision_node.attrib["name"],
             dag_name=self.workflow.dag_name,
-            job_properties=self.job_properties,
-            configuration_properties=self.configuration_properties,
+            property_set=self.property_set,
         )
 
         p_node = ParsedActionNode(mapper)
@@ -219,8 +217,7 @@ class OozieParser:
         mapper = map_class(
             oozie_node=action_operation_node,
             name=action_node.attrib["name"],
-            job_properties=self.job_properties,
-            configuration_properties=self.configuration_properties,
+            property_set=self.property_set,
             dag_name=self.workflow.dag_name,
             action_mapper=self.action_map,
             control_mapper=self.control_map,

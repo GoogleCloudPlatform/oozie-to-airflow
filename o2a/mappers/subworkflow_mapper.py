@@ -26,6 +26,7 @@ from o2a.converter.task import Task
 from o2a.definitions import EXAMPLES_PATH
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.mappers.base_mapper import BaseMapper
+from o2a.o2a_libs.property_utils import PropertySet
 from o2a.utils import el_utils
 from o2a.utils.variable_name_utils import convert_to_python_variable
 
@@ -44,8 +45,7 @@ class SubworkflowMapper(ActionMapper):
         dag_name: str,
         input_directory_path: str,
         output_directory_path: str,
-        job_properties: Dict[str, str],
-        configuration_properties: Dict[str, str],
+        property_set: PropertySet,
         action_mapper: Dict[str, Type[ActionMapper]],
         control_mapper: Dict[str, Type[BaseMapper]],
         trigger_rule=TriggerRule.ALL_SUCCESS,
@@ -57,8 +57,7 @@ class SubworkflowMapper(ActionMapper):
             name=name,
             dag_name=dag_name,
             trigger_rule=trigger_rule,
-            job_properties=job_properties,
-            configuration_properties=configuration_properties,
+            property_set=property_set,
             **kwargs,
         )
         self.task_id = name
@@ -87,15 +86,20 @@ class SubworkflowMapper(ActionMapper):
             control_mapper=self.control_mapper,
             dag_name=f"{self.dag_name}.{self.task_id}",
             output_dag_name=f"subdag_{convert_to_python_variable(self.app_name)}.py",
+            initial_property_set=self.get_property_set(),
         )
         converter.convert()
 
-    def get_properties(self):
+    def get_property_set(self) -> PropertySet:
         propagate_configuration = self.oozie_node.find("propagate-configuration")
         # Below the `is not None` is necessary due to Element's __bool__() return value:
         # `len(self._children) != 0`,
         # and `propagate_configuration` is an empty node so __bool__() will always return False.
-        return self.job_properties if propagate_configuration is not None else {}
+        return (
+            self.property_set
+            if propagate_configuration is not None
+            else PropertySet(configuration_properties={}, job_properties={})
+        )
 
     def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
         tasks: List[Task] = [

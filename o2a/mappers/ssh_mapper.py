@@ -14,7 +14,7 @@
 # limitations under the License.
 """Maps SSH Oozie node to Airflow's DAG"""
 import shlex
-from typing import Dict, Set, List, Tuple
+from typing import List, Set, Tuple
 from xml.etree.ElementTree import Element
 
 from airflow.utils.trigger_rule import TriggerRule
@@ -38,8 +38,7 @@ class SSHMapper(ActionMapper):
         self,
         oozie_node: Element,
         name: str,
-        job_properties: Dict[str, str],
-        configuration_properties: Dict[str, str],
+        property_set: PropertySet,
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
         template: str = "ssh.tpl",
         **kwargs,
@@ -49,8 +48,7 @@ class SSHMapper(ActionMapper):
             oozie_node=oozie_node,
             name=name,
             trigger_rule=trigger_rule,
-            job_properties=job_properties,
-            configuration_properties=configuration_properties,
+            property_set=property_set,
             **kwargs,
         )
         self.template = template
@@ -93,8 +91,7 @@ class SSHMapper(ActionMapper):
                 template_name="ssh.tpl",
                 trigger_rule=self.trigger_rule,
                 template_params=dict(
-                    job_properties=self.job_properties,
-                    configuration_properties=self.configuration_properties,
+                    property_set=self.property_set,
                     # SSH mapper does not support <configuration></configuration> node -
                     # no action_node_properties are needed
                     command=self.command,

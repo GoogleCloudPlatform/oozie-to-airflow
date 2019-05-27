@@ -21,6 +21,7 @@ from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.task import Task
 from o2a.mappers import ssh_mapper
+from o2a.o2a_libs.property_utils import PropertySet
 
 
 class TestSSHMapper(unittest.TestCase):
@@ -72,8 +73,9 @@ class TestSSHMapper(unittest.TestCase):
                     task_id="test_id",
                     template_name="ssh.tpl",
                     template_params={
-                        "job_properties": {},
-                        "configuration_properties": {},
+                        "property_set": PropertySet(
+                            configuration_properties={}, job_properties={}, action_node_properties={}
+                        ),
                         "command": "'ls -l -a'",
                         "user": "user",
                         "host": "apache.org",
@@ -96,7 +98,8 @@ class TestSSHMapper(unittest.TestCase):
             name="test_id",
             dag_name="BBB",
             trigger_rule=TriggerRule.DUMMY,
-            job_properties=job_properties,
-            configuration_properties=configuration_properties,
+            property_set=PropertySet(
+                job_properties=job_properties, configuration_properties=configuration_properties
+            ),
         )
         return mapper

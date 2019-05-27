@@ -121,16 +121,14 @@ class FsMapper(ActionMapper):
         oozie_node: Element,
         name: str,
         dag_name: str,
-        job_properties: Dict[str, str],
-        configuration_properties: Dict[str, str],
+        property_set: PropertySet,
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
         **kwargs,
     ):
         super().__init__(
             oozie_node=oozie_node,
             name=name,
-            job_properties=job_properties,
-            configuration_properties=configuration_properties,
+            property_set=property_set,
             trigger_rule=trigger_rule,
             dag_name=dag_name,
             **kwargs,
@@ -177,7 +175,7 @@ class FsMapper(ActionMapper):
     def parse_fs_action(self, index: int, node: Element) -> Optional[Task]:
         tag_name = node.tag
         if tag_name == "configuration":
-            self.action_node_properties_to_add = self.action_node_properties
+            self.action_node_properties_to_add = self.property_set.action_node_properties
             return None
         tasks_count = len(self.oozie_node)
         task_id = self.name if tasks_count == 1 else f"{self.name}_fs_{index}_{tag_name}"
@@ -186,15 +184,12 @@ class FsMapper(ActionMapper):
         if not mapper_fn:
             raise Exception("Unknown FS operation: {}".format(tag_name))
 
-        pig_command = mapper_fn(
-            node,
-            property_set=PropertySet(
-                job_properties=self.job_properties, configuration_properties=self.configuration_properties
-            ),
-        )
+        pig_command = mapper_fn(node, property_set=self.property_set)
 
         return Task(
             task_id=task_id,
             template_name="fs_op.tpl",
-            template_params=dict(pig_command=pig_command, action_node_properties=self.action_node_properties),
+            template_params=dict(
+                pig_command=pig_command, action_node_properties=self.property_set.action_node_properties
+            ),
         )
