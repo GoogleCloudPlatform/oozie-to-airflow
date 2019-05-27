@@ -26,7 +26,7 @@ from o2a.converter.task import Task
 from o2a.definitions import EXAMPLES_PATH
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.mappers.base_mapper import BaseMapper
-from o2a.utils import el_utils, xml_utils
+from o2a.utils import el_utils
 from o2a.utils.variable_name_utils import convert_to_python_variable
 
 
@@ -96,18 +96,6 @@ class SubworkflowMapper(ActionMapper):
         # `len(self._children) != 0`,
         # and `propagate_configuration` is an empty node so __bool__() will always return False.
         return self.job_properties if propagate_configuration is not None else {}
-
-    def _parse_config(self):
-        config = self.oozie_node.find("configuration")
-        if config:
-            property_nodes = xml_utils.find_nodes_by_tag(config, "property")
-            if property_nodes:
-                for node in property_nodes:
-                    name = node.find("name").text
-                    value = el_utils.replace_el_with_var(
-                        node.find("value").text, self.property_set, quote=False
-                    )
-                    self.job_properties[name] = value
 
     def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
         tasks: List[Task] = [
