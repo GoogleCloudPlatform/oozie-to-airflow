@@ -291,7 +291,7 @@ Optional commands to execute:
 
 You do not need to specify the parameters once you run the script with your chosen flags.
 The latest parameters used are stored and cached locally in .ENVIRONMENT_NAME files in
-[.run-sys-test-cache-dir](.run-sys-test-cache-dir) and used next time when you run the script.
+[.o2a-run-sys-test-cache-dir](.o2a-run-sys-test-cache-dir) and used next time when you run the script.
 
 In case you want to clean up the cache, simply remove all the files from that directory.
 
