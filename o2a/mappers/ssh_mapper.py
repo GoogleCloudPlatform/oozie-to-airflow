@@ -55,7 +55,7 @@ class SSHMapper(ActionMapper):
         cmd = self.get_command()
 
         self.command = el_utils.convert_el_to_jinja(cmd)
-        host_key = self.get_host_key(self.property_set)
+        host_key = self.get_host_key()
 
         # Since Airflow separates user and host, we can't use jinja templating.
         # We must check if it is in job_properties.
@@ -73,14 +73,14 @@ class SSHMapper(ActionMapper):
         cmd = " ".join(shlex.quote(x) for x in [cmd, *args])
         return cmd
 
-    def get_host_key(self, property_set: PropertySet) -> str:
+    def get_host_key(self) -> str:
         host = self.oozie_node.find("host")
         if host is None or not host.text:
             raise Exception("Missing host node in SSH action: {}".format(self.oozie_node))
         host_key = el_utils.strip_el(host.text)
         # the <user> node is formatted like [USER]@[HOST]
-        if host_key in property_set:
-            host_key = property_set[host_key]
+        if host_key in self.property_set:
+            host_key = self.property_set[host_key]
         return host_key
 
     def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
