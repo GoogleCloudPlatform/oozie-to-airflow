@@ -15,7 +15,7 @@
 """Maps FS node to Airflow's DAG"""
 
 import shlex
-from typing import List, Set, Dict, Optional, Tuple
+from typing import List, Optional, Set, Tuple
 
 from xml.etree.ElementTree import Element
 
@@ -136,7 +136,6 @@ class FsMapper(ActionMapper):
         self.oozie_node = oozie_node
         self.trigger_rule = trigger_rule
         self.tasks: List[Task] = []
-        self.action_node_properties_to_add: Optional[Dict[str, str]] = None
 
     def on_parse_node(self):
         super().on_parse_node()
@@ -174,8 +173,8 @@ class FsMapper(ActionMapper):
 
     def parse_fs_action(self, index: int, node: Element) -> Optional[Task]:
         tag_name = node.tag
-        if tag_name == "configuration":
-            self.action_node_properties_to_add = self.property_set.action_node_properties
+        if tag_name not in FS_OPERATION_MAPPERS.keys():
+            # Skip nodes that are not FS mapper action nodes
             return None
         tasks_count = len(self.oozie_node)
         task_id = self.name if tasks_count == 1 else f"{self.name}_fs_{index}_{tag_name}"
