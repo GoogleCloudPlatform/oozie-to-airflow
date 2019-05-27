@@ -13,14 +13,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Kill mapper - maps the workflow end"""
-from typing import List, Set, Tuple
+from typing import List, Set, Tuple, Optional, Dict
 from xml.etree.ElementTree import Element
 
 from o2a.converter.task import Task
 from o2a.converter.workflow import Workflow
 from o2a.converter.relation import Relation
 from o2a.mappers.base_mapper import BaseMapper
-from o2a.utils.dict_utils import remove_key_from_dictionary_copy
 
 
 class KillMapper(BaseMapper):
@@ -28,17 +27,23 @@ class KillMapper(BaseMapper):
     Converts a Kill Oozie node to an Airflow task.
     """
 
-    def __init__(self, oozie_node: Element, name: str, dag_name: str, **kwargs):
-        kwargs, job_properties = remove_key_from_dictionary_copy(kwargs, "job_properties", {})
-        kwargs, configuration_properties = remove_key_from_dictionary_copy(
-            kwargs, "configuration_properties", {}
-        )
+    def __init__(
+        self,
+        oozie_node: Element,
+        name: str,
+        dag_name: str,
+        job_properties: Optional[Dict[str, str]] = None,
+        configuration_properties: Optional[Dict[str, str]] = None,
+        **kwargs,
+    ):
+        not_none_job_properties: Dict[str, str] = job_properties or {}
+        not_none_configuration_properties: Dict[str, str] = configuration_properties or {}
         super().__init__(
             oozie_node=oozie_node,
             name=name,
             dag_name=dag_name,
-            job_properties=job_properties,
-            configuration_properties=configuration_properties,
+            job_properties=not_none_job_properties,
+            configuration_properties=not_none_configuration_properties,
             **kwargs,
         )
 

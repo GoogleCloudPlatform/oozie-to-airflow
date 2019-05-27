@@ -14,29 +14,34 @@
 # limitations under the License.
 """Dummy Mapper that is used as temporary solution while we are implementing the real mappers.
 """
-from typing import Set, Tuple, List
+from typing import Set, Tuple, List, Dict, Optional
 from xml.etree.ElementTree import Element
 
 from o2a.converter.relation import Relation
 from o2a.converter.task import Task
 from o2a.mappers.action_mapper import ActionMapper
-from o2a.utils.dict_utils import remove_key_from_dictionary_copy
 
 
 class DummyMapper(ActionMapper):
     """Dummy mapper used in place of not-yet-implemented mappers """
 
-    def __init__(self, oozie_node: Element, name: str, dag_name: str, **kwargs):
-        kwargs, job_properties = remove_key_from_dictionary_copy(kwargs, "job_properties", {})
-        kwargs, configuration_properties = remove_key_from_dictionary_copy(
-            kwargs, "configuration_properties", {}
-        )
+    def __init__(
+        self,
+        oozie_node: Element,
+        name: str,
+        dag_name: str,
+        job_properties: Optional[Dict[str, str]] = None,
+        configuration_properties: Optional[Dict[str, str]] = None,
+        **kwargs,
+    ):
+        not_none_job_properties: Dict[str, str] = job_properties or {}
+        not_none_configuration_properties: Dict[str, str] = configuration_properties or {}
         super().__init__(
             oozie_node=oozie_node,
             name=name,
             dag_name=dag_name,
-            job_properties=job_properties,
-            configuration_properties=configuration_properties,
+            job_properties=not_none_job_properties,
+            configuration_properties=not_none_configuration_properties,
             **kwargs,
         )
 
