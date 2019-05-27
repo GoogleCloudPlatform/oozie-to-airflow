@@ -145,7 +145,7 @@ class OozieConverter:
 
     def read_configuration_properties(self):
         """
-        Reads configuration job_properties to configuration_properties dictionary.
+        Reads configuration properties to configuration_properties dictionary.
         Replaces EL job_properties within.
         :return: None
         """
