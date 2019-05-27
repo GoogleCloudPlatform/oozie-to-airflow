@@ -66,6 +66,8 @@ export DATAPROC_USER=${DATAPROC_USER:=${USER:=example_user}}
 
 RUN_SSH_COMMAND="false"
 
+RUN_OOZIE_WEBUI="false"
+
 SETUP_AUTOCOMPLETE="false"
 
 COMPOSER_WEB_UI_URL=""
@@ -190,6 +192,10 @@ Optional commands to execute:
 
 -S, --ssh-to-cluster-master
         SSH to dataproc's cluster master. Arguments after -- are passed to gcloud ssh command as extra args.
+
+-W, --open-oozie-web-ui
+        Creates a SOCKS5 proxy server that redirects traffic through the main Dataproc cluster node and
+        opens Google Chrome with a proxy configuration and a tab with the Oozie web interface.
 
 -A, --setup-autocomplete
         Sets up autocomplete for o2a-run-sys-tests
@@ -362,6 +368,12 @@ do
       echo "Running SSH to master"
       echo
       shift ;;
+    -W|--open-oozie-webui)
+      export RUN_OOZIE_WEBUI="true"
+      echo
+      echo "Opening Oozie Web UI"
+      echo
+      shift ;;
     -A|--setup-autocomplete)
       export SETUP_AUTOCOMPLETE="true"
       echo
@@ -388,6 +400,39 @@ function ssh_to_cluster_master {
     set -x
     # shellcheck disable=SC2068
     gcloud compute ssh "${DATAPROC_CLUSTER_MASTER}" --zone "${DATAPROC_MASTER_ZONE}" -- $@
+}
+
+function open_oozie_webui {
+    local PROXY_PORT=1080
+    local CHROME_PROFILE_TMP="/tmp/o2a-chrome-profile-${DATAPROC_CLUSTER_MASTER}-${DATAPROC_MASTER_ZONE}"
+    echo
+    echo "Open Oozie Web UI via SOCKS5 proxy on ${PROXY_PORT}."
+    echo "You will be connected to cluster master ${DATAPROC_CLUSTER_MASTER} in zone ${DATAPROC_MASTER_ZONE}."
+    echo
+    local CHROME_BIN
+    if [[ -x '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome' ]]; then
+        CHROME_BIN='/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'
+    elif command -v google-chrome >> /dev/null; then
+        CHROME_BIN="google-chrome"
+    else
+        echo "You need to install Google Chrome to use this functionality."
+        echo
+        echo "For more information look at:"
+        echo "https://support.google.com/chrome/answer/95346"
+        echo
+        exit 1
+    fi;
+    set -x
+    # Start SSH dynamic port forwarding
+    gcloud compute ssh  "${DATAPROC_CLUSTER_MASTER}" --zone "${DATAPROC_MASTER_ZONE}" -- -D "${PROXY_PORT}" -N &
+    # Open the browser
+    "${CHROME_BIN}" --proxy-server="socks5://localhost:${PROXY_PORT}" \
+    --user-data-dir="${CHROME_PROFILE_TMP}" --no-default-browser-check \
+    "http://${DATAPROC_CLUSTER_MASTER}:11000"  &> /dev/null
+    # Delete temporary browser profile
+    rm -rf "${CHROME_PROFILE_TMP}"
+    # Kill SSH dynamic port forwarding
+    kill %1
 }
 
 function verify_arguments {
@@ -541,6 +586,12 @@ if [[ ${RUN_SSH_COMMAND} == "true" ]]; then
     fetch_dataproc_environment_info
     # shellcheck disable=SC2068
     ssh_to_cluster_master $@
+    exit
+fi
+
+if [[ ${RUN_OOZIE_WEBUI} == "true" ]]; then
+    fetch_dataproc_environment_info
+    open_oozie_webui
     exit
 fi
 
