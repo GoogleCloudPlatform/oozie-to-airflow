@@ -283,6 +283,10 @@ Optional commands to execute:
 -S, --ssh-to-cluster-master
         SSH to dataproc's cluster master. Arguments after -- are passed to gcloud ssh command as extra args.
 
+-X, --open-oozie-web-ui
+        Creates a SOCKS5 proxy server that redirects traffic through the main Dataproc cluster node and
+        opens Google Chrome with a proxy configuration and a tab with the Oozie web interface.
+
 -A, --setup-autocomplete
         Sets up autocomplete for o2a-run-sys-tests
 ```
