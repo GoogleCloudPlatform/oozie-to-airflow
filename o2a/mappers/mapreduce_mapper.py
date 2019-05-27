@@ -60,6 +60,7 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
         self.hdfs_archives = None
 
     def on_parse_node(self):
+        super().on_parse_node()
         name_node_text = self.oozie_node.find("name-node").text
         self.name_node = el_utils.replace_el_with_var(
             name_node_text, property_set=self.property_set, quote=False

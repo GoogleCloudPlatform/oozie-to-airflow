@@ -64,6 +64,7 @@ class TestPigMapper(unittest.TestCase):
         mapper = self._get_pig_mapper(
             job_properties=job_properties, configuration_properties=configuration_properties
         )
+        mapper.on_parse_node()
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
@@ -94,6 +95,7 @@ class TestPigMapper(unittest.TestCase):
         mapper = self._get_pig_mapper(
             job_properties=job_properties, configuration_properties=configuration_properties
         )
+        mapper.on_parse_node()
 
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
@@ -114,7 +116,7 @@ class TestPigMapper(unittest.TestCase):
         mapper = self._get_pig_mapper(
             job_properties=job_properties, configuration_properties=configuration_properties
         )
-
+        mapper.on_parse_node()
         tasks, relations = mapper.to_tasks_and_relations()
 
         self.assertEqual(

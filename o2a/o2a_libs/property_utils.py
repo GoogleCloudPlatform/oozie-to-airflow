@@ -44,7 +44,7 @@ class PropertySet(Mapping):
     ):
         self.configuration_properties: Dict[str, str] = configuration_properties
         self.job_properties: Dict[str, str] = job_properties
-        self.action_node_properties: Dict[str, str] = action_node_properties if action_node_properties else {}
+        self.action_node_properties: Dict[str, str] = action_node_properties or {}
 
     def __getitem__(self, item: str) -> str:
         return self.job_properties_merged[item]

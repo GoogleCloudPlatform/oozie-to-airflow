@@ -73,6 +73,7 @@ class SparkMapper(ActionMapper, PrepareMixin):
         self.dataproc_jars: List[str] = []
 
     def on_parse_node(self):
+        super().on_parse_node()
         _, self.hdfs_files = self.file_extractor.parse_node()
         _, self.hdfs_archives = self.archive_extractor.parse_node()
 

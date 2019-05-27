@@ -45,6 +45,9 @@ class ActionMapper(BaseMapper, ABC):
             oozie_node, name, dag_name, job_properties, configuration_properties, trigger_rule, **kwargs
         )
         self.action_node_properties: Dict[str, str] = {}
+
+    def on_parse_node(self):
+        super().on_parse_node()
         self._parse_config()
 
     def _parse_config(self):

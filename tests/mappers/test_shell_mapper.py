@@ -55,6 +55,7 @@ class TestShellMapper(unittest.TestCase):
 
     def test_create_mapper_no_jinja(self):
         mapper = self._get_shell_mapper(job_properties={}, configuration_properties={})
+        mapper.on_parse_node()
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
@@ -79,6 +80,7 @@ class TestShellMapper(unittest.TestCase):
         mapper = self._get_shell_mapper(
             job_properties=job_properties, configuration_properties=configuration_properties
         )
+        mapper.on_parse_node()
 
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
@@ -95,6 +97,7 @@ class TestShellMapper(unittest.TestCase):
         mapper = self._get_shell_mapper(
             job_properties=job_properties, configuration_properties=configuration_properties
         )
+        mapper.on_parse_node()
         tasks, relations = mapper.to_tasks_and_relations()
 
         self.assertEqual(

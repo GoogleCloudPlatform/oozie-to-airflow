@@ -85,6 +85,7 @@ class GitMapper(ActionMapper, PrepareMixin):
         self.key_path: Optional[str] = None
 
     def on_parse_node(self):
+        super().on_parse_node()
         self.git_uri = get_tag_el_text(
             self.oozie_node, TAG_GIT_URI, property_set=self.property_set, default=""
         )
