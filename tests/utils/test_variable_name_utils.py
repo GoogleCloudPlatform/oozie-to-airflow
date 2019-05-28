@@ -20,8 +20,7 @@ from parameterized import parameterized
 from o2a.utils.variable_name_utils import convert_to_python_variable
 
 
-# pylint: disable=invalid-name
-class convert_to_python_variableTestCase(TestCase):
+class ConvertToPythonVariableTestCase(TestCase):
     def test_should_keep_original_when_its_not_required(self):
         self.assertEqual(convert_to_python_variable("TEST"), "TEST")
 

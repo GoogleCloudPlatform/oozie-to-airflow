@@ -25,24 +25,23 @@ from o2a.converter.mappers import ACTION_MAP
 from o2a.converter.task import Task
 from o2a.definitions import EXAMPLE_SUBWORKFLOW_PATH
 from o2a.mappers import subworkflow_mapper
+from o2a.o2a_libs.property_utils import PropertySet
 
 
 class TestSubworkflowMapper(TestCase):
 
-    subworkflow_params = {
+    subworkflow_properties = {
+        "nameNode": "hdfs://",
+        "oozie.wf.application.path": "hdfs:///user/pig/examples/pig",
+    }
+
+    main_properties = {"examplesRoot": "examples", "nameNode": "hdfs://", "resourceManager": "localhost:8032"}
+
+    config = {
         "dataproc_cluster": "test_cluster",
         "gcp_conn_id": "google_cloud_default",
         "gcp_region": "europe-west3",
         "gcp_uri_prefix": "gs://test_bucket/dags",
-        "nameNode": "hdfs://",
-        "oozie.wf.application.path": "hdfs:///user/pig/examples/pi",
-    }
-
-    main_params = {
-        "examplesRoot": "examples",
-        "nameNode": "hdfs://",
-        "resourceManager": "localhost:8032",
-        "dataproc_cluster": "cluster-o2a",
     }
 
     SUBDAG_TEST_FILEPATH = "/tmp/subdag_pig.py"
@@ -71,7 +70,7 @@ class TestSubworkflowMapper(TestCase):
     @mock.patch("o2a.utils.el_utils.parse_els")
     def test_create_mapper_jinja(self, parse_els):
         # Given
-        parse_els.return_value = self.subworkflow_params
+        parse_els.side_effect = [self.subworkflow_properties, self.config]
         # When
         mapper = self._get_subwf_mapper()
 
@@ -79,14 +78,17 @@ class TestSubworkflowMapper(TestCase):
         self.assertEqual("test_id", mapper.task_id)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.subworkflow_node, mapper.oozie_node)
-        self.assertEqual(self.main_params, mapper.params)
-        # Propagate config node is present, should forward config properties
+        self.assertEqual("examples", mapper.props.merged["examplesRoot"])
+        self.assertEqual("hdfs://", mapper.props.merged["nameNode"])
+        self.assertEqual("hdfs:///user/pig/examples/pig", mapper.props.merged["oozie.wf.application.path"])
+        self.assertEqual("localhost:8032", mapper.props.merged["resourceManager"])
+        self.assertIsNotNone(mapper.props.merged["user.name"])
         self.assertTrue(os.path.isfile(self.SUBDAG_TEST_FILEPATH))
 
     @mock.patch("o2a.utils.el_utils.parse_els")
     def test_create_mapper_jinja_no_propagate(self, parse_els):
         # Given
-        parse_els.return_value = self.subworkflow_params
+        parse_els.side_effect = [self.subworkflow_properties, self.config]
         self.assertFalse(os.path.isfile(self.SUBDAG_TEST_FILEPATH))
         # Removing the propagate-configuration node
         propagate_configuration = self.subworkflow_node.find("propagate-configuration")
@@ -99,24 +101,24 @@ class TestSubworkflowMapper(TestCase):
         self.assertEqual("test_id", mapper.task_id)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.subworkflow_node, mapper.oozie_node)
-        self.assertEqual(self.main_params, mapper.params)
-        # Propagate config node is missing, should NOT forward config properties
-        self.assertEqual({}, mapper.get_config_properties())
+        self.assertEqual(self.main_properties, mapper.props.job_properties)
+        # Propagate config node is missing, should NOT forward config job_properties
+        self.assertEqual(PropertySet(config={}, job_properties={}), mapper.get_props())
         self.assertTrue(os.path.isfile(self.SUBDAG_TEST_FILEPATH))
 
     @mock.patch("o2a.utils.el_utils.parse_els")
-    def test_to_tasks_and_relations(self, parse_els_mock):
+    def test_to_tasks_and_relations(self, parse_els):
         # Given
-        parse_els_mock.return_value = self.subworkflow_params
+        parse_els.side_effect = [self.subworkflow_properties, self.config]
         mapper = self._get_subwf_mapper()
         # When
         tasks, relations = mapper.to_tasks_and_relations()
 
         # Then
         self.assertEqual(
-            tasks, [Task(task_id="test_id", template_name="subwf.tpl", template_params={"app_name": "pig"})]
+            [Task(task_id="test_id", template_name="subwf.tpl", template_params={"app_name": "pig"})], tasks
         )
-        self.assertEqual(relations, [])
+        self.assertEqual([], relations)
 
     def test_required_imports(self):
         mapper = self._get_subwf_mapper()
@@ -133,5 +135,5 @@ class TestSubworkflowMapper(TestCase):
             dag_name="test",
             action_mapper=ACTION_MAP,
             trigger_rule=TriggerRule.DUMMY,
-            params=self.main_params,
+            props=PropertySet(job_properties=self.main_properties, config=self.config),
         )
