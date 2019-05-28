@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Utilities used by EL functions"""
+import codecs
 import logging
 import os
 import re
@@ -192,3 +193,8 @@ def normalize_path(url, params, allow_no_schema=False):
             f"hdfs://localhost:9200/path. Current value: {url_with_var}"
         )
     return url_parts.path
+
+
+def escape_string_with_python_escapes(string_to_escape: str) -> str:
+    escaped_bytes, _ = codecs.escape_encode(string_to_escape.encode())  # type: ignore # C-Api level
+    return "'" + escaped_bytes.decode("utf-8") + "'"  # type: ignore
