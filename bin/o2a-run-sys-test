@@ -73,28 +73,28 @@ COMPOSER_WEB_UI_URL=""
 VERBOSE="false"
 
 function prepare_configuration {
-    if [[ ! -f "${LOCAL_CONFIGURATION_PROPERTIES_TEMPLATE}" ]]; then
+    if [[ ! -f "${LOCAL_CONFIG_TEMPLATE}" ]]; then
         echo
-        echo "The file ${LOCAL_CONFIGURATION_PROPERTIES_TEMPLATE} does not exist."
+        echo "The file ${LOCAL_CONFIG_TEMPLATE} does not exist."
         echo "Skipping preparing configuration"
         echo
     else
         echo
-        echo "Preparing ${LOCAL_CONFIGURATION_PROPERTIES} "
-        echo "     from ${LOCAL_CONFIGURATION_PROPERTIES_TEMPLATE}."
+        echo "Preparing ${LOCAL_CONFIG} "
+        echo "     from ${LOCAL_CONFIG_TEMPLATE}."
         echo
         export DATAPROC_CLUSTER_NAME GCP_REGION COMPOSER_DAG_BUCKET
         echo
         echo "Cluster name: ${DATAPROC_CLUSTER_NAME}"
         echo "Region: ${GCP_REGION}"
         echo
-        j2 "${LOCAL_CONFIGURATION_PROPERTIES_TEMPLATE}" \
+        j2 "${LOCAL_CONFIG_TEMPLATE}" \
               -e DATAPROC_CLUSTER_NAME \
               -e GCP_REGION \
               -e COMPOSER_DAG_BUCKET \
               -e DATAPROC_USER \
               -e LOCAL_APP_NAME \
-              -o "${LOCAL_CONFIGURATION_PROPERTIES}"
+              -o "${LOCAL_CONFIG}"
     fi
 }
 
@@ -563,8 +563,8 @@ LOCAL_O2A_LIBS_DIR="${LOCAL_O2A_PROJECT_DIR}/o2a/o2a_libs"
 LOCAL_SCRIPTS_DIR="${LOCAL_O2A_PROJECT_DIR}/o2a/scripts"
 OUTPUT_DAG_NAME="test_${LOCAL_APP_NAME}_dag"
 
-LOCAL_CONFIGURATION_PROPERTIES_TEMPLATE=${LOCAL_APP_DIR}/configuration.template.properties
-LOCAL_CONFIGURATION_PROPERTIES=${LOCAL_APP_DIR}/configuration.properties
+LOCAL_CONFIG_TEMPLATE=${LOCAL_APP_DIR}/configuration.template.properties
+LOCAL_CONFIG=${LOCAL_APP_DIR}/configuration.properties
 
 verify_arguments
 

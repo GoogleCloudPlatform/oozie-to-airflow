@@ -12,10 +12,11 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
- #}
+#}
 
 {{ task_id | to_var }} = bash_operator.BashOperator(
     task_id={{ task_id | to_python }},
     trigger_rule={{ trigger_rule | to_python }},
-    bash_command={{ prepare_command | to_python }},
+    bash_command={% include "prepare_command.tpl" %},
+    params={% include "props.tpl" %},
 )

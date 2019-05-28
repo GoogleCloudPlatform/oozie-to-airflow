@@ -12,26 +12,26 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
- #}
-
+#}
 {{ task_id | to_var }} = dataproc_operator.DataProcHadoopOperator(
     task_id={{ task_id | to_python }},
     trigger_rule={{ trigger_rule | to_python }},
-    main_class=PARAMS['hadoop_main_class'],
+    main_class=CONFIG['hadoop_main_class'],
     arguments=[
-        {{ properties['mapreduce.input.fileinputformat.inputdir'] | to_python }},
-        {{ properties['mapreduce.output.fileoutputformat.outputdir'] | to_python }}
+        "{{ '{{' }} params.props.merged['mapreduce.input.fileinputformat.inputdir'] {{ '}}' }}",
+        "{{ '{{' }} params.props.merged['mapreduce.output.fileoutputformat.outputdir'] {{ '}}' }}"
     ],
     {% if hdfs_files %}
-    files={{ hdfs_files | to_python }},
+        files={{ hdfs_files | to_python }},
     {% endif %}
     {% if hdfs_archives %}
-    archives={{ hdfs_archives | to_python }},
+        archives={{ hdfs_archives | to_python }},
     {% endif %}
-    cluster_name=PARAMS['dataproc_cluster'],
-    dataproc_hadoop_properties={{ properties }},
-    dataproc_hadoop_jars=PARAMS['hadoop_jars'],
-    gcp_conn_id=PARAMS['gcp_conn_id'],
-    region=PARAMS['gcp_region'],
-    dataproc_job_id={{ task_id | to_python }}
+    cluster_name=CONFIG['dataproc_cluster'],
+    dataproc_hadoop_properties={% include "props.tpl" %}.merged,
+    dataproc_hadoop_jars=CONFIG['hadoop_jars'].split(','),
+    gcp_conn_id=CONFIG['gcp_conn_id'],
+    region=CONFIG['gcp_region'],
+    dataproc_job_id={{ task_id | to_python }},
+    params={% include "props.tpl" %},
 )

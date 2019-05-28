@@ -14,6 +14,6 @@
 # limitations under the License.
 """ List of project-wide constants """
 
-CONFIGURATION_PROPERTIES = "configuration.properties"
-JOB_PROPERTIES = "job.properties"
+CONFIG = "configuration.properties"
+JOB_PROPS = "job.properties"
 WORKFLOW_XML = "workflow.xml"

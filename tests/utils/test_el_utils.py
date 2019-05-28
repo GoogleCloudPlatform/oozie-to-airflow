@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests EL utils"""
+import tempfile
 import unittest
 import unittest.mock
 
@@ -23,6 +24,9 @@ from o2a.utils import el_utils
 from o2a.utils.el_utils import normalize_path, escape_string_with_python_escapes
 
 # pylint: disable=too-many-public-methods
+from o2a.o2a_libs.property_utils import PropertySet
+
+
 class TestELUtils(unittest.TestCase):
     def test_strip_el(self):
         exp_func = 'concat("abc", "def")'
@@ -39,37 +43,41 @@ class TestELUtils(unittest.TestCase):
         self.assertEqual(el_utils.strip_el(el_var2), exp_var)
 
     def test_replace_el_with_var_var_no_quote(self):
-        params = {"hostname": "airflow@apache.org"}
+        job_properties = {"hostname": "airflow@apache.org"}
+        props = PropertySet(job_properties=job_properties, config={}, action_node_properties={})
         el_var = "${hostname}"
         expected = "airflow@apache.org"
 
-        replaced = el_utils.replace_el_with_var(el_var, params, quote=False)
+        replaced = el_utils.replace_el_with_var(el_var, props=props, quote=False)
         self.assertEqual(replaced, expected)
 
     def test_replace_el_with_var_func_no_quote(self):
         # functions shouldn't be replaced
-        params = {}
+        job_properties = {}
+        props = PropertySet(job_properties=job_properties, config={}, action_node_properties={})
         el_var = '${concat("abc", "def")}'
         expected = '${concat("abc", "def")}'
 
-        replaced = el_utils.replace_el_with_var(el_var, params, quote=False)
+        replaced = el_utils.replace_el_with_var(el_var, props=props, quote=False)
         self.assertEqual(replaced, expected)
 
     def test_replace_el_with_var_var_quote(self):
-        params = {"hostname": "airflow@apache.org"}
+        job_properties = {"hostname": "airflow@apache.org"}
+        props = PropertySet(job_properties=job_properties, config={}, action_node_properties={})
         el_var = "${hostname}"
         expected = "'airflow@apache.org'"
 
-        replaced = el_utils.replace_el_with_var(el_var, params, quote=True)
+        replaced = el_utils.replace_el_with_var(el_var, props=props, quote=True)
         self.assertEqual(replaced, expected)
 
     def test_replace_el_with_var_func_quote(self):
         # functions shouldn't be replaced
-        params = {}
+        job_properties = {}
+        props = PropertySet(job_properties=job_properties, config={}, action_node_properties={})
         el_var = '${concat("abc", "def")}'
         expected = '\'${concat("abc", "def")}\''
 
-        replaced = el_utils.replace_el_with_var(el_var, params, quote=True)
+        replaced = el_utils.replace_el_with_var(el_var, props=props)
         self.assertEqual(replaced, expected)
 
     def test_parse_el_func(self):
@@ -102,12 +110,12 @@ class TestELUtils(unittest.TestCase):
 
     def test_convert_el_to_jinja_var_no_quote(self):
         el_function = "${hostname}"
-        expected = "{{ params.hostname }}"
+        expected = "{{ params.props.merged['hostname'] }}"
         self.assertEqual(expected, el_utils.convert_el_to_jinja(el_function, quote=False))
 
     def test_convert_el_to_jinja_var_quote(self):
         el_function = "${hostname}"
-        expected = "'{{ params.hostname }}'"
+        expected = "'{{ params.props.merged['hostname'] }}'"
         self.assertEqual(expected, el_utils.convert_el_to_jinja(el_function, quote=True))
 
     def test_convert_el_to_jinja_func_no_quote(self):
@@ -131,32 +139,58 @@ class TestELUtils(unittest.TestCase):
         self.assertEqual(expected, el_utils.convert_el_to_jinja(el_function, quote=True))
 
     def test_parse_els_no_file(self):
-        params = {"test": "answer"}
-        self.assertEqual(params, el_utils.parse_els(None, params))
+        expected_properties = {}
+        props = PropertySet(job_properties={"key": "value"}, config={}, action_node_properties={})
+        self.assertEqual(expected_properties, el_utils.parse_els(None, props=props))
 
     def test_parse_els_file(self):
-        import tempfile
-
         prop_file = tempfile.NamedTemporaryFile("w", delete=False)
         prop_file.write("#comment\n" "key=value")
         prop_file.close()
 
-        params = {"test": "answer"}
-        expected = {"test": "answer", "key": "value"}
-        self.assertEqual(expected, el_utils.parse_els(prop_file.name, params))
+        job_properties = {"test": "answer"}
+        props = PropertySet(job_properties=job_properties, config={}, action_node_properties={})
+        expected = {"key": "value"}
+        self.assertEqual(expected, el_utils.parse_els(prop_file.name, props=props))
 
     def test_parse_els_file_list(self):
         # Should remain unchanged, as the conversion from a comma-separated string to a List will
         # occur before writing to file.
-        import tempfile
-
         prop_file = tempfile.NamedTemporaryFile("w", delete=False)
-        prop_file.write("#comment\n" "key=value,value2")
+        prop_file.write("#comment\n" "key=value,value2,${test}")
         prop_file.close()
 
-        params = {"test": "answer"}
-        expected = {"test": "answer", "key": "value,value2"}
-        self.assertEqual(expected, el_utils.parse_els(prop_file.name, params))
+        job_properties = {"test": "answer"}
+        props = PropertySet(config={}, job_properties=job_properties, action_node_properties={})
+        expected = {"key": "value,value2,answer"}
+        self.assertEqual(expected, el_utils.parse_els(prop_file.name, props=props))
+
+    def test_parse_els_multiple_line_with_back_references(self):
+        # Should remain unchanged, as the conversion from a comma-separated string to a List will
+        # occur before writing to file.
+        prop_file = tempfile.NamedTemporaryFile("w", delete=False)
+        prop_file.write(
+            """
+#comment
+key=value,value2,${test}
+key2=value
+key3=refer${key2}
+key4=refer${key5}
+key5=test
+"""
+        )
+        prop_file.close()
+
+        job_properties = {"test": "answer"}
+        props = PropertySet(config={}, job_properties=job_properties, action_node_properties={})
+        expected = {
+            "key": "value,value2,answer",
+            "key2": "value",
+            "key3": "refervalue",
+            "key4": "refer${key5}",  # no forward-references
+            "key5": "test",
+        }
+        self.assertEqual(expected, el_utils.parse_els(prop_file.name, props=props))
 
     @parameterized.expand(
         [
@@ -168,8 +202,9 @@ class TestELUtils(unittest.TestCase):
     def test_normalize_path_green_path(self, oozie_path, expected_result):
         cluster = "my-cluster"
         region = "europe-west3"
-        params = {"nameNode": "hdfs://localhost:8020", "dataproc_cluster": cluster, "gcp_region": region}
-        result = normalize_path(oozie_path, params)
+        job_properties = {"nameNode": "hdfs://localhost:8020"}
+        config = {"dataproc_cluster": cluster, "gcp_region": region}
+        result = normalize_path(oozie_path, props=PropertySet(config=config, job_properties=job_properties))
         self.assertEqual(expected_result, result)
 
     @parameterized.expand(
@@ -183,13 +218,16 @@ class TestELUtils(unittest.TestCase):
     def test_normalize_path_with_allow_no_schema(self, oozie_path, expected_result):
         cluster = "my-cluster"
         region = "europe-west3"
-        params = {"nameNode": "hdfs://localhost:8020", "dataproc_cluster": cluster, "gcp_region": region}
-        result = normalize_path(oozie_path, params, allow_no_schema=True)
+        job_properties = {"nameNode": "hdfs://localhost:8020"}
+        config = {"dataproc_cluster": cluster, "gcp_region": region}
+        result = normalize_path(
+            oozie_path, props=PropertySet(config=config, job_properties=job_properties), allow_no_schema=True
+        )
         self.assertEqual(expected_result, result)
 
     @parameterized.expand(
         [
-            ("${nameNodeAAA}/examples/output-data/demo/pig-node",),
+            ("${nameNode_1}/examples/output-data/demo/pig-node",),
             ("/examples/output-data/demo/pig-node",),
             ("http:///examples/output-data/demo/pig-node2",),
         ]
@@ -197,9 +235,10 @@ class TestELUtils(unittest.TestCase):
     def test_normalize_path_red_path(self, oozie_path):
         cluster = "my-cluster"
         region = "europe-west3"
-        params = {"nameNode": "hdfs://localhost:8020", "dataproc_cluster": cluster, "gcp_region": region}
+        job_properties = {"nameNode": "hdfs://localhost:8020"}
+        config = {"dataproc_cluster": cluster, "gcp_region": region}
         with self.assertRaisesRegex(ParseException, "Unknown path format. "):
-            normalize_path(oozie_path, params)
+            normalize_path(oozie_path, props=PropertySet(config=config, job_properties=job_properties))
 
     @parameterized.expand(
         [("http:///examples/output-data/demo/pig-node2",), ("ftp:///examples/output-data/demo/pig-node2",)]
@@ -207,9 +246,14 @@ class TestELUtils(unittest.TestCase):
     def test_normalize_path_red_path_allowed_no_schema(self, oozie_path):
         cluster = "my-cluster"
         region = "europe-west3"
-        params = {"nameNode": "hdfs://localhost:8020", "dataproc_cluster": cluster, "gcp_region": region}
+        job_properties = {"nameNode": "hdfs://localhost:8020"}
+        config = {"dataproc_cluster": cluster, "gcp_region": region}
         with self.assertRaisesRegex(ParseException, "Unknown path format. "):
-            normalize_path(oozie_path, params, allow_no_schema=True)
+            normalize_path(
+                oozie_path,
+                props=PropertySet(config=config, job_properties=job_properties),
+                allow_no_schema=True,
+            )
 
     @parameterized.expand(
         [
@@ -217,8 +261,8 @@ class TestELUtils(unittest.TestCase):
             ("ą", "'\\xc4\\x85'"),
             ("'", "'\\''"),
             (
-                    "This string is \" replaced with 'Escaped one'",
-                    "'This string is \" replaced with \\'Escaped one\\''",
+                "This string is \" replaced with 'Escaped one'",
+                "'This string is \" replaced with \\'Escaped one\\''",
             ),
             ('"', "'\"'"),
         ]

@@ -24,6 +24,8 @@ from o2a.converter.task import Task
 from o2a.mappers import mapreduce_mapper
 
 # language=XML
+from o2a.o2a_libs.property_utils import PropertySet
+
 EXAMPLE_XML = """
 <map-reduce>
     <name-node>hdfs://</name-node>
@@ -122,7 +124,7 @@ class TestMapReduceMapper(unittest.TestCase):
         self.mapreduce_node = ET.fromstring(EXAMPLE_XML)
 
     def test_create_mapper(self):
-        mapper = self._get_mapreduce_mapper()
+        mapper = self._get_mapreduce_mapper(job_properties={}, config={})
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
@@ -130,15 +132,10 @@ class TestMapReduceMapper(unittest.TestCase):
 
     def test_on_parse_node(self):
         # test jinja templating
-        params = {
-            "nameNode": "hdfs://",
-            "queueName": "myQueue",
-            "examplesRoot": "examples",
-            "dataproc_cluster": "my-cluster",
-            "gcp_region": "europe-west3",
-        }
+        job_properties = {"nameNode": "hdfs://", "queueName": "myQueue", "examplesRoot": "examples"}
+        config = {"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"}
 
-        mapper = self._get_mapreduce_mapper(params=params)
+        mapper = self._get_mapreduce_mapper(job_properties=job_properties, config=config)
         mapper.on_parse_node()
 
         # make sure everything is getting initialized correctly
@@ -147,85 +144,103 @@ class TestMapReduceMapper(unittest.TestCase):
         self.assertEqual(self.mapreduce_node, mapper.oozie_node)
 
         self.assertEqual("hdfs://", mapper.name_node)
-        self.assertEqual("myQueue", mapper.properties["mapred.job.queue.name"])
-        self.assertEqual("WordCount$Map", mapper.properties["mapreduce.job.map.class"])
-        self.assertEqual("WordCount$Reduce", mapper.properties["mapreduce.job.reduce.class"])
-        self.assertEqual("org.apache.hadoop.io.Text", mapper.properties["mapreduce.job.output.key.class"])
+        self.assertEqual("myQueue", mapper.props.action_node_properties["mapred.job.queue.name"])
+        self.assertEqual("WordCount$Map", mapper.props.action_node_properties["mapreduce.job.map.class"])
         self.assertEqual(
-            "org.apache.hadoop.io.IntWritable", mapper.properties["mapreduce.job.output.value.class"]
+            "WordCount$Reduce", mapper.props.action_node_properties["mapreduce.job.reduce.class"]
+        )
+        self.assertEqual(
+            "org.apache.hadoop.io.Text", mapper.props.action_node_properties["mapreduce.job.output.key.class"]
+        )
+        self.assertEqual(
+            "org.apache.hadoop.io.IntWritable",
+            mapper.props.action_node_properties["mapreduce.job.output.value.class"],
         )
         self.assertEqual(
             "/user/mapred/examples/mapreduce/input",
-            mapper.properties["mapreduce.input.fileinputformat.inputdir"],
+            mapper.props.action_node_properties["mapreduce.input.fileinputformat.inputdir"],
         )
         self.assertEqual(
             "/user/mapred/examples/mapreduce/output",
-            mapper.properties["mapreduce.output.fileoutputformat.outputdir"],
+            mapper.props.action_node_properties["mapreduce.output.fileoutputformat.outputdir"],
         )
 
     def test_to_tasks_and_relations(self):
         mapper = mapreduce_mapper.MapReduceMapper(
             oozie_node=self.mapreduce_node,
             name="test_id",
+            dag_name="DAG_NAME_B",
             trigger_rule=TriggerRule.DUMMY,
-            params={
-                "nameNode": "hdfs://",
-                "dataproc_cluster": "my-cluster",
-                "gcp_region": "europe-west3",
-                "hadoop_jars": "hdfs:///user/mapred/examples/mapreduce/lib/wordcount.jar",
-                "hadoop_main_class": "WordCount",
-            },
+            props=PropertySet(
+                job_properties={"nameNode": "hdfs://"},
+                config={
+                    "dataproc_cluster": "my-cluster",
+                    "gcp_region": "europe-west3",
+                    "hadoop_jars": "hdfs:///user/mapred/examples/mapreduce/lib/wordcount.jar",
+                    "hadoop_main_class": "WordCount",
+                },
+            ),
         )
         mapper.on_parse_node()
 
         tasks, relations = mapper.to_tasks_and_relations()
 
         self.assertEqual(
-            tasks,
             [
                 Task(
                     task_id="test_id_prepare",
                     template_name="prepare.tpl",
-                    template_params={
-                        "prepare_command": "$DAGS_FOLDER/../data/prepare.sh -c my-cluster "
-                        '-r europe-west3 -d "/examples/mapreduce/output"'
-                    },
+                    template_params={"delete": "/examples/mapreduce/output", "mkdir": None},
                 ),
                 Task(
                     task_id="test_id",
                     template_name="mapreduce.tpl",
                     template_params={
-                        "properties": {
-                            "mapred.mapper.new-api": "true",
-                            "mapred.reducer.new-api": "true",
-                            "mapred.job.queue.name": "${queueName}",
-                            "mapreduce.job.map.class": "WordCount$Map",
-                            "mapreduce.job.reduce.class": "WordCount$Reduce",
-                            "mapreduce.job.output.key.class": "org.apache.hadoop.io.Text",
-                            "mapreduce.job.output.value.class": "org.apache.hadoop.io.IntWritable",
-                            "mapreduce.input.fileinputformat.inputdir": "/user/mapred/${examplesRoot}"
-                            "/mapreduce/input",
-                            "mapreduce.output.fileoutputformat.outputdir": "/user/mapred/${examplesRoot}"
-                            "/mapreduce/output",
-                        },
+                        "props": PropertySet(
+                            config={
+                                "dataproc_cluster": "my-cluster",
+                                "gcp_region": "europe-west3",
+                                "hadoop_jars": "hdfs:///user/mapred/examples/mapreduce/lib/wordcount.jar",
+                                "hadoop_main_class": "WordCount",
+                            },
+                            job_properties={"nameNode": "hdfs://"},
+                            action_node_properties={
+                                "mapred.mapper.new-api": "true",
+                                "mapred.reducer.new-api": "true",
+                                "mapred.job.queue.name": "${queueName}",
+                                "mapreduce.job.map.class": "WordCount$Map",
+                                "mapreduce.job.reduce.class": "WordCount$Reduce",
+                                "mapreduce.job.output.key.class": "org.apache.hadoop.io.Text",
+                                "mapreduce.job.output.value.class": "org.apache.hadoop.io.IntWritable",
+                                "mapreduce.input.fileinputformat."
+                                "inputdir": "/user/mapred/${examplesRoot}/mapreduce/input",
+                                "mapreduce.output.fileoutputformat."
+                                "outputdir": "/user/mapred/${examplesRoot}/mapreduce/output",
+                            },
+                        ),
                         "params_dict": {},
                         "hdfs_files": [],
                         "hdfs_archives": [],
                     },
                 ),
             ],
+            tasks,
         )
         self.assertEqual(relations, [Relation(from_task_id="test_id_prepare", to_task_id="test_id")])
 
     def test_required_imports(self):
-        mapper = self._get_mapreduce_mapper()
+        mapper = self._get_mapreduce_mapper(job_properties={}, config={})
         imps = mapper.required_imports()
         imp_str = "\n".join(imps)
         ast.parse(imp_str)
 
-    def _get_mapreduce_mapper(self, params=None):
+    def _get_mapreduce_mapper(self, job_properties, config):
         return mapreduce_mapper.MapReduceMapper(
-            oozie_node=self.mapreduce_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=params
+            oozie_node=self.mapreduce_node,
+            name="test_id",
+            dag_name="DAG_NAME_B",
+            trigger_rule=TriggerRule.DUMMY,
+            props=PropertySet(job_properties=job_properties, config=config),
         )
 
 
@@ -234,7 +249,7 @@ class TestMapReduceMapperNoPrepare(unittest.TestCase):
         self.mapreduce_node = ET.fromstring(EXAMPLE_XML_NO_PREPARE)
 
     def test_create_mapper(self):
-        mapper = self._get_mapreduce_mapper()
+        mapper = self._get_mapreduce_mapper(job_properties={}, config={})
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
@@ -244,54 +259,70 @@ class TestMapReduceMapperNoPrepare(unittest.TestCase):
         mapper = mapreduce_mapper.MapReduceMapper(
             oozie_node=self.mapreduce_node,
             name="test_id",
+            dag_name="DAG_NAME_B",
             trigger_rule=TriggerRule.DUMMY,
-            params={
-                "nameNode": "hdfs://",
-                "dataproc_cluster": "my-cluster",
-                "gcp_region": "europe-west3",
-                "hadoop_jars": "hdfs:///user/mapred/examples/mapreduce/lib/wordcount.jar",
-                "hadoop_main_class": "WordCount",
-            },
+            props=PropertySet(
+                job_properties={"nameNode": "hdfs://"},
+                config={
+                    "dataproc_cluster": "my-cluster",
+                    "gcp_region": "europe-west3",
+                    "hadoop_jars": "hdfs:///user/mapred/examples/mapreduce/lib/wordcount.jar",
+                    "hadoop_main_class": "WordCount",
+                },
+            ),
         )
         mapper.on_parse_node()
         tasks, relations = mapper.to_tasks_and_relations()
 
         self.assertEqual(
-            tasks,
             [
                 Task(
                     task_id="test_id",
                     template_name="mapreduce.tpl",
                     template_params={
-                        "properties": {
-                            "mapred.mapper.new-api": "true",
-                            "mapred.reducer.new-api": "true",
-                            "mapred.job.queue.name": "${queueName}",
-                            "mapreduce.job.map.class": "WordCount$Map",
-                            "mapreduce.job.reduce.class": "WordCount$Reduce",
-                            "mapreduce.job.output.key.class": "org.apache.hadoop.io.Text",
-                            "mapreduce.job.output.value.class": "org.apache.hadoop.io.IntWritable",
-                            "mapreduce.input.fileinputformat.inputdir": "/user/mapred/${examplesRoot}"
-                            "/mapreduce/input",
-                            "mapreduce.output.fileoutputformat.outputdir": "/user/mapred/${examplesRoot}"
-                            "/mapreduce/output",
-                        },
+                        "props": PropertySet(
+                            config={
+                                "dataproc_cluster": "my-cluster",
+                                "gcp_region": "europe-west3",
+                                "hadoop_jars": "hdfs:///user/mapred/examples/mapreduce/lib/wordcount.jar",
+                                "hadoop_main_class": "WordCount",
+                            },
+                            job_properties={"nameNode": "hdfs://"},
+                            action_node_properties={
+                                "mapred.mapper.new-api": "true",
+                                "mapred.reducer.new-api": "true",
+                                "mapred.job.queue.name": "${queueName}",
+                                "mapreduce.job.map.class": "WordCount$Map",
+                                "mapreduce.job.reduce.class": "WordCount$Reduce",
+                                "mapreduce.job.output.key.class": "org.apache.hadoop.io.Text",
+                                "mapreduce.job.output.value.class": "org.apache.hadoop.io.IntWritable",
+                                "mapreduce.input.fileinputformat."
+                                "inputdir": "/user/mapred/${examplesRoot}/mapreduce/input",
+                                "mapreduce.output.fileoutputformat."
+                                "outputdir": "/user/mapred/${examplesRoot}/mapreduce/output",
+                            },
+                        ),
                         "params_dict": {},
                         "hdfs_files": [],
                         "hdfs_archives": [],
                     },
                 )
             ],
+            tasks,
         )
         self.assertEqual(relations, [])
 
     def test_required_imports(self):
-        mapper = self._get_mapreduce_mapper()
+        mapper = self._get_mapreduce_mapper(job_properties={}, config={})
         imps = mapper.required_imports()
         imp_str = "\n".join(imps)
         ast.parse(imp_str)
 
-    def _get_mapreduce_mapper(self, params=None):
+    def _get_mapreduce_mapper(self, job_properties, config):
         return mapreduce_mapper.MapReduceMapper(
-            oozie_node=self.mapreduce_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=params
+            oozie_node=self.mapreduce_node,
+            name="test_id",
+            dag_name="DAG_NAME_B",
+            trigger_rule=TriggerRule.DUMMY,
+            props=PropertySet(job_properties=job_properties, config=config),
         )

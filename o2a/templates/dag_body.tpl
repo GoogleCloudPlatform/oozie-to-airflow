@@ -12,16 +12,16 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
- #}
-{%- for node in nodes %}
-{%- for task in node.tasks %}
-    {{ task.rendered_template }}
+#}
+{% for node in nodes %}
+{% for task in node.tasks %}
+{{ task.rendered_template }}
 {% endfor %}
-{%- for relation in node.relations %}
+{% for relation in node.relations %}
 {{ relation.from_task_id | to_var }}.set_downstream({{ relation.to_task_id | to_var }})
 {% endfor %}
 {% endfor %}
 
-{%- for relation in relations %}
-{{ relation.from_task_id | to_var }}.set_downstream({{ relation.to_task_id | to_var}})
+{% for relation in relations %}
+{{ relation.from_task_id | to_var }}.set_downstream({{ relation.to_task_id | to_var }})
 {% endfor %}

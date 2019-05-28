@@ -26,7 +26,7 @@ class PythonSerializerModule(unittest.TestCase):
         self.assertEqual("None", python_serializer.serialize(None))
 
     def test_should_serialize_str(self):
-        self.assertEqual("'AAA'", python_serializer.serialize("AAA"))
+        self.assertEqual("'DAG_NAME_A'", python_serializer.serialize("DAG_NAME_A"))
 
     def test_should_serialize_true(self):
         self.assertEqual("True", python_serializer.serialize(True))

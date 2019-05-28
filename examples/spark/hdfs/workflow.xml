@@ -41,6 +41,12 @@
             <prepare>
                 <delete path="${nameNode}/user/${userName}/${examplesRoot}/apps/spark/lib/oozie-examples-4.3.0-copy.jar"/>
             </prepare>
+            <configuration>
+                <property>
+                    <name>test.property.node</name>
+                    <value>${nameNode}</value>
+                </property>
+            </configuration>
             <master>${master}</master>
             <name>Spark-FileCopy</name>
             <class>org.apache.oozie.example.SparkFileCopy</class>

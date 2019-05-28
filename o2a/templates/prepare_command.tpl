@@ -13,13 +13,12 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 #}
-{% if (action_node_properties is defined) and (action_node_properties | length != 0) -%}
-    PropertySet(
-        configuration_properties=CONFIGURATION_PROPERTIES,
-        job_properties=JOB_PROPERTIES,
-        action_node_properties={{ action_node_properties | tojson }})
-{% else -%}
-    PropertySet(
-        configuration_properties=CONFIGURATION_PROPERTIES,
-        job_properties=JOB_PROPERTIES)
-{% endif %}
+"$DAGS_FOLDER/../data/prepare.sh "
+"-c {{ '{{' }} params.config['dataproc_cluster'] {{ '}}' }}"
+"-r {{ '{{' }} params.config['gcp_region'] {{ '}}' }}"
+{% if delete is not none %}'-d %s'{% endif %}
+{% if mkdir is not none %}'-m %s'{% endif %} \
+% (
+ {% if delete is not none %}shlex.quote({{ delete | to_python }}),{% endif %}
+ {% if mkdir is not none %}shlex.quote({{ mkdir | to_python }}),{% endif %}
+)

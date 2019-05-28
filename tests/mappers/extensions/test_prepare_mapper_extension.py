@@ -19,15 +19,29 @@ from xml.etree import ElementTree as ET
 from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.task import Task
-from o2a.mappers.prepare_mixin import PrepareMixin
+from o2a.mappers.base_mapper import BaseMapper
+from o2a.mappers.extensions.prepare_mapper_extension import PrepareMapperExtension
 from o2a.o2a_libs.property_utils import PropertySet
 
+TEST_MAPPER_NAME = "mapper"
 
-class TestPrepareMixin(unittest.TestCase):
+
+class TestPrepareMapperExtension(unittest.TestCase):
     delete_path1 = "/examples/output-data/demo/pig-node"
     delete_path2 = "/examples/output-data/demo/pig-node2"
     mkdir_path1 = "/examples/input-data/demo/pig-node"
     mkdir_path2 = "/examples/input-data/demo/pig-node2"
+
+    @staticmethod
+    def get_mapper_extension(node: ET.Element, props: PropertySet):
+        mapper = BaseMapper(
+            oozie_node=node,
+            trigger_rule=TriggerRule.DUMMY,
+            name=TEST_MAPPER_NAME,
+            props=props,
+            dag_name="dag",
+        )
+        return PrepareMapperExtension(mapper)
 
     def test_with_prepare(self):
         cluster = "my-cluster"
@@ -47,16 +61,14 @@ class TestPrepareMixin(unittest.TestCase):
 </pig>
 """
         pig_node_prepare = ET.fromstring(pig_node_prepare_str)
-        mixin = PrepareMixin(pig_node_prepare)
-        self.assertTrue(mixin.has_prepare())
-        task = mixin.get_prepare_task(
-            name="test_node",
-            trigger_rule=TriggerRule.DUMMY,
-            props=PropertySet(config=config, job_properties=job_properties),
+        extension = self.get_mapper_extension(
+            pig_node_prepare, props=PropertySet(config=config, job_properties=job_properties)
         )
+        self.assertTrue(extension.has_prepare())
+        task = extension.get_prepare_task()
         self.assertEqual(
             Task(
-                task_id="test_node_prepare",
+                task_id="mapper_prepare",
                 template_name="prepare.tpl",
                 trigger_rule="dummy",
                 template_params={
@@ -75,13 +87,12 @@ class TestPrepareMixin(unittest.TestCase):
         # language=XML
         pig_node_str = "<pig><name-node>hdfs://</name-node></pig>"
         pig_node = ET.fromstring(pig_node_str)
-        mixin = PrepareMixin(pig_node)
-        self.assertFalse(mixin.has_prepare())
-        prepare_task = mixin.get_prepare_task(
-            name="task",
-            trigger_rule=TriggerRule.DUMMY,
-            props=PropertySet(config=config, job_properties=job_properties),
+        extension = self.get_mapper_extension(
+            node=pig_node, props=PropertySet(config=config, job_properties=job_properties)
         )
+
+        self.assertFalse(extension.has_prepare())
+        prepare_task = extension.get_prepare_task()
         self.assertIsNone(prepare_task)
 
     def test_empty_prepare(self):
@@ -98,11 +109,9 @@ class TestPrepareMixin(unittest.TestCase):
 </pig>
 """
         pig_node = ET.fromstring(pig_node_str)
-        mixin = PrepareMixin(pig_node)
-        self.assertFalse(mixin.has_prepare())
-        prepare_task = mixin.get_prepare_task(
-            name="task",
-            trigger_rule=TriggerRule.DUMMY,
-            props=PropertySet(config=config, job_properties=job_properties),
+        extension = self.get_mapper_extension(
+            node=pig_node, props=PropertySet(config=config, job_properties=job_properties)
         )
+        self.assertFalse(extension.has_prepare())
+        prepare_task = extension.get_prepare_task()
         self.assertIsNone(prepare_task)

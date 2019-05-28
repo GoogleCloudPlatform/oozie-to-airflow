@@ -12,12 +12,14 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
- #}
+#}
 {% for dependency in dependencies %}
 {{ dependency }}
-{%- endfor %}
+{% endfor %}
 
-PARAMS = {{ params | to_python }}
+CONFIG={{ config | to_python }}
+
+JOB_PROPS={{ job_properties | to_python }}
 
 def sub_dag(parent_dag_name, child_dag_name, start_date, schedule_interval):
     with models.DAG(

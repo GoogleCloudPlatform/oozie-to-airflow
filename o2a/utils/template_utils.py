@@ -16,13 +16,16 @@
 from typing import Dict, Any
 
 import jinja2
+
 from o2a.definitions import TPL_PATH
 from o2a.utils import python_serializer
 
 from o2a.utils.variable_name_utils import convert_to_python_variable
 
 TEMPLATE_LOADER = jinja2.FileSystemLoader(searchpath=TPL_PATH)
-TEMPLATE_ENV = jinja2.Environment(loader=TEMPLATE_LOADER, undefined=jinja2.StrictUndefined)
+TEMPLATE_ENV = jinja2.Environment(
+    loader=TEMPLATE_LOADER, undefined=jinja2.StrictUndefined, trim_blocks=True, lstrip_blocks=True
+)
 TEMPLATE_CACHES: Dict[str, Any] = {}
 
 TEMPLATE_ENV.filters["to_var"] = convert_to_python_variable
