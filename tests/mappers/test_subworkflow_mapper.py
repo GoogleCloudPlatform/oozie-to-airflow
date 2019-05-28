@@ -81,7 +81,6 @@ class TestSubworkflowMapper(TestCase):
         self.assertEqual(self.subworkflow_node, mapper.oozie_node)
         self.assertEqual(self.main_params, mapper.params)
         # Propagate config node is present, should forward config properties
-        self.assertEqual({"resourceManager": "localhost:8032"}, mapper.get_config_properties())
         self.assertTrue(os.path.isfile(self.SUBDAG_TEST_FILEPATH))
 
     @mock.patch("o2a.utils.el_utils.parse_els")

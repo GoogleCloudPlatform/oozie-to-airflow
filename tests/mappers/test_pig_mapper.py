@@ -68,7 +68,6 @@ class TestPigMapper(unittest.TestCase):
         self.assertEqual("localhost:8032", mapper.resource_manager)
         self.assertEqual("hdfs://", mapper.name_node)
         self.assertEqual("id.pig", mapper.script_file_name)
-        self.assertEqual("${queueName}", mapper.properties["mapred.job.queue.name"])
         self.assertEqual("/user/${wf:user()}/${examplesRoot}/input-data/text", mapper.params_dict["INPUT"])
         self.assertEqual(
             "/user/${wf:user()}/${examplesRoot}/output-data/demo/pig-node", mapper.params_dict["OUTPUT"]
@@ -96,7 +95,6 @@ class TestPigMapper(unittest.TestCase):
         self.assertEqual("localhost:9999", mapper.resource_manager)
         self.assertEqual("hdfs://", mapper.name_node)
         self.assertEqual("id_el.pig", mapper.script_file_name)
-        self.assertEqual("myQueue", mapper.properties["mapred.job.queue.name"])
         self.assertEqual("/user/${wf:user()}/examples/input-data/text", mapper.params_dict["INPUT"])
         self.assertEqual(
             "/user/${wf:user()}/examples/output-data/demo/pig-node", mapper.params_dict["OUTPUT"]
@@ -125,10 +123,7 @@ class TestPigMapper(unittest.TestCase):
                     task_id="test_id",
                     template_name="pig.tpl",
                     template_params={
-                        "properties": {
-                            "mapred.job.queue.name": "${queueName}",
-                            "mapred.map.output.compress": "false",
-                        },
+                        "properties": {},
                         "params_dict": {
                             "INPUT": "/user/${wf:user()}/${examplesRoot}/input-data/text",
                             "OUTPUT": "/user/${wf:user()}/${examplesRoot}/output-data/demo/pig-node",
