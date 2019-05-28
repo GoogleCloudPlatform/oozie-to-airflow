@@ -57,10 +57,13 @@ class DecisionMapper(BaseMapper):
         self,
         oozie_node: Element,
         name: str,
+        dag_name: str,
         trigger_rule: str = TriggerRule.ALL_DONE,
         params: Dict[str, str] = None,
     ):
-        BaseMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule)
+        BaseMapper.__init__(
+            self, oozie_node=oozie_node, name=name, dag_name=dag_name, trigger_rule=trigger_rule
+        )
         if params is None:
             params = {}
         self.params: Dict[str, str] = params
