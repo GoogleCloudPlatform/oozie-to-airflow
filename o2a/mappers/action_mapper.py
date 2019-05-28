@@ -14,6 +14,7 @@
 # limitations under the License.
 """Base class for all action nappers"""
 from typing import Dict
+from abc import ABC
 from xml.etree.ElementTree import Element
 
 from airflow.utils.trigger_rule import TriggerRule
@@ -24,13 +25,17 @@ from o2a.utils import xml_utils, el_utils
 
 # pylint: disable=abstract-method
 # noinspection PyAbstractClass
-class ActionMapper(BaseMapper):
+class ActionMapper(BaseMapper, ABC):
     """Base class for all action mappers"""
 
     def __init__(self, oozie_node: Element, name: str, trigger_rule: str = TriggerRule.ALL_SUCCESS, **kwargs):
         super().__init__(oozie_node, name, **kwargs)
         self.properties: Dict[str, str] = {}
         self.trigger_rule: str = trigger_rule
+
+    def on_parse_node(self):
+        super().on_parse_node()
+        self._parse_config()
 
     def _parse_config(self):
         config = self.oozie_node.find("configuration")

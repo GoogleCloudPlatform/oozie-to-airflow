@@ -25,7 +25,7 @@ from o2a.converter.oozie_converter import OozieConverter
 from o2a.converter.task import Task
 from o2a.definitions import EXAMPLES_PATH
 from o2a.mappers.action_mapper import ActionMapper
-from o2a.utils import el_utils, xml_utils
+from o2a.utils import el_utils
 
 
 # pylint: disable=too-many-instance-attributes
@@ -68,7 +68,6 @@ class SubworkflowMapper(ActionMapper):
         # TODO: but for now we assume app is in "examples"
         app_path = os.path.join(EXAMPLES_PATH, self.app_name)
         logging.info(f"Converting subworkflow from {app_path}")
-        self._parse_config()
         converter = OozieConverter(
             input_directory_path=app_path,
             output_directory_path=self.output_directory_path,
@@ -86,18 +85,6 @@ class SubworkflowMapper(ActionMapper):
         # `len(self._children) != 0`,
         # and `propagate_configuration` is an empty node so __bool__() will always return False.
         return self.properties if propagate_configuration is not None else {}
-
-    def _parse_config(self):
-        config = self.oozie_node.find("configuration")
-        if config:
-            property_nodes = xml_utils.find_nodes_by_tag(config, "property")
-            if property_nodes:
-                for node in property_nodes:
-                    name = node.find("name").text
-                    value = el_utils.replace_el_with_var(
-                        node.find("value").text, params=self.params, quote=False
-                    )
-                    self.properties[name] = value
 
     def to_tasks_and_relations(self):
         tasks = [
