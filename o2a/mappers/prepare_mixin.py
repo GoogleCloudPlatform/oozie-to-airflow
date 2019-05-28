@@ -28,14 +28,13 @@ class PrepareMixin:
         self.oozie_node_for_prepare = oozie_node
 
     def has_prepare(self):
-        prepare_nodes = xml_utils.find_nodes_by_tag(self.oozie_node_for_prepare, "prepare")
-        _has_prepare = False
-        for node in prepare_nodes:
-            delete_nodes = xml_utils.find_nodes_by_tag(node, "delete")
-            mkdir_nodes = xml_utils.find_node_by_tag(node, "mkdir")
+        prepare_node = xml_utils.find_node_by_tag(self.oozie_node_for_prepare, "prepare")
+        if prepare_node:
+            delete_nodes = xml_utils.find_nodes_by_tag(prepare_node, "delete")
+            mkdir_nodes = xml_utils.find_node_by_tag(prepare_node, "mkdir")
             if delete_nodes or mkdir_nodes:
-                _has_prepare = True
-        return _has_prepare
+                return True
+        return False
 
     def get_prepare_task(self, name: str, trigger_rule: str, property_set) -> Optional[Task]:
         delete_paths, mkdir_paths = self.parse_prepare_node(property_set=property_set)
