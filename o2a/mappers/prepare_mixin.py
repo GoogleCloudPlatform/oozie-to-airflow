@@ -40,12 +40,8 @@ class PrepareMixin:
         delete_paths, mkdir_paths = self.parse_prepare_node(property_set=property_set)
         if not delete_paths and not mkdir_paths:
             return None
-        delete = None
-        mkdir = None
-        if delete_paths:
-            delete = " ".join(delete_paths)
-        if mkdir_paths:
-            mkdir = " ".join(mkdir_paths)
+        delete = " ".join(delete_paths) if delete_paths else None
+        mkdir = " ".join(mkdir_paths) if mkdir_paths else None
         return Task(
             task_id=name + "_prepare",
             template_name="prepare.tpl",
