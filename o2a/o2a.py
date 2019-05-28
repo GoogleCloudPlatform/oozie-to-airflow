@@ -25,7 +25,7 @@ from subprocess import CalledProcessError, check_call
 from o2a.converter.mappers import ACTION_MAP
 from o2a.converter.oozie_converter import OozieConverter
 from o2a.converter.constants import HDFS_FOLDER
-from o2a.utils.constants import CONFIGURATION_PROPERTIES, WORKFLOW_XML
+from o2a.utils.constants import CONFIG, WORKFLOW_XML
 
 INDENT = 4
 
@@ -58,14 +58,14 @@ def main():
     if not dag_name:
         dag_name = os.path.basename(input_directory_path)
 
-    conf_path = os.path.join(input_directory_path, CONFIGURATION_PROPERTIES)
+    conf_path = os.path.join(input_directory_path, CONFIG)
     if not os.path.isfile(conf_path):
         logging.warning(
             f"""
 
 #################################### WARNING ###########################################
 
-The '{CONFIGURATION_PROPERTIES}' file was not detected in {input_directory_path}.
+The '{CONFIG}' file was not detected in {input_directory_path}.
 It may be necessary to provide input parameters for the workflow.
 
 In case of any conversion errors make sure this configuration file is really not needed.

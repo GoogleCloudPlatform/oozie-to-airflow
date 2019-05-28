@@ -13,15 +13,13 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 #}
-{{ task_id | to_var }} = dataproc_operator.DataProcPigOperator(
-    task_id={{ task_id | to_python }},
-    trigger_rule={{ trigger_rule | to_python }},
-    query_uri='%s/%s' % (CONFIG['gcp_uri_prefix'], {{ script_file_name | to_python }}),
-    variables={{ params_dict | to_python }},
-    dataproc_pig_properties={% include "props.tpl" %}.merged,
-    cluster_name=CONFIG['dataproc_cluster'],
-    gcp_conn_id=CONFIG['gcp_conn_id'],
-    region=CONFIG['gcp_region'],
-    dataproc_job_id={{ task_id | to_python }},
-    params={% include "props.tpl" %},
-)
+{% if (action_node_properties is defined) and (action_node_properties | length != 0) -%}
+    PropertySet(
+        config=CONFIG,
+        job_properties=JOB_PROPS,
+        action_node_properties={{ action_node_properties | tojson }})
+{% else -%}
+    PropertySet(
+        config=CONFIG,
+        job_properties=JOB_PROPS)
+{% endif %}

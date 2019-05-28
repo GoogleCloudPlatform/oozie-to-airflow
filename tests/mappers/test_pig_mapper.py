@@ -22,6 +22,7 @@ from airflow.utils.trigger_rule import TriggerRule
 from o2a.converter.task import Task
 from o2a.converter.relation import Relation
 from o2a.mappers import pig_mapper
+from o2a.o2a_libs.property_utils import PropertySet
 
 
 class TestPigMapper(unittest.TestCase):
@@ -59,8 +60,10 @@ class TestPigMapper(unittest.TestCase):
         self.pig_node = ET.fromstring(pig_node_str)
 
     def test_create_mapper_no_jinja(self):
-        params = {"nameNode": "hdfs://"}
-        mapper = self._get_pig_mapper(params=params)
+        job_properties = {"nameNode": "hdfs://"}
+        config = {}
+        mapper = self._get_pig_mapper(job_properties=job_properties, config=config)
+        mapper.on_parse_node()
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
@@ -68,6 +71,7 @@ class TestPigMapper(unittest.TestCase):
         self.assertEqual("localhost:8032", mapper.resource_manager)
         self.assertEqual("hdfs://", mapper.name_node)
         self.assertEqual("id.pig", mapper.script_file_name)
+        self.assertEqual("${queueName}", mapper.props.action_node_properties["mapred.job.queue.name"])
         self.assertEqual("/user/${wf:user()}/${examplesRoot}/input-data/text", mapper.params_dict["INPUT"])
         self.assertEqual(
             "/user/${wf:user()}/${examplesRoot}/output-data/demo/pig-node", mapper.params_dict["OUTPUT"]
@@ -78,15 +82,17 @@ class TestPigMapper(unittest.TestCase):
         self.pig_node.find("resource-manager").text = "${resourceManager}"
         self.pig_node.find("name-node").text = "${nameNode}"
         self.pig_node.find("script").text = "${scriptName}"
-        params = {
+        job_properties = {
             "resourceManager": "localhost:9999",
             "nameNode": "hdfs://",
             "queueName": "myQueue",
             "examplesRoot": "examples",
             "scriptName": "id_el.pig",
         }
+        config = {}
 
-        mapper = self._get_pig_mapper(params=params)
+        mapper = self._get_pig_mapper(job_properties=job_properties, config=config)
+        mapper.on_parse_node()
 
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
@@ -95,35 +101,41 @@ class TestPigMapper(unittest.TestCase):
         self.assertEqual("localhost:9999", mapper.resource_manager)
         self.assertEqual("hdfs://", mapper.name_node)
         self.assertEqual("id_el.pig", mapper.script_file_name)
+        self.assertEqual("myQueue", mapper.props.action_node_properties["mapred.job.queue.name"])
         self.assertEqual("/user/${wf:user()}/examples/input-data/text", mapper.params_dict["INPUT"])
         self.assertEqual(
             "/user/${wf:user()}/examples/output-data/demo/pig-node", mapper.params_dict["OUTPUT"]
         )
 
     def test_to_tasks_and_relations(self):
-        params = {"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3", "nameNode": "hdfs://"}
-        mapper = self._get_pig_mapper(params=params)
-
+        job_properties = {"nameNode": "hdfs://"}
+        config = {"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"}
+        mapper = self._get_pig_mapper(job_properties=job_properties, config=config)
+        mapper.on_parse_node()
         tasks, relations = mapper.to_tasks_and_relations()
 
         self.assertEqual(
-            tasks,
             [
                 Task(
                     task_id="test_id_prepare",
                     template_name="prepare.tpl",
                     template_params={
-                        "prepare_command": "$DAGS_FOLDER/../data/prepare.sh -c my-cluster -r europe-west3 -d "
-                        '"/examples/output-data/demo/pig-node /examples/output-data/demo'
-                        '/pig-node2" -m "/examples/input-data/demo/pig-node /examples'
-                        '/input-data/demo/pig-node2"'
+                        "delete": "/examples/output-data/demo/pig-node /examples/output-data/demo/pig-node2",
+                        "mkdir": "/examples/input-data/demo/pig-node /examples/input-data/demo/pig-node2",
                     },
                 ),
                 Task(
                     task_id="test_id",
                     template_name="pig.tpl",
                     template_params={
-                        "properties": {},
+                        "props": PropertySet(
+                            config={"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"},
+                            job_properties={"nameNode": "hdfs://"},
+                            action_node_properties={
+                                "mapred.job.queue.name": "${queueName}",
+                                "mapred.map.output.compress": "false",
+                            },
+                        ),
                         "params_dict": {
                             "INPUT": "/user/${wf:user()}/${examplesRoot}/input-data/text",
                             "OUTPUT": "/user/${wf:user()}/${examplesRoot}/output-data/demo/pig-node",
@@ -132,23 +144,30 @@ class TestPigMapper(unittest.TestCase):
                     },
                 ),
             ],
+            tasks,
         )
-        self.assertEqual(relations, [Relation(from_task_id="test_id_prepare", to_task_id="test_id")])
+        self.assertEqual([Relation(from_task_id="test_id_prepare", to_task_id="test_id")], relations)
 
     def test_first_task_id(self):
-        params = {"nameNode": "hdfs://"}
-        mapper = self._get_pig_mapper(params=params)
-        self.assertEqual(mapper.first_task_id, "test_id_prepare")
+        job_properties = {"nameNode": "hdfs://"}
+        config = {}
+        mapper = self._get_pig_mapper(job_properties=job_properties, config=config)
+        self.assertEqual("test_id_prepare", mapper.first_task_id)
 
     def test_required_imports(self):
-        params = {"nameNode": "hdfs://"}
-        mapper = self._get_pig_mapper(params=params)
+        job_properties = {"nameNode": "hdfs://"}
+        config = {}
+        mapper = self._get_pig_mapper(job_properties=job_properties, config=config)
         imps = mapper.required_imports()
         imp_str = "\n".join(imps)
         ast.parse(imp_str)
 
-    def _get_pig_mapper(self, params=None):
+    def _get_pig_mapper(self, job_properties, config):
         mapper = pig_mapper.PigMapper(
-            oozie_node=self.pig_node, name="test_id", trigger_rule=TriggerRule.DUMMY, params=params
+            oozie_node=self.pig_node,
+            name="test_id",
+            dag_name="DAG_NAME_B",
+            trigger_rule=TriggerRule.DUMMY,
+            props=PropertySet(job_properties=job_properties, config=config),
         )
         return mapper

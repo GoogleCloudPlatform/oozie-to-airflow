@@ -28,7 +28,7 @@ class Workflow:  # pylint: disable=too-few-public-methods
         self,
         input_directory_path: str,
         output_directory_path: str,
-        dag_name: str = None,
+        dag_name: str,
         relations: Set[Relation] = None,
         nodes: Dict[str, ParsedActionNode] = None,
         dependencies: Set[str] = None,
@@ -43,9 +43,11 @@ class Workflow:  # pylint: disable=too-few-public-methods
         # These are the general dependencies required that every operator
         # requires.
         self.dependencies = dependencies or {
+            "import shlex",
             "import datetime",
-            "from o2a.o2a_libs.el_basic_functions import * ",
-            "from o2a.o2a_libs.el_wf_functions import * ",
+            "from o2a.o2a_libs.el_basic_functions import *",
+            "from o2a.o2a_libs.el_wf_functions import *",
+            "from o2a.o2a_libs.property_utils import PropertySet",
             "from airflow import models",
             "from airflow.utils.trigger_rule import TriggerRule",
             "from airflow.utils import dates",

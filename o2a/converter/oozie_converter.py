@@ -35,8 +35,9 @@ from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.workflow import Workflow
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.utils import el_utils
-from o2a.utils.constants import CONFIGURATION_PROPERTIES, JOB_PROPERTIES
+from o2a.utils.constants import CONFIG, JOB_PROPS
 from o2a.utils.el_utils import comma_separated_string_to_list
+from o2a.o2a_libs.property_utils import PropertySet
 from o2a.utils.template_utils import render_template
 
 AutoflakeArgs = namedtuple(
@@ -67,6 +68,7 @@ class OozieConverter:
         start_days_ago: int = None,
         schedule_interval: str = None,
         output_dag_name: str = None,
+        initial_props: PropertySet = None,
     ):
         """
         :param input_directory_path: Oozie workflow directory.
@@ -85,21 +87,26 @@ class OozieConverter:
         self.schedule_interval = schedule_interval
         self.dag_name = dag_name
         self.template_name = template_name
-        self.configuration_properties_file = os.path.join(input_directory_path, CONFIGURATION_PROPERTIES)
-        self.job_properties_file = os.path.join(input_directory_path, JOB_PROPERTIES)
+        self.config_file = os.path.join(input_directory_path, CONFIG)
+        self.job_properties_file = os.path.join(input_directory_path, JOB_PROPS)
         self.output_dag_name = (
             os.path.join(output_directory_path, output_dag_name)
             if output_dag_name
             else os.path.join(output_directory_path, self.dag_name) + ".py"
         )
-        params = {"user.name": user or os.environ["USER"]}
-        params = self.add_properties_to_params(params)
-        params = el_utils.parse_els(self.configuration_properties_file, params)
-        self.params = params
+        # Propagate the configuration in case initial property set is passed
+        self.job_properties = {} if not initial_props else initial_props.job_properties
+        self.job_properties["user.name"] = user or os.environ["USER"]
+        self.config: Dict[str, str] = {}
+        self.props = PropertySet(
+            job_properties=self.job_properties, config=self.config, action_node_properties={}
+        )
+        self.read_and_update_job_properties_replace_el()
+        self.read_config_replace_el()
         self.parser = parser.OozieParser(
             input_directory_path=input_directory_path,
             output_directory_path=output_directory_path,
-            params=params,
+            props=self.props,
             dag_name=dag_name,
             action_mapper=action_mapper,
         )
@@ -133,11 +140,23 @@ class OozieConverter:
             p_node.tasks = tasks
             p_node.relations = relations
 
-    def add_properties_to_params(self, params: Dict[str, str]):
+    def read_config_replace_el(self):
         """
-        Template method, can be overridden.
+        Reads configuration properties to config dictionary.
+        Replaces EL properties within.
+        :return: None
         """
-        return el_utils.parse_els(self.job_properties_file, params)
+        self.config = el_utils.parse_els(properties_file=self.config_file, props=self.props)
+
+    def read_and_update_job_properties_replace_el(self):
+        """
+        Reads job properties and updates job_properties dictionary with the read values
+        Replaces EL job_properties within.
+        :return: None
+        """
+        self.job_properties.update(
+            el_utils.parse_els(properties_file=self.job_properties_file, props=self.props)
+        )
 
     def create_dag_file(self, workflow: Workflow):
         """
@@ -191,15 +210,16 @@ class OozieConverter:
         """
         Creates text representation of the workflow.
         """
-        converted_params: Dict[str, Union[List[str], str]] = {
-            x: comma_separated_string_to_list(y) for x, y in self.params.items()
+        converted_job_properties: Dict[str, Union[List[str], str]] = {
+            x: comma_separated_string_to_list(y) for x, y in self.job_properties.items()
         }
         dag_file = render_template(
             template_name=self.template_name,
             dag_name=self.dag_name,
             schedule_interval=self.schedule_interval,
             start_days_ago=self.start_days_ago,
-            params=converted_params,
+            job_properties=converted_job_properties,
+            config=self.config,
             relations=workflow.relations,
             nodes=list(workflow.nodes.values()),
             dependencies=workflow.dependencies,
