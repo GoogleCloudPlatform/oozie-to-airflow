@@ -23,11 +23,11 @@ from o2a.mappers.base_mapper import BaseMapper
 from o2a.utils import xml_utils, el_utils
 
 
-# pylint: disable=abstract-method
-# noinspection PyAbstractClass
 from o2a.o2a_libs.property_utils import PropertySet
 
 
+# pylint: disable=abstract-method
+# noinspection PyAbstractClass
 class ActionMapper(BaseMapper, ABC):
     """Base class for all action mappers"""
 
