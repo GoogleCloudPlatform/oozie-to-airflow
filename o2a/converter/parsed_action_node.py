@@ -58,12 +58,6 @@ class ParsedActionNode:
     def get_error_downstream_name(self) -> Optional[str]:
         return self.error_xml
 
-    def __repr__(self) -> str:
-        return (
-            f"ParsedActionNode(mapper={repr(self.mapper)}, downstream_names={self.downstream_names}, "
-            f"is_error={self.is_error}, is_ok={self.is_ok}, error_xml={self.error_xml})"
-        )
-
     @property
     def first_task_id(self) -> str:
         """
@@ -117,3 +111,16 @@ class ParsedActionNode:
             self.mapper.trigger_rule = TriggerRule.ALL_SUCCESS
         else:
             self.mapper.trigger_rule = TriggerRule.ONE_FAILED
+
+    def __repr__(self) -> str:
+        return (
+            f"ParsedActionNode(mapper={self.mapper}, "
+            f"downstream_names={self.downstream_names}, "
+            f"is_error={self.is_error}, error_xml={self.error_xml}, "
+            f"tasks={self.tasks}, relations={self.relations})"
+        )
+
+    def __eq__(self, other):
+        if isinstance(other, self.__class__):
+            return self.__dict__ == other.__dict__
+        return False
