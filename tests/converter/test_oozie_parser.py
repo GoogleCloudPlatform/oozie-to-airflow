@@ -23,7 +23,7 @@ from parameterized import parameterized
 
 from o2a.converter import parser
 from o2a.converter import parsed_action_node
-from o2a.converter.mappers import ACTION_MAP, CONTROL_MAP
+from o2a.converter.mappers import ACTION_MAP
 from o2a.converter.relation import Relation
 from o2a.definitions import EXAMPLE_DEMO_PATH, EXAMPLES_PATH
 from o2a.mappers import dummy_mapper, pig_mapper
@@ -38,7 +38,7 @@ class TestOozieParser(unittest.TestCase):
             output_directory_path="/tmp",
             params=params,
             action_mapper=ACTION_MAP,
-            control_mapper=CONTROL_MAP,
+            dag_name="BBB",
         )
 
     @mock.patch("o2a.mappers.kill_mapper.KillMapper.on_parse_node", wraps=None)
@@ -333,17 +333,17 @@ class TestOozieParser(unittest.TestCase):
     def test_create_relations(self):
         oozie_node = ET.Element("dummy")
         op1 = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task1")
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task1", dag_name="BBB")
         )
         op1.downstream_names = ["task2", "task3"]
         op1.error_xml = "fail1"
         op2 = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task2")
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task2", dag_name="BBB")
         )
         op2.downstream_names = ["task3", "task4"]
         op2.error_xml = "fail1"
         op3 = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task3")
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task3", dag_name="BBB")
         )
         op3.downstream_names = ["end1"]
         op3.error_xml = "fail1"
@@ -356,10 +356,10 @@ class TestOozieParser(unittest.TestCase):
             }
         )
         end = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="end1")
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="end1", dag_name="BBB")
         )
         fail = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="fail1")
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="fail1", dag_name="BBB")
         )
         op_dict = {"task1": op1, "task2": op2, "task3": op3, "task4": op4, "end1": end, "fail1": fail}
         self.parser.workflow.nodes.update(op_dict)
@@ -386,25 +386,25 @@ class TestOozieParser(unittest.TestCase):
     def test_update_trigger_rules(self):
         oozie_node = ET.Element("dummy")
         op1 = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task1")
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task1", dag_name="BBB")
         )
         op1.downstream_names = ["task2", "task3"]
         op1.error_xml = "fail1"
         op2 = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task2")
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task2", dag_name="BBB")
         )
         op2.downstream_names = ["task3"]
         op2.error_xml = "fail1"
         op3 = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task3")
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task3", dag_name="BBB")
         )
         op3.downstream_names = ["end1"]
         op3.error_xml = "fail1"
         end = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="end1")
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="end1", dag_name="BBB")
         )
         fail = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="fail1")
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="fail1", dag_name="BBB")
         )
         op_dict = {"task1": op1, "task2": op2, "task3": op3, "end1": end, "fail1": fail}
 
@@ -551,7 +551,7 @@ class TestOozieExamples(unittest.TestCase):
             output_directory_path="/tmp",
             params=case.params,
             action_mapper=ACTION_MAP,
-            control_mapper=CONTROL_MAP,
+            dag_name="BBB",
         )
         current_parser.parse_workflow()
         self.assertEqual(case.node_names, set(current_parser.workflow.nodes.keys()))

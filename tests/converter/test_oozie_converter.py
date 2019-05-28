@@ -22,7 +22,7 @@ from xml.etree.ElementTree import Element
 
 from o2a import o2a
 from o2a.converter.oozie_converter import OozieConverter, AutoflakeArgs
-from o2a.converter.mappers import CONTROL_MAP, ACTION_MAP
+from o2a.converter.mappers import ACTION_MAP
 from o2a.converter.parsed_action_node import ParsedActionNode
 
 from o2a.converter.task import Task
@@ -38,7 +38,6 @@ class TestOozieConverter(TestCase):
             input_directory_path="/input_directory_path/",
             output_directory_path="/tmp",
             action_mapper=ACTION_MAP,
-            control_mapper=CONTROL_MAP,
             user="USER",
         )
 
@@ -65,7 +64,7 @@ class TestOozieConverter(TestCase):
             input_directory_path="in_dir",
             output_directory_path="out_dir",
             relations={Relation(from_task_id="AAA", to_task_id="BBB")},
-            nodes=dict(AAA=ParsedActionNode(DummyMapper(Element("dummy"), name="AAA"))),
+            nodes=dict(AAA=ParsedActionNode(DummyMapper(Element("dummy"), name="AAA", dag_name="BBB"))),
             dependencies={"import AAAA"},
         )
         # When
@@ -84,7 +83,7 @@ class TestOozieConverter(TestCase):
             input_directory_path="in_dir",
             output_directory_path="out_dir",
             relations={Relation(from_task_id="AAA", to_task_id="BBB")},
-            nodes=dict(AAA=ParsedActionNode(DummyMapper(Element("dummy"), name="AAA"))),
+            nodes=dict(AAA=ParsedActionNode(DummyMapper(Element("dummy"), name="AAA", dag_name="BBB"))),
             dependencies={"import AAAA"},
         )
         parse_workflow_mock.return_value = workflow
@@ -114,7 +113,7 @@ class TestOozieConverter(TestCase):
     @mock.patch("o2a.converter.oozie_converter.render_template", return_value="TEXT_CONTENT")
     def test_write_dag_file(self, render_template_mock):
         relations = {Relation(from_task_id="TASK_1", to_task_id="TASK_2")}
-        nodes = dict(TASK_1=ParsedActionNode(DummyMapper(Element("dummy"), name="TASK_1")))
+        nodes = dict(TASK_1=ParsedActionNode(DummyMapper(Element("dummy"), name="TASK_1", dag_name="BBB")))
         dependencies = {"import awesome_stuff"}
         workflow = Workflow(
             input_directory_path="/tmp/input_directory",

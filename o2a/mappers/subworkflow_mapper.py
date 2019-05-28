@@ -25,7 +25,6 @@ from o2a.converter.oozie_converter import OozieConverter
 from o2a.converter.task import Task
 from o2a.definitions import EXAMPLES_PATH
 from o2a.mappers.action_mapper import ActionMapper
-from o2a.mappers.base_mapper import BaseMapper
 from o2a.utils import el_utils, xml_utils
 
 
@@ -44,7 +43,6 @@ class SubworkflowMapper(ActionMapper):
         input_directory_path: str,
         output_directory_path: str,
         action_mapper: Dict[str, Type[ActionMapper]],
-        control_mapper: Dict[str, Type[BaseMapper]],
         trigger_rule=TriggerRule.ALL_SUCCESS,
         params=None,
         **kwargs,
@@ -60,7 +58,6 @@ class SubworkflowMapper(ActionMapper):
         self.output_directory_path = output_directory_path
         self.dag_name = dag_name
         self.action_mapper = action_mapper
-        self.control_mapper = control_mapper
         self._parse_oozie_node()
 
     def _parse_oozie_node(self):
@@ -78,7 +75,6 @@ class SubworkflowMapper(ActionMapper):
             start_days_ago=0,
             template_name="subworkflow.tpl",
             action_mapper=self.action_mapper,
-            control_mapper=self.control_mapper,
             dag_name=f"{self.dag_name}.{self.task_id}",
             output_dag_name=f"subdag_{self.app_name}.py",
         )
