@@ -16,17 +16,17 @@
 
 
 {{ task_id | to_var }} = dataproc_operator.DataProcSparkOperator(
-    task_id={{ task_id | tojson }},
-    trigger_rule={{ trigger_rule | tojson }},
-    {% if main_jar %}main_jar={{ main_jar | tojson }},{% endif %}
-    {% if main_class %}main_class={{ main_class | tojson }},{% endif %}
-    arguments={{ arguments | tojson }},
-    {% if archives %}archives={{ archives | tojson }},{% endif %}
-    {% if files %}files={{ files | tojson }},{% endif %}
-    job_name={{ job_name | tojson }},
+    task_id={{ task_id | to_python }},
+    trigger_rule={{ trigger_rule | to_python }},
+    {% if main_jar %}main_jar={{ main_jar | to_python }},{% endif %}
+    {% if main_class %}main_class={{ main_class | to_python }},{% endif %}
+    arguments={{ arguments | to_python }},
+    {% if archives %}archives={{ archives | to_python }},{% endif %}
+    {% if files %}files={{ files | to_python }},{% endif %}
+    job_name={{ job_name | to_python }},
     cluster_name=PARAMS['dataproc_cluster'],
-    {% if dataproc_spark_jars %}dataproc_spark_jars={{ dataproc_spark_jars | tojson }},{% endif %}
-    {% if dataproc_spark_properties %}dataproc_spark_properties={{ dataproc_spark_properties | tojson }},{% endif %}
+    {% if dataproc_spark_jars %}dataproc_spark_jars={{ dataproc_spark_jars | to_python }},{% endif %}
+    {% if dataproc_spark_properties %}dataproc_spark_properties={{ dataproc_spark_properties | to_python }},{% endif %}
     gcp_conn_id=PARAMS['gcp_conn_id'],
     region=PARAMS['gcp_region']
 )
