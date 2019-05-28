@@ -14,18 +14,14 @@
   limitations under the License.
 #}
 {{ task_id | to_var }} = dataproc_operator.DataProcPigOperator(
-    task_id='{{ task_id | python_escape }}',
-    trigger_rule='{{ trigger_rule | python_escape }}',
-    query_uri='%s/%s' % (CONFIGURATION_PROPERTIES['gcp_uri_prefix'], '{{ script_file_name | python_escape }}'),
-    variables={
-        {% for key, value in params_dict.items() %}
-            '{{key | python_escape}}': {% if value is none %}None{% else %}'{{ value | python_escape }}'{% endif %},
-        {% endfor %}
-    },
+    task_id={{ task_id | python_escape_string }},
+    trigger_rule={{ trigger_rule | python_escape_string }},
+    query_uri='%s/%s' % (CONFIGURATION_PROPERTIES['gcp_uri_prefix'], {{ script_file_name | python_escape_string }}),
+    variables={{ params_dict | python_escape_dictionary }},
     dataproc_pig_properties={% include "property_set.tpl" %}.job_properties_merged,
     cluster_name=CONFIGURATION_PROPERTIES['dataproc_cluster'],
     gcp_conn_id=CONFIGURATION_PROPERTIES['gcp_conn_id'],
     region=CONFIGURATION_PROPERTIES['gcp_region'],
-    dataproc_job_id='{{ task_id | python_escape }}',
+    dataproc_job_id={{ task_id | python_escape_string }},
     params={% include "property_set.tpl" %},
 )

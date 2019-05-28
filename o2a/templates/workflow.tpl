@@ -18,19 +18,12 @@
 {{ dependency }}
 {% endfor %}
 
-JOB_PROPERTIES={
-   {% for key, value in job_properties.items() %}
-       '{{key | python_escape}}': {% if value is none %}None{% else %}'{{ value | python_escape }}'{% endif %},
-   {% endfor %}
-}
-CONFIGURATION_PROPERTIES={
-   {% for key, value in configuration_properties.items() %}
-       '{{key | python_escape}}': {% if value is none %}None{% else %}'{{ value | python_escape }}'{% endif %},
-   {% endfor %}
-}
+JOB_PROPERTIES={{ job_properties | python_escape_dictionary }}
+
+CONFIGURATION_PROPERTIES={{ configuration_properties | python_escape_dictionary }}
 
 with models.DAG(
-    '{{ dag_name | python_escape }}',
+    {{ dag_name | python_escape_string }},
     schedule_interval={% if schedule_interval %}datetime.timedelta(days={{ schedule_interval }}){% else %}None{% endif %},  # Change to suit your needs
     start_date=dates.days_ago({{ start_days_ago }})  # Change to suit your needs
 ) as dag:

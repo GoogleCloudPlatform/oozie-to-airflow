@@ -21,8 +21,8 @@
 {% if git_branch != '' %}"--branch %s " {% endif %}
 {% if key_path != '' %}"--key_path %s " {% endif %}
 % (
-shlex.quote('{{ git_uri | python_escape }}'),
-shlex.quote('{{ destination_path | python_escape }}'),
-{% if git_branch != '' %}shlex.quote('{{ git_branch | python_escape }}'),{% endif %}
-{% if key_path != '' %}shlex.quote('{{ key_path | python_escape }}'),{% endif %}
+shlex.quote({{ git_uri | python_escape_string }}),
+shlex.quote({{ destination_path | python_escape_string }}),
+{% if git_branch != '' %}shlex.quote({{ git_branch | python_escape_string }}),{% endif %}
+{% if key_path != '' %}shlex.quote({{ key_path | python_escape_string }}),{% endif %}
 )

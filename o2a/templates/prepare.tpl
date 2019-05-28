@@ -15,8 +15,8 @@
 #}
 
 {{ task_id | to_var }} = bash_operator.BashOperator(
-    task_id='{{ task_id | python_escape }}',
-    trigger_rule='{{ trigger_rule | python_escape }}',
+    task_id={{ task_id | python_escape_string }},
+    trigger_rule={{ trigger_rule | python_escape_string }},
 {#
  In BashOperator in Composer we can't read from $DAGS_FOLDER (~/dags) - permission denied.
  However we can read from ~/data -> /home/airflow/gcs/data.
@@ -28,8 +28,8 @@
                  {% if delete is not none %}'-d %s'{% endif %}
                  {% if mkdir is not none %}'-m %s'{% endif %} \
                  % (
-                     {% if delete is not none %}shlex.quote('{{ delete | python_escape }}'),{% endif %}
-                     {% if mkdir is not none %}shlex.quote('{{ mkdir | python_escape }}'),{% endif %}
+                     {% if delete is not none %}shlex.quote({{ delete | python_escape_string }}),{% endif %}
+                     {% if mkdir is not none %}shlex.quote({{ mkdir | python_escape_string }}),{% endif %}
                  ),
     params={% include "property_set.tpl" %},
 )

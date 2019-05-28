@@ -17,17 +17,9 @@
 {{ dependency }}
 {% endfor %}
 
-JOB_PROPERTIES={
-   {% for key, value in job_properties.items() %}
-       '{{key | python_escape}}': {% if value is none %}None{% else %}'{{ value | python_escape }}'{% endif %},
-   {% endfor %}
-}
+JOB_PROPERTIES={{ job_properties | python_escape_dictionary }}
 
-CONFIGURATION_PROPERTIES={
-   {% for key, value in configuration_properties.items() %}
-       '{{key | python_escape}}': {% if value is none %}None{% else %}'{{ value | python_escape }}'{% endif %},
-   {% endfor %}
-}
+CONFIGURATION_PROPERTIES={{ configuration_properties | python_escape_dictionary }}
 
 def sub_dag(parent_dag_name, child_dag_name, start_date, schedule_interval):
     with models.DAG(

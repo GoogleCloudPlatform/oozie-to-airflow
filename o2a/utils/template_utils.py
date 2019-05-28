@@ -18,7 +18,11 @@ from typing import Dict, Any
 import jinja2
 
 from o2a.definitions import TPL_PATH
-from o2a.utils.el_utils import escape_string_with_python_escapes
+from o2a.utils.el_utils import (
+    escape_string_with_python_escapes,
+    escape_string_list_with_python_escapes,
+    escape_string_dictionary_with_python_escapes,
+)
 from o2a.utils.variable_name_utils import convert_to_python_variable
 
 TEMPLATE_LOADER = jinja2.FileSystemLoader(searchpath=TPL_PATH)
@@ -28,7 +32,9 @@ TEMPLATE_ENV = jinja2.Environment(
 TEMPLATE_CACHES: Dict[str, Any] = {}
 
 TEMPLATE_ENV.filters["to_var"] = convert_to_python_variable
-TEMPLATE_ENV.filters["python_escape"] = escape_string_with_python_escapes
+TEMPLATE_ENV.filters["python_escape_string"] = escape_string_with_python_escapes
+TEMPLATE_ENV.filters["python_escape_list"] = escape_string_list_with_python_escapes
+TEMPLATE_ENV.filters["python_escape_dictionary"] = escape_string_dictionary_with_python_escapes
 
 
 def render_template(template_name: str, *args, **kwargs) -> str:

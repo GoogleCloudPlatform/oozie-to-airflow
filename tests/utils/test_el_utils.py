@@ -21,7 +21,12 @@ from parameterized import parameterized
 
 from o2a.converter.exceptions import ParseException
 from o2a.utils import el_utils
-from o2a.utils.el_utils import normalize_path, escape_string_with_python_escapes
+from o2a.utils.el_utils import (
+    normalize_path,
+    escape_string_with_python_escapes,
+    escape_string_list_with_python_escapes,
+    escape_string_dictionary_with_python_escapes,
+)
 
 # pylint: disable=too-many-public-methods
 from o2a.o2a_libs.property_utils import PropertySet
@@ -289,15 +294,39 @@ key5=test
 
     @parameterized.expand(
         [
-            ("test", "test"),
-            ("ą", "\\xc4\\x85"),
-            ("'", "\\'"),
+            ("test", "'test'"),
+            ("ą", "'\\xc4\\x85'"),
+            ("'", "'\\''"),
             (
                 "This string is \" replaced with 'Escaped one'",
-                "This string is \" replaced with \\'Escaped one\\'",
+                "'This string is \" replaced with \\'Escaped one\\''",
             ),
-            ('"', '"'),
+            ('"', "'\"'"),
         ]
     )
     def test_escape_python_string(self, input_string, expected_string):
         self.assertEqual(expected_string, escape_string_with_python_escapes(input_string))
+
+    @parameterized.expand(
+        [
+            ([], "[\n]\n"),
+            (["a"], "[\n'a',\n]\n"),
+            (["'"], "[\n'\\'',\n]\n"),
+            (["a", "'", None], "[\n'a',\n'\\'',\nNone,\n]\n"),
+        ]
+    )
+    def test_escape_python_list(self, input_list, expected_string):
+        self.assertEqual(expected_string, escape_string_list_with_python_escapes(input_list))
+
+    @parameterized.expand(
+        [
+            (dict(), "{\n}\n"),
+            ({"a": "b"}, "{\n'a': 'b',\n}\n"),
+            ({"a": "'"}, "{\n'a': '\\'',\n}\n"),
+            ({"'": "'"}, "{\n'\\'': '\\'',\n}\n"),
+            ({"a": None}, "{\n'a': None,\n}\n"),
+            ({None: None}, "{\nNone: None,\n}\n"),
+        ]
+    )
+    def test_escape_python_dictionary(self, input_dictionary, expected_string):
+        self.assertEqual(expected_string, escape_string_dictionary_with_python_escapes(input_dictionary))

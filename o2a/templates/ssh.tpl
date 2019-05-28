@@ -20,9 +20,9 @@
 )
 
 {{ task_id | to_var }} = ssh_operator.SSHOperator(
-    task_id='{{ task_id | python_escape }}',
-    trigger_rule='{{ trigger_rule | python_escape }}',
+    task_id={{ task_id | python_escape_string }},
+    trigger_rule={{ trigger_rule | python_escape_string }},
     ssh_hook={{ task_id | to_var }}_hook,
-    command='{{ command | python_escape }}',
+    command={{ command | python_escape_string }},
     params={% include "property_set.tpl" %},
 )

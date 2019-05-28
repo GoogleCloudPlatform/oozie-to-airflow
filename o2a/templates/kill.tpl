@@ -14,7 +14,7 @@
   limitations under the License.
 #}
 {{ task_id | to_var }} = bash_operator.BashOperator(
-    task_id='{{ task_id | python_escape }}',
-    trigger_rule='{{ trigger_rule | python_escape }}',
+    task_id={{ task_id | python_escape_string }},
+    trigger_rule={{ trigger_rule | python_escape_string }},
     bash_command='exit 1',
 )

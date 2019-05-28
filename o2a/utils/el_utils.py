@@ -18,7 +18,7 @@ import logging
 import os
 import re
 from copy import deepcopy
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, Dict
 from urllib.parse import urlparse, ParseResult
 
 from o2a.converter.exceptions import ParseException
@@ -202,6 +202,31 @@ def normalize_path(url, property_set: PropertySet, allow_no_schema=False):
     return url_parts.path
 
 
-def escape_string_with_python_escapes(string_to_escape: str) -> Optional[str]:
+def escape_string_with_python_escapes(string_to_escape: Optional[str]) -> Optional[str]:
+    if not string_to_escape:
+        return None
     escaped_bytes, _ = codecs.escape_encode(string_to_escape.encode())  # type: ignore # C-Api level
-    return escaped_bytes.decode("utf-8")  # type: ignore
+    return "'" + escaped_bytes.decode("utf-8") + "'"  # type: ignore
+
+
+def escape_string_list_with_python_escapes(list_to_escape: List[Optional[str]]) -> str:
+    escaped_string = "[\n"
+    for element in list_to_escape:
+        escaped_string += str(escape_string_with_python_escapes(element)) + ",\n"
+    escaped_string += "]\n"
+    return escaped_string
+
+
+def escape_string_dictionary_with_python_escapes(
+    dictionary_to_escape: Dict[Optional[str], Optional[str]]
+) -> str:
+    escaped_string = "{\n"
+    for key, value in dictionary_to_escape.items():
+        escaped_string += (
+            str(escape_string_with_python_escapes(key))
+            + ": "
+            + str(escape_string_with_python_escapes(value))
+            + ",\n"
+        )
+    escaped_string += "}\n"
+    return escaped_string
