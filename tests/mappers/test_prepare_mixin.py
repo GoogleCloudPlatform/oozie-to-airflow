@@ -16,7 +16,11 @@
 import unittest
 from xml.etree import ElementTree as ET
 
-from o2a.mappers import prepare_mixin
+from airflow.utils.trigger_rule import TriggerRule
+
+from o2a.converter.task import Task
+from o2a.mappers.prepare_mixin import PrepareMixin
+from o2a.o2a_libs.property_utils import PropertySet
 
 
 class TestPrepareMixin(unittest.TestCase):
@@ -28,7 +32,8 @@ class TestPrepareMixin(unittest.TestCase):
     def test_with_prepare(self):
         cluster = "my-cluster"
         region = "europe-west3"
-        params = {"nameNode": "hdfs://localhost:8020", "dataproc_cluster": cluster, "gcp_region": region}
+        job_properties = {"nameNode": "hdfs://localhost:8020"}
+        configuration_properties = {"dataproc_cluster": cluster, "gcp_region": region}
         # language=XML
         pig_node_prepare_str = """
 <pig>
@@ -42,21 +47,68 @@ class TestPrepareMixin(unittest.TestCase):
 </pig>
 """
         pig_node_prepare = ET.fromstring(pig_node_prepare_str)
-
-        prepare = prepare_mixin.PrepareMixin().get_prepare_command(oozie_node=pig_node_prepare, params=params)
-        self.assertEqual(
-            '$DAGS_FOLDER/../data/prepare.sh -c {0} -r {1} -d "{2} {3}" -m "{4} {5}"'.format(
-                cluster, region, self.delete_path1, self.delete_path2, self.mkdir_path1, self.mkdir_path2
+        mixin = PrepareMixin(pig_node_prepare)
+        self.assertTrue(mixin.has_prepare())
+        task = mixin.get_prepare_task(
+            name="test_node",
+            trigger_rule=TriggerRule.DUMMY,
+            property_set=PropertySet(
+                configuration_properties=configuration_properties, job_properties=job_properties
             ),
-            prepare,
+        )
+        self.assertEqual(
+            Task(
+                task_id="test_node_prepare",
+                template_name="prepare.tpl",
+                trigger_rule="dummy",
+                template_params={
+                    "delete": "/examples/output-data/demo/pig-node /examples/output-data/demo/pig-node2",
+                    "mkdir": "/examples/input-data/demo/pig-node /examples/input-data/demo/pig-node2",
+                },
+            ),
+            task,
         )
 
     def test_no_prepare(self):
         cluster = "my-cluster"
         region = "europe-west3"
-        params = {"nameNode": "hdfs://localhost:8020", "dataproc_cluster": cluster, "gcp_region": region}
+        job_properties = {"nameNode": "hdfs://localhost:8020"}
+        configuration_properties = {"dataproc_cluster": cluster, "gcp_region": region}
         # language=XML
         pig_node_str = "<pig><name-node>hdfs://</name-node></pig>"
         pig_node = ET.fromstring(pig_node_str)
-        prepare = prepare_mixin.PrepareMixin().get_prepare_command(oozie_node=pig_node, params=params)
-        self.assertEqual("", prepare)
+        mixin = PrepareMixin(pig_node)
+        self.assertFalse(mixin.has_prepare())
+        prepare_task = mixin.get_prepare_task(
+            name="task",
+            trigger_rule=TriggerRule.DUMMY,
+            property_set=PropertySet(
+                configuration_properties=configuration_properties, job_properties=job_properties
+            ),
+        )
+        self.assertIsNone(prepare_task)
+
+    def test_empty_prepare(self):
+        cluster = "my-cluster"
+        region = "europe-west3"
+        job_properties = {"nameNode": "hdfs://localhost:8020"}
+        configuration_properties = {"dataproc_cluster": cluster, "gcp_region": region}
+        # language=XML
+        pig_node_str = """
+<pig>
+    <name-node>hdfs://</name-node>
+    <prepare>
+    </prepare>
+</pig>
+"""
+        pig_node = ET.fromstring(pig_node_str)
+        mixin = PrepareMixin(pig_node)
+        self.assertFalse(mixin.has_prepare())
+        prepare_task = mixin.get_prepare_task(
+            name="task",
+            trigger_rule=TriggerRule.DUMMY,
+            property_set=PropertySet(
+                configuration_properties=configuration_properties, job_properties=job_properties
+            ),
+        )
+        self.assertIsNone(prepare_task)

@@ -15,17 +15,19 @@
 """Maps subworkflow of Oozie to Airflow's sub-dag"""
 import logging
 import os
-from typing import Dict, Set, Type
+from typing import Dict, Set, Type, Tuple, List
 
 from xml.etree.ElementTree import Element
 
 from airflow.utils.trigger_rule import TriggerRule
-
 from o2a.converter.oozie_converter import OozieConverter
+from o2a.converter.relation import Relation
 from o2a.converter.task import Task
 from o2a.definitions import EXAMPLES_PATH
 from o2a.mappers.action_mapper import ActionMapper
+from o2a.o2a_libs.property_utils import PropertySet
 from o2a.utils import el_utils
+from o2a.utils.variable_name_utils import convert_to_python_variable
 
 
 # pylint: disable=too-many-instance-attributes
@@ -42,18 +44,22 @@ class SubworkflowMapper(ActionMapper):
         dag_name: str,
         input_directory_path: str,
         output_directory_path: str,
+        property_set: PropertySet,
         action_mapper: Dict[str, Type[ActionMapper]],
         trigger_rule=TriggerRule.ALL_SUCCESS,
-        params=None,
         **kwargs,
     ):
-        ActionMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, **kwargs)
-        if params is None:
-            params = {}
-        self.params = params
+        ActionMapper.__init__(
+            self,
+            oozie_node=oozie_node,
+            name=name,
+            dag_name=dag_name,
+            trigger_rule=trigger_rule,
+            property_set=property_set,
+            **kwargs,
+        )
         self.task_id = name
         self.trigger_rule = trigger_rule
-        self.properties: Dict[str, str] = {}
         self.input_directory_path = input_directory_path
         self.output_directory_path = output_directory_path
         self.dag_name = dag_name
@@ -62,7 +68,7 @@ class SubworkflowMapper(ActionMapper):
 
     def _parse_oozie_node(self):
         app_path = self.oozie_node.find("app-path").text
-        app_path = el_utils.replace_el_with_var(app_path, params=self.params, quote=False)
+        app_path = el_utils.replace_el_with_var(app_path, property_set=self.property_set, quote=False)
         _, _, self.app_name = app_path.rpartition("/")
         # TODO: hacky: we should calculate it deriving from input_directory_path and comparing app-path
         # TODO: but for now we assume app is in "examples"
@@ -75,19 +81,24 @@ class SubworkflowMapper(ActionMapper):
             template_name="subworkflow.tpl",
             action_mapper=self.action_mapper,
             dag_name=f"{self.dag_name}.{self.task_id}",
-            output_dag_name=f"subdag_{self.app_name}.py",
+            output_dag_name=f"subdag_{convert_to_python_variable(self.app_name)}.py",
+            initial_property_set=self.get_property_set(),
         )
         converter.convert()
 
-    def get_config_properties(self):
+    def get_property_set(self) -> PropertySet:
         propagate_configuration = self.oozie_node.find("propagate-configuration")
         # Below the `is not None` is necessary due to Element's __bool__() return value:
         # `len(self._children) != 0`,
         # and `propagate_configuration` is an empty node so __bool__() will always return False.
-        return self.properties if propagate_configuration is not None else {}
+        return (
+            self.property_set
+            if propagate_configuration is not None
+            else PropertySet(configuration_properties={}, job_properties={})
+        )
 
-    def to_tasks_and_relations(self):
-        tasks = [
+    def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
+        tasks: List[Task] = [
             Task(
                 task_id=self.name,
                 template_name="subwf.tpl",
@@ -95,7 +106,7 @@ class SubworkflowMapper(ActionMapper):
                 template_params=dict(app_name=self.app_name),
             )
         ]
-        relations = []
+        relations: List[Relation] = []
         return tasks, relations
 
     def required_imports(self) -> Set[str]:
@@ -103,5 +114,5 @@ class SubworkflowMapper(ActionMapper):
             "from airflow.utils import dates",
             "from airflow.contrib.operators import dataproc_operator",
             "from airflow.operators.subdag_operator import SubDagOperator",
-            f"import subdag_{self.app_name}",
+            f"from . import subdag_{self.app_name}",
         }

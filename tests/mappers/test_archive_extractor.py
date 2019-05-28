@@ -18,38 +18,46 @@ from xml.etree.ElementTree import Element
 from xml.etree import ElementTree as ET
 
 from o2a.utils.file_archive_extractors import ArchiveExtractor
+from o2a.o2a_libs.property_utils import PropertySet
 
 
 class TestArchiveExtractor(unittest.TestCase):
     def setUp(self):
-        self.default_params = {
+        self.configuration_properties = {}
+        self.job_properties = {
             "nameNode": "hdfs://",
             "oozie.wf.application.path": "hdfs:///user/pig/examples/pig_test_node",
         }
+        self.action_node_properties = {}
+        self.property_set = PropertySet(
+            configuration_properties=self.configuration_properties,
+            job_properties=self.job_properties,
+            action_node_properties=self.action_node_properties,
+        )
 
     def test_add_relative_archive(self):
         # Given
-        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), params=self.default_params)
+        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), property_set=self.property_set)
         # When
         archive_extractor.add_archive("test_archive.zip")
         # Then
-        self.assertEqual(archive_extractor.archives, ["test_archive.zip"])
+        self.assertEqual(["test_archive.zip"], archive_extractor.archives)
         self.assertEqual(
-            archive_extractor.hdfs_archives, ["hdfs:///user/pig/examples/pig_test_node/test_archive.zip"]
+            ["hdfs:///user/pig/examples/pig_test_node/test_archive.zip"], archive_extractor.hdfs_archives
         )
 
     def test_add_absolute_archive(self):
         # Given
-        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), params=self.default_params)
+        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), property_set=self.property_set)
         # When
         archive_extractor.add_archive("/test_archive.zip")
         # Then
-        self.assertEqual(archive_extractor.archives, ["/test_archive.zip"])
-        self.assertEqual(archive_extractor.hdfs_archives, ["hdfs:///test_archive.zip"])
+        self.assertEqual(["/test_archive.zip"], archive_extractor.archives)
+        self.assertEqual(["hdfs:///test_archive.zip"], archive_extractor.hdfs_archives)
 
     def test_add_multiple_archives(self):
         # Given
-        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), params=self.default_params)
+        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), property_set=self.property_set)
         # When
         archive_extractor.add_archive("/test_archive.zip")
         archive_extractor.add_archive("test_archive2.tar")
@@ -69,7 +77,7 @@ class TestArchiveExtractor(unittest.TestCase):
 
     def test_add_hash_archives(self):
         # Given
-        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), params=self.default_params)
+        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), property_set=self.property_set)
         # When
         archive_extractor.add_archive("/test_archive.zip#test3_link")
         archive_extractor.add_archive("test_archive2.tar#test_link")
@@ -90,7 +98,7 @@ class TestArchiveExtractor(unittest.TestCase):
 
     def test_add_archive_extra_hash(self):
         # Given
-        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), params=self.default_params)
+        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), property_set=self.property_set)
         # When
         with self.assertRaises(Exception) as context:
             archive_extractor.add_archive("/test_archive.zip#4rarear#")
@@ -101,7 +109,8 @@ class TestArchiveExtractor(unittest.TestCase):
 
     def test_replace_el(self):
         # Given
-        params = {"var1": "value1", "var2": "value2", **self.default_params}
+        self.property_set.job_properties["var1"] = "value1"
+        self.property_set.job_properties["var2"] = "value2"
         # language=XML
         node_str = """
 <pig>
@@ -111,7 +120,7 @@ class TestArchiveExtractor(unittest.TestCase):
 </pig>
         """
         oozie_node = ET.fromstring(node_str)
-        archive_extractor = ArchiveExtractor(oozie_node=oozie_node, params=params)
+        archive_extractor = ArchiveExtractor(oozie_node=oozie_node, property_set=self.property_set)
         # When
         archive_extractor.parse_node()
         # Then

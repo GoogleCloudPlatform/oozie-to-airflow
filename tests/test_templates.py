@@ -150,7 +150,7 @@ class TemplateTestMixin:
                 self.assertNotEqual(
                     original_view,
                     mutated_view,
-                    f"Uncorrelated template params: {path}, Mutated view: {mutated_view}",
+                    f"Uncorrelated template job_properties: {path}, Mutated view: {mutated_view}",
                 )
             elif isinstance(current_value, dict):
                 for key, _ in current_value.items():
@@ -232,7 +232,7 @@ class MapReduceTemplateTestCase(TestCase, TemplateTestMixin):
     DEFAULT_TEMPLATE_PARAMS = {
         "task_id": "AA",
         "trigger_rule": "dummy",
-        "properties": {
+        "action_node_properties": {
             "mapred.mapper.new-api": "true",
             "mapred.reducer.new-api": "true",
             "mapred.job.queue.name": "${queueName}",
@@ -243,6 +243,7 @@ class MapReduceTemplateTestCase(TestCase, TemplateTestMixin):
             "mapreduce.input.fileinputformat.inputdir": "/user/mapred/${examplesRoot}/mapreduce/input",
             "mapreduce.output.fileoutputformat.outputdir": "/user/mapred/${examplesRoot}/mapreduce/output",
         },
+        "job_properties": {},
         "params_dict": {},
         "hdfs_files": ["B"],
         "hdfs_archives": ["D"],
@@ -271,7 +272,6 @@ class PigTemplateTestCase(TestCase, TemplateTestMixin):
     DEFAULT_TEMPLATE_PARAMS = {
         "task_id": "AA",
         "trigger_rule": "dummy",
-        "properties": {"mapred.job.queue.name": "${queueName}", "mapred.map.output.compress": "false"},
         "params_dict": {
             "INPUT": "/user/${wf:user()}/${examplesRoot}/input-data/text",
             "OUTPUT": "/user/${wf:user()}/${examplesRoot}/output-data/demo/pig-node",
@@ -291,8 +291,8 @@ class PigTemplateTestCase(TestCase, TemplateTestMixin):
 
     @parameterized.expand(
         [
-            ({"params": {'AA"': "AAA"}},),
-            ({"params": {"AA": 'A"AA'}},),
+            ({"job_properties": {'AA"': "AAA"}},),
+            ({"job_properties": {"AA": 'A"AA'}},),
             ({"command": 'A"'},),
             ({"user": 'A"'},),
             ({"host": 'A"'},),
@@ -307,7 +307,12 @@ class PigTemplateTestCase(TestCase, TemplateTestMixin):
 class PrepareTemplateTestCase(TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "prepare.tpl"
 
-    DEFAULT_TEMPLATE_PARAMS = {"task_id": "AAA", "prepare_command": "AAAA", "trigger_rule": "dummy"}
+    DEFAULT_TEMPLATE_PARAMS = {
+        "task_id": "AAA",
+        "trigger_rule": "dummy",
+        "delete": "file1 file2",
+        "mkdir": "file3 file4",
+    }
 
     def test_green_path(self):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
@@ -343,14 +348,14 @@ class SparkTemplateTestCase(TestCase, TemplateTestMixin):
 
     DEFAULT_TEMPLATE_PARAMS = {
         "task_id": "AA",
-        "archives": [],
+        "hdfs_archives": [],
         "arguments": ["inputpath=hdfs:///input/file.txt", "value=2"],
         "dataproc_spark_jars": ["/lib/spark-examples_2.10-1.1.0.jar"],
-        "dataproc_spark_properties": {
+        "spark_opts": {
             "mapred.compress.map.output": "true",
             "spark.executor.extraJavaOptions": "-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp",
         },
-        "files": [],
+        "hdfs_files": [],
         "job_name": "Spark Examples",
         "main_class": "org.apache.spark.examples.mllib.JavaALS",
         "main_jar": None,
@@ -380,8 +385,8 @@ class SparkTemplateTestCase(TestCase, TemplateTestMixin):
         [
             ({"task_id": 'AA"AA"\''},),
             ({"trigger_rule": 'AA"AA"\''},),
-            ({"params": {'AA"': "AAA"}},),
-            ({"params": {"AA": 'A"AA'}},),
+            ({"job_properties": {'AA"': "AAA"}},),
+            ({"job_properties": {"AA": 'A"AA'}},),
             ({"name": 'A"'},),
             ({"command": 'A"'},),
             ({"user": 'A"'},),
@@ -399,7 +404,7 @@ class SshTemplateTestCase(TestCase, TemplateTestMixin):
 
     DEFAULT_TEMPLATE_PARAMS = {
         "task_id": "AA",
-        "params": {},
+        "job_properties": {},
         "trigger_rule": "dummy",
         "command": "ls -l -a",
         "user": "user",
@@ -410,7 +415,7 @@ class SshTemplateTestCase(TestCase, TemplateTestMixin):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
         self.assertValidPython(res)
 
-    @parameterized.expand([({"params": None},)])
+    @parameterized.expand([({"job_properties": None},)])
     def test_optional_parameters(self, mutation):
         template_params = mutate(self.DEFAULT_TEMPLATE_PARAMS, mutation)
         res = render_template(self.TEMPLATE_NAME, **template_params)
@@ -420,8 +425,8 @@ class SshTemplateTestCase(TestCase, TemplateTestMixin):
         [
             ({"task_id": 'AA"AA"\''},),
             ({"trigger_rule": 'AA"AA"\''},),
-            ({"params": {'AA"': "AAA"}},),
-            ({"params": {"AA": 'A"AA'}},),
+            ({"job_properties": {'AA"': "AAA"}},),
+            ({"job_properties": {"AA": 'A"AA'}},),
             ({"command": 'A"'},),
             ({"user": 'A"'},),
             ({"host": 'A"'},),
@@ -464,7 +469,8 @@ class WorkflowTemplateTestCase(TestCase, TemplateTestMixin):
                 ],
             )
         ],
-        params={"user.name": "USER"},
+        job_properties={"user.name": "USER"},
+        configuration_properties={},
         relations={Relation(from_task_id="TASK_1", to_task_id="TASK_2")},
         schedule_interval=None,
         start_days_ago=None,
@@ -490,7 +496,8 @@ class SubWorkflowTemplateTestCase(TestCase, TemplateTestMixin):
                 relations=[Relation(from_task_id="first_task", to_task_id="second_task")],
             )
         ],
-        params={"user.name": "USER"},
+        job_properties={"user.name": "USER"},
+        configuration_properties={},
         relations={Relation(from_task_id="TASK_1", to_task_id="TASK_2")},
         schedule_interval=None,
         start_days_ago=None,

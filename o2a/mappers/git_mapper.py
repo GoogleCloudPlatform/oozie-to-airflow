@@ -14,7 +14,7 @@
 # limitations under the License.
 """Maps Shell action into Airflow's DAG"""
 import shlex
-from typing import Dict, Optional, Set
+from typing import List, Optional, Set, Tuple
 
 from urllib.parse import urlparse
 from xml.etree.ElementTree import Element
@@ -25,6 +25,7 @@ from o2a.converter.relation import Relation
 from o2a.converter.task import Task
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.mappers.prepare_mixin import PrepareMixin
+from o2a.o2a_libs.property_utils import PropertySet
 
 from o2a.utils.xml_utils import get_tag_el_text
 
@@ -39,8 +40,8 @@ def prepare_git_command(
 ):
     cmd = (
         f"$DAGS_FOLDER/../data/git.sh "
-        "--cluster {dataproc_cluster} "
-        "--region {gcp_region} "
+        "--cluster {{params.configuration_properties['dataproc_cluster']}} "
+        "--region {{params.configuration_properties['gcp_region']}} "
         f"--git-uri {shlex.quote(git_uri)} "
         f"--destination-path {shlex.quote(destination_path)}"
     )
@@ -63,52 +64,70 @@ class GitMapper(ActionMapper, PrepareMixin):
         self,
         oozie_node: Element,
         name: str,
+        property_set: PropertySet,
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
-        params: Dict[str, str] = None,
         **kwargs,
     ):
-        ActionMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, **kwargs)
-        if params is None:
-            params = {}
-        self.params = params
-        self.bash_command: Optional[str] = None
+        ActionMapper.__init__(
+            self,
+            oozie_node=oozie_node,
+            name=name,
+            trigger_rule=trigger_rule,
+            property_set=property_set,
+            **kwargs,
+        )
+        PrepareMixin.__init__(self, oozie_node=oozie_node)
+        self.git_uri: Optional[str] = None
+        self.git_branch: Optional[str] = None
+        self.destination_uri: Optional[str] = None
+        self.destination_path: Optional[str] = None
+        self.key_path_uri: Optional[str] = None
+        self.key_path: Optional[str] = None
 
     def on_parse_node(self):
-        git_uri = get_tag_el_text(self.oozie_node, TAG_GIT_URI, self.params)
-        git_branch = get_tag_el_text(self.oozie_node, TAG_BRANCH, self.params)
-        destination_uri = get_tag_el_text(self.oozie_node, TAG_DESTINATION_URI, self.params)
-        destination_path = urlparse(destination_uri).path
-        key_path_uri = get_tag_el_text(self.oozie_node, TAG_KEY_PATH, self.params)
-        key_path = urlparse(key_path_uri).path
-        self.bash_command = prepare_git_command(
-            git_uri=git_uri, git_branch=git_branch, destination_path=destination_path, key_path=key_path
+        super().on_parse_node()
+        self.git_uri = get_tag_el_text(
+            self.oozie_node, TAG_GIT_URI, property_set=self.property_set, default=""
         )
+        self.git_branch = get_tag_el_text(
+            self.oozie_node, TAG_BRANCH, property_set=self.property_set, default=""
+        )
+        self.destination_uri = get_tag_el_text(
+            self.oozie_node, tag=TAG_DESTINATION_URI, property_set=self.property_set, default=""
+        )
+        self.destination_path = urlparse(self.destination_uri).path
+        self.key_path_uri = get_tag_el_text(
+            self.oozie_node, tag=TAG_KEY_PATH, property_set=self.property_set, default=""
+        )
+        self.key_path = urlparse(self.key_path_uri).path
 
-    def to_tasks_and_relations(self):
-        tasks = [
-            Task(
-                task_id=self.name,
-                template_name="git.tpl",
-                template_params=dict(bash_command=self.bash_command),
-            )
-        ]
-        relations = []
-        if self.has_prepare(self.oozie_node):
-            prepare_command = self.get_prepare_command(self.oozie_node, self.params)
-            tasks.insert(
-                0,
-                Task(
-                    task_id=self.name + "_prepare",
-                    template_name="prepare.tpl",
-                    template_params=dict(prepare_command=prepare_command),
-                ),
-            )
-            relations = [Relation(from_task_id=self.name + "_prepare", to_task_id=self.name)]
+    def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
+        action_task = Task(
+            task_id=self.name,
+            template_name="git.tpl",
+            template_params=dict(
+                git_uri=self.git_uri,
+                git_branch=self.git_branch,
+                destination_uri=self.destination_uri,
+                destination_path=self.destination_path,
+                key_path_uri=self.key_path_uri,
+                key_path=self.key_path,
+                property_set=self.property_set,
+            ),
+        )
+        tasks: List[Task] = [action_task]
+        relations: List[Relation] = []
+        prepare_task = self.get_prepare_task(
+            name=self.name, trigger_rule=self.trigger_rule, property_set=self.property_set
+        )
+        if prepare_task:
+            relations = [Relation(prepare_task.task_id, to_task_id=self.name)]
+            tasks = [prepare_task, action_task]
         return tasks, relations
 
     def required_imports(self) -> Set[str]:
         return {"from airflow.utils import dates", "from airflow.contrib.operators import dataproc_operator"}
 
     @property
-    def first_task_id(self):
-        return "{task_id}_prepare".format(task_id=self.name)
+    def first_task_id(self) -> str:
+        return f"{self.name}_prepare" if self.has_prepare() else self.name

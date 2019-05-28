@@ -13,9 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """XML parsing utilities"""
-from typing import List, cast, Optional, Dict
+from typing import List, Optional, cast
 from xml.etree import ElementTree as ET
 from o2a.utils import el_utils
+from o2a.o2a_libs.property_utils import PropertySet
 
 
 class NoNodeFoundException(Exception):
@@ -86,7 +87,9 @@ def find_nodes_by_attribute(root, attr, val, tag=None) -> List[ET.Element]:
     return matching_nodes
 
 
-def get_tag_el_text(root: ET.Element, tag: str, params: Dict[str, str], default: str = None):
+def get_tag_el_text(
+    root: ET.Element, tag: str, property_set: PropertySet, default: Optional[str] = None
+) -> Optional[str]:
     """
     If a node exists in the oozie_node with the tag specified in tag, it
     will attempt to replace the EL (if it exists) with the corresponding
@@ -95,7 +98,7 @@ def get_tag_el_text(root: ET.Element, tag: str, params: Dict[str, str], default:
     more than one with the specified tag, it uses the first one found.
     """
     var = find_node_by_tag(root, tag)
-    if var is not None:
+    if var is not None and var.text is not None:
         # Only check the first one
-        return el_utils.replace_el_with_var(var.text, params=params, quote=False)
+        return el_utils.replace_el_with_var(var.text, property_set=property_set, quote=False)
     return default

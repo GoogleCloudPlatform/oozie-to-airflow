@@ -12,10 +12,24 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
- #}
+#}
 
 {{ task_id | to_var }} = bash_operator.BashOperator(
     task_id={{ task_id | to_python }},
     trigger_rule={{ trigger_rule | to_python }},
-    bash_command={{ prepare_command | to_python }},
+{#
+ In BashOperator in Composer we can't read from $DAGS_FOLDER (~/dags) - permission denied.
+ However we can read from ~/data -> /home/airflow/gcs/data.
+ The easiest way to access it is using the $DAGS_FOLDER env variable.
+#}
+    bash_command="$DAGS_FOLDER/../data/prepare.sh "
+                 "-c {{ '{{' }} params.configuration_properties['dataproc_cluster'] {{ '}}' }}"
+                 "-r {{ '{{' }} params.configuration_properties['gcp_region'] {{ '}}' }}"
+                 {% if delete is not none %}'-d %s'{% endif %}
+                 {% if mkdir is not none %}'-m %s'{% endif %} \
+                 % (
+                     {% if delete is not none %}shlex.quote({{ delete | to_python }}),{% endif %}
+                     {% if mkdir is not none %}shlex.quote({{ mkdir | to_python }}),{% endif %}
+                 ),
+    params={% include "property_set.tpl" %},
 )

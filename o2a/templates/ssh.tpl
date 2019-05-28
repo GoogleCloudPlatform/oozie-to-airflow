@@ -12,18 +12,17 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
- #}
-
+#}
 {{ task_id | to_var }}_hook = ssh_hook.SSHHook(
     ssh_conn_id='ssh_default',
-    username={{ user | to_python }},
-    remote_host={{ host | to_python }},
+    username={{ user | tojson }},
+    remote_host={{ host | tojson }},
 )
 
 {{ task_id | to_var }} = ssh_operator.SSHOperator(
     task_id={{ task_id | to_python }},
     trigger_rule={{ trigger_rule | to_python }},
     ssh_hook={{ task_id | to_var }}_hook,
-    params=PARAMS,
     command={{ command | to_python }},
+    params={% include "property_set.tpl" %},
 )

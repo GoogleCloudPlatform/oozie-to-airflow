@@ -44,6 +44,12 @@
             <git-uri>https://github.com/GoogleCloudPlatform/oozie-to-airflow.git</git-uri>
             <branch>master</branch>
             <destination-uri>${nameNode}/user/${userName}/${examplesRoot}/apps/git/repo</destination-uri>
+            <configuration>
+                <property>
+                    <name>test.property.node</name>
+                    <value>${nameNode}</value>
+                </property>
+            </configuration>
         </git>
         <ok to="end" />
         <error to="fail" />

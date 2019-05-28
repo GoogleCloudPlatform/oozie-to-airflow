@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Maps Spark action to Airflow Dag"""
-from typing import Dict, Set, List, Optional
+from typing import Dict, Set, List, Optional, Tuple
 
 import xml.etree.ElementTree as ET
 
@@ -24,17 +24,18 @@ from o2a.converter.task import Task
 from o2a.converter.relation import Relation
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.mappers.prepare_mixin import PrepareMixin
+from o2a.o2a_libs.property_utils import PropertySet
 from o2a.utils import xml_utils, el_utils
 from o2a.utils.file_archive_extractors import FileExtractor, ArchiveExtractor
 
 
 # pylint: disable=too-many-instance-attributes
+from o2a.utils.xml_utils import get_tag_el_text
+
 SPARK_TAG_VALUE = "value"
 SPARK_TAG_NAME = "name"
 SPARK_TAG_ARGS = "arg"
 SPARK_TAG_OPTS = "spark-opts"
-SPARK_TAG_CONFIGURATION = "configuration"
-SPARK_TAG_JOB_XML = "job-xml"
 SPARK_TAG_JOB_NAME = "name"
 SPARK_TAG_CLASS = "class"
 SPARK_TAG_JAR = "jar"
@@ -47,64 +48,56 @@ class SparkMapper(ActionMapper, PrepareMixin):
         self,
         oozie_node: ET.Element,
         name: str,
+        property_set: PropertySet,
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
-        params: Dict[str, str] = None,
         **kwargs,
     ):
-        ActionMapper.__init__(self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, **kwargs)
-        self.params = params or {}
+        ActionMapper.__init__(
+            self,
+            oozie_node=oozie_node,
+            name=name,
+            trigger_rule=trigger_rule,
+            property_set=property_set,
+            **kwargs,
+        )
+        PrepareMixin.__init__(self, oozie_node=oozie_node)
         self.java_class = ""
         self.java_jar = ""
         self.job_name: Optional[str] = None
         self.jars: List[str] = []
-        self.properties: Dict[str, str] = {}
         self.application_args: List[str] = []
-        self.file_extractor = FileExtractor(oozie_node=oozie_node, params=self.params)
-        self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, params=self.params)
-        self.prepare_command = None
+        self.file_extractor = FileExtractor(oozie_node=oozie_node, property_set=self.property_set)
+        self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, property_set=self.property_set)
         self.hdfs_files: List[str] = []
         self.hdfs_archives: List[str] = []
         self.dataproc_jars: List[str] = []
+        self.spark_opts: Dict[str, str] = {}
 
     def on_parse_node(self):
-
-        if self.has_prepare:
-            self.prepare_command = self.get_prepare_command(oozie_node=self.oozie_node, params=self.params)
-
         super().on_parse_node()
         _, self.hdfs_files = self.file_extractor.parse_node()
         _, self.hdfs_archives = self.archive_extractor.parse_node()
 
-        self.java_jar = self._get_or_default(self.oozie_node, SPARK_TAG_JAR, None, params=self.params)
-        self.java_class = self._get_or_default(self.oozie_node, SPARK_TAG_CLASS, None, params=self.params)
+        self.java_jar = get_tag_el_text(self.oozie_node, property_set=self.property_set, tag=SPARK_TAG_JAR)
+        self.java_class = get_tag_el_text(
+            self.oozie_node, property_set=self.property_set, tag=SPARK_TAG_CLASS
+        )
         if self.java_class and self.java_jar:
             self.dataproc_jars = [self.java_jar]
             self.java_jar = None
-        self.job_name = self._get_or_default(self.oozie_node, SPARK_TAG_JOB_NAME, None, params=self.params)
+        self.job_name = get_tag_el_text(
+            self.oozie_node, property_set=self.property_set, tag=SPARK_TAG_JOB_NAME
+        )
 
         spark_opts = xml_utils.find_nodes_by_tag(self.oozie_node, SPARK_TAG_OPTS)
         if spark_opts:
-            self.properties.update(self._parse_spark_opts(spark_opts[0]))
+            self.spark_opts.update(self._parse_spark_opts(spark_opts[0]))
 
         app_args = xml_utils.find_nodes_by_tag(self.oozie_node, SPARK_TAG_ARGS)
         for arg in app_args:
-            self.application_args.append(el_utils.replace_el_with_var(arg.text, self.params, quote=False))
-
-    @staticmethod
-    def _get_or_default(root: ET.Element, tag: str, default: str = None, params: Dict[str, str] = None):
-        """
-        If a node exists in the oozie_node with the tag specified in tag, it
-        will attempt to replace the EL (if it exists) with the corresponding
-        variable. If no EL var is found, it just returns text. However, if the
-        tag is not found under oozie_node, then return default. If there are
-        more than one with the specified tag, it uses the first one found.
-        """
-        var = xml_utils.find_nodes_by_tag(root, tag)
-
-        if var:
-            # Only check the first one
-            return el_utils.replace_el_with_var(var[0].text, params=params, quote=False)
-        return default
+            self.application_args.append(
+                el_utils.replace_el_with_var(arg.text, self.property_set, quote=False)
+            )
 
     @staticmethod
     def _parse_spark_opts(spark_opts_node: ET.Element):
@@ -134,15 +127,12 @@ class SparkMapper(ActionMapper, PrepareMixin):
                 if len(value) > 2 and value[0] in ["'", '"'] and value:
                     value = value[1:-1]
                 conf[key] = value
+            # TODO: parse also other options (like --executor-memory 20G --num-executors 50 and many more)
+            #  see: https://oozie.apache.org/docs/5.1.0/DG_SparkActionExtension.html#PySpark_with_Spark_Action
 
         return conf
 
-    def _get_tasks(self):
-        """
-        Returns the list of Airflow tasks that are the result of mapping
-
-        :return: list of Airflow tasks
-        """
+    def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
         action_task = Task(
             task_id=self.name,
             template_name="spark.tpl",
@@ -151,39 +141,21 @@ class SparkMapper(ActionMapper, PrepareMixin):
                 main_jar=self.java_jar,
                 main_class=self.java_class,
                 arguments=self.application_args,
-                archives=self.hdfs_archives,
-                files=self.hdfs_files,
+                hdfs_archives=self.hdfs_archives,
+                hdfs_files=self.hdfs_files,
                 job_name=self.job_name,
-                dataproc_spark_properties=self.properties,
                 dataproc_spark_jars=self.dataproc_jars,
+                spark_opts=self.spark_opts,
             ),
         )
-
-        if not self.has_prepare(self.oozie_node):
-            return [action_task]
-
-        prepare_task = Task(
-            task_id=self.name + "_prepare",
-            template_name="prepare.tpl",
-            template_params=dict(prepare_command=self.prepare_command),
+        tasks: List[Task] = [action_task]
+        relations: List[Relation] = []
+        prepare_task = self.get_prepare_task(
+            name=self.name, trigger_rule=self.trigger_rule, property_set=self.property_set
         )
-        return [prepare_task, action_task]
-
-    def _get_relations(self):
-        """
-        Returns the list of Airflow relations that are the result of mapping
-
-        :return: list of relations
-        """
-        return (
-            [Relation(from_task_id=self.name + "_prepare", to_task_id=self.name)]
-            if self.has_prepare(self.oozie_node)
-            else []
-        )
-
-    def to_tasks_and_relations(self):
-        tasks = self._get_tasks()
-        relations = self._get_relations()
+        if prepare_task:
+            tasks = [prepare_task, action_task]
+            relations = [Relation(from_task_id=prepare_task.task_id, to_task_id=self.name)]
         return tasks, relations
 
     def required_imports(self) -> Set[str]:
@@ -195,5 +167,5 @@ class SparkMapper(ActionMapper, PrepareMixin):
         }
 
     @property
-    def first_task_id(self):
-        return self._get_tasks()[0].task_id
+    def first_task_id(self) -> str:
+        return f"{self.name}_prepare" if self.has_prepare() else self.name

@@ -32,8 +32,10 @@ import unittest
 
 from xml.etree import ElementTree as ET
 
-from o2a.mappers import base_mapper
 from airflow.utils.trigger_rule import TriggerRule
+
+from o2a.mappers import base_mapper
+from o2a.o2a_libs.property_utils import PropertySet
 
 
 class TestBaseMapper(unittest.TestCase):
@@ -50,7 +52,11 @@ class TestBaseMapper(unittest.TestCase):
 """
         self.node = ET.fromstring(node_str)
         self.mapper = base_mapper.BaseMapper(
-            oozie_node=self.node, name="test_id", trigger_rule=TriggerRule.DUMMY
+            oozie_node=self.node,
+            name="test_id",
+            dag_name="BBB",
+            trigger_rule=TriggerRule.DUMMY,
+            property_set=PropertySet(job_properties={}, configuration_properties={}),
         )
 
     def test_dummy_method(self):

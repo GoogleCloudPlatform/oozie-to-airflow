@@ -16,6 +16,7 @@
 
 import ast
 import unittest
+from typing import Dict
 from xml.etree import ElementTree as ET
 
 from parameterized import parameterized
@@ -24,12 +25,13 @@ from airflow.utils.trigger_rule import TriggerRule
 from o2a.converter.task import Task
 from o2a.converter.relation import Relation
 from o2a.mappers import fs_mapper
+from o2a.o2a_libs.property_utils import PropertySet
 
-TEST_PARAMS = {"user.name": "pig", "nameNode": "hdfs://localhost:8020"}
+TEST_JOB_PROPERTIES: Dict[str, str] = {"user.name": "pig", "nameNode": "hdfs://localhost:8020"}
+TEST_CONFIGURATION_PROPERTIES: Dict[str, str] = {}
 
 
-# pylint: disable=invalid-name
-class prepare_mkdir_commandTest(unittest.TestCase):
+class PrepareCommandsTest(unittest.TestCase):
     @parameterized.expand(
         [
             (
@@ -42,12 +44,18 @@ class prepare_mkdir_commandTest(unittest.TestCase):
             ),
         ]
     )
-    def test_result(self, xml, command):
+    def test_prepare_mkdir_command(self, xml, command):
         node = ET.fromstring(xml)
-        self.assertEqual(fs_mapper.prepare_mkdir_command(node, TEST_PARAMS), command)
+        self.assertEqual(
+            command,
+            fs_mapper.prepare_mkdir_command(
+                node,
+                property_set=PropertySet(
+                    job_properties=TEST_JOB_PROPERTIES, configuration_properties=TEST_CONFIGURATION_PROPERTIES
+                ),
+            ),
+        )
 
-
-class prepare_delete_commandTest(unittest.TestCase):
     @parameterized.expand(
         [
             (
@@ -60,12 +68,18 @@ class prepare_delete_commandTest(unittest.TestCase):
             ),
         ]
     )
-    def test_result(self, xml, command):
+    def test_prepare_delete_command(self, xml, command):
         node = ET.fromstring(xml)
-        self.assertEqual(fs_mapper.prepare_delete_command(node, TEST_PARAMS), command)
+        self.assertEqual(
+            command,
+            fs_mapper.prepare_delete_command(
+                node,
+                property_set=PropertySet(
+                    job_properties=TEST_JOB_PROPERTIES, configuration_properties=TEST_CONFIGURATION_PROPERTIES
+                ),
+            ),
+        )
 
-
-class prepare_move_commanddTest(unittest.TestCase):
     @parameterized.expand(
         [
             (
@@ -85,12 +99,18 @@ class prepare_move_commanddTest(unittest.TestCase):
             ),
         ]
     )
-    def test_result(self, xml, command):
+    def test_prepare_move_command(self, xml, command):
         node = ET.fromstring(xml)
-        self.assertEqual(fs_mapper.prepare_move_command(node, TEST_PARAMS), command)
+        self.assertEqual(
+            command,
+            fs_mapper.prepare_move_command(
+                node,
+                property_set=PropertySet(
+                    job_properties=TEST_JOB_PROPERTIES, configuration_properties=TEST_CONFIGURATION_PROPERTIES
+                ),
+            ),
+        )
 
-
-class prepare_chmod_commandTest(unittest.TestCase):
     @parameterized.expand(
         [
             (
@@ -109,19 +129,25 @@ class prepare_chmod_commandTest(unittest.TestCase):
             ),
             (
                 """<chmod path='hdfs://localhost:8020/home/pig/test-fs/test-chmod-4'
-                permissions='777' dir-files='false' >
-         <recursive/>
-         </chmod>""",
+                        permissions='777' dir-files='false' >
+                 <recursive/>
+                 </chmod>""",
                 "fs -chmod -R 777 /home/pig/test-fs/test-chmod-4",
             ),
         ]
     )
-    def test_result(self, xml, command):
+    def test_prepare_chmod_command(self, xml, command):
         node = ET.fromstring(xml)
-        self.assertEqual(fs_mapper.prepare_chmod_command(node, TEST_PARAMS), command)
+        self.assertEqual(
+            command,
+            fs_mapper.prepare_chmod_command(
+                node,
+                property_set=PropertySet(
+                    job_properties=TEST_JOB_PROPERTIES, configuration_properties=TEST_CONFIGURATION_PROPERTIES
+                ),
+            ),
+        )
 
-
-class prepare_touchz_commandTest(unittest.TestCase):
     @parameterized.expand(
         [
             (
@@ -134,12 +160,18 @@ class prepare_touchz_commandTest(unittest.TestCase):
             ),
         ]
     )
-    def test_result(self, xml, command):
+    def test_prepare_touchz_command(self, xml, command):
         node = ET.fromstring(xml)
-        self.assertEqual(fs_mapper.prepare_touchz_command(node, TEST_PARAMS), command)
+        self.assertEqual(
+            command,
+            fs_mapper.prepare_touchz_command(
+                node,
+                property_set=PropertySet(
+                    job_properties=TEST_JOB_PROPERTIES, configuration_properties=TEST_CONFIGURATION_PROPERTIES
+                ),
+            ),
+        )
 
-
-class prepare_chgrp_commandTest(unittest.TestCase):
     @parameterized.expand(
         [
             (
@@ -152,9 +184,17 @@ class prepare_chgrp_commandTest(unittest.TestCase):
             ),
         ]
     )
-    def test_result(self, xml, command):
+    def test_prepare_chgrp_command(self, xml, command):
         node = ET.fromstring(xml)
-        self.assertEqual(fs_mapper.prepare_chgrp_command(node, TEST_PARAMS), command)
+        self.assertEqual(
+            command,
+            fs_mapper.prepare_chgrp_command(
+                node,
+                property_set=PropertySet(
+                    job_properties=TEST_JOB_PROPERTIES, configuration_properties=TEST_CONFIGURATION_PROPERTIES
+                ),
+            ),
+        )
 
 
 class FsMapperSingleTestCase(unittest.TestCase):
@@ -173,16 +213,19 @@ class FsMapperSingleTestCase(unittest.TestCase):
         tasks, relations = self.mapper.to_tasks_and_relations()
 
         self.assertEqual(
-            tasks,
             [
                 Task(
                     task_id="test_id",
                     template_name="fs_op.tpl",
-                    template_params={"pig_command": "fs -mkdir -p /home/pig/test-delete-1"},
+                    template_params={
+                        "pig_command": "fs -mkdir -p /home/pig/test-delete-1",
+                        "action_node_properties": {},
+                    },
                 )
             ],
+            tasks,
         )
-        self.assertEqual(relations, [])
+        self.assertEqual([], relations)
 
     def test_required_imports(self):
         imps = self.mapper.required_imports()
@@ -190,10 +233,10 @@ class FsMapperSingleTestCase(unittest.TestCase):
         self.assertIsNotNone(ast.parse(imp_str))
 
     def test_get_first_task_id(self):
-        self.assertEqual(self.mapper.first_task_id, "test_id")
+        self.assertEqual("test_id", self.mapper.first_task_id)
 
     def test_get_last_task_id(self):
-        self.assertEqual(self.mapper.last_task_id, "test_id")
+        self.assertEqual("test_id", self.mapper.last_task_id)
 
 
 class FsMapperEmptyTestCase(unittest.TestCase):
@@ -205,8 +248,8 @@ class FsMapperEmptyTestCase(unittest.TestCase):
     def test_to_tasks_and_relations(self):
         tasks, relations = self.mapper.to_tasks_and_relations()
 
-        self.assertEqual(tasks, [Task(task_id="test_id", template_name="dummy.tpl")])
-        self.assertEqual(relations, [])
+        self.assertEqual([Task(task_id="test_id", template_name="dummy.tpl")], tasks)
+        self.assertEqual([], relations)
 
     def test_required_imports(self):
         imps = self.mapper.required_imports()
@@ -214,10 +257,10 @@ class FsMapperEmptyTestCase(unittest.TestCase):
         self.assertIsNotNone(ast.parse(imp_str))
 
     def test_get_first_task_id(self):
-        self.assertEqual(self.mapper.first_task_id, "test_id")
+        self.assertEqual("test_id", self.mapper.first_task_id)
 
     def test_get_last_task_id(self):
-        self.assertEqual(self.mapper.last_task_id, "test_id")
+        self.assertEqual("test_id", self.mapper.last_task_id)
 
 
 class FsMapperComplexTestCase(unittest.TestCase):
@@ -225,6 +268,13 @@ class FsMapperComplexTestCase(unittest.TestCase):
         # language=XML
         node_str = """
             <fs>
+                <configuration>
+                    <property>
+                        <name>test.property.node</name>
+                        <value>${nameNode}</value>
+                    </property>
+                </configuration>
+
                 <!-- mkdir -->
                 <mkdir path='hdfs://localhost:9200/home/pig/test-delete-1'/>
                 <mkdir path='hdfs:///home/pig/test-delete-2'/>
@@ -274,92 +324,146 @@ class FsMapperComplexTestCase(unittest.TestCase):
                 Task(
                     task_id="test_id_fs_0_mkdir",
                     template_name="fs_op.tpl",
-                    template_params={"pig_command": "fs -mkdir -p /home/pig/test-delete-1"},
+                    template_params={
+                        "pig_command": "fs -mkdir -p /home/pig/test-delete-1",
+                        "action_node_properties": {"test.property.node": "hdfs://"},
+                    },
                 ),
                 Task(
                     task_id="test_id_fs_1_mkdir",
                     template_name="fs_op.tpl",
-                    template_params={"pig_command": "fs -mkdir -p /home/pig/test-delete-2"},
+                    template_params={
+                        "pig_command": "fs -mkdir -p /home/pig/test-delete-2",
+                        "action_node_properties": {"test.property.node": "hdfs://"},
+                    },
                 ),
                 Task(
                     task_id="test_id_fs_2_mkdir",
                     template_name="fs_op.tpl",
-                    template_params={"pig_command": "fs -mkdir -p /home/pig/test-delete-1"},
+                    template_params={
+                        "pig_command": "fs -mkdir -p /home/pig/test-delete-1",
+                        "action_node_properties": {"test.property.node": "hdfs://"},
+                    },
                 ),
                 Task(
                     task_id="test_id_fs_3_mkdir",
                     template_name="fs_op.tpl",
-                    template_params={"pig_command": "fs -mkdir -p /home/pig/test-delete-2"},
+                    template_params={
+                        "pig_command": "fs -mkdir -p /home/pig/test-delete-2",
+                        "action_node_properties": {"test.property.node": "hdfs://"},
+                    },
                 ),
                 Task(
                     task_id="test_id_fs_4_mkdir",
                     template_name="fs_op.tpl",
-                    template_params={"pig_command": "fs -mkdir -p /home/pig/test-delete-3"},
+                    template_params={
+                        "pig_command": "fs -mkdir -p /home/pig/test-delete-3",
+                        "action_node_properties": {"test.property.node": "hdfs://"},
+                    },
                 ),
                 Task(
                     task_id="test_id_fs_5_delete",
                     template_name="fs_op.tpl",
-                    template_params={"pig_command": "fs -rm -r /home/pig/test-delete-1"},
+                    template_params={
+                        "pig_command": "fs -rm -r /home/pig/test-delete-1",
+                        "action_node_properties": {"test.property.node": "hdfs://"},
+                    },
                 ),
                 Task(
                     task_id="test_id_fs_6_mkdir",
                     template_name="fs_op.tpl",
-                    template_params={"pig_command": "fs -mkdir -p /home/pig/test-delete-1"},
+                    template_params={
+                        "pig_command": "fs -mkdir -p /home/pig/test-delete-1",
+                        "action_node_properties": {"test.property.node": "hdfs://"},
+                    },
                 ),
                 Task(
                     task_id="test_id_fs_7_move",
                     template_name="fs_op.tpl",
-                    template_params={"pig_command": "fs -mv /home/pig/test-chmod-1 /home/pig/test-chmod-2"},
+                    template_params={
+                        "pig_command": "fs -mv /home/pig/test-chmod-1 /home/pig/test-chmod-2",
+                        "action_node_properties": {"test.property.node": "hdfs://"},
+                    },
                 ),
                 Task(
                     task_id="test_id_fs_8_mkdir",
                     template_name="fs_op.tpl",
-                    template_params={"pig_command": "fs -mkdir -p /home/pig/test-chmod-1"},
+                    template_params={
+                        "pig_command": "fs -mkdir -p /home/pig/test-chmod-1",
+                        "action_node_properties": {"test.property.node": "hdfs://"},
+                    },
                 ),
                 Task(
                     task_id="test_id_fs_9_mkdir",
                     template_name="fs_op.tpl",
-                    template_params={"pig_command": "fs -mkdir -p /home/pig/test-chmod-2"},
+                    template_params={
+                        "pig_command": "fs -mkdir -p /home/pig/test-chmod-2",
+                        "action_node_properties": {"test.property.node": "hdfs://"},
+                    },
                 ),
                 Task(
                     task_id="test_id_fs_10_mkdir",
                     template_name="fs_op.tpl",
-                    template_params={"pig_command": "fs -mkdir -p /home/pig/test-chmod-3"},
+                    template_params={
+                        "pig_command": "fs -mkdir -p /home/pig/test-chmod-3",
+                        "action_node_properties": {"test.property.node": "hdfs://"},
+                    },
                 ),
                 Task(
                     task_id="test_id_fs_11_mkdir",
                     template_name="fs_op.tpl",
-                    template_params={"pig_command": "fs -mkdir -p /home/pig/test-chmod-4"},
+                    template_params={
+                        "pig_command": "fs -mkdir -p /home/pig/test-chmod-4",
+                        "action_node_properties": {"test.property.node": "hdfs://"},
+                    },
                 ),
                 Task(
                     task_id="test_id_fs_12_chmod",
                     template_name="fs_op.tpl",
-                    template_params={"pig_command": "fs -chmod  -rwxrw-rw- /home/pig/test-chmod-1"},
+                    template_params={
+                        "pig_command": "fs -chmod  -rwxrw-rw- /home/pig/test-chmod-1",
+                        "action_node_properties": {"test.property.node": "hdfs://"},
+                    },
                 ),
                 Task(
                     task_id="test_id_fs_13_chmod",
                     template_name="fs_op.tpl",
-                    template_params={"pig_command": "fs -chmod  -rwxrw-rw- /home/pig/test-chmod-2"},
+                    template_params={
+                        "pig_command": "fs -chmod  -rwxrw-rw- /home/pig/test-chmod-2",
+                        "action_node_properties": {"test.property.node": "hdfs://"},
+                    },
                 ),
                 Task(
                     task_id="test_id_fs_14_chmod",
                     template_name="fs_op.tpl",
-                    template_params={"pig_command": "fs -chmod  -rwxrw-rw- /home/pig/test-chmod-3"},
+                    template_params={
+                        "pig_command": "fs -chmod  -rwxrw-rw- /home/pig/test-chmod-3",
+                        "action_node_properties": {"test.property.node": "hdfs://"},
+                    },
                 ),
                 Task(
                     task_id="test_id_fs_15_chmod",
                     template_name="fs_op.tpl",
-                    template_params={"pig_command": "fs -chmod -R -rwxrw-rw- /home/pig/test-chmod-4"},
+                    template_params={
+                        "pig_command": "fs -chmod -R -rwxrw-rw- /home/pig/test-chmod-4",
+                        "action_node_properties": {"test.property.node": "hdfs://"},
+                    },
                 ),
                 Task(
                     task_id="test_id_fs_16_touchz",
                     template_name="fs_op.tpl",
-                    template_params={"pig_command": "fs -touchz /home/pig/test-touchz-1"},
+                    template_params={
+                        "pig_command": "fs -touchz /home/pig/test-touchz-1",
+                        "action_node_properties": {"test.property.node": "hdfs://"},
+                    },
                 ),
                 Task(
                     task_id="test_id_fs_17_chgrp",
                     template_name="fs_op.tpl",
-                    template_params={"pig_command": "fs -chgrp  pig /home/pig/test-touchz-1"},
+                    template_params={
+                        "pig_command": "fs -chgrp  pig /home/pig/test-touchz-1",
+                        "action_node_properties": {"test.property.node": "hdfs://"},
+                    },
                 ),
             ],
         )
@@ -399,4 +503,10 @@ class FsMapperComplexTestCase(unittest.TestCase):
 
 
 def _get_fs_mapper(oozie_node):
-    return fs_mapper.FsMapper(oozie_node=oozie_node, name="test_id", trigger_rule=TriggerRule.DUMMY)
+    return fs_mapper.FsMapper(
+        oozie_node=oozie_node,
+        name="test_id",
+        dag_name="BBB",
+        trigger_rule=TriggerRule.DUMMY,
+        property_set=PropertySet(job_properties={"nameNode": "hdfs://"}, configuration_properties={}),
+    )

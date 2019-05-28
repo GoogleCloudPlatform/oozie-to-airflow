@@ -12,16 +12,16 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
- #}
-
+#}
 {{ task_id | to_var }} = dataproc_operator.DataProcPigOperator(
     task_id={{ task_id | to_python }},
     trigger_rule={{ trigger_rule | to_python }},
-    query_uri='{}/{}'.format(PARAMS['gcp_uri_prefix'], {{ script_file_name | to_python }}),
-    variables={{ params_dict }},
-    dataproc_pig_properties={{ properties }},
-    cluster_name=PARAMS['dataproc_cluster'],
-    gcp_conn_id=PARAMS['gcp_conn_id'],
-    region=PARAMS['gcp_region'],
-    dataproc_job_id={{ task_id | to_python }}
+    query_uri='%s/%s' % (CONFIGURATION_PROPERTIES['gcp_uri_prefix'], {{ script_file_name | to_python }}),
+    variables={{ params_dict | to_python }},
+    dataproc_pig_properties={% include "property_set.tpl" %}.job_properties_merged,
+    cluster_name=CONFIGURATION_PROPERTIES['dataproc_cluster'],
+    gcp_conn_id=CONFIGURATION_PROPERTIES['gcp_conn_id'],
+    region=CONFIGURATION_PROPERTIES['gcp_region'],
+    dataproc_job_id={{ task_id | to_python }},
+    params={% include "property_set.tpl" %},
 )

@@ -24,9 +24,9 @@ from o2a.converter.task import Task
 from o2a.mappers import git_mapper
 from o2a.mappers.git_mapper import prepare_git_command
 
-EXAMPLE_PARAMS = {"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3", "nameNode": "hdfs://"}
-
 # language=XML
+from o2a.o2a_libs.property_utils import PropertySet
+
 EXAMPLE_XML = """
 <git name="git">
     <prepare>
@@ -39,26 +39,27 @@ EXAMPLE_XML = """
     <key-path>hdfs://name-node.second.company.com:8020/awesome-key/</key-path>
 </git>"""
 
-EXAMPLE_PARAMS = {
+EXAMPLE_JOB_PROPERTIES = {
     "branch": "my-awesome-branch",
-    "dataproc_cluster": "my-cluster",
-    "gcp_region": "europe-west3",
     "nameNode": "hdfs://",
     "userName": "test_user",
     "examplesRoot": "examples",
 }
 
+EXAMPLE_CONFIGURATION_PROPERTIES = {"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"}
 
-# pylint: disable=invalid-name
-class prepare_git_command_TestCase(unittest.TestCase):
+
+class PrepareGitCommandTestCase(unittest.TestCase):
     def test_green_path(self):
         command = prepare_git_command(
             git_uri="GIT_URI", git_branch="GIT_BRANCH", destination_path="/DEST_PATH/", key_path="/KEY/PATH"
         )
         self.assertEqual(
-            command,
-            "$DAGS_FOLDER/../data/git.sh --cluster {dataproc_cluster} --region {gcp_region} "
+            "$DAGS_FOLDER/../data/git.sh "
+            "--cluster {{params.configuration_properties['dataproc_cluster']}} "
+            "--region {{params.configuration_properties['gcp_region']}} "
             "--git-uri GIT_URI --destination-path /DEST_PATH/ --branch GIT_BRANCH --key-path /KEY/PATH",
+            command,
         )
 
     def test_should_escape_special_characters(self):
@@ -69,10 +70,12 @@ class prepare_git_command_TestCase(unittest.TestCase):
             key_path="/KEY/'\"PATH",
         )
         self.assertEqual(
-            command,
-            "$DAGS_FOLDER/../data/git.sh --cluster {dataproc_cluster} --region {gcp_region} "
+            "$DAGS_FOLDER/../data/git.sh "
+            "--cluster {{params.configuration_properties['dataproc_cluster']}} "
+            "--region {{params.configuration_properties['gcp_region']}} "
             "--git-uri 'GIT_'\"'\"'\"URI' --destination-path '/DEST_PA'\"'\"'\"TH/' "
             "--branch 'GIT'\"'\"'\"_BRANCH' --key-path '/KEY/'\"'\"'\"PATH'",
+            command,
         )
 
     def test_without_branch(self):
@@ -80,9 +83,11 @@ class prepare_git_command_TestCase(unittest.TestCase):
             git_uri="GIT_URI", git_branch=None, destination_path="/DEST_PATH/", key_path="/KEY/PATH"
         )
         self.assertEqual(
-            command,
-            "$DAGS_FOLDER/../data/git.sh --cluster {dataproc_cluster} --region {gcp_region} "
+            "$DAGS_FOLDER/../data/git.sh "
+            "--cluster {{params.configuration_properties['dataproc_cluster']}} "
+            "--region {{params.configuration_properties['gcp_region']}} "
             "--git-uri GIT_URI --destination-path /DEST_PATH/ --key-path /KEY/PATH",
+            command,
         )
 
     def test_without_key_path(self):
@@ -90,9 +95,11 @@ class prepare_git_command_TestCase(unittest.TestCase):
             git_uri="GIT_URI", git_branch="GIT_BRANCH", destination_path="/DEST_PATH/", key_path=None
         )
         self.assertEqual(
-            command,
-            "$DAGS_FOLDER/../data/git.sh --cluster {dataproc_cluster} --region {gcp_region} "
+            "$DAGS_FOLDER/../data/git.sh "
+            "--cluster {{params.configuration_properties['dataproc_cluster']}} "
+            "--region {{params.configuration_properties['gcp_region']}} "
             "--git-uri GIT_URI --destination-path /DEST_PATH/ --branch GIT_BRANCH",
+            command,
         )
 
 
@@ -114,32 +121,44 @@ class TestGitMapper(unittest.TestCase):
         tasks, relations = mapper.to_tasks_and_relations()
 
         self.assertEqual(
-            tasks,
             [
                 Task(
                     task_id="test_id_prepare",
                     template_name="prepare.tpl",
-                    trigger_rule="dummy",
-                    template_params={
-                        "prepare_command": "$DAGS_FOLDER/../data/prepare.sh -c my-cluster "
-                        '-r europe-west3 -d "/tmp/d_path" -m "/tmp/mk_path"'
-                    },
+                    trigger_rule="all_success",
+                    template_params={"delete": "/tmp/d_path", "mkdir": "/tmp/mk_path"},
                 ),
                 Task(
                     task_id="test_id",
                     template_name="git.tpl",
                     trigger_rule="dummy",
                     template_params={
-                        "bash_command": "$DAGS_FOLDER/../data/git.sh --cluster {dataproc_cluster} "
-                        "--region {gcp_region} --git-uri https://github.com/apache/oozie "
-                        "--destination-path /my_git_repo_directory --branch my-awesome-branch "
-                        "--key-path /awesome-key/"
+                        "git_uri": "https://github.com/apache/oozie",
+                        "git_branch": "my-awesome-branch",
+                        "destination_uri": "hdfs:///my_git_repo_directory",
+                        "destination_path": "/my_git_repo_directory",
+                        "key_path_uri": "hdfs://name-node.second.company.com:8020/awesome-key/",
+                        "key_path": "/awesome-key/",
+                        "property_set": PropertySet(
+                            configuration_properties={
+                                "dataproc_cluster": "my-cluster",
+                                "gcp_region": "europe-west3",
+                            },
+                            job_properties={
+                                "branch": "my-awesome-branch",
+                                "nameNode": "hdfs://",
+                                "userName": "test_user",
+                                "examplesRoot": "examples",
+                            },
+                            action_node_properties={},
+                        ),
                     },
                 ),
             ],
+            tasks,
         )
 
-        self.assertEqual(relations, [Relation(from_task_id="test_id_prepare", to_task_id="test_id")])
+        self.assertEqual([Relation(from_task_id="test_id_prepare", to_task_id="test_id")], relations)
 
     def test_convert_to_text_without_prepare_node(self):
         spark_node = ET.fromstring(EXAMPLE_XML)
@@ -151,22 +170,37 @@ class TestGitMapper(unittest.TestCase):
         tasks, relations = mapper.to_tasks_and_relations()
 
         self.assertEqual(
-            tasks,
             [
                 Task(
                     task_id="test_id",
                     template_name="git.tpl",
                     trigger_rule="dummy",
                     template_params={
-                        "bash_command": "$DAGS_FOLDER/../data/git.sh --cluster {dataproc_cluster} "
-                        "--region {gcp_region} --git-uri https://github.com/apache/oozie "
-                        "--destination-path /my_git_repo_directory --branch my-awesome-branch "
-                        "--key-path /awesome-key/"
+                        "git_uri": "https://github.com/apache/oozie",
+                        "git_branch": "my-awesome-branch",
+                        "destination_uri": "hdfs:///my_git_repo_directory",
+                        "destination_path": "/my_git_repo_directory",
+                        "key_path_uri": "hdfs://name-node.second.company.com:8020/awesome-key/",
+                        "key_path": "/awesome-key/",
+                        "property_set": PropertySet(
+                            configuration_properties={
+                                "dataproc_cluster": "my-cluster",
+                                "gcp_region": "europe-west3",
+                            },
+                            job_properties={
+                                "branch": "my-awesome-branch",
+                                "nameNode": "hdfs://",
+                                "userName": "test_user",
+                                "examplesRoot": "examples",
+                            },
+                            action_node_properties={},
+                        ),
                     },
                 )
             ],
+            tasks,
         )
-        self.assertEqual(relations, [])
+        self.assertEqual([], relations)
 
     def test_required_imports(self):
         spark_node = ET.fromstring(EXAMPLE_XML)
@@ -177,5 +211,13 @@ class TestGitMapper(unittest.TestCase):
 
     @staticmethod
     def _get_git_mapper(spark_node):
-        mapper = git_mapper.GitMapper(oozie_node=spark_node, name="test_id", params=EXAMPLE_PARAMS)
+        mapper = git_mapper.GitMapper(
+            oozie_node=spark_node,
+            name="test_id",
+            dag_name="BBB",
+            property_set=PropertySet(
+                job_properties=EXAMPLE_JOB_PROPERTIES,
+                configuration_properties=EXAMPLE_CONFIGURATION_PROPERTIES,
+            ),
+        )
         return mapper

@@ -47,5 +47,5 @@ class TestDummyMapper(unittest.TestCase):
 
     def _get_dummy_mapper(self):
         return dummy_mapper.DummyMapper(
-            oozie_node=self.oozie_node, name="test_id", trigger_rule=TriggerRule.DUMMY
+            oozie_node=self.oozie_node, name="test_id", trigger_rule=TriggerRule.DUMMY, dag_name="BBB"
         )
