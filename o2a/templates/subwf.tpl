@@ -15,7 +15,7 @@
 #}
 
 {{ task_id | to_var }} = SubDagOperator(
-    task_id={{ task_id | python_escape_string }},
-    trigger_rule={{ trigger_rule | python_escape_string }},
-    subdag=subdag_{{ app_name | to_var }}.sub_dag(dag.dag_id, {{ task_id | python_escape_string }}, dag.start_date, dag.schedule_interval),
+    task_id={{ task_id | to_python }},
+    trigger_rule={{ trigger_rule | to_python }},
+    subdag=subdag_{{ app_name | to_var }}.sub_dag(dag.dag_id, {{ task_id | to_python }}, dag.start_date, dag.schedule_interval),
 )

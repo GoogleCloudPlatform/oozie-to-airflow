@@ -17,9 +17,9 @@
 {{ dependency }}
 {% endfor %}
 
-JOB_PROPERTIES={{ job_properties | python_escape_dictionary }}
+JOB_PROPERTIES={{ job_properties | to_python }}
 
-CONFIGURATION_PROPERTIES={{ configuration_properties | python_escape_dictionary }}
+CONFIGURATION_PROPERTIES={{ configuration_properties | to_python }}
 
 def sub_dag(parent_dag_name, child_dag_name, start_date, schedule_interval):
     with models.DAG(

@@ -14,6 +14,6 @@
   limitations under the License.
 #}
 {{ task_id | to_var }} = dummy_operator.DummyOperator(
-    task_id={{ task_id | python_escape_string }},
-    trigger_rule={{ trigger_rule | python_escape_string }}
+    task_id={{ task_id | to_python }},
+    trigger_rule={{ trigger_rule | to_python }}
 )

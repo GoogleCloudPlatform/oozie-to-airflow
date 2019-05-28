@@ -14,8 +14,8 @@
   limitations under the License.
 #}
 {{ task_id | to_var }} = bash_operator.BashOperator(
-    task_id={{ task_id | python_escape_string }},
-    trigger_rule={{ trigger_rule | python_escape_string }},
+    task_id={{ task_id | to_python }},
+    trigger_rule={{ trigger_rule | to_python }},
     bash_command={% include "git_command.tpl" %},
     params={% include "property_set.tpl" %},
 )

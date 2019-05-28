@@ -14,24 +14,20 @@
   limitations under the License.
 #}
 {{ task_id | to_var }} = dataproc_operator.DataProcHadoopOperator(
-    task_id={{ task_id | python_escape_string }},
-    trigger_rule={{ trigger_rule | python_escape_string }},
+    task_id={{ task_id | to_python }},
+    trigger_rule={{ trigger_rule | to_python }},
     main_class=CONFIGURATION_PROPERTIES['hadoop_main_class'],
     arguments=[
         "{{ '{{' }} params['mapreduce.input.fileinputformat.inputdir'] {{ '}}' }}",
         "{{ '{{' }} params['mapreduce.output.fileoutputformat.outputdir'] {{ '}}' }}"
     ],
-    {% if hdfs_files %}
-        files={{ hdfs_files | python_escape_list }},
-    {% endif %}
-    {% if hdfs_archives %}
-        archives={{ hdfs_archives | python_escape_list }},
-    {% endif %}
+    {% if hdfs_files %}files={{ hdfs_files | to_python }},{% endif %}
+    {% if hdfs_archives %}archives={{ hdfs_archives | to_python }},{% endif %}
     cluster_name=CONFIGURATION_PROPERTIES['dataproc_cluster'],
     dataproc_hadoop_properties={% include "property_set.tpl" %}.job_properties_merged,
     dataproc_hadoop_jars=CONFIGURATION_PROPERTIES['hadoop_jars'].split(','),
     gcp_conn_id=CONFIGURATION_PROPERTIES['gcp_conn_id'],
     region=CONFIGURATION_PROPERTIES['gcp_region'],
-    dataproc_job_id={{ task_id | python_escape_string }},
+    dataproc_job_id={{ task_id | to_python }},
     params={% include "property_set.tpl" %},
 )

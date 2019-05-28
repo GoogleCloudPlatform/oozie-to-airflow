@@ -18,12 +18,12 @@
 {{ dependency }}
 {% endfor %}
 
-JOB_PROPERTIES={{ job_properties | python_escape_dictionary }}
+JOB_PROPERTIES={{ job_properties | to_python }}
 
-CONFIGURATION_PROPERTIES={{ configuration_properties | python_escape_dictionary }}
+CONFIGURATION_PROPERTIES={{ configuration_properties | to_python }}
 
 with models.DAG(
-    {{ dag_name | python_escape_string }},
+    {{ dag_name | to_python }},
     schedule_interval={% if schedule_interval %}datetime.timedelta(days={{ schedule_interval }}){% else %}None{% endif %},  # Change to suit your needs
     start_date=dates.days_ago({{ start_days_ago }})  # Change to suit your needs
 ) as dag:

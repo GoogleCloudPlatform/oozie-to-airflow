@@ -17,21 +17,21 @@ def {{ task_id | to_var }}_decision():
 {% for key, val in case_dict.items() %}
 {% if loop.first %}
     if {{ key }}:
-        return "{{ val }}"
+        return {{ val | to_python }}
 {% endif %}
 {% if not loop.first and not loop.last %}
     elif {{ key }}:
-        return "{{ val }}"
+        return {{ val | to_python}}
 {% endif %}
 {% if loop.last %}
     else:
-        return "{{ val }}"
+        return {{ val | to_python }}
 {% endif %}
 {% endfor %}
 
 
 {{ task_id | to_var }} = python_operator.BranchPythonOperator(
-    task_id={{ task_id | python_escape_string }},
-    trigger_rule={{ trigger_rule | python_escape_string }},
+    task_id={{ task_id | to_python }},
+    trigger_rule={{ trigger_rule | to_python }},
     python_callable={{ task_id | to_var }}_decision,
 )
