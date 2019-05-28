@@ -22,30 +22,15 @@ particular actions.
 from typing import Type, Dict
 
 from o2a.mappers.action_mapper import ActionMapper
-from o2a.mappers.base_mapper import BaseMapper
-from o2a.mappers.decision_mapper import DecisionMapper
 from o2a.mappers.dummy_mapper import DummyMapper
-from o2a.mappers.end_mapper import EndMapper
 from o2a.mappers.fs_mapper import FsMapper
 from o2a.mappers.git_mapper import GitMapper
-from o2a.mappers.kill_mapper import KillMapper
 from o2a.mappers.mapreduce_mapper import MapReduceMapper
 from o2a.mappers.pig_mapper import PigMapper
 from o2a.mappers.shell_mapper import ShellMapper
 from o2a.mappers.spark_mapper import SparkMapper
 from o2a.mappers.ssh_mapper import SSHMapper
-from o2a.mappers.start_mapper import StartMapper
 from o2a.mappers.subworkflow_mapper import SubworkflowMapper
-
-
-CONTROL_MAP: Dict[str, Type[BaseMapper]] = {
-    "decision": DecisionMapper,
-    "end": EndMapper,
-    "kill": KillMapper,
-    "fork": DummyMapper,
-    "join": DummyMapper,
-    "start": StartMapper,
-}
 
 ACTION_MAP: Dict[str, Type[ActionMapper]] = {
     "unknown": DummyMapper,

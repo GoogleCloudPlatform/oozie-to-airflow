@@ -22,7 +22,7 @@ import sys
 from distutils.spawn import find_executable
 from subprocess import CalledProcessError, check_call
 
-from o2a.converter.mappers import ACTION_MAP, CONTROL_MAP
+from o2a.converter.mappers import ACTION_MAP
 from o2a.converter.oozie_converter import OozieConverter
 from o2a.converter.constants import HDFS_FOLDER
 from o2a.utils.constants import CONFIGURATION_PROPERTIES, WORKFLOW_XML
@@ -90,7 +90,6 @@ Otherwise please provide it.
         input_directory_path=input_directory_path,
         output_directory_path=output_directory_path,
         action_mapper=ACTION_MAP,
-        control_mapper=CONTROL_MAP,
         user=args.user,
         start_days_ago=start_days_ago,
         schedule_interval=schedule_interval,

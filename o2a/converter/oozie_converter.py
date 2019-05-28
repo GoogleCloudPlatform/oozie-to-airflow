@@ -34,7 +34,6 @@ from o2a.converter.constants import HDFS_FOLDER
 from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.workflow import Workflow
 from o2a.mappers.action_mapper import ActionMapper
-from o2a.mappers.base_mapper import BaseMapper
 from o2a.utils import el_utils
 from o2a.utils.constants import CONFIGURATION_PROPERTIES, JOB_PROPERTIES
 from o2a.utils.el_utils import comma_separated_string_to_list
@@ -63,7 +62,6 @@ class OozieConverter:
         input_directory_path: str,
         output_directory_path: str,
         action_mapper: Dict[str, Type[ActionMapper]],
-        control_mapper: Dict[str, Type[BaseMapper]],
         template_name: str = "workflow.tpl",
         user: str = None,
         start_days_ago: int = None,
@@ -104,7 +102,6 @@ class OozieConverter:
             params=params,
             dag_name=dag_name,
             action_mapper=action_mapper,
-            control_mapper=control_mapper,
         )
 
     def recreate_output_directory(self):
