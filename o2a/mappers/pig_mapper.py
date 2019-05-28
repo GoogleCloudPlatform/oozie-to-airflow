@@ -59,7 +59,6 @@ class PigMapper(ActionMapper, PrepareMixin):
         self.resource_manager = el_utils.replace_el_with_var(res_man_text, params=self.params, quote=False)
         self.name_node = el_utils.replace_el_with_var(name_node_text, params=self.params, quote=False)
         self.script_file_name = el_utils.replace_el_with_var(script, params=self.params, quote=False)
-        self._parse_config()
         self._parse_params()
         self.files, self.hdfs_files = self.file_extractor.parse_node()
         self.archives, self.hdfs_archives = self.archive_extractor.parse_node()
