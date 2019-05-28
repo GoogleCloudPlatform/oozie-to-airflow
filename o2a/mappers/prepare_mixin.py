@@ -65,11 +65,11 @@ class PrepareMixin:
         """
         delete_paths = []
         mkdir_paths = []
-        prepare_nodes = xml_utils.find_nodes_by_tag(self.oozie_node_for_prepare, "prepare")
-        if prepare_nodes:
+        prepare_node = xml_utils.find_node_by_tag(self.oozie_node_for_prepare, "prepare")
+        if prepare_node:
             # If there exists a prepare node, there will only be one, according
             # to oozie xml schema
-            for node in prepare_nodes[0]:
+            for node in prepare_node:
                 node_path = normalize_path(node.attrib["path"], property_set=property_set)
                 if node.tag == "delete":
                     delete_paths.append(node_path)
