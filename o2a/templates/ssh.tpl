@@ -16,14 +16,14 @@
 
 {{ task_id | to_var }}_hook = ssh_hook.SSHHook(
     ssh_conn_id='ssh_default',
-    username={{ user | tojson }},
-    remote_host={{ host | tojson }},
+    username={{ user | to_python }},
+    remote_host={{ host | to_python }},
 )
 
 {{ task_id | to_var }} = ssh_operator.SSHOperator(
-    task_id={{ task_id | tojson }},
-    trigger_rule={{ trigger_rule | tojson }},
+    task_id={{ task_id | to_python }},
+    trigger_rule={{ trigger_rule | to_python }},
     ssh_hook={{ task_id | to_var }}_hook,
     params=PARAMS,
-    command={{ command | tojson }},
+    command={{ command | to_python }},
 )

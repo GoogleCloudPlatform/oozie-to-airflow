@@ -20,8 +20,7 @@ from parameterized import parameterized
 
 from o2a.converter.exceptions import ParseException
 from o2a.utils import el_utils
-from o2a.utils.el_utils import normalize_path
-
+from o2a.utils.el_utils import normalize_path, escape_string_with_python_escapes
 
 # pylint: disable=too-many-public-methods
 class TestELUtils(unittest.TestCase):
@@ -211,3 +210,18 @@ class TestELUtils(unittest.TestCase):
         params = {"nameNode": "hdfs://localhost:8020", "dataproc_cluster": cluster, "gcp_region": region}
         with self.assertRaisesRegex(ParseException, "Unknown path format. "):
             normalize_path(oozie_path, params, allow_no_schema=True)
+
+    @parameterized.expand(
+        [
+            ("test", "'test'"),
+            ("ą", "'\\xc4\\x85'"),
+            ("'", "'\\''"),
+            (
+                    "This string is \" replaced with 'Escaped one'",
+                    "'This string is \" replaced with \\'Escaped one\\''",
+            ),
+            ('"', "'\"'"),
+        ]
+    )
+    def test_escape_python_string(self, input_string, expected_string):
+        self.assertEqual(expected_string, escape_string_with_python_escapes(input_string))

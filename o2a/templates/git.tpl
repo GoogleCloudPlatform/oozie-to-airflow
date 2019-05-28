@@ -15,9 +15,9 @@
  #}
 
 {{ task_id | to_var }} = bash_operator.BashOperator(
-    task_id={{ task_id | tojson }},
-    trigger_rule={{ trigger_rule | tojson }},
-    bash_command={{ bash_command | tojson }}.format(
+    task_id={{ task_id | to_python }},
+    trigger_rule={{ trigger_rule | to_python }},
+    bash_command={{ bash_command | to_python }}.format(
         dataproc_cluster=PARAMS['dataproc_cluster'],
         gcp_region=PARAMS['gcp_region']
     ),

@@ -15,7 +15,7 @@
  #}
 
 {{ task_id | to_var }} = bash_operator.BashOperator(
-    task_id={{ task_id | tojson }},
-    trigger_rule={{ trigger_rule | tojson }},
+    task_id={{ task_id | to_python }},
+    trigger_rule={{ trigger_rule | to_python }},
     bash_command='exit 1',
 )
