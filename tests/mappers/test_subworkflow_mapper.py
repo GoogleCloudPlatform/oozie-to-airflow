@@ -78,16 +78,11 @@ class TestSubworkflowMapper(TestCase):
         self.assertEqual("test_id", mapper.task_id)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.subworkflow_node, mapper.oozie_node)
-        self.assertEqual(
-            {
-                "examplesRoot": "examples",
-                "nameNode": "hdfs://",
-                "oozie.wf.application.path": "hdfs:///user/pig/examples/pig",
-                "resourceManager": "localhost:8032",
-                "user.name": "potiuk",
-            },
-            mapper.property_set.job_properties,
-        )
+        self.assertEqual("examples", mapper.property_set["examplesRoot"])
+        self.assertEqual("hdfs://", mapper.property_set["nameNode"])
+        self.assertEqual("hdfs:///user/pig/examples/pig", mapper.property_set["oozie.wf.application.path"])
+        self.assertEqual("localhost:8032", mapper.property_set["resourceManager"])
+        self.assertIsNotNone(mapper.property_set["user.name"])
         self.assertTrue(os.path.isfile(self.SUBDAG_TEST_FILEPATH))
 
     @mock.patch("o2a.utils.el_utils.parse_els")
