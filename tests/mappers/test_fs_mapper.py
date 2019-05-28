@@ -31,7 +31,7 @@ TEST_JOB_PROPERTIES: Dict[str, str] = {"user.name": "pig", "nameNode": "hdfs://l
 TEST_CONFIGURATION_PROPERTIES: Dict[str, str] = {}
 
 
-class PrepareMkdirCommandTest(unittest.TestCase):
+class PrepareCommandsTest(unittest.TestCase):
     @parameterized.expand(
         [
             (
@@ -56,8 +56,6 @@ class PrepareMkdirCommandTest(unittest.TestCase):
             ),
         )
 
-
-class PrepareDeleteCommandTest(unittest.TestCase):
     @parameterized.expand(
         [
             (
@@ -82,8 +80,6 @@ class PrepareDeleteCommandTest(unittest.TestCase):
             ),
         )
 
-
-class PrepareMoveCommandTest(unittest.TestCase):
     @parameterized.expand(
         [
             (
@@ -115,8 +111,6 @@ class PrepareMoveCommandTest(unittest.TestCase):
             ),
         )
 
-
-class PrepareChmodCommandTest(unittest.TestCase):
     @parameterized.expand(
         [
             (
@@ -154,8 +148,6 @@ class PrepareChmodCommandTest(unittest.TestCase):
             ),
         )
 
-
-class PrepareTouchzCommandTest(unittest.TestCase):
     @parameterized.expand(
         [
             (
@@ -180,8 +172,6 @@ class PrepareTouchzCommandTest(unittest.TestCase):
             ),
         )
 
-
-class PrepareChgrpCommandTest(unittest.TestCase):
     @parameterized.expand(
         [
             (
