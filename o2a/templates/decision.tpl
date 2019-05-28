@@ -21,7 +21,7 @@ def {{ task_id | to_var }}_decision():
 {% endif %}
 {% if not loop.first and not loop.last %}
     elif {{ key }}:
-        return {{ val | to_python}}
+        return {{ val | to_python }}
 {% endif %}
 {% if loop.last %}
     else:

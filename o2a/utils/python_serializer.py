@@ -14,7 +14,7 @@
 # limitations under the License.
 """Python serializer
 
-Serialize python structures to Python code.
+Serialize object to Python code.
 
 The following data types are supported:
 - str,
@@ -48,7 +48,7 @@ def serialize(serializable_obj: Any) -> str:
         elif isinstance(target, dict):
             buf = "{"
             buf += ", ".join(
-                f"{serialize_recursively(key, markers)}:" f" {serialize_recursively(value, markers)}"
+                f"{serialize_recursively(key, markers)}: {serialize_recursively(value, markers)}"
                 for key, value in target.items()
             )
             buf += "}"
