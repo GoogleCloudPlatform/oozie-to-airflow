@@ -101,8 +101,8 @@ class OozieConverter:
         self.props = PropertySet(
             job_properties=self.job_properties, config=self.config, action_node_properties={}
         )
-        self.update_job_properties()
-        self.read_config()
+        self.read_and_update_job_properties_replace_el()
+        self.read_config_replace_el()
         self.parser = parser.OozieParser(
             input_directory_path=input_directory_path,
             output_directory_path=output_directory_path,
@@ -140,7 +140,7 @@ class OozieConverter:
             p_node.tasks = tasks
             p_node.relations = relations
 
-    def read_config(self):
+    def read_config_replace_el(self):
         """
         Reads configuration properties to config dictionary.
         Replaces EL properties within.
@@ -148,9 +148,10 @@ class OozieConverter:
         """
         self.config = el_utils.parse_els(properties_file=self.config_file, props=self.props)
 
-    def update_job_properties(self):
+    def read_and_update_job_properties_replace_el(self):
         """
-        Reads job properties to job_properties dictionary. Replaces EL job_properties within.
+        Reads job properties and updates job_properties dictionary with the read values
+        Replaces EL job_properties within.
         :return: None
         """
         self.job_properties.update(
