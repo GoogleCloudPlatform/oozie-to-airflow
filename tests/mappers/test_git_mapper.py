@@ -214,7 +214,7 @@ class TestGitMapper(unittest.TestCase):
         mapper = git_mapper.GitMapper(
             oozie_node=spark_node,
             name="test_id",
-            dag_name="BBB",
+            dag_name="DAG_NAME_B",
             property_set=PropertySet(
                 job_properties=EXAMPLE_JOB_PROPERTIES,
                 configuration_properties=EXAMPLE_CONFIGURATION_PROPERTIES,

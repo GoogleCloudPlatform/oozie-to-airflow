@@ -43,8 +43,8 @@ def mutate(parent: Dict[str, Any], mutations: Dict[str, Any]) -> Dict[str, Any]:
 
         In [0]: target = { 'a': { 'b': { 'c': 3 } } }
 
-        In [1]: mutate(target, {'a': {'b': "AAAA"}})
-        Out[1]: {'a': {'b': 'AAAA'}}
+        In [1]: mutate(target, {'a': {'b': "user"}})
+        Out[1]: {'a': {'b': 'user'}}
 
     :Example::
 
@@ -107,7 +107,7 @@ def set_value_by_path(target: Any, path: List[Union[str, int]], value: Any) -> N
 
         In [0]: target = { 'a': [{ 'b': { 'c': 3 } }] }
 
-        In [1]: set_value_by_path(target, ["a", 0, "b", "c"], "AAA")
+        In [1]: set_value_by_path(target, ["a", 0, "b", "c"], "DAG_NAME_A")
 
         In [2]: target
         Out[2]: {'a': [{'b': {'c': 'AAA'}}]}
@@ -166,7 +166,7 @@ class DecisionTemplateTestCase(TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "decision.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = dict(
-        task_id="AAA",
+        task_id="DAG_NAME_A",
         trigger_rule=TriggerRule.DUMMY,
         case_dict={"first_not_null('', '')": "task1", "'True'": "task2", "default": "task3"},
     )
@@ -185,7 +185,7 @@ class DecisionTemplateTestCase(TestCase, TemplateTestMixin):
 class DummyTemplateTestCase(TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "dummy.tpl"
 
-    DEFAULT_TEMPLATE_PARAMS = dict(task_id="AAA", trigger_rule=TriggerRule.DUMMY)
+    DEFAULT_TEMPLATE_PARAMS = dict(task_id="DAG_NAME_A", trigger_rule=TriggerRule.DUMMY)
 
     def test_minimal_green_path(self):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
@@ -195,7 +195,11 @@ class DummyTemplateTestCase(TestCase, TemplateTestMixin):
 class FsOpTempalteTestCase(TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "fs_op.tpl"
 
-    DEFAULT_TEMPLATE_PARAMS = {"task_id": "AAA", "pig_command": "AAA", "trigger_rule": TriggerRule.DUMMY}
+    DEFAULT_TEMPLATE_PARAMS = {
+        "task_id": "DAG_NAME_A",
+        "pig_command": "DAG_NAME_A",
+        "trigger_rule": TriggerRule.DUMMY,
+    }
 
     def test_minimal_green_path(self):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
@@ -213,7 +217,7 @@ class FsOpTempalteTestCase(TestCase, TemplateTestMixin):
 class KillTemplateTestCase(TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "kill.tpl"
 
-    DEFAULT_TEMPLATE_PARAMS = dict(task_id="AAA", trigger_rule=TriggerRule.DUMMY)
+    DEFAULT_TEMPLATE_PARAMS = dict(task_id="DAG_NAME_A", trigger_rule=TriggerRule.DUMMY)
 
     def test_minimal_green_path(self):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
@@ -291,7 +295,7 @@ class PigTemplateTestCase(TestCase, TemplateTestMixin):
 
     @parameterized.expand(
         [
-            ({"job_properties": {'AA"': "AAA"}},),
+            ({"job_properties": {'AA"': "DAG_NAME_A"}},),
             ({"job_properties": {"AA": 'A"AA'}},),
             ({"command": 'A"'},),
             ({"user": 'A"'},),
@@ -308,7 +312,7 @@ class PrepareTemplateTestCase(TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "prepare.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = {
-        "task_id": "AAA",
+        "task_id": "DAG_NAME_A",
         "trigger_rule": "dummy",
         "delete": "file1 file2",
         "mkdir": "file3 file4",
@@ -319,7 +323,7 @@ class PrepareTemplateTestCase(TestCase, TemplateTestMixin):
         self.assertValidPython(res)
 
     @parameterized.expand(
-        [({"task_id": 'AA"AA"\''},), ({"trigger_rule": 'AA"AA"\''},), ({"prepare_command": 'AAAAA"'},)]
+        [({"task_id": 'AA"AA"\''},), ({"trigger_rule": 'AA"AA"\''},), ({"prepare_command": 'PREPARE_CMD"'},)]
     )
     def test_escape_character(self, mutation):
         template_params = mutate(self.DEFAULT_TEMPLATE_PARAMS, mutation)
@@ -330,13 +334,13 @@ class PrepareTemplateTestCase(TestCase, TemplateTestMixin):
 class ShellTemplateTestCase(TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "shell.tpl"
 
-    DEFAULT_TEMPLATE_PARAMS = {"task_id": "AAA", "pig_command": "AAAA", "trigger_rule": "dummy"}
+    DEFAULT_TEMPLATE_PARAMS = {"task_id": "DAG_NAME_A", "pig_command": "PIG_CMD", "trigger_rule": "dummy"}
 
     def test_green_path(self):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
         self.assertValidPython(res)
 
-    @parameterized.expand([({"pig_command": 'A"'},), ({"pig_command": 'AAAAA"'},)])
+    @parameterized.expand([({"pig_command": 'A"'},), ({"pig_command": 'PIG_CMD"'},)])
     def test_escape_character(self, mutation):
         template_params = mutate(self.DEFAULT_TEMPLATE_PARAMS, mutation)
         res = render_template(self.TEMPLATE_NAME, **template_params)
@@ -385,7 +389,7 @@ class SparkTemplateTestCase(TestCase, TemplateTestMixin):
         [
             ({"task_id": 'AA"AA"\''},),
             ({"trigger_rule": 'AA"AA"\''},),
-            ({"job_properties": {'AA"': "AAA"}},),
+            ({"job_properties": {'AA"': "DAG_NAME_A"}},),
             ({"job_properties": {"AA": 'A"AA'}},),
             ({"name": 'A"'},),
             ({"command": 'A"'},),
@@ -425,7 +429,7 @@ class SshTemplateTestCase(TestCase, TemplateTestMixin):
         [
             ({"task_id": 'AA"AA"\''},),
             ({"trigger_rule": 'AA"AA"\''},),
-            ({"job_properties": {'AA"': "AAA"}},),
+            ({"job_properties": {'AA"': "DAG_NAME_A"}},),
             ({"job_properties": {"AA": 'A"AA'}},),
             ({"command": 'A"'},),
             ({"user": 'A"'},),
@@ -441,7 +445,7 @@ class SshTemplateTestCase(TestCase, TemplateTestMixin):
 class SubwfTemplateTestCase(TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "subwf.tpl"
 
-    DEFAULT_TEMPLATE_PARAMS = {"task_id": "test_id", "app_name": "AAA", "trigger_rule": "dummy"}
+    DEFAULT_TEMPLATE_PARAMS = {"task_id": "test_id", "app_name": "DAG_NAME_A", "trigger_rule": "dummy"}
 
     def test_green_path(self):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)

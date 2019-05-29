@@ -50,7 +50,7 @@ class TestEndMapper(unittest.TestCase):
         ast.parse(imp_str)
 
     def test_on_parse_finish_simple_should_remove_end_node(self):
-        workflow = Workflow(input_directory_path="", output_directory_path="", dag_name="BBB")
+        workflow = Workflow(input_directory_path="", output_directory_path="", dag_name="DAG_NAME_B")
 
         mapper = self._get_end_mapper("second_task")
 
@@ -65,7 +65,7 @@ class TestEndMapper(unittest.TestCase):
         self.assertEqual(set(), workflow.relations)
 
     def test_on_parse_finish_decision_should_not_remove_end_node(self):
-        workflow = Workflow(input_directory_path="", output_directory_path="", dag_name="BBB")
+        workflow = Workflow(input_directory_path="", output_directory_path="", dag_name="DAG_NAME_B")
 
         mapper = self._get_end_mapper("end_task")
 
@@ -89,6 +89,6 @@ class TestEndMapper(unittest.TestCase):
 
     def _get_end_mapper(self, name="test_id"):
         mapper = end_mapper.EndMapper(
-            oozie_node=self.oozie_node, name=name, trigger_rule=TriggerRule.DUMMY, dag_name="BBB"
+            oozie_node=self.oozie_node, name=name, trigger_rule=TriggerRule.DUMMY, dag_name="DAG_NAME_B"
         )
         return mapper

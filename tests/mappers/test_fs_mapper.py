@@ -506,7 +506,7 @@ def _get_fs_mapper(oozie_node):
     return fs_mapper.FsMapper(
         oozie_node=oozie_node,
         name="test_id",
-        dag_name="BBB",
+        dag_name="DAG_NAME_B",
         trigger_rule=TriggerRule.DUMMY,
         property_set=PropertySet(job_properties={"nameNode": "hdfs://"}, configuration_properties={}),
     )

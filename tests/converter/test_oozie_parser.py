@@ -42,7 +42,7 @@ class TestOozieParser(unittest.TestCase):
             output_directory_path="/tmp",
             property_set=property_set,
             action_mapper=ACTION_MAP,
-            dag_name="BBB",
+            dag_name="DAG_NAME_B",
         )
 
     @mock.patch("o2a.mappers.kill_mapper.KillMapper.on_parse_node", wraps=None)
@@ -334,17 +334,17 @@ class TestOozieParser(unittest.TestCase):
     def test_create_relations(self):
         oozie_node = ET.Element("dummy")
         op1 = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task1", dag_name="BBB")
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task1", dag_name="DAG_NAME_B")
         )
         op1.downstream_names = ["task2", "task3"]
         op1.error_xml = "fail1"
         op2 = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task2", dag_name="BBB")
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task2", dag_name="DAG_NAME_B")
         )
         op2.downstream_names = ["task3", "task4"]
         op2.error_xml = "fail1"
         op3 = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task3", dag_name="BBB")
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task3", dag_name="DAG_NAME_B")
         )
         op3.downstream_names = ["end1"]
         op3.error_xml = "fail1"
@@ -357,10 +357,10 @@ class TestOozieParser(unittest.TestCase):
             }
         )
         end = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="end1", dag_name="BBB")
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="end1", dag_name="DAG_NAME_B")
         )
         fail = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="fail1", dag_name="BBB")
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="fail1", dag_name="DAG_NAME_B")
         )
         op_dict = {"task1": op1, "task2": op2, "task3": op3, "task4": op4, "end1": end, "fail1": fail}
         self.parser.workflow.nodes.update(op_dict)
@@ -387,25 +387,25 @@ class TestOozieParser(unittest.TestCase):
     def test_update_trigger_rules(self):
         oozie_node = ET.Element("dummy")
         op1 = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task1", dag_name="BBB")
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task1", dag_name="DAG_NAME_B")
         )
         op1.downstream_names = ["task2", "task3"]
         op1.error_xml = "fail1"
         op2 = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task2", dag_name="BBB")
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task2", dag_name="DAG_NAME_B")
         )
         op2.downstream_names = ["task3"]
         op2.error_xml = "fail1"
         op3 = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task3", dag_name="BBB")
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task3", dag_name="DAG_NAME_B")
         )
         op3.downstream_names = ["end1"]
         op3.error_xml = "fail1"
         end = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="end1", dag_name="BBB")
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="end1", dag_name="DAG_NAME_B")
         )
         fail = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="fail1", dag_name="BBB")
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="fail1", dag_name="DAG_NAME_B")
         )
         op_dict = {"task1": op1, "task2": op2, "task3": op3, "end1": end, "fail1": fail}
 
@@ -482,7 +482,7 @@ class TestOozieExamples(unittest.TestCase):
                     name="el",
                     node_names={"ssh"},
                     relations=set(),
-                    job_properties={"hostname": "AAAA@BBB", "nameNode": "hdfs://"},
+                    job_properties={"hostname": "user@BBB", "nameNode": "hdfs://"},
                     configuration_properties={},
                 ),
             ),
@@ -504,7 +504,7 @@ class TestOozieExamples(unittest.TestCase):
                         Relation(from_task_id="move_fs_1_move", to_task_id="join"),
                         Relation(from_task_id="touchz", to_task_id="join"),
                     },
-                    job_properties={"hostname": "AAAA@BBB", "nameNode": "hdfs://localhost:8020/"},
+                    job_properties={"hostname": "user@BBB", "nameNode": "hdfs://localhost:8020/"},
                     configuration_properties={},
                 ),
             ),
@@ -549,7 +549,7 @@ class TestOozieExamples(unittest.TestCase):
                     name="ssh",
                     node_names={"ssh"},
                     relations=set(),
-                    job_properties={"hostname": "AAAA@BBB", "nameNode": "hdfs://"},
+                    job_properties={"hostname": "user@BBB", "nameNode": "hdfs://"},
                     configuration_properties={},
                 ),
             ),
@@ -575,7 +575,7 @@ class TestOozieExamples(unittest.TestCase):
                 job_properties=case.job_properties, configuration_properties=case.configuration_properties
             ),
             action_mapper=ACTION_MAP,
-            dag_name="BBB",
+            dag_name="DAG_NAME_B",
         )
         current_parser.parse_workflow()
         self.assertEqual(case.node_names, set(current_parser.workflow.nodes.keys()))

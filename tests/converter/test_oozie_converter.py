@@ -55,7 +55,7 @@ class TestOozieConverter(TestCase):
         args = o2a.parse_args(["-i", input_dir, "-o", output_dir, "-u", user])
         self.assertEqual(args.user, user)
 
-    @mock.patch("o2a.converter.oozie_converter.render_template", return_value="AAA")
+    @mock.patch("o2a.converter.oozie_converter.render_template", return_value="DAG_NAME_A")
     @mock.patch("builtins.open", return_value=io.StringIO())
     def test_create_dag_file(self, open_mock, _):
         # Given
@@ -63,9 +63,11 @@ class TestOozieConverter(TestCase):
             dag_name="A",
             input_directory_path="in_dir",
             output_directory_path="out_dir",
-            relations={Relation(from_task_id="AAA", to_task_id="BBB")},
-            nodes=dict(AAA=ParsedActionNode(DummyMapper(Element("dummy"), name="AAA", dag_name="BBB"))),
-            dependencies={"import AAAA"},
+            relations={Relation(from_task_id="DAG_NAME_A", to_task_id="DAG_NAME_B")},
+            nodes=dict(
+                AAA=ParsedActionNode(DummyMapper(Element("dummy"), name="DAG_NAME_A", dag_name="DAG_NAME_B"))
+            ),
+            dependencies={"import IMPORT"},
         )
         # When
         self.converter.create_dag_file(workflow)
@@ -82,9 +84,11 @@ class TestOozieConverter(TestCase):
             dag_name="A",
             input_directory_path="in_dir",
             output_directory_path="out_dir",
-            relations={Relation(from_task_id="AAA", to_task_id="BBB")},
-            nodes=dict(AAA=ParsedActionNode(DummyMapper(Element("dummy"), name="AAA", dag_name="BBB"))),
-            dependencies={"import AAAA"},
+            relations={Relation(from_task_id="DAG_NAME_A", to_task_id="DAG_NAME_B")},
+            nodes=dict(
+                AAA=ParsedActionNode(DummyMapper(Element("dummy"), name="DAG_NAME_A", dag_name="DAG_NAME_B"))
+            ),
+            dependencies={"import IMPORT"},
         )
         parse_workflow_mock.return_value = workflow
         # When
@@ -113,7 +117,9 @@ class TestOozieConverter(TestCase):
     @mock.patch("o2a.converter.oozie_converter.render_template", return_value="TEXT_CONTENT")
     def test_write_dag_file(self, render_template_mock):
         relations = {Relation(from_task_id="TASK_1", to_task_id="TASK_2")}
-        nodes = dict(TASK_1=ParsedActionNode(DummyMapper(Element("dummy"), name="TASK_1", dag_name="BBB")))
+        nodes = dict(
+            TASK_1=ParsedActionNode(DummyMapper(Element("dummy"), name="TASK_1", dag_name="DAG_NAME_B"))
+        )
         dependencies = {"import awesome_stuff"}
         workflow = Workflow(
             input_directory_path="/tmp/input_directory",

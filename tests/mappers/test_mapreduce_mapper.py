@@ -174,7 +174,7 @@ class TestMapReduceMapper(unittest.TestCase):
         mapper = mapreduce_mapper.MapReduceMapper(
             oozie_node=self.mapreduce_node,
             name="test_id",
-            dag_name="BBB",
+            dag_name="DAG_NAME_B",
             trigger_rule=TriggerRule.DUMMY,
             property_set=PropertySet(
                 job_properties={"nameNode": "hdfs://"},
@@ -243,7 +243,7 @@ class TestMapReduceMapper(unittest.TestCase):
         return mapreduce_mapper.MapReduceMapper(
             oozie_node=self.mapreduce_node,
             name="test_id",
-            dag_name="BBB",
+            dag_name="DAG_NAME_B",
             trigger_rule=TriggerRule.DUMMY,
             property_set=PropertySet(
                 job_properties=job_properties, configuration_properties=configuration_properties
@@ -266,7 +266,7 @@ class TestMapReduceMapperNoPrepare(unittest.TestCase):
         mapper = mapreduce_mapper.MapReduceMapper(
             oozie_node=self.mapreduce_node,
             name="test_id",
-            dag_name="BBB",
+            dag_name="DAG_NAME_B",
             trigger_rule=TriggerRule.DUMMY,
             property_set=PropertySet(
                 job_properties={"nameNode": "hdfs://"},
@@ -329,7 +329,7 @@ class TestMapReduceMapperNoPrepare(unittest.TestCase):
         return mapreduce_mapper.MapReduceMapper(
             oozie_node=self.mapreduce_node,
             name="test_id",
-            dag_name="BBB",
+            dag_name="DAG_NAME_B",
             trigger_rule=TriggerRule.DUMMY,
             property_set=PropertySet(
                 job_properties=job_properties, configuration_properties=configuration_properties

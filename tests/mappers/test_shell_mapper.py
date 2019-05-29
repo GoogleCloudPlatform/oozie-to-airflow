@@ -140,7 +140,7 @@ class TestShellMapper(unittest.TestCase):
         return shell_mapper.ShellMapper(
             oozie_node=self.shell_node,
             name="test_id",
-            dag_name="BBB",
+            dag_name="DAG_NAME_B",
             trigger_rule=TriggerRule.DUMMY,
             property_set=PropertySet(
                 job_properties=job_properties, configuration_properties=configuration_properties

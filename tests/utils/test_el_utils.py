@@ -252,7 +252,7 @@ key5=test
 
     @parameterized.expand(
         [
-            ("${nameNodeAAA}/examples/output-data/demo/pig-node",),
+            ("${nameNode_1}/examples/output-data/demo/pig-node",),
             ("/examples/output-data/demo/pig-node",),
             ("http:///examples/output-data/demo/pig-node2",),
         ]

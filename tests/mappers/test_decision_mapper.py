@@ -81,7 +81,7 @@ class TestDecisionMapper(unittest.TestCase):
         return decision_mapper.DecisionMapper(
             oozie_node=self.decision_node,
             name="test_id",
-            dag_name="BBB",
+            dag_name="DAG_NAME_B",
             trigger_rule=TriggerRule.DUMMY,
             job_properties={},
             configuration_properties={},

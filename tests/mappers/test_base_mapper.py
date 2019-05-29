@@ -54,7 +54,7 @@ class TestBaseMapper(unittest.TestCase):
         self.mapper = base_mapper.BaseMapper(
             oozie_node=self.node,
             name="test_id",
-            dag_name="BBB",
+            dag_name="DAG_NAME_B",
             trigger_rule=TriggerRule.DUMMY,
             property_set=PropertySet(job_properties={}, configuration_properties={}),
         )

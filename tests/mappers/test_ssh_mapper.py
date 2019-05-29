@@ -96,7 +96,7 @@ class TestSSHMapper(unittest.TestCase):
         mapper = ssh_mapper.SSHMapper(
             oozie_node=self.ssh_node,
             name="test_id",
-            dag_name="BBB",
+            dag_name="DAG_NAME_B",
             trigger_rule=TriggerRule.DUMMY,
             property_set=PropertySet(
                 job_properties=job_properties, configuration_properties=configuration_properties

@@ -179,7 +179,7 @@ class TestPigMapper(unittest.TestCase):
         mapper = pig_mapper.PigMapper(
             oozie_node=self.pig_node,
             name="test_id",
-            dag_name="BBB",
+            dag_name="DAG_NAME_B",
             trigger_rule=TriggerRule.DUMMY,
             property_set=PropertySet(
                 job_properties=job_properties, configuration_properties=configuration_properties

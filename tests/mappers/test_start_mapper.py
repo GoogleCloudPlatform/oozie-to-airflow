@@ -49,7 +49,7 @@ class TestStartMapper(unittest.TestCase):
         ast.parse(imp_str)
 
     def test_on_parse_finish(self):
-        workflow = Workflow(input_directory_path="", output_directory_path="", dag_name="BBB")
+        workflow = Workflow(input_directory_path="", output_directory_path="", dag_name="DAG_NAME_B")
 
         mapper = self._get_start_mapper(name="first_task")
 
@@ -67,7 +67,7 @@ class TestStartMapper(unittest.TestCase):
         mapper = StartMapper(
             oozie_node=self.oozie_node,
             name=name,
-            dag_name="BBB",
+            dag_name="DAG_NAME_B",
             trigger_rule=TriggerRule.DUMMY,
             property_set=PropertySet(configuration_properties={}, job_properties={}),
         )
