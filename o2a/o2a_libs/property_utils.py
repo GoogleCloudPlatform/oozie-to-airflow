@@ -22,7 +22,7 @@ import json
 # pylint: disable=too-few-public-methods
 class PropertySet(Mapping):
     """Holds all the different types of properties (job/action node for now - job.xml and workflow.xml in
-       the future) and implements [] operator to return property value according to the oozie algorithm
+       the future) and implements [] operator to return property value according to the Oozie algorithm
        of property precedence.
 
        Note that the configuration_properties are not used in the [] operator nor in the
