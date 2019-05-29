@@ -15,11 +15,11 @@
 #}
 {% if (action_node_properties is defined) and (action_node_properties | length != 0) -%}
     PropertySet(
-        configuration_properties=CONFIGURATION_PROPERTIES,
-        job_properties=JOB_PROPERTIES,
+        config=CONFIG,
+        job_properties=JOB_PROPS,
         action_node_properties={{ action_node_properties | tojson }})
 {% else -%}
     PropertySet(
-        configuration_properties=CONFIGURATION_PROPERTIES,
-        job_properties=JOB_PROPERTIES)
+        config=CONFIG,
+        job_properties=JOB_PROPS)
 {% endif %}

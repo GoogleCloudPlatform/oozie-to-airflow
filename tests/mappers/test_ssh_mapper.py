@@ -39,7 +39,7 @@ class TestSSHMapper(unittest.TestCase):
         self.ssh_node = ET.fromstring(ssh_node_str)
 
     def test_create_mapper_no_jinja(self):
-        mapper = self._get_ssh_mapper(job_properties={}, configuration_properties={})
+        mapper = self._get_ssh_mapper(job_properties={}, config={})
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
@@ -53,7 +53,7 @@ class TestSSHMapper(unittest.TestCase):
         self.ssh_node.find("host").text = "${hostname}"
         job_properties = {"hostname": "user@apache.org"}
 
-        mapper = self._get_ssh_mapper(job_properties=job_properties, configuration_properties={})
+        mapper = self._get_ssh_mapper(job_properties=job_properties, config={})
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
@@ -63,7 +63,7 @@ class TestSSHMapper(unittest.TestCase):
         self.assertEqual("'ls -l -a'", mapper.command)
 
     def test_to_tasks_and_relations(self):
-        mapper = self._get_ssh_mapper(job_properties={}, configuration_properties={})
+        mapper = self._get_ssh_mapper(job_properties={}, config={})
 
         tasks, relations = mapper.to_tasks_and_relations()
 
@@ -73,9 +73,7 @@ class TestSSHMapper(unittest.TestCase):
                     task_id="test_id",
                     template_name="ssh.tpl",
                     template_params={
-                        "property_set": PropertySet(
-                            configuration_properties={}, job_properties={}, action_node_properties={}
-                        ),
+                        "props": PropertySet(config={}, job_properties={}, action_node_properties={}),
                         "command": "'ls -l -a'",
                         "user": "user",
                         "host": "apache.org",
@@ -87,19 +85,17 @@ class TestSSHMapper(unittest.TestCase):
         self.assertEqual(relations, [])
 
     def test_required_imports(self):
-        mapper = self._get_ssh_mapper(job_properties={}, configuration_properties={})
+        mapper = self._get_ssh_mapper(job_properties={}, config={})
         imps = mapper.required_imports()
         imp_str = "\n".join(imps)
         ast.parse(imp_str)
 
-    def _get_ssh_mapper(self, job_properties, configuration_properties):
+    def _get_ssh_mapper(self, job_properties, config):
         mapper = ssh_mapper.SSHMapper(
             oozie_node=self.ssh_node,
             name="test_id",
             dag_name="DAG_NAME_B",
             trigger_rule=TriggerRule.DUMMY,
-            property_set=PropertySet(
-                job_properties=job_properties, configuration_properties=configuration_properties
-            ),
+            props=PropertySet(job_properties=job_properties, config=config),
         )
         return mapper

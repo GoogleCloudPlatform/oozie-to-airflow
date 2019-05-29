@@ -37,7 +37,7 @@ class TestSubworkflowMapper(TestCase):
 
     main_properties = {"examplesRoot": "examples", "nameNode": "hdfs://", "resourceManager": "localhost:8032"}
 
-    configuration_properties = {
+    config = {
         "dataproc_cluster": "test_cluster",
         "gcp_conn_id": "google_cloud_default",
         "gcp_region": "europe-west3",
@@ -70,7 +70,7 @@ class TestSubworkflowMapper(TestCase):
     @mock.patch("o2a.utils.el_utils.parse_els")
     def test_create_mapper_jinja(self, parse_els):
         # Given
-        parse_els.side_effect = [self.subworkflow_properties, self.configuration_properties]
+        parse_els.side_effect = [self.subworkflow_properties, self.config]
         # When
         mapper = self._get_subwf_mapper()
 
@@ -78,17 +78,17 @@ class TestSubworkflowMapper(TestCase):
         self.assertEqual("test_id", mapper.task_id)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.subworkflow_node, mapper.oozie_node)
-        self.assertEqual("examples", mapper.property_set["examplesRoot"])
-        self.assertEqual("hdfs://", mapper.property_set["nameNode"])
-        self.assertEqual("hdfs:///user/pig/examples/pig", mapper.property_set["oozie.wf.application.path"])
-        self.assertEqual("localhost:8032", mapper.property_set["resourceManager"])
-        self.assertIsNotNone(mapper.property_set["user.name"])
+        self.assertEqual("examples", mapper.props.merged["examplesRoot"])
+        self.assertEqual("hdfs://", mapper.props.merged["nameNode"])
+        self.assertEqual("hdfs:///user/pig/examples/pig", mapper.props.merged["oozie.wf.application.path"])
+        self.assertEqual("localhost:8032", mapper.props.merged["resourceManager"])
+        self.assertIsNotNone(mapper.props.merged["user.name"])
         self.assertTrue(os.path.isfile(self.SUBDAG_TEST_FILEPATH))
 
     @mock.patch("o2a.utils.el_utils.parse_els")
     def test_create_mapper_jinja_no_propagate(self, parse_els):
         # Given
-        parse_els.side_effect = [self.subworkflow_properties, self.configuration_properties]
+        parse_els.side_effect = [self.subworkflow_properties, self.config]
         self.assertFalse(os.path.isfile(self.SUBDAG_TEST_FILEPATH))
         # Removing the propagate-configuration node
         propagate_configuration = self.subworkflow_node.find("propagate-configuration")
@@ -101,15 +101,15 @@ class TestSubworkflowMapper(TestCase):
         self.assertEqual("test_id", mapper.task_id)
         self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.subworkflow_node, mapper.oozie_node)
-        self.assertEqual(self.main_properties, mapper.property_set.job_properties)
+        self.assertEqual(self.main_properties, mapper.props.job_properties)
         # Propagate config node is missing, should NOT forward config job_properties
-        self.assertEqual({}, mapper.get_property_set())
+        self.assertEqual(PropertySet(config={}, job_properties={}), mapper.get_props())
         self.assertTrue(os.path.isfile(self.SUBDAG_TEST_FILEPATH))
 
     @mock.patch("o2a.utils.el_utils.parse_els")
     def test_to_tasks_and_relations(self, parse_els):
         # Given
-        parse_els.side_effect = [self.subworkflow_properties, self.configuration_properties]
+        parse_els.side_effect = [self.subworkflow_properties, self.config]
         mapper = self._get_subwf_mapper()
         # When
         tasks, relations = mapper.to_tasks_and_relations()
@@ -135,7 +135,5 @@ class TestSubworkflowMapper(TestCase):
             dag_name="test",
             action_mapper=ACTION_MAP,
             trigger_rule=TriggerRule.DUMMY,
-            property_set=PropertySet(
-                job_properties=self.main_properties, configuration_properties=self.configuration_properties
-            ),
+            props=PropertySet(job_properties=self.main_properties, config=self.config),
         )

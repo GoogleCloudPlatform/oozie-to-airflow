@@ -59,7 +59,7 @@ class DecisionMapper(BaseMapper):
         oozie_node: Element,
         name: str,
         dag_name: str,
-        property_set: PropertySet = None,
+        props: PropertySet = None,
         trigger_rule: str = TriggerRule.ALL_DONE,
         **kwargs: Dict,
     ):
@@ -68,7 +68,7 @@ class DecisionMapper(BaseMapper):
             oozie_node=oozie_node,
             name=name,
             dag_name=dag_name,
-            property_set=property_set or PropertySet(job_properties={}, configuration_properties={}),
+            props=props or PropertySet(job_properties={}, config={}),
             trigger_rule=trigger_rule,
             **kwargs,
         )

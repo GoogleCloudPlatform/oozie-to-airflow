@@ -14,8 +14,8 @@
   limitations under the License.
 #}
 "$DAGS_FOLDER/../data/git.sh "
-"--cluster={{ '{{' }}params.configuration_properties['dataproc_cluster']{{ '}}' }} "
-"--region={{ '{{' }}params.configuration_properties['gcp_region']{{ '}}' }} "
+"--cluster={{ '{{' }}params.config['dataproc_cluster']{{ '}}' }} "
+"--region={{ '{{' }}params.config['gcp_region']{{ '}}' }} "
 "--git-uri %s "
 "--destination-path %s "
 {% if git_branch != '' %}"--branch %s " {% endif %}

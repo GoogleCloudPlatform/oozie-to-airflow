@@ -88,7 +88,7 @@ def find_nodes_by_attribute(root, attr, val, tag=None) -> List[ET.Element]:
 
 
 def get_tag_el_text(
-    root: ET.Element, tag: str, property_set: PropertySet, default: Optional[str] = None
+    root: ET.Element, tag: str, props: PropertySet, default: Optional[str] = None
 ) -> Optional[str]:
     """
     If a node exists in the oozie_node with the tag specified in tag, it
@@ -100,5 +100,5 @@ def get_tag_el_text(
     var = find_node_by_tag(root, tag)
     if var is not None and var.text is not None:
         # Only check the first one
-        return el_utils.replace_el_with_var(var.text, property_set=property_set, quote=False)
+        return el_utils.replace_el_with_var(var.text, props=props, quote=False)
     return default

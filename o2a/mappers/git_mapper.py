@@ -40,8 +40,8 @@ def prepare_git_command(
 ):
     cmd = (
         f"$DAGS_FOLDER/../data/git.sh "
-        "--cluster {{params.configuration_properties['dataproc_cluster']}} "
-        "--region {{params.configuration_properties['gcp_region']}} "
+        "--cluster {{params.config['dataproc_cluster']}} "
+        "--region {{params.config['gcp_region']}} "
         f"--git-uri {shlex.quote(git_uri)} "
         f"--destination-path {shlex.quote(destination_path)}"
     )
@@ -64,17 +64,12 @@ class GitMapper(ActionMapper, PrepareMixin):
         self,
         oozie_node: Element,
         name: str,
-        property_set: PropertySet,
+        props: PropertySet,
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
         **kwargs,
     ):
         ActionMapper.__init__(
-            self,
-            oozie_node=oozie_node,
-            name=name,
-            trigger_rule=trigger_rule,
-            property_set=property_set,
-            **kwargs,
+            self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, props=props, **kwargs
         )
         PrepareMixin.__init__(self, oozie_node=oozie_node)
         self.git_uri: Optional[str] = None
@@ -86,19 +81,13 @@ class GitMapper(ActionMapper, PrepareMixin):
 
     def on_parse_node(self):
         super().on_parse_node()
-        self.git_uri = get_tag_el_text(
-            self.oozie_node, TAG_GIT_URI, property_set=self.property_set, default=""
-        )
-        self.git_branch = get_tag_el_text(
-            self.oozie_node, TAG_BRANCH, property_set=self.property_set, default=""
-        )
+        self.git_uri = get_tag_el_text(self.oozie_node, TAG_GIT_URI, props=self.props, default="")
+        self.git_branch = get_tag_el_text(self.oozie_node, TAG_BRANCH, props=self.props, default="")
         self.destination_uri = get_tag_el_text(
-            self.oozie_node, tag=TAG_DESTINATION_URI, property_set=self.property_set, default=""
+            self.oozie_node, tag=TAG_DESTINATION_URI, props=self.props, default=""
         )
         self.destination_path = urlparse(self.destination_uri).path
-        self.key_path_uri = get_tag_el_text(
-            self.oozie_node, tag=TAG_KEY_PATH, property_set=self.property_set, default=""
-        )
+        self.key_path_uri = get_tag_el_text(self.oozie_node, tag=TAG_KEY_PATH, props=self.props, default="")
         self.key_path = urlparse(self.key_path_uri).path
 
     def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
@@ -112,14 +101,12 @@ class GitMapper(ActionMapper, PrepareMixin):
                 destination_path=self.destination_path,
                 key_path_uri=self.key_path_uri,
                 key_path=self.key_path,
-                property_set=self.property_set,
+                props=self.props,
             ),
         )
         tasks: List[Task] = [action_task]
         relations: List[Relation] = []
-        prepare_task = self.get_prepare_task(
-            name=self.name, trigger_rule=self.trigger_rule, property_set=self.property_set
-        )
+        prepare_task = self.get_prepare_task(name=self.name, trigger_rule=self.trigger_rule, props=self.props)
         if prepare_task:
             relations = [Relation(prepare_task.task_id, to_task_id=self.name)]
             tasks = [prepare_task, action_task]

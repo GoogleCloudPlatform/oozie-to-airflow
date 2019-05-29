@@ -27,8 +27,8 @@ from o2a.converter.relation import Relation
 from o2a.mappers import fs_mapper
 from o2a.o2a_libs.property_utils import PropertySet
 
-TEST_JOB_PROPERTIES: Dict[str, str] = {"user.name": "pig", "nameNode": "hdfs://localhost:8020"}
-TEST_CONFIGURATION_PROPERTIES: Dict[str, str] = {}
+TEST_JOB_PROPS: Dict[str, str] = {"user.name": "pig", "nameNode": "hdfs://localhost:8020"}
+TEST_CONFIG: Dict[str, str] = {}
 
 
 class PrepareCommandsTest(unittest.TestCase):
@@ -49,10 +49,7 @@ class PrepareCommandsTest(unittest.TestCase):
         self.assertEqual(
             command,
             fs_mapper.prepare_mkdir_command(
-                node,
-                property_set=PropertySet(
-                    job_properties=TEST_JOB_PROPERTIES, configuration_properties=TEST_CONFIGURATION_PROPERTIES
-                ),
+                node, props=PropertySet(job_properties=TEST_JOB_PROPS, config=TEST_CONFIG)
             ),
         )
 
@@ -73,10 +70,7 @@ class PrepareCommandsTest(unittest.TestCase):
         self.assertEqual(
             command,
             fs_mapper.prepare_delete_command(
-                node,
-                property_set=PropertySet(
-                    job_properties=TEST_JOB_PROPERTIES, configuration_properties=TEST_CONFIGURATION_PROPERTIES
-                ),
+                node, props=PropertySet(job_properties=TEST_JOB_PROPS, config=TEST_CONFIG)
             ),
         )
 
@@ -104,10 +98,7 @@ class PrepareCommandsTest(unittest.TestCase):
         self.assertEqual(
             command,
             fs_mapper.prepare_move_command(
-                node,
-                property_set=PropertySet(
-                    job_properties=TEST_JOB_PROPERTIES, configuration_properties=TEST_CONFIGURATION_PROPERTIES
-                ),
+                node, props=PropertySet(job_properties=TEST_JOB_PROPS, config=TEST_CONFIG)
             ),
         )
 
@@ -141,10 +132,7 @@ class PrepareCommandsTest(unittest.TestCase):
         self.assertEqual(
             command,
             fs_mapper.prepare_chmod_command(
-                node,
-                property_set=PropertySet(
-                    job_properties=TEST_JOB_PROPERTIES, configuration_properties=TEST_CONFIGURATION_PROPERTIES
-                ),
+                node, props=PropertySet(job_properties=TEST_JOB_PROPS, config=TEST_CONFIG)
             ),
         )
 
@@ -165,10 +153,7 @@ class PrepareCommandsTest(unittest.TestCase):
         self.assertEqual(
             command,
             fs_mapper.prepare_touchz_command(
-                node,
-                property_set=PropertySet(
-                    job_properties=TEST_JOB_PROPERTIES, configuration_properties=TEST_CONFIGURATION_PROPERTIES
-                ),
+                node, props=PropertySet(job_properties=TEST_JOB_PROPS, config=TEST_CONFIG)
             ),
         )
 
@@ -189,10 +174,7 @@ class PrepareCommandsTest(unittest.TestCase):
         self.assertEqual(
             command,
             fs_mapper.prepare_chgrp_command(
-                node,
-                property_set=PropertySet(
-                    job_properties=TEST_JOB_PROPERTIES, configuration_properties=TEST_CONFIGURATION_PROPERTIES
-                ),
+                node, props=PropertySet(job_properties=TEST_JOB_PROPS, config=TEST_CONFIG)
             ),
         )
 
@@ -508,5 +490,5 @@ def _get_fs_mapper(oozie_node):
         name="test_id",
         dag_name="DAG_NAME_B",
         trigger_rule=TriggerRule.DUMMY,
-        property_set=PropertySet(job_properties={"nameNode": "hdfs://"}, configuration_properties={}),
+        props=PropertySet(job_properties={"nameNode": "hdfs://"}, config={}),
     )

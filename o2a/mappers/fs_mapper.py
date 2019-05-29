@@ -46,29 +46,29 @@ FS_TAG_PERMISSIONS = "permissions"
 FS_TAG_GROUP = "group"
 
 
-def prepare_mkdir_command(node: Element, property_set: PropertySet):
-    path = normalize_path(node.attrib[FS_TAG_PATH], property_set=property_set)
+def prepare_mkdir_command(node: Element, props: PropertySet):
+    path = normalize_path(node.attrib[FS_TAG_PATH], props=props)
     command = "fs -mkdir -p {path}".format(path=shlex.quote(path))
     return command
 
 
-def prepare_delete_command(node: Element, property_set: PropertySet):
-    path = normalize_path(node.attrib[FS_TAG_PATH], property_set=property_set)
+def prepare_delete_command(node: Element, props: PropertySet):
+    path = normalize_path(node.attrib[FS_TAG_PATH], props=props)
     command = "fs -rm -r {path}".format(path=shlex.quote(path))
 
     return command
 
 
-def prepare_move_command(node: Element, property_set: PropertySet):
-    source = normalize_path(node.attrib[FS_TAG_SOURCE], property_set=property_set)
-    target = normalize_path(node.attrib[FS_TAG_TARGET], property_set=property_set, allow_no_schema=True)
+def prepare_move_command(node: Element, props: PropertySet):
+    source = normalize_path(node.attrib[FS_TAG_SOURCE], props=props)
+    target = normalize_path(node.attrib[FS_TAG_TARGET], props=props, allow_no_schema=True)
 
     command = "fs -mv {source} {target}".format(source=shlex.quote(source), target=shlex.quote(target))
     return command
 
 
-def prepare_chmod_command(node: Element, property_set: PropertySet):
-    path = normalize_path(node.attrib[FS_TAG_PATH], property_set=property_set)
+def prepare_chmod_command(node: Element, props: PropertySet):
+    path = normalize_path(node.attrib[FS_TAG_PATH], props=props)
     permission = node.attrib[FS_TAG_PERMISSIONS]
     # TODO: Add support for dirFiles Reference: GH issues #80
     #       dirFiles = bool_value(node, FS_TAG _DIRFILES)
@@ -81,15 +81,15 @@ def prepare_chmod_command(node: Element, property_set: PropertySet):
     return command
 
 
-def prepare_touchz_command(node: Element, property_set: PropertySet):
-    path = normalize_path(node.attrib[FS_TAG_PATH], property_set=property_set)
+def prepare_touchz_command(node: Element, props: PropertySet):
+    path = normalize_path(node.attrib[FS_TAG_PATH], props=props)
 
     command = "fs -touchz {path}".format(path=shlex.quote(path))
     return command
 
 
-def prepare_chgrp_command(node: Element, property_set: PropertySet):
-    path = normalize_path(node.attrib[FS_TAG_PATH], property_set=property_set)
+def prepare_chgrp_command(node: Element, props: PropertySet):
+    path = normalize_path(node.attrib[FS_TAG_PATH], props=props)
     group = node.attrib[FS_TAG_GROUP]
 
     recursive = node.find(FS_TAG_RECURSIVE) is not None
@@ -121,14 +121,14 @@ class FsMapper(ActionMapper):
         oozie_node: Element,
         name: str,
         dag_name: str,
-        property_set: PropertySet,
+        props: PropertySet,
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
         **kwargs,
     ):
         super().__init__(
             oozie_node=oozie_node,
             name=name,
-            property_set=property_set,
+            props=props,
             trigger_rule=trigger_rule,
             dag_name=dag_name,
             **kwargs,
@@ -179,12 +179,12 @@ class FsMapper(ActionMapper):
         tag_name = node.tag
         task_id = self.name if operation_nodes_count == 1 else f"{self.name}_fs_{index}_{tag_name}"
         mapper_fn = FS_OPERATION_MAPPERS[tag_name]
-        pig_command = mapper_fn(node, property_set=self.property_set)
+        pig_command = mapper_fn(node, props=self.props)
 
         return Task(
             task_id=task_id,
             template_name="fs_op.tpl",
             template_params=dict(
-                pig_command=pig_command, action_node_properties=self.property_set.action_node_properties
+                pig_command=pig_command, action_node_properties=self.props.action_node_properties
             ),
         )

@@ -62,7 +62,7 @@ def wf_user():
     Returns the user name that started the current workflow job.
 
     """
-    return "{{ job_properties.user.name }}"
+    return "{{ params.props.merged.user.name }}"
 
 
 def wf_group():

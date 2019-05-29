@@ -24,5 +24,5 @@
     trigger_rule={{ trigger_rule | to_python }},
     ssh_hook={{ task_id | to_var }}_hook,
     command={{ command | to_python }},
-    params={% include "property_set.tpl" %},
+    params={% include "props.tpl" %},
 )

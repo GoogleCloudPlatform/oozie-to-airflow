@@ -17,5 +17,5 @@
     task_id={{ task_id | to_python }},
     trigger_rule={{ trigger_rule | to_python }},
     bash_command={% include "pig_command.tpl" %} % shlex.quote({{ pig_command | to_python }}),
-    params={% include "property_set.tpl" %},
+    params={% include "props.tpl" %},
 )

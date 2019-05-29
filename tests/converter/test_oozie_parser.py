@@ -36,11 +36,11 @@ from o2a.o2a_libs.property_utils import PropertySet
 
 class TestOozieParser(unittest.TestCase):
     def setUp(self):
-        property_set = PropertySet(job_properties={}, configuration_properties={})
+        props = PropertySet(job_properties={}, config={})
         self.parser = parser.OozieParser(
             input_directory_path=EXAMPLE_DEMO_PATH,
             output_directory_path="/tmp",
-            property_set=property_set,
+            props=props,
             action_mapper=ACTION_MAP,
             dag_name="DAG_NAME_B",
         )
@@ -200,7 +200,7 @@ class TestOozieParser(unittest.TestCase):
     def test_parse_action_node_pig_with_file_and_archive(self):
         self.parser.action_map = {"pig": pig_mapper.PigMapper}
         node_name = "pig-node"
-        self.parser.property_set.job_properties = {"nameNode": "myNameNode"}
+        self.parser.props.job_properties = {"nameNode": "myNameNode"}
         # language=XML
         action_string = f"""
 <action name='{node_name}'>
@@ -229,7 +229,7 @@ class TestOozieParser(unittest.TestCase):
 
     def test_parse_mapreduce_node(self):
         self.parser.job_properties = {"nameNode": "hdfs://"}
-        self.parser.configuration_properties = {"dataproc_cluster": "mycluster", "gcp_region": "europe-west3"}
+        self.parser.config = {"dataproc_cluster": "mycluster", "gcp_region": "europe-west3"}
         node_name = "mr-node"
         # language=XML
         xml = f"""
@@ -430,7 +430,7 @@ class WorkflowTestCase(NamedTuple):
     node_names: Set[str]
     relations: Set[Relation]
     job_properties: Dict[str, str]
-    configuration_properties: Dict[str, str]
+    config: Dict[str, str]
 
 
 class TestOozieExamples(unittest.TestCase):
@@ -446,7 +446,7 @@ class TestOozieExamples(unittest.TestCase):
                         Relation(from_task_id="decision-node", to_task_id="kill"),
                     },
                     job_properties={"nameNode": "hdfs://"},
-                    configuration_properties={},
+                    config={},
                 ),
             ),
             (
@@ -474,7 +474,7 @@ class TestOozieExamples(unittest.TestCase):
                         Relation(from_task_id="subworkflow-node", to_task_id="join-node"),
                     },
                     job_properties={"nameNode": "hdfs://"},
-                    configuration_properties={},
+                    config={},
                 ),
             ),
             (
@@ -483,7 +483,7 @@ class TestOozieExamples(unittest.TestCase):
                     node_names={"ssh"},
                     relations=set(),
                     job_properties={"hostname": "user@BBB", "nameNode": "hdfs://"},
-                    configuration_properties={},
+                    config={},
                 ),
             ),
             (
@@ -505,7 +505,7 @@ class TestOozieExamples(unittest.TestCase):
                         Relation(from_task_id="touchz", to_task_id="join"),
                     },
                     job_properties={"hostname": "user@BBB", "nameNode": "hdfs://localhost:8020/"},
-                    configuration_properties={},
+                    config={},
                 ),
             ),
             (
@@ -514,7 +514,7 @@ class TestOozieExamples(unittest.TestCase):
                     node_names={"mr-node"},
                     relations=set(),
                     job_properties={"dataproc_cluster": "A", "nameNode": "hdfs://"},
-                    configuration_properties={"gcp_region": "B"},
+                    config={"gcp_region": "B"},
                 ),
             ),
             (
@@ -523,7 +523,7 @@ class TestOozieExamples(unittest.TestCase):
                     node_names={"pig-node"},
                     relations=set(),
                     job_properties={"oozie.wf.application.path": "hdfs://", "nameNode": "hdfs://"},
-                    configuration_properties={},
+                    config={},
                 ),
             ),
             (
@@ -532,7 +532,7 @@ class TestOozieExamples(unittest.TestCase):
                     node_names={"shell-node"},
                     relations=set(),
                     job_properties={"nameNode": "hdfs://"},
-                    configuration_properties={},
+                    config={},
                 ),
             ),
             (
@@ -541,7 +541,7 @@ class TestOozieExamples(unittest.TestCase):
                     node_names={"spark-node"},
                     relations=set(),
                     job_properties={"nameNode": "hdfs://"},
-                    configuration_properties={"dataproc_cluster": "A", "gcp_region": "B"},
+                    config={"dataproc_cluster": "A", "gcp_region": "B"},
                 ),
             ),
             (
@@ -550,7 +550,7 @@ class TestOozieExamples(unittest.TestCase):
                     node_names={"ssh"},
                     relations=set(),
                     job_properties={"hostname": "user@BBB", "nameNode": "hdfs://"},
-                    configuration_properties={},
+                    config={},
                 ),
             ),
             (
@@ -559,7 +559,7 @@ class TestOozieExamples(unittest.TestCase):
                     node_names={"subworkflow-node"},
                     relations=set(),
                     job_properties={},
-                    configuration_properties={},
+                    config={},
                 ),
             ),
         ],
@@ -571,9 +571,7 @@ class TestOozieExamples(unittest.TestCase):
         current_parser = parser.OozieParser(
             input_directory_path=path.join(EXAMPLES_PATH, case.name),
             output_directory_path="/tmp",
-            property_set=PropertySet(
-                job_properties=case.job_properties, configuration_properties=case.configuration_properties
-            ),
+            props=PropertySet(job_properties=case.job_properties, config=case.config),
             action_mapper=ACTION_MAP,
             dag_name="DAG_NAME_B",
         )

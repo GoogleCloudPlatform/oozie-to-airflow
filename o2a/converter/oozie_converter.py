@@ -35,7 +35,7 @@ from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.workflow import Workflow
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.utils import el_utils
-from o2a.utils.constants import CONFIGURATION_PROPERTIES, JOB_PROPERTIES
+from o2a.utils.constants import CONFIG, JOB_PROPS
 from o2a.utils.el_utils import comma_separated_string_to_list
 from o2a.o2a_libs.property_utils import PropertySet
 from o2a.utils.template_utils import render_template
@@ -68,7 +68,7 @@ class OozieConverter:
         start_days_ago: int = None,
         schedule_interval: str = None,
         output_dag_name: str = None,
-        initial_property_set: PropertySet = None,
+        initial_props: PropertySet = None,
     ):
         """
         :param input_directory_path: Oozie workflow directory.
@@ -87,28 +87,26 @@ class OozieConverter:
         self.schedule_interval = schedule_interval
         self.dag_name = dag_name
         self.template_name = template_name
-        self.configuration_properties_file = os.path.join(input_directory_path, CONFIGURATION_PROPERTIES)
-        self.job_properties_file = os.path.join(input_directory_path, JOB_PROPERTIES)
+        self.config_file = os.path.join(input_directory_path, CONFIG)
+        self.job_properties_file = os.path.join(input_directory_path, JOB_PROPS)
         self.output_dag_name = (
             os.path.join(output_directory_path, output_dag_name)
             if output_dag_name
             else os.path.join(output_directory_path, self.dag_name) + ".py"
         )
         # Propagate the configuration in case initial property set is passed
-        self.job_properties = {} if not initial_property_set else initial_property_set.job_properties
+        self.job_properties = {} if not initial_props else initial_props.job_properties
         self.job_properties["user.name"] = user or os.environ["USER"]
-        self.configuration_properties: Dict[str, str] = {}
-        self.property_set = PropertySet(
-            job_properties=self.job_properties,
-            configuration_properties=self.configuration_properties,
-            action_node_properties={},
+        self.config: Dict[str, str] = {}
+        self.props = PropertySet(
+            job_properties=self.job_properties, config=self.config, action_node_properties={}
         )
         self.update_job_properties()
-        self.read_configuration_properties()
+        self.read_config()
         self.parser = parser.OozieParser(
             input_directory_path=input_directory_path,
             output_directory_path=output_directory_path,
-            property_set=self.property_set,
+            props=self.props,
             dag_name=dag_name,
             action_mapper=action_mapper,
         )
@@ -142,15 +140,13 @@ class OozieConverter:
             p_node.tasks = tasks
             p_node.relations = relations
 
-    def read_configuration_properties(self):
+    def read_config(self):
         """
-        Reads configuration properties to configuration_properties dictionary.
+        Reads configuration properties to config dictionary.
         Replaces EL properties within.
         :return: None
         """
-        self.configuration_properties = el_utils.parse_els(
-            properties_file=self.configuration_properties_file, property_set=self.property_set
-        )
+        self.config = el_utils.parse_els(properties_file=self.config_file, props=self.props)
 
     def update_job_properties(self):
         """
@@ -158,7 +154,7 @@ class OozieConverter:
         :return: None
         """
         self.job_properties.update(
-            el_utils.parse_els(properties_file=self.job_properties_file, property_set=self.property_set)
+            el_utils.parse_els(properties_file=self.job_properties_file, props=self.props)
         )
 
     def create_dag_file(self, workflow: Workflow):
@@ -222,7 +218,7 @@ class OozieConverter:
             schedule_interval=self.schedule_interval,
             start_days_ago=self.start_days_ago,
             job_properties=converted_job_properties,
-            configuration_properties=self.configuration_properties,
+            config=self.config,
             relations=workflow.relations,
             nodes=list(workflow.nodes.values()),
             dependencies=workflow.dependencies,

@@ -24,9 +24,9 @@ from o2a.converter.relation import Relation
 from o2a.mappers import spark_mapper
 from o2a.o2a_libs.property_utils import PropertySet
 
-EXAMPLE_JOB_PROPERTIES = {"nameNode": "hdfs://", "userName": "test_user", "examplesRoot": "examples"}
+EXAMPLE_JOB_PROPS = {"nameNode": "hdfs://", "userName": "test_user", "examplesRoot": "examples"}
 
-EXAMPLE_CONFIGURATION_PROPERTIES = {"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"}
+EXAMPLE_CONFIG = {"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"}
 
 # language=XML
 EXAMPLE_XML_WITH_PREPARE = """
@@ -178,9 +178,6 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
             name="test_id",
             dag_name="DAG_NAME_B",
             trigger_rule=TriggerRule.DUMMY,
-            property_set=PropertySet(
-                job_properties=EXAMPLE_JOB_PROPERTIES,
-                configuration_properties=EXAMPLE_CONFIGURATION_PROPERTIES,
-            ),
+            props=PropertySet(job_properties=EXAMPLE_JOB_PROPS, config=EXAMPLE_CONFIG),
         )
         return mapper

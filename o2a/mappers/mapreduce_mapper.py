@@ -38,7 +38,7 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
         oozie_node: Element,
         name: str,
         dag_name: str,
-        property_set: PropertySet,
+        props: PropertySet,
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
         **kwargs,
     ):
@@ -48,13 +48,13 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
             name=name,
             dag_name=dag_name,
             trigger_rule=trigger_rule,
-            property_set=property_set,
+            props=props,
             **kwargs,
         )
         PrepareMixin.__init__(self, oozie_node=oozie_node)
         self.params_dict: Dict[str, str] = {}
-        self.file_extractor = FileExtractor(oozie_node=oozie_node, property_set=self.property_set)
-        self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, property_set=self.property_set)
+        self.file_extractor = FileExtractor(oozie_node=oozie_node, props=self.props)
+        self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, props=self.props)
         self.name_node = None
         self.hdfs_files = None
         self.hdfs_archives = None
@@ -62,9 +62,7 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
     def on_parse_node(self):
         super().on_parse_node()
         name_node_text = self.oozie_node.find("name-node").text
-        self.name_node = el_utils.replace_el_with_var(
-            name_node_text, property_set=self.property_set, quote=False
-        )
+        self.name_node = el_utils.replace_el_with_var(name_node_text, props=self.props, quote=False)
         self._parse_params()
         _, self.hdfs_files = self.file_extractor.parse_node()
         _, self.hdfs_archives = self.archive_extractor.parse_node()
@@ -74,7 +72,7 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
         if param_nodes:
             self.params_dict = {}
             for node in param_nodes:
-                param = el_utils.replace_el_with_var(node.text, property_set=self.property_set, quote=False)
+                param = el_utils.replace_el_with_var(node.text, props=self.props, quote=False)
                 key, value = param.split("=", 1)
                 self.params_dict[key] = value
 
@@ -84,7 +82,7 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
             template_name="mapreduce.tpl",
             trigger_rule=self.trigger_rule,
             template_params=dict(
-                property_set=self.property_set,
+                props=self.props,
                 params_dict=self.params_dict,
                 hdfs_files=self.hdfs_files,
                 hdfs_archives=self.hdfs_archives,
@@ -92,9 +90,7 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
         )
         tasks: List[Task] = [action_task]
         relations: List[Relation] = []
-        prepare_task = self.get_prepare_task(
-            name=self.name, trigger_rule=self.trigger_rule, property_set=self.property_set
-        )
+        prepare_task = self.get_prepare_task(name=self.name, trigger_rule=self.trigger_rule, props=self.props)
         if prepare_task:
             tasks = [prepare_task, action_task]
             relations = [Relation(from_task_id=prepare_task.task_id, to_task_id=self.name)]

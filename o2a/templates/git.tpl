@@ -17,5 +17,5 @@
     task_id={{ task_id | to_python }},
     trigger_rule={{ trigger_rule | to_python }},
     bash_command={% include "git_command.tpl" %},
-    params={% include "property_set.tpl" %},
+    params={% include "props.tpl" %},
 )

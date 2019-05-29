@@ -44,48 +44,40 @@ class TestELUtils(unittest.TestCase):
 
     def test_replace_el_with_var_var_no_quote(self):
         job_properties = {"hostname": "airflow@apache.org"}
-        property_set = PropertySet(
-            job_properties=job_properties, configuration_properties={}, action_node_properties={}
-        )
+        props = PropertySet(job_properties=job_properties, config={}, action_node_properties={})
         el_var = "${hostname}"
         expected = "airflow@apache.org"
 
-        replaced = el_utils.replace_el_with_var(el_var, property_set=property_set, quote=False)
+        replaced = el_utils.replace_el_with_var(el_var, props=props, quote=False)
         self.assertEqual(replaced, expected)
 
     def test_replace_el_with_var_func_no_quote(self):
         # functions shouldn't be replaced
         job_properties = {}
-        property_set = PropertySet(
-            job_properties=job_properties, configuration_properties={}, action_node_properties={}
-        )
+        props = PropertySet(job_properties=job_properties, config={}, action_node_properties={})
         el_var = '${concat("abc", "def")}'
         expected = '${concat("abc", "def")}'
 
-        replaced = el_utils.replace_el_with_var(el_var, property_set=property_set, quote=False)
+        replaced = el_utils.replace_el_with_var(el_var, props=props, quote=False)
         self.assertEqual(replaced, expected)
 
     def test_replace_el_with_var_var_quote(self):
         job_properties = {"hostname": "airflow@apache.org"}
-        property_set = PropertySet(
-            job_properties=job_properties, configuration_properties={}, action_node_properties={}
-        )
+        props = PropertySet(job_properties=job_properties, config={}, action_node_properties={})
         el_var = "${hostname}"
         expected = "'airflow@apache.org'"
 
-        replaced = el_utils.replace_el_with_var(el_var, property_set=property_set, quote=True)
+        replaced = el_utils.replace_el_with_var(el_var, props=props, quote=True)
         self.assertEqual(replaced, expected)
 
     def test_replace_el_with_var_func_quote(self):
         # functions shouldn't be replaced
         job_properties = {}
-        property_set = PropertySet(
-            job_properties=job_properties, configuration_properties={}, action_node_properties={}
-        )
+        props = PropertySet(job_properties=job_properties, config={}, action_node_properties={})
         el_var = '${concat("abc", "def")}'
         expected = '\'${concat("abc", "def")}\''
 
-        replaced = el_utils.replace_el_with_var(el_var, property_set=property_set)
+        replaced = el_utils.replace_el_with_var(el_var, props=props)
         self.assertEqual(replaced, expected)
 
     def test_parse_el_func(self):
@@ -118,12 +110,12 @@ class TestELUtils(unittest.TestCase):
 
     def test_convert_el_to_jinja_var_no_quote(self):
         el_function = "${hostname}"
-        expected = "{{ job_properties.hostname }}"
+        expected = "{{ params.props.merged['hostname'] }}"
         self.assertEqual(expected, el_utils.convert_el_to_jinja(el_function, quote=False))
 
     def test_convert_el_to_jinja_var_quote(self):
         el_function = "${hostname}"
-        expected = "'{{ job_properties.hostname }}'"
+        expected = "'{{ params.props.merged['hostname'] }}'"
         self.assertEqual(expected, el_utils.convert_el_to_jinja(el_function, quote=True))
 
     def test_convert_el_to_jinja_func_no_quote(self):
@@ -148,10 +140,8 @@ class TestELUtils(unittest.TestCase):
 
     def test_parse_els_no_file(self):
         expected_properties = {}
-        property_set = PropertySet(
-            job_properties={"key": "value"}, configuration_properties={}, action_node_properties={}
-        )
-        self.assertEqual(expected_properties, el_utils.parse_els(None, property_set=property_set))
+        props = PropertySet(job_properties={"key": "value"}, config={}, action_node_properties={})
+        self.assertEqual(expected_properties, el_utils.parse_els(None, props=props))
 
     def test_parse_els_file(self):
         prop_file = tempfile.NamedTemporaryFile("w", delete=False)
@@ -159,11 +149,9 @@ class TestELUtils(unittest.TestCase):
         prop_file.close()
 
         job_properties = {"test": "answer"}
-        property_set = PropertySet(
-            job_properties=job_properties, configuration_properties={}, action_node_properties={}
-        )
+        props = PropertySet(job_properties=job_properties, config={}, action_node_properties={})
         expected = {"key": "value"}
-        self.assertEqual(expected, el_utils.parse_els(prop_file.name, property_set=property_set))
+        self.assertEqual(expected, el_utils.parse_els(prop_file.name, props=props))
 
     def test_parse_els_file_list(self):
         # Should remain unchanged, as the conversion from a comma-separated string to a List will
@@ -173,11 +161,9 @@ class TestELUtils(unittest.TestCase):
         prop_file.close()
 
         job_properties = {"test": "answer"}
-        property_set = PropertySet(
-            configuration_properties={}, job_properties=job_properties, action_node_properties={}
-        )
+        props = PropertySet(config={}, job_properties=job_properties, action_node_properties={})
         expected = {"key": "value,value2,answer"}
-        self.assertEqual(expected, el_utils.parse_els(prop_file.name, property_set=property_set))
+        self.assertEqual(expected, el_utils.parse_els(prop_file.name, props=props))
 
     def test_parse_els_multiple_line_with_back_references(self):
         # Should remain unchanged, as the conversion from a comma-separated string to a List will
@@ -196,9 +182,7 @@ key5=test
         prop_file.close()
 
         job_properties = {"test": "answer"}
-        property_set = PropertySet(
-            configuration_properties={}, job_properties=job_properties, action_node_properties={}
-        )
+        props = PropertySet(config={}, job_properties=job_properties, action_node_properties={})
         expected = {
             "key": "value,value2,answer",
             "key2": "value",
@@ -206,7 +190,7 @@ key5=test
             "key4": "refer${key5}",  # no forward-references
             "key5": "test",
         }
-        self.assertEqual(expected, el_utils.parse_els(prop_file.name, property_set=property_set))
+        self.assertEqual(expected, el_utils.parse_els(prop_file.name, props=props))
 
     @parameterized.expand(
         [
@@ -219,13 +203,8 @@ key5=test
         cluster = "my-cluster"
         region = "europe-west3"
         job_properties = {"nameNode": "hdfs://localhost:8020"}
-        configuration_properties = {"dataproc_cluster": cluster, "gcp_region": region}
-        result = normalize_path(
-            oozie_path,
-            property_set=PropertySet(
-                configuration_properties=configuration_properties, job_properties=job_properties
-            ),
-        )
+        config = {"dataproc_cluster": cluster, "gcp_region": region}
+        result = normalize_path(oozie_path, props=PropertySet(config=config, job_properties=job_properties))
         self.assertEqual(expected_result, result)
 
     @parameterized.expand(
@@ -240,13 +219,9 @@ key5=test
         cluster = "my-cluster"
         region = "europe-west3"
         job_properties = {"nameNode": "hdfs://localhost:8020"}
-        configuration_properties = {"dataproc_cluster": cluster, "gcp_region": region}
+        config = {"dataproc_cluster": cluster, "gcp_region": region}
         result = normalize_path(
-            oozie_path,
-            property_set=PropertySet(
-                configuration_properties=configuration_properties, job_properties=job_properties
-            ),
-            allow_no_schema=True,
+            oozie_path, props=PropertySet(config=config, job_properties=job_properties), allow_no_schema=True
         )
         self.assertEqual(expected_result, result)
 
@@ -261,14 +236,9 @@ key5=test
         cluster = "my-cluster"
         region = "europe-west3"
         job_properties = {"nameNode": "hdfs://localhost:8020"}
-        configuration_properties = {"dataproc_cluster": cluster, "gcp_region": region}
+        config = {"dataproc_cluster": cluster, "gcp_region": region}
         with self.assertRaisesRegex(ParseException, "Unknown path format. "):
-            normalize_path(
-                oozie_path,
-                property_set=PropertySet(
-                    configuration_properties=configuration_properties, job_properties=job_properties
-                ),
-            )
+            normalize_path(oozie_path, props=PropertySet(config=config, job_properties=job_properties))
 
     @parameterized.expand(
         [("http:///examples/output-data/demo/pig-node2",), ("ftp:///examples/output-data/demo/pig-node2",)]
@@ -277,13 +247,11 @@ key5=test
         cluster = "my-cluster"
         region = "europe-west3"
         job_properties = {"nameNode": "hdfs://localhost:8020"}
-        configuration_properties = {"dataproc_cluster": cluster, "gcp_region": region}
+        config = {"dataproc_cluster": cluster, "gcp_region": region}
         with self.assertRaisesRegex(ParseException, "Unknown path format. "):
             normalize_path(
                 oozie_path,
-                property_set=PropertySet(
-                    configuration_properties=configuration_properties, job_properties=job_properties
-                ),
+                props=PropertySet(config=config, job_properties=job_properties),
                 allow_no_schema=True,
             )
 

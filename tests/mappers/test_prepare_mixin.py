@@ -33,7 +33,7 @@ class TestPrepareMixin(unittest.TestCase):
         cluster = "my-cluster"
         region = "europe-west3"
         job_properties = {"nameNode": "hdfs://localhost:8020"}
-        configuration_properties = {"dataproc_cluster": cluster, "gcp_region": region}
+        config = {"dataproc_cluster": cluster, "gcp_region": region}
         # language=XML
         pig_node_prepare_str = """
 <pig>
@@ -52,9 +52,7 @@ class TestPrepareMixin(unittest.TestCase):
         task = mixin.get_prepare_task(
             name="test_node",
             trigger_rule=TriggerRule.DUMMY,
-            property_set=PropertySet(
-                configuration_properties=configuration_properties, job_properties=job_properties
-            ),
+            props=PropertySet(config=config, job_properties=job_properties),
         )
         self.assertEqual(
             Task(
@@ -73,7 +71,7 @@ class TestPrepareMixin(unittest.TestCase):
         cluster = "my-cluster"
         region = "europe-west3"
         job_properties = {"nameNode": "hdfs://localhost:8020"}
-        configuration_properties = {"dataproc_cluster": cluster, "gcp_region": region}
+        config = {"dataproc_cluster": cluster, "gcp_region": region}
         # language=XML
         pig_node_str = "<pig><name-node>hdfs://</name-node></pig>"
         pig_node = ET.fromstring(pig_node_str)
@@ -82,9 +80,7 @@ class TestPrepareMixin(unittest.TestCase):
         prepare_task = mixin.get_prepare_task(
             name="task",
             trigger_rule=TriggerRule.DUMMY,
-            property_set=PropertySet(
-                configuration_properties=configuration_properties, job_properties=job_properties
-            ),
+            props=PropertySet(config=config, job_properties=job_properties),
         )
         self.assertIsNone(prepare_task)
 
@@ -92,7 +88,7 @@ class TestPrepareMixin(unittest.TestCase):
         cluster = "my-cluster"
         region = "europe-west3"
         job_properties = {"nameNode": "hdfs://localhost:8020"}
-        configuration_properties = {"dataproc_cluster": cluster, "gcp_region": region}
+        config = {"dataproc_cluster": cluster, "gcp_region": region}
         # language=XML
         pig_node_str = """
 <pig>
@@ -107,8 +103,6 @@ class TestPrepareMixin(unittest.TestCase):
         prepare_task = mixin.get_prepare_task(
             name="task",
             trigger_rule=TriggerRule.DUMMY,
-            property_set=PropertySet(
-                configuration_properties=configuration_properties, job_properties=job_properties
-            ),
+            props=PropertySet(config=config, job_properties=job_properties),
         )
         self.assertIsNone(prepare_task)

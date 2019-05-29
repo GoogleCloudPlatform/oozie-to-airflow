@@ -48,17 +48,12 @@ class SparkMapper(ActionMapper, PrepareMixin):
         self,
         oozie_node: ET.Element,
         name: str,
-        property_set: PropertySet,
+        props: PropertySet,
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
         **kwargs,
     ):
         ActionMapper.__init__(
-            self,
-            oozie_node=oozie_node,
-            name=name,
-            trigger_rule=trigger_rule,
-            property_set=property_set,
-            **kwargs,
+            self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, props=props, **kwargs
         )
         PrepareMixin.__init__(self, oozie_node=oozie_node)
         self.java_class = ""
@@ -66,8 +61,8 @@ class SparkMapper(ActionMapper, PrepareMixin):
         self.job_name: Optional[str] = None
         self.jars: List[str] = []
         self.application_args: List[str] = []
-        self.file_extractor = FileExtractor(oozie_node=oozie_node, property_set=self.property_set)
-        self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, property_set=self.property_set)
+        self.file_extractor = FileExtractor(oozie_node=oozie_node, props=self.props)
+        self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, props=self.props)
         self.hdfs_files: List[str] = []
         self.hdfs_archives: List[str] = []
         self.dataproc_jars: List[str] = []
@@ -78,16 +73,12 @@ class SparkMapper(ActionMapper, PrepareMixin):
         _, self.hdfs_files = self.file_extractor.parse_node()
         _, self.hdfs_archives = self.archive_extractor.parse_node()
 
-        self.java_jar = get_tag_el_text(self.oozie_node, property_set=self.property_set, tag=SPARK_TAG_JAR)
-        self.java_class = get_tag_el_text(
-            self.oozie_node, property_set=self.property_set, tag=SPARK_TAG_CLASS
-        )
+        self.java_jar = get_tag_el_text(self.oozie_node, props=self.props, tag=SPARK_TAG_JAR)
+        self.java_class = get_tag_el_text(self.oozie_node, props=self.props, tag=SPARK_TAG_CLASS)
         if self.java_class and self.java_jar:
             self.dataproc_jars = [self.java_jar]
             self.java_jar = None
-        self.job_name = get_tag_el_text(
-            self.oozie_node, property_set=self.property_set, tag=SPARK_TAG_JOB_NAME
-        )
+        self.job_name = get_tag_el_text(self.oozie_node, props=self.props, tag=SPARK_TAG_JOB_NAME)
 
         spark_opts = xml_utils.find_nodes_by_tag(self.oozie_node, SPARK_TAG_OPTS)
         if spark_opts:
@@ -95,9 +86,7 @@ class SparkMapper(ActionMapper, PrepareMixin):
 
         app_args = xml_utils.find_nodes_by_tag(self.oozie_node, SPARK_TAG_ARGS)
         for arg in app_args:
-            self.application_args.append(
-                el_utils.replace_el_with_var(arg.text, self.property_set, quote=False)
-            )
+            self.application_args.append(el_utils.replace_el_with_var(arg.text, self.props, quote=False))
 
     @staticmethod
     def _parse_spark_opts(spark_opts_node: ET.Element):
@@ -150,9 +139,7 @@ class SparkMapper(ActionMapper, PrepareMixin):
         )
         tasks: List[Task] = [action_task]
         relations: List[Relation] = []
-        prepare_task = self.get_prepare_task(
-            name=self.name, trigger_rule=self.trigger_rule, property_set=self.property_set
-        )
+        prepare_task = self.get_prepare_task(name=self.name, trigger_rule=self.trigger_rule, props=self.props)
         if prepare_task:
             tasks = [prepare_task, action_task]
             relations = [Relation(from_task_id=prepare_task.task_id, to_task_id=self.name)]

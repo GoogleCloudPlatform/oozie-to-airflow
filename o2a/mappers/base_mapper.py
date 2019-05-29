@@ -34,11 +34,11 @@ class BaseMapper(ABC):
         oozie_node: Element,
         name: str,
         dag_name: str,
-        property_set: PropertySet,
+        props: PropertySet,
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
         **kwargs: Any,
     ):
-        self.property_set = deepcopy(property_set)
+        self.props = deepcopy(props)
         self.oozie_node = oozie_node
         self.dag_name = dag_name
         self.name = name
@@ -101,7 +101,7 @@ class BaseMapper(ABC):
             f"{type(self).__name__}(name={self.name}, "
             f"dag_name={self.dag_name}, "
             f"oozie_node={self.oozie_node}, "
-            f"property_set={self.property_set}, "
+            f"props={self.props}, "
             f"trigger_rule={self.trigger_rule}) "
         )
 

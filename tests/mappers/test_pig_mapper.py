@@ -61,10 +61,8 @@ class TestPigMapper(unittest.TestCase):
 
     def test_create_mapper_no_jinja(self):
         job_properties = {"nameNode": "hdfs://"}
-        configuration_properties = {}
-        mapper = self._get_pig_mapper(
-            job_properties=job_properties, configuration_properties=configuration_properties
-        )
+        config = {}
+        mapper = self._get_pig_mapper(job_properties=job_properties, config=config)
         mapper.on_parse_node()
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
@@ -73,7 +71,7 @@ class TestPigMapper(unittest.TestCase):
         self.assertEqual("localhost:8032", mapper.resource_manager)
         self.assertEqual("hdfs://", mapper.name_node)
         self.assertEqual("id.pig", mapper.script_file_name)
-        self.assertEqual("${queueName}", mapper.property_set.action_node_properties["mapred.job.queue.name"])
+        self.assertEqual("${queueName}", mapper.props.action_node_properties["mapred.job.queue.name"])
         self.assertEqual("/user/${wf:user()}/${examplesRoot}/input-data/text", mapper.params_dict["INPUT"])
         self.assertEqual(
             "/user/${wf:user()}/${examplesRoot}/output-data/demo/pig-node", mapper.params_dict["OUTPUT"]
@@ -91,11 +89,9 @@ class TestPigMapper(unittest.TestCase):
             "examplesRoot": "examples",
             "scriptName": "id_el.pig",
         }
-        configuration_properties = {}
+        config = {}
 
-        mapper = self._get_pig_mapper(
-            job_properties=job_properties, configuration_properties=configuration_properties
-        )
+        mapper = self._get_pig_mapper(job_properties=job_properties, config=config)
         mapper.on_parse_node()
 
         # make sure everything is getting initialized correctly
@@ -105,7 +101,7 @@ class TestPigMapper(unittest.TestCase):
         self.assertEqual("localhost:9999", mapper.resource_manager)
         self.assertEqual("hdfs://", mapper.name_node)
         self.assertEqual("id_el.pig", mapper.script_file_name)
-        self.assertEqual("myQueue", mapper.property_set.action_node_properties["mapred.job.queue.name"])
+        self.assertEqual("myQueue", mapper.props.action_node_properties["mapred.job.queue.name"])
         self.assertEqual("/user/${wf:user()}/examples/input-data/text", mapper.params_dict["INPUT"])
         self.assertEqual(
             "/user/${wf:user()}/examples/output-data/demo/pig-node", mapper.params_dict["OUTPUT"]
@@ -113,10 +109,8 @@ class TestPigMapper(unittest.TestCase):
 
     def test_to_tasks_and_relations(self):
         job_properties = {"nameNode": "hdfs://"}
-        configuration_properties = {"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"}
-        mapper = self._get_pig_mapper(
-            job_properties=job_properties, configuration_properties=configuration_properties
-        )
+        config = {"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"}
+        mapper = self._get_pig_mapper(job_properties=job_properties, config=config)
         mapper.on_parse_node()
         tasks, relations = mapper.to_tasks_and_relations()
 
@@ -134,11 +128,8 @@ class TestPigMapper(unittest.TestCase):
                     task_id="test_id",
                     template_name="pig.tpl",
                     template_params={
-                        "property_set": PropertySet(
-                            configuration_properties={
-                                "dataproc_cluster": "my-cluster",
-                                "gcp_region": "europe-west3",
-                            },
+                        "props": PropertySet(
+                            config={"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"},
                             job_properties={"nameNode": "hdfs://"},
                             action_node_properties={
                                 "mapred.job.queue.name": "${queueName}",
@@ -159,30 +150,24 @@ class TestPigMapper(unittest.TestCase):
 
     def test_first_task_id(self):
         job_properties = {"nameNode": "hdfs://"}
-        configuration_properties = {}
-        mapper = self._get_pig_mapper(
-            job_properties=job_properties, configuration_properties=configuration_properties
-        )
+        config = {}
+        mapper = self._get_pig_mapper(job_properties=job_properties, config=config)
         self.assertEqual("test_id_prepare", mapper.first_task_id)
 
     def test_required_imports(self):
         job_properties = {"nameNode": "hdfs://"}
-        configuration_properties = {}
-        mapper = self._get_pig_mapper(
-            job_properties=job_properties, configuration_properties=configuration_properties
-        )
+        config = {}
+        mapper = self._get_pig_mapper(job_properties=job_properties, config=config)
         imps = mapper.required_imports()
         imp_str = "\n".join(imps)
         ast.parse(imp_str)
 
-    def _get_pig_mapper(self, job_properties, configuration_properties):
+    def _get_pig_mapper(self, job_properties, config):
         mapper = pig_mapper.PigMapper(
             oozie_node=self.pig_node,
             name="test_id",
             dag_name="DAG_NAME_B",
             trigger_rule=TriggerRule.DUMMY,
-            property_set=PropertySet(
-                job_properties=job_properties, configuration_properties=configuration_properties
-            ),
+            props=PropertySet(job_properties=job_properties, config=config),
         )
         return mapper

@@ -26,14 +26,14 @@
         archives={{ hdfs_archives | to_python }}.
     {% endif %}
     job_name={{ job_name | to_python }},
-    cluster_name=CONFIGURATION_PROPERTIES['dataproc_cluster'],
+    cluster_name=CONFIG['dataproc_cluster'],
     {% if dataproc_spark_jars %}
         dataproc_spark_jars={{ dataproc_spark_jars | to_python }},
     {% endif %}
     {% if spark_opts %}
         dataproc_spark_properties={{ spark_opts | to_python }},
     {% endif %}
-    gcp_conn_id=CONFIGURATION_PROPERTIES['gcp_conn_id'],
-    region=CONFIGURATION_PROPERTIES['gcp_region'],
-    params={% include "property_set.tpl" %},
+    gcp_conn_id=CONFIG['gcp_conn_id'],
+    region=CONFIG['gcp_region'],
+    params={% include "props.tpl" %},
 )

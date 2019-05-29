@@ -23,21 +23,21 @@ from o2a.o2a_libs.property_utils import PropertySet
 
 class TestArchiveExtractor(unittest.TestCase):
     def setUp(self):
-        self.configuration_properties = {}
+        self.config = {}
         self.job_properties = {
             "nameNode": "hdfs://",
             "oozie.wf.application.path": "hdfs:///user/pig/examples/pig_test_node",
         }
         self.action_node_properties = {}
-        self.property_set = PropertySet(
-            configuration_properties=self.configuration_properties,
+        self.props = PropertySet(
+            config=self.config,
             job_properties=self.job_properties,
             action_node_properties=self.action_node_properties,
         )
 
     def test_add_relative_archive(self):
         # Given
-        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), property_set=self.property_set)
+        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), props=self.props)
         # When
         archive_extractor.add_archive("test_archive.zip")
         # Then
@@ -48,7 +48,7 @@ class TestArchiveExtractor(unittest.TestCase):
 
     def test_add_absolute_archive(self):
         # Given
-        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), property_set=self.property_set)
+        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), props=self.props)
         # When
         archive_extractor.add_archive("/test_archive.zip")
         # Then
@@ -57,7 +57,7 @@ class TestArchiveExtractor(unittest.TestCase):
 
     def test_add_multiple_archives(self):
         # Given
-        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), property_set=self.property_set)
+        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), props=self.props)
         # When
         archive_extractor.add_archive("/test_archive.zip")
         archive_extractor.add_archive("test_archive2.tar")
@@ -77,7 +77,7 @@ class TestArchiveExtractor(unittest.TestCase):
 
     def test_add_hash_archives(self):
         # Given
-        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), property_set=self.property_set)
+        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), props=self.props)
         # When
         archive_extractor.add_archive("/test_archive.zip#test3_link")
         archive_extractor.add_archive("test_archive2.tar#test_link")
@@ -98,7 +98,7 @@ class TestArchiveExtractor(unittest.TestCase):
 
     def test_add_archive_extra_hash(self):
         # Given
-        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), property_set=self.property_set)
+        archive_extractor = ArchiveExtractor(oozie_node=Element("fake"), props=self.props)
         # When
         with self.assertRaises(Exception) as context:
             archive_extractor.add_archive("/test_archive.zip#4rarear#")
@@ -109,8 +109,8 @@ class TestArchiveExtractor(unittest.TestCase):
 
     def test_replace_el(self):
         # Given
-        self.property_set.job_properties["var1"] = "value1"
-        self.property_set.job_properties["var2"] = "value2"
+        self.props.job_properties["var1"] = "value1"
+        self.props.job_properties["var2"] = "value2"
         # language=XML
         node_str = """
 <pig>
@@ -120,7 +120,7 @@ class TestArchiveExtractor(unittest.TestCase):
 </pig>
         """
         oozie_node = ET.fromstring(node_str)
-        archive_extractor = ArchiveExtractor(oozie_node=oozie_node, property_set=self.property_set)
+        archive_extractor = ArchiveExtractor(oozie_node=oozie_node, props=self.props)
         # When
         archive_extractor.parse_node()
         # Then

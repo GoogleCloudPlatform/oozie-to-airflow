@@ -39,14 +39,14 @@ EXAMPLE_XML = """
     <key-path>hdfs://name-node.second.company.com:8020/awesome-key/</key-path>
 </git>"""
 
-EXAMPLE_JOB_PROPERTIES = {
+EXAMPLE_JOB_PROPS = {
     "branch": "my-awesome-branch",
     "nameNode": "hdfs://",
     "userName": "test_user",
     "examplesRoot": "examples",
 }
 
-EXAMPLE_CONFIGURATION_PROPERTIES = {"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"}
+EXAMPLE_CONFIG = {"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"}
 
 
 class PrepareGitCommandTestCase(unittest.TestCase):
@@ -56,8 +56,8 @@ class PrepareGitCommandTestCase(unittest.TestCase):
         )
         self.assertEqual(
             "$DAGS_FOLDER/../data/git.sh "
-            "--cluster {{params.configuration_properties['dataproc_cluster']}} "
-            "--region {{params.configuration_properties['gcp_region']}} "
+            "--cluster {{params.config['dataproc_cluster']}} "
+            "--region {{params.config['gcp_region']}} "
             "--git-uri GIT_URI --destination-path /DEST_PATH/ --branch GIT_BRANCH --key-path /KEY/PATH",
             command,
         )
@@ -71,8 +71,8 @@ class PrepareGitCommandTestCase(unittest.TestCase):
         )
         self.assertEqual(
             "$DAGS_FOLDER/../data/git.sh "
-            "--cluster {{params.configuration_properties['dataproc_cluster']}} "
-            "--region {{params.configuration_properties['gcp_region']}} "
+            "--cluster {{params.config['dataproc_cluster']}} "
+            "--region {{params.config['gcp_region']}} "
             "--git-uri 'GIT_'\"'\"'\"URI' --destination-path '/DEST_PA'\"'\"'\"TH/' "
             "--branch 'GIT'\"'\"'\"_BRANCH' --key-path '/KEY/'\"'\"'\"PATH'",
             command,
@@ -84,8 +84,8 @@ class PrepareGitCommandTestCase(unittest.TestCase):
         )
         self.assertEqual(
             "$DAGS_FOLDER/../data/git.sh "
-            "--cluster {{params.configuration_properties['dataproc_cluster']}} "
-            "--region {{params.configuration_properties['gcp_region']}} "
+            "--cluster {{params.config['dataproc_cluster']}} "
+            "--region {{params.config['gcp_region']}} "
             "--git-uri GIT_URI --destination-path /DEST_PATH/ --key-path /KEY/PATH",
             command,
         )
@@ -96,8 +96,8 @@ class PrepareGitCommandTestCase(unittest.TestCase):
         )
         self.assertEqual(
             "$DAGS_FOLDER/../data/git.sh "
-            "--cluster {{params.configuration_properties['dataproc_cluster']}} "
-            "--region {{params.configuration_properties['gcp_region']}} "
+            "--cluster {{params.config['dataproc_cluster']}} "
+            "--region {{params.config['gcp_region']}} "
             "--git-uri GIT_URI --destination-path /DEST_PATH/ --branch GIT_BRANCH",
             command,
         )
@@ -139,11 +139,8 @@ class TestGitMapper(unittest.TestCase):
                         "destination_path": "/my_git_repo_directory",
                         "key_path_uri": "hdfs://name-node.second.company.com:8020/awesome-key/",
                         "key_path": "/awesome-key/",
-                        "property_set": PropertySet(
-                            configuration_properties={
-                                "dataproc_cluster": "my-cluster",
-                                "gcp_region": "europe-west3",
-                            },
+                        "props": PropertySet(
+                            config={"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"},
                             job_properties={
                                 "branch": "my-awesome-branch",
                                 "nameNode": "hdfs://",
@@ -182,11 +179,8 @@ class TestGitMapper(unittest.TestCase):
                         "destination_path": "/my_git_repo_directory",
                         "key_path_uri": "hdfs://name-node.second.company.com:8020/awesome-key/",
                         "key_path": "/awesome-key/",
-                        "property_set": PropertySet(
-                            configuration_properties={
-                                "dataproc_cluster": "my-cluster",
-                                "gcp_region": "europe-west3",
-                            },
+                        "props": PropertySet(
+                            config={"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"},
                             job_properties={
                                 "branch": "my-awesome-branch",
                                 "nameNode": "hdfs://",
@@ -215,9 +209,6 @@ class TestGitMapper(unittest.TestCase):
             oozie_node=spark_node,
             name="test_id",
             dag_name="DAG_NAME_B",
-            property_set=PropertySet(
-                job_properties=EXAMPLE_JOB_PROPERTIES,
-                configuration_properties=EXAMPLE_CONFIGURATION_PROPERTIES,
-            ),
+            props=PropertySet(job_properties=EXAMPLE_JOB_PROPS, config=EXAMPLE_CONFIG),
         )
         return mapper

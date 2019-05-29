@@ -55,7 +55,7 @@ class TestShellMapper(unittest.TestCase):
         self.shell_node = ET.fromstring(shell_node_str)
 
     def test_create_mapper_no_jinja(self):
-        mapper = self._get_shell_mapper(job_properties={}, configuration_properties={})
+        mapper = self._get_shell_mapper(job_properties={}, config={})
         mapper.on_parse_node()
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
@@ -63,7 +63,7 @@ class TestShellMapper(unittest.TestCase):
         self.assertEqual(self.shell_node, mapper.oozie_node)
         self.assertEqual("localhost:8032", mapper.resource_manager)
         self.assertEqual("hdfs://localhost:8020", mapper.name_node)
-        self.assertEqual("${queueName}", mapper.property_set.action_node_properties["mapred.job.queue.name"])
+        self.assertEqual("${queueName}", mapper.props.action_node_properties["mapred.job.queue.name"])
         self.assertEqual("echo arg1 arg2", mapper.bash_command)
 
     def test_create_mapper_jinja(self):
@@ -76,11 +76,9 @@ class TestShellMapper(unittest.TestCase):
             "queueName": "myQueue",
             "examplesRoot": "examples",
         }
-        configuration_properties = {"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"}
+        config = {"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"}
 
-        mapper = self._get_shell_mapper(
-            job_properties=job_properties, configuration_properties=configuration_properties
-        )
+        mapper = self._get_shell_mapper(job_properties=job_properties, config=config)
         mapper.on_parse_node()
 
         # make sure everything is getting initialized correctly
@@ -89,15 +87,13 @@ class TestShellMapper(unittest.TestCase):
         self.assertEqual(self.shell_node, mapper.oozie_node)
         self.assertEqual("localhost:9999", mapper.resource_manager)
         self.assertEqual("hdfs://localhost:8021", mapper.name_node)
-        self.assertEqual("myQueue", mapper.property_set.action_node_properties["mapred.job.queue.name"])
+        self.assertEqual("myQueue", mapper.props.action_node_properties["mapred.job.queue.name"])
         self.assertEqual("echo arg1 arg2", mapper.bash_command)
 
     def test_to_tasks_and_relations(self):
         job_properties = {"nameNode": "hdfs://localhost:9020/", "queueName": "default"}
-        configuration_properties = {"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"}
-        mapper = self._get_shell_mapper(
-            job_properties=job_properties, configuration_properties=configuration_properties
-        )
+        config = {"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"}
+        mapper = self._get_shell_mapper(job_properties=job_properties, config=config)
         mapper.on_parse_node()
         tasks, relations = mapper.to_tasks_and_relations()
 
@@ -131,18 +127,16 @@ class TestShellMapper(unittest.TestCase):
 
     def test_required_imports(self):
         job_properties = {"nameNode": "hdfs://localhost:9020/"}
-        mapper = self._get_shell_mapper(job_properties=job_properties, configuration_properties={})
+        mapper = self._get_shell_mapper(job_properties=job_properties, config={})
         imps = mapper.required_imports()
         imp_str = "\n".join(imps)
         ast.parse(imp_str)
 
-    def _get_shell_mapper(self, job_properties, configuration_properties):
+    def _get_shell_mapper(self, job_properties, config):
         return shell_mapper.ShellMapper(
             oozie_node=self.shell_node,
             name="test_id",
             dag_name="DAG_NAME_B",
             trigger_rule=TriggerRule.DUMMY,
-            property_set=PropertySet(
-                job_properties=job_properties, configuration_properties=configuration_properties
-            ),
+            props=PropertySet(job_properties=job_properties, config=config),
         )

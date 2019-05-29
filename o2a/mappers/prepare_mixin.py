@@ -36,8 +36,8 @@ class PrepareMixin:
                 return True
         return False
 
-    def get_prepare_task(self, name: str, trigger_rule: str, property_set) -> Optional[Task]:
-        delete_paths, mkdir_paths = self.parse_prepare_node(property_set=property_set)
+    def get_prepare_task(self, name: str, trigger_rule: str, props) -> Optional[Task]:
+        delete_paths, mkdir_paths = self.parse_prepare_node(props=props)
         if not delete_paths and not mkdir_paths:
             return None
         delete = " ".join(delete_paths) if delete_paths else None
@@ -49,7 +49,7 @@ class PrepareMixin:
             template_params=dict(delete=delete, mkdir=mkdir),
         )
 
-    def parse_prepare_node(self, property_set: PropertySet) -> Tuple[List[str], List[str]]:
+    def parse_prepare_node(self, props: PropertySet) -> Tuple[List[str], List[str]]:
         """
         <prepare>
             <delete path="[PATH]"/>
@@ -65,7 +65,7 @@ class PrepareMixin:
             # If there exists a prepare node, there will only be one, according
             # to oozie xml schema
             for node in prepare_node:
-                node_path = normalize_path(node.attrib["path"], property_set=property_set)
+                node_path = normalize_path(node.attrib["path"], props=props)
                 if node.tag == "delete":
                     delete_paths.append(node_path)
                 elif node.tag == "mkdir":

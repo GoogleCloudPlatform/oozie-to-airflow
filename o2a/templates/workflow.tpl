@@ -18,9 +18,9 @@
 {{ dependency }}
 {% endfor %}
 
-JOB_PROPERTIES={{ job_properties | to_python }}
+JOB_PROPS={{ job_properties | to_python }}
 
-CONFIGURATION_PROPERTIES={{ configuration_properties | to_python }}
+CONFIG={{ config | to_python }}
 
 with models.DAG(
     {{ dag_name | to_python }},

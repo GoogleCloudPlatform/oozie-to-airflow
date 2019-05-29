@@ -29,18 +29,13 @@ class KillMapper(BaseMapper):
     """
 
     def __init__(
-        self,
-        oozie_node: Element,
-        name: str,
-        dag_name: str,
-        property_set: Optional[PropertySet] = None,
-        **kwargs,
+        self, oozie_node: Element, name: str, dag_name: str, props: Optional[PropertySet] = None, **kwargs
     ):
         super().__init__(
             oozie_node=oozie_node,
             name=name,
             dag_name=dag_name,
-            property_set=property_set or PropertySet(job_properties={}, configuration_properties={}),
+            props=props or PropertySet(job_properties={}, config={}),
             **kwargs,
         )
 

@@ -36,7 +36,7 @@ class ActionMapper(BaseMapper, ABC):
         oozie_node: Element,
         name: str,
         dag_name: str,
-        property_set: PropertySet,
+        props: PropertySet,
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
         **kwargs: Any,
     ):
@@ -44,7 +44,7 @@ class ActionMapper(BaseMapper, ABC):
             oozie_node=oozie_node,
             name=name,
             dag_name=dag_name,
-            property_set=property_set,
+            props=props,
             trigger_rule=trigger_rule,
             **kwargs,
         )
@@ -57,13 +57,11 @@ class ActionMapper(BaseMapper, ABC):
         action_node_properties: Dict[str, str] = {}
         config = self.oozie_node.find("configuration")
         if config:
-            property_set = self.property_set
+            props = self.props
             property_nodes = xml_utils.find_nodes_by_tag(config, "property")
             if property_nodes:
                 for node in property_nodes:
                     name = node.find("name").text
-                    value = el_utils.replace_el_with_var(
-                        node.find("value").text, property_set=property_set, quote=False
-                    )
+                    value = el_utils.replace_el_with_var(node.find("value").text, props=props, quote=False)
                     action_node_properties[name] = value
-        self.property_set.action_node_properties = action_node_properties
+        self.props.action_node_properties = action_node_properties

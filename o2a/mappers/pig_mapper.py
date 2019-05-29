@@ -39,37 +39,26 @@ class PigMapper(ActionMapper, PrepareMixin):
         self,
         oozie_node: Element,
         name: str,
-        property_set: PropertySet,
+        props: PropertySet,
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
         **kwargs,
     ):
         ActionMapper.__init__(
-            self,
-            oozie_node=oozie_node,
-            name=name,
-            trigger_rule=trigger_rule,
-            property_set=property_set,
-            **kwargs,
+            self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, props=props, **kwargs
         )
         PrepareMixin.__init__(self, oozie_node=oozie_node)
         self.params_dict: Dict[str, str] = {}
-        self.file_extractor = FileExtractor(oozie_node=oozie_node, property_set=self.property_set)
-        self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, property_set=self.property_set)
+        self.file_extractor = FileExtractor(oozie_node=oozie_node, props=self.props)
+        self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, props=self.props)
         self._parse_oozie_node()
 
     def _parse_oozie_node(self):
         res_man_text = self.oozie_node.find("resource-manager").text
         name_node_text = self.oozie_node.find("name-node").text
         script = self.oozie_node.find("script").text
-        self.resource_manager = el_utils.replace_el_with_var(
-            res_man_text, property_set=self.property_set, quote=False
-        )
-        self.name_node = el_utils.replace_el_with_var(
-            name_node_text, property_set=self.property_set, quote=False
-        )
-        self.script_file_name = el_utils.replace_el_with_var(
-            script, property_set=self.property_set, quote=False
-        )
+        self.resource_manager = el_utils.replace_el_with_var(res_man_text, props=self.props, quote=False)
+        self.name_node = el_utils.replace_el_with_var(name_node_text, props=self.props, quote=False)
+        self.script_file_name = el_utils.replace_el_with_var(script, props=self.props, quote=False)
         self._parse_params()
         self.files, self.hdfs_files = self.file_extractor.parse_node()
         self.archives, self.hdfs_archives = self.archive_extractor.parse_node()
@@ -79,7 +68,7 @@ class PigMapper(ActionMapper, PrepareMixin):
         if param_nodes:
             self.params_dict = {}
             for node in param_nodes:
-                param = el_utils.replace_el_with_var(node.text, property_set=self.property_set, quote=False)
+                param = el_utils.replace_el_with_var(node.text, props=self.props, quote=False)
                 key, value = param.split("=")
                 self.params_dict[key] = value
 
@@ -89,16 +78,12 @@ class PigMapper(ActionMapper, PrepareMixin):
             template_name="pig.tpl",
             trigger_rule=self.trigger_rule,
             template_params=dict(
-                property_set=self.property_set,
-                params_dict=self.params_dict,
-                script_file_name=self.script_file_name,
+                props=self.props, params_dict=self.params_dict, script_file_name=self.script_file_name
             ),
         )
         tasks: List[Task] = [action_task]
         relations: List[Relation] = []
-        prepare_task = self.get_prepare_task(
-            name=self.name, trigger_rule=self.trigger_rule, property_set=self.property_set
-        )
+        prepare_task = self.get_prepare_task(name=self.name, trigger_rule=self.trigger_rule, props=self.props)
         if prepare_task:
             tasks = [prepare_task, action_task]
             relations = [Relation(from_task_id=prepare_task.task_id, to_task_id=self.name)]

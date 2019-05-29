@@ -56,7 +56,7 @@ class TestBaseMapper(unittest.TestCase):
             name="test_id",
             dag_name="DAG_NAME_B",
             trigger_rule=TriggerRule.DUMMY,
-            property_set=PropertySet(job_properties={}, configuration_properties={}),
+            props=PropertySet(job_properties={}, config={}),
         )
 
     def test_dummy_method(self):

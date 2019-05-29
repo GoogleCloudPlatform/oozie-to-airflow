@@ -38,18 +38,13 @@ class SSHMapper(ActionMapper):
         self,
         oozie_node: Element,
         name: str,
-        property_set: PropertySet,
+        props: PropertySet,
         trigger_rule: str = TriggerRule.ALL_SUCCESS,
         template: str = "ssh.tpl",
         **kwargs,
     ):
         ActionMapper.__init__(
-            self,
-            oozie_node=oozie_node,
-            name=name,
-            trigger_rule=trigger_rule,
-            property_set=property_set,
-            **kwargs,
+            self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, props=props, **kwargs
         )
         self.template = template
         cmd = self.get_command()
@@ -79,8 +74,8 @@ class SSHMapper(ActionMapper):
             raise Exception("Missing host node in SSH action: {}".format(self.oozie_node))
         host_key = el_utils.strip_el(host.text)
         # the <user> node is formatted like [USER]@[HOST]
-        if host_key in self.property_set:
-            host_key = self.property_set[host_key]
+        if host_key in self.props.merged:
+            host_key = self.props.merged[host_key]
         return host_key
 
     def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
@@ -91,7 +86,7 @@ class SSHMapper(ActionMapper):
                 template_name="ssh.tpl",
                 trigger_rule=self.trigger_rule,
                 template_params=dict(
-                    property_set=self.property_set,
+                    props=self.props,
                     # SSH mapper does not support <configuration></configuration> node -
                     # no action_node_properties are needed
                     command=self.command,

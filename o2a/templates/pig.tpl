@@ -16,12 +16,12 @@
 {{ task_id | to_var }} = dataproc_operator.DataProcPigOperator(
     task_id={{ task_id | to_python }},
     trigger_rule={{ trigger_rule | to_python }},
-    query_uri='%s/%s' % (CONFIGURATION_PROPERTIES['gcp_uri_prefix'], {{ script_file_name | to_python }}),
+    query_uri='%s/%s' % (CONFIG['gcp_uri_prefix'], {{ script_file_name | to_python }}),
     variables={{ params_dict | to_python }},
-    dataproc_pig_properties={% include "property_set.tpl" %}.job_properties_merged,
-    cluster_name=CONFIGURATION_PROPERTIES['dataproc_cluster'],
-    gcp_conn_id=CONFIGURATION_PROPERTIES['gcp_conn_id'],
-    region=CONFIGURATION_PROPERTIES['gcp_region'],
+    dataproc_pig_properties={% include "props.tpl" %}.merged,
+    cluster_name=CONFIG['dataproc_cluster'],
+    gcp_conn_id=CONFIG['gcp_conn_id'],
+    region=CONFIG['gcp_region'],
     dataproc_job_id={{ task_id | to_python }},
-    params={% include "property_set.tpl" %},
+    params={% include "props.tpl" %},
 )

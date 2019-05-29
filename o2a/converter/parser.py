@@ -48,7 +48,7 @@ class OozieParser:
         self,
         input_directory_path: str,
         output_directory_path: str,
-        property_set: PropertySet,
+        props: PropertySet,
         action_mapper: Dict[str, Type[ActionMapper]],
         dag_name: str,
     ):
@@ -58,7 +58,7 @@ class OozieParser:
             output_directory_path=output_directory_path,
         )
         self.workflow_file = os.path.join(input_directory_path, HDFS_FOLDER, "workflow.xml")
-        self.property_set = property_set
+        self.props = props
         self.action_map = action_mapper
 
     def parse_kill_node(self, kill_node: ET.Element):
@@ -71,7 +71,7 @@ class OozieParser:
             name=kill_node.attrib["name"],
             dag_name=self.workflow.dag_name,
             trigger_rule=TriggerRule.ONE_FAILED,
-            property_set=self.property_set,
+            props=self.props,
         )
         p_node = ParsedActionNode(mapper)
 
@@ -181,7 +181,7 @@ class OozieParser:
             oozie_node=decision_node,
             name=decision_node.attrib["name"],
             dag_name=self.workflow.dag_name,
-            property_set=self.property_set,
+            props=self.props,
         )
 
         p_node = ParsedActionNode(mapper)
@@ -214,7 +214,7 @@ class OozieParser:
         mapper = map_class(
             oozie_node=action_operation_node,
             name=action_node.attrib["name"],
-            property_set=self.property_set,
+            props=self.props,
             dag_name=self.workflow.dag_name,
             action_mapper=self.action_map,
             input_directory_path=self.workflow.input_directory_path,
@@ -254,7 +254,7 @@ class OozieParser:
             oozie_node=start_node,
             name=start_name,
             dag_name=self.workflow.dag_name,
-            property_set=self.property_set,
+            props=self.props,
             trigger_rule=TriggerRule.DUMMY,
         )
 

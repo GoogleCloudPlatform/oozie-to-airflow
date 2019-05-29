@@ -137,7 +137,7 @@ class TestOozieConverter(TestCase):
             dependencies={"import awesome_stuff"},
             nodes=[nodes["TASK_1"]],
             job_properties={"user.name": "USER"},
-            configuration_properties={},
+            config={},
             relations={Relation(from_task_id="TASK_1", to_task_id="TASK_2")},
             schedule_interval=None,
             start_days_ago=None,

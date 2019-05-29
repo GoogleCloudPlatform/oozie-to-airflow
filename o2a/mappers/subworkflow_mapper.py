@@ -44,7 +44,7 @@ class SubworkflowMapper(ActionMapper):
         dag_name: str,
         input_directory_path: str,
         output_directory_path: str,
-        property_set: PropertySet,
+        props: PropertySet,
         action_mapper: Dict[str, Type[ActionMapper]],
         trigger_rule=TriggerRule.ALL_SUCCESS,
         **kwargs,
@@ -55,7 +55,7 @@ class SubworkflowMapper(ActionMapper):
             name=name,
             dag_name=dag_name,
             trigger_rule=trigger_rule,
-            property_set=property_set,
+            props=props,
             **kwargs,
         )
         self.task_id = name
@@ -68,7 +68,7 @@ class SubworkflowMapper(ActionMapper):
 
     def _parse_oozie_node(self):
         app_path = self.oozie_node.find("app-path").text
-        app_path = el_utils.replace_el_with_var(app_path, property_set=self.property_set, quote=False)
+        app_path = el_utils.replace_el_with_var(app_path, props=self.props, quote=False)
         _, _, self.app_name = app_path.rpartition("/")
         # TODO: hacky: we should calculate it deriving from input_directory_path and comparing app-path
         # TODO: but for now we assume app is in "examples"
@@ -82,19 +82,17 @@ class SubworkflowMapper(ActionMapper):
             action_mapper=self.action_mapper,
             dag_name=f"{self.dag_name}.{self.task_id}",
             output_dag_name=f"subdag_{convert_to_python_variable(self.app_name)}.py",
-            initial_property_set=self.get_property_set(),
+            initial_props=self.get_props(),
         )
         converter.convert()
 
-    def get_property_set(self) -> PropertySet:
+    def get_props(self) -> PropertySet:
         propagate_configuration = self.oozie_node.find("propagate-configuration")
         # Below the `is not None` is necessary due to Element's __bool__() return value:
         # `len(self._children) != 0`,
         # and `propagate_configuration` is an empty node so __bool__() will always return False.
         return (
-            self.property_set
-            if propagate_configuration is not None
-            else PropertySet(configuration_properties={}, job_properties={})
+            self.props if propagate_configuration is not None else PropertySet(config={}, job_properties={})
         )
 
     def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:

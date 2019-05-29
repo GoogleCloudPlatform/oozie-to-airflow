@@ -68,7 +68,7 @@ def strip_el(el_function: str) -> str:
     return re.sub("[${}]", "", el_function).strip()
 
 
-def replace_el_with_var(el_function: str, property_set: PropertySet, quote=True) -> str:
+def replace_el_with_var(el_function: str, props: PropertySet, quote=True) -> str:
     """
     Only supports a single variable for now.
     """
@@ -79,7 +79,7 @@ def replace_el_with_var(el_function: str, property_set: PropertySet, quote=True)
     if var_match:
         for var in var_match:
             try:
-                value = property_set[var]
+                value = props.merged[var]
                 jinjafied_el = jinjafied_el.replace("${" + var + "}", value)
             except KeyError:
                 logging.info(f"The EL variable {var} was missing in the properties")
@@ -132,12 +132,12 @@ def convert_el_to_jinja(oozie_el, quote=True):
         return jinjafied_el
     if var_match:
         for var in var_match:
-            jinjafied_el = jinjafied_el.replace("${" + var + "}", "{{ job_properties." + var + " }}")
+            jinjafied_el = jinjafied_el.replace("${" + var + "}", "{{ params.props.merged['" + var + "'] }}")
 
     return "'" + jinjafied_el + "'" if quote else jinjafied_el
 
 
-def parse_els(properties_file: Optional[str], property_set: PropertySet):
+def parse_els(properties_file: Optional[str], props: PropertySet):
     """
     Parses the job_properties file into a dictionary, if the value has
     and EL function in it, it gets replaced with the corresponding
@@ -153,7 +153,7 @@ def parse_els(properties_file: Optional[str], property_set: PropertySet):
         command='ssh user@google.com',
     }
     """
-    copy_of_property_set = deepcopy(property_set)
+    copy_of_props = deepcopy(props)
     properties_read_from_file = {}
     if properties_file:
         if os.path.isfile(properties_file):
@@ -162,21 +162,21 @@ def parse_els(properties_file: Optional[str], property_set: PropertySet):
                     if line.startswith("#") or line.startswith(" ") or line.startswith("\n"):
                         continue
                     else:
-                        key, value = _convert_line(line, property_set=copy_of_property_set)
+                        key, value = _convert_line(line, props=copy_of_props)
                         # Set the value of property in the copy of property set for further reference
-                        copy_of_property_set.action_node_properties[key] = value
+                        copy_of_props.action_node_properties[key] = value
                         properties_read_from_file[key] = value
         else:
             logging.warning(f"The job_properties file is missing: {properties_file}")
     return properties_read_from_file
 
 
-def _convert_line(line: str, property_set: PropertySet) -> Tuple[str, str]:
+def _convert_line(line: str, props: PropertySet) -> Tuple[str, str]:
     """
     Converts a line from the job_properties file and adds it to the job_properties dictionary.
     """
     key, value = line.split("=", 1)
-    value = replace_el_with_var(value.strip(), property_set=property_set, quote=False)
+    value = replace_el_with_var(value.strip(), props=props, quote=False)
     return key.strip(), value
 
 
@@ -189,9 +189,9 @@ def comma_separated_string_to_list(line: str) -> Union[List[str], str]:
     return values[0] if len(values) <= 1 else values
 
 
-def normalize_path(url, property_set: PropertySet, allow_no_schema=False):
-    url_with_var = replace_el_with_var(url, property_set=property_set, quote=False)
-    url_with_var = replace_el_with_var(url_with_var, property_set=property_set, quote=False)
+def normalize_path(url, props: PropertySet, allow_no_schema=False):
+    url_with_var = replace_el_with_var(url, props=props, quote=False)
+    url_with_var = replace_el_with_var(url_with_var, props=props, quote=False)
     url_parts: ParseResult = urlparse(url_with_var)
     allowed_schema = {"hdfs", ""} if allow_no_schema else {"hdfs"}
     if url_parts.scheme not in allowed_schema:

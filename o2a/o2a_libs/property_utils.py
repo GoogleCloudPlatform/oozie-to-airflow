@@ -14,56 +14,54 @@
 # limitations under the License.
 
 """Stores property set for use in particular actions"""
-from typing import Dict, Iterator, Any
-from collections.abc import Mapping
+from typing import Dict
 import json
 
 
 # pylint: disable=too-few-public-methods
-class PropertySet(Mapping):
+class PropertySet:
     """Holds all the different types of properties (job/action node for now - job.xml and workflow.xml in
        the future) and implements [] operator to return property value according to the Oozie algorithm
        of property precedence.
 
-       Note that the configuration_properties are not used in the [] operator nor in the
-       job_properties_merged. You need to access the configuration properties
-       via explicit <PROPERTY_SET>.configuration_properties['key']
+       Note that the config are not used in the [] operator nor in the
+       merged. You need to access the configuration properties
+       via explicit <PROPERTY_SET>.config['key']
     """
-
-    def __iter__(self) -> Iterator[str]:
-        return self.job_properties_merged.__iter__()
-
-    def __len__(self) -> int:
-        return self.job_properties_merged.__len__()
 
     def __init__(
         self,
-        configuration_properties: Dict[str, str],
+        config: Dict[str, str],
         job_properties: Dict[str, str],
         action_node_properties: Dict[str, str] = None,
     ):
-        self.configuration_properties: Dict[str, str] = configuration_properties
+        self.config: Dict[str, str] = config
         self.job_properties: Dict[str, str] = job_properties
         self.action_node_properties: Dict[str, str] = action_node_properties or {}
 
-    def __getitem__(self, item: str) -> str:
-        return self.job_properties_merged[item]
-
-    def __contains__(self, key: Any) -> bool:
-        return key in self.job_properties_merged
-
     @property
-    def job_properties_merged(self) -> Dict[str, str]:
+    def merged(self) -> Dict[str, str]:
+        """
+        Those are merged job and action node properties.
+        :return:
+        """
         # not optimal but allows to modify properties in job.properties/action_node_properties at any time
-        job_properties_merged: Dict[str, str] = {}
-        job_properties_merged.update(self.job_properties)
-        job_properties_merged.update(self.action_node_properties)
-        return job_properties_merged
+        merged_props: Dict[str, str] = {}
+        merged_props.update(self.job_properties)
+        merged_props.update(self.action_node_properties)
+        return merged_props
 
     def __repr__(self) -> str:
         return (
-            f"PropertySet(configuration_properties={json.dumps(self.configuration_properties, indent=2)}, "
+            f"PropertySet(config={json.dumps(self.config, indent=2)}, "
             f"job_properties={json.dumps(self.job_properties, indent=2)}, "
             f"action_node_properties={json.dumps(self.action_node_properties, indent=2)}, "
-            f"job_properties_merged={json.dumps(self.job_properties_merged, indent=2)})"
+        )
+
+    def __eq__(self, other):
+        return (
+            isinstance(other, PropertySet)
+            and self.config == other.config
+            and self.job_properties == other.job_properties
+            and self.action_node_properties == other.action_node_properties
         )

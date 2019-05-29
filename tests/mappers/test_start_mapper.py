@@ -69,6 +69,6 @@ class TestStartMapper(unittest.TestCase):
             name=name,
             dag_name="DAG_NAME_B",
             trigger_rule=TriggerRule.DUMMY,
-            property_set=PropertySet(configuration_properties={}, job_properties={}),
+            props=PropertySet(config={}, job_properties={}),
         )
         return mapper

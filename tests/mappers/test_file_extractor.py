@@ -27,13 +27,11 @@ class TestFileExtractor(unittest.TestCase):
             "nameNode": "hdfs://",
             "oozie.wf.application.path": "hdfs:///user/pig/examples/pig_test_node",
         }
-        self.property_set = PropertySet(
-            job_properties=self.job_properties, configuration_properties={}, action_node_properties={}
-        )
+        self.props = PropertySet(job_properties=self.job_properties, config={}, action_node_properties={})
 
     def test_add_relative_file(self):
         # Given
-        file_extractor = FileExtractor(oozie_node=Element("fake"), property_set=self.property_set)
+        file_extractor = FileExtractor(oozie_node=Element("fake"), props=self.props)
         # When
         file_extractor.add_file("test_file")
         # Then
@@ -42,7 +40,7 @@ class TestFileExtractor(unittest.TestCase):
 
     def test_add_absolute_file(self):
         # Given
-        file_extractor = FileExtractor(oozie_node=Element("fake"), property_set=self.property_set)
+        file_extractor = FileExtractor(oozie_node=Element("fake"), props=self.props)
         # When
         file_extractor.add_file("/test_file")
         # Then
@@ -51,7 +49,7 @@ class TestFileExtractor(unittest.TestCase):
 
     def test_add_multiple_files(self):
         # Given
-        file_extractor = FileExtractor(oozie_node=Element("fake"), property_set=self.property_set)
+        file_extractor = FileExtractor(oozie_node=Element("fake"), props=self.props)
         # When
         file_extractor.add_file("/test_file")
         file_extractor.add_file("test_file2")
@@ -65,7 +63,7 @@ class TestFileExtractor(unittest.TestCase):
 
     def test_add_hash_files(self):
         # Given
-        file_extractor = FileExtractor(oozie_node=Element("fake"), property_set=self.property_set)
+        file_extractor = FileExtractor(oozie_node=Element("fake"), props=self.props)
         # When
         file_extractor.add_file("/test_file#test3_link")
         file_extractor.add_file("test_file2#test_link")
@@ -85,7 +83,7 @@ class TestFileExtractor(unittest.TestCase):
 
     def test_add_file_extra_hash(self):
         # Given
-        file_extractor = FileExtractor(oozie_node=Element("fake"), property_set=self.property_set)
+        file_extractor = FileExtractor(oozie_node=Element("fake"), props=self.props)
         # When
         with self.assertRaises(Exception) as context:
             file_extractor.add_file("/test_file#4rarear#")
@@ -107,7 +105,7 @@ class TestFileExtractor(unittest.TestCase):
 </pig>
         """
         oozie_node = ET.fromstring(node_str)
-        file_extractor = FileExtractor(oozie_node=oozie_node, property_set=self.property_set)
+        file_extractor = FileExtractor(oozie_node=oozie_node, props=self.props)
         # When
         file_extractor.parse_node()
         # Then

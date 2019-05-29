@@ -84,5 +84,5 @@ class TestDecisionMapper(unittest.TestCase):
             dag_name="DAG_NAME_B",
             trigger_rule=TriggerRule.DUMMY,
             job_properties={},
-            configuration_properties={},
+            config={},
         )
