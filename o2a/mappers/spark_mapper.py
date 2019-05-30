@@ -23,7 +23,7 @@ from o2a.converter.exceptions import ParseException
 from o2a.converter.task import Task
 from o2a.converter.relation import Relation
 from o2a.mappers.action_mapper import ActionMapper
-from o2a.mappers.prepare_mixin import PrepareMixin
+from o2a.mappers.extensions.prepare_mapper_extension import PrepareMapperExtension
 from o2a.o2a_libs.property_utils import PropertySet
 from o2a.utils import xml_utils, el_utils
 from o2a.utils.file_archive_extractors import FileExtractor, ArchiveExtractor
@@ -41,7 +41,7 @@ SPARK_TAG_CLASS = "class"
 SPARK_TAG_JAR = "jar"
 
 
-class SparkMapper(ActionMapper, PrepareMixin):
+class SparkMapper(ActionMapper):
     """Maps Spark Action"""
 
     def __init__(
@@ -55,7 +55,6 @@ class SparkMapper(ActionMapper, PrepareMixin):
         ActionMapper.__init__(
             self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, props=props, **kwargs
         )
-        PrepareMixin.__init__(self, oozie_node=oozie_node)
         self.java_class = ""
         self.java_jar = ""
         self.job_name: Optional[str] = None
@@ -67,6 +66,7 @@ class SparkMapper(ActionMapper, PrepareMixin):
         self.hdfs_archives: List[str] = []
         self.dataproc_jars: List[str] = []
         self.spark_opts: Dict[str, str] = {}
+        self.prepare_extension: PrepareMapperExtension = PrepareMapperExtension(self)
 
     def on_parse_node(self):
         super().on_parse_node()
@@ -154,4 +154,4 @@ class SparkMapper(ActionMapper, PrepareMixin):
 
     @property
     def first_task_id(self) -> str:
-        return f"{self.name}_prepare" if self.has_prepare() else self.name
+        return self.prepare_extension.first_task_id  # type: ignore  # make mypy happy
