@@ -152,6 +152,16 @@ class TemplateTestMixin:
                     mutated_view,
                     f"Uncorrelated template job_properties: {path}, Mutated view: {mutated_view}",
                 )
+            elif isinstance(current_value, int):
+                template_params = deepcopy(self.DEFAULT_TEMPLATE_PARAMS)
+                set_value_by_path(template_params, path, randint(0, 100))
+                mutated_view = render_template(self.TEMPLATE_NAME, **template_params)
+                self.assertNotEqual(
+                    original_view,
+                    mutated_view,
+                    f"Uncorrelated template job_properties: {path}, Mutated view: {mutated_view}",
+                )
+
             elif isinstance(current_value, dict):
                 for key, _ in current_value.items():
                     walk_recursively_and_mutate([*path, key])
@@ -175,7 +185,9 @@ class DecisionTemplateTestCase(TestCase, TemplateTestMixin):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
         self.assertValidPython(res)
 
-    @parameterized.expand([({"task_id": 'AA"AA"\''},), ({"trigger_rule": 'AA"AA"\''},)])
+    @parameterized.expand(
+        [({"task_id": 'AA"AA"\''},), ({"trigger_rule": 'AA"AA"\''},), ({"case_dict": {"default": 'tas"k3'}},)]
+    )
     def test_escape_character(self, mutation):
         template_params = mutate(self.DEFAULT_TEMPLATE_PARAMS, mutations=mutation)
         res = render_template(self.TEMPLATE_NAME, **template_params)
@@ -191,6 +203,12 @@ class DummyTemplateTestCase(TestCase, TemplateTestMixin):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
         self.assertValidPython(res)
 
+    @parameterized.expand([({"task_id": 'AA"AA"\''},), ({"trigger_rule": 'AA"AA"\''},)])
+    def test_escape_character(self, mutation):
+        template_params = mutate(self.DEFAULT_TEMPLATE_PARAMS, mutations=mutation)
+        res = render_template(self.TEMPLATE_NAME, **template_params)
+        self.assertValidPython(res)
+
 
 class FsOpTempalteTestCase(TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "fs_op.tpl"
@@ -199,6 +217,7 @@ class FsOpTempalteTestCase(TestCase, TemplateTestMixin):
         "task_id": "DAG_NAME_A",
         "pig_command": "DAG_NAME_A",
         "trigger_rule": TriggerRule.DUMMY,
+        "action_node_properties": {"key": "value"},
     }
 
     def test_minimal_green_path(self):
@@ -206,8 +225,51 @@ class FsOpTempalteTestCase(TestCase, TemplateTestMixin):
         self.assertValidPython(res)
 
     @parameterized.expand(
-        [({"pig_command": 'AA"AA"\''},), ({"task_id": 'AA"AA"\''},), ({"trigger_rule": 'AA"AA"\''},)]
+        [
+            ({"pig_command": 'AA"AA"\''},),
+            ({"task_id": 'AA"AA"\''},),
+            ({"trigger_rule": 'AA"AA"\''},),
+            ({"action_node_properties": {"key": 'value""\''}},),
+        ]
     )
+    def test_escape_character(self, mutation):
+        template_params = mutate(self.DEFAULT_TEMPLATE_PARAMS, mutations=mutation)
+        res = render_template(self.TEMPLATE_NAME, **template_params)
+        self.assertValidPython(res)
+
+
+class GitTemplateTestCase(TestCase, TemplateTestMixin):
+    TEMPLATE_NAME = "git.tpl"
+
+    DEFAULT_TEMPLATE_PARAMS = {
+        "task_id": "TASK_ID",
+        "trigger_rule": "dummy",
+        "git_uri": "https://github.com/apache/oozie",
+        "git_branch": "my-awesome-branch",
+        "destination_path": "/my_git_repo_directory",
+        "key_path": "/awesome-key/",
+    }
+
+    def test_minimal_green_path(self):
+        res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
+        self.assertValidPython(res)
+
+    @parameterized.expand(
+        [
+            ({"git_uri": None},),
+            ({"git_branch": None},),
+            ({"destination_uri": None},),
+            ({"destination_path": None},),
+            ({"key_path_uri": None},),
+            ({"key_path": None},),
+        ]
+    )
+    def test_optional_parameters(self, mutation):
+        template_params = mutate(self.DEFAULT_TEMPLATE_PARAMS, mutation)
+        res = render_template(self.TEMPLATE_NAME, **template_params)
+        self.assertValidPython(res)
+
+    @parameterized.expand([({"task_id": 'AA"AA"\''},), ({"trigger_rule": 'AA"AA"\''},)])
     def test_escape_character(self, mutation):
         template_params = mutate(self.DEFAULT_TEMPLATE_PARAMS, mutations=mutation)
         res = render_template(self.TEMPLATE_NAME, **template_params)
@@ -247,8 +309,6 @@ class MapReduceTemplateTestCase(TestCase, TemplateTestMixin):
             "mapreduce.input.fileinputformat.inputdir": "/user/mapred/${examplesRoot}/mapreduce/input",
             "mapreduce.output.fileoutputformat.outputdir": "/user/mapred/${examplesRoot}/mapreduce/output",
         },
-        "job_properties": {},
-        "params_dict": {},
         "hdfs_files": ["B"],
         "hdfs_archives": ["D"],
     }
@@ -260,10 +320,18 @@ class MapReduceTemplateTestCase(TestCase, TemplateTestMixin):
     @parameterized.expand([({"hdfs_files": None},), ({"hdfs_archives": None},)])
     def test_optional_parameters(self, mutation):
         template_params = mutate(self.DEFAULT_TEMPLATE_PARAMS, mutation)
-        res = render_template("mapreduce.tpl", **template_params)
+        res = render_template(self.TEMPLATE_NAME, **template_params)
         self.assertValidPython(res)
 
-    @parameterized.expand([({"task_id": 'AA"AA"\''},), ({"trigger_rule": 'AA"AA"\''},)])
+    @parameterized.expand(
+        [
+            ({"task_id": 'AA"AA"\''},),
+            ({"trigger_rule": 'AA"AA"\''},),
+            ({"action_node_properties": {"mapred.mapper.new-api": 'tr"ue'}},),
+            ({"hdfs_files": ['val"ue']},),
+            ({"hdfs_archives": ['val"ue']},),
+        ]
+    )
     def test_escape_character(self, mutation):
         template_params = mutate(self.DEFAULT_TEMPLATE_PARAMS, mutations=mutation)
         res = render_template(self.TEMPLATE_NAME, **template_params)
@@ -281,6 +349,7 @@ class PigTemplateTestCase(TestCase, TemplateTestMixin):
             "OUTPUT": "/user/${wf:user()}/${examplesRoot}/output-data/demo/pig-node",
         },
         "script_file_name": "id.pig",
+        "action_node_properties": {"key": "value"},
     }
 
     def test_green_path(self):
@@ -300,6 +369,8 @@ class PigTemplateTestCase(TestCase, TemplateTestMixin):
             ({"command": 'A"'},),
             ({"user": 'A"'},),
             ({"host": 'A"'},),
+            ({"script_file_name": 'AAAA"AAA'},),
+            ({"params_dict": {"key": 'val"ue'}},),
         ]
     )
     def test_escape_character(self, mutation):
@@ -316,6 +387,7 @@ class PrepareTemplateTestCase(TestCase, TemplateTestMixin):
         "trigger_rule": "dummy",
         "delete": "file1 file2",
         "mkdir": "file3 file4",
+        "action_node_properties": {"key": "value"},
     }
 
     def test_green_path(self):
@@ -334,13 +406,25 @@ class PrepareTemplateTestCase(TestCase, TemplateTestMixin):
 class ShellTemplateTestCase(TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "shell.tpl"
 
-    DEFAULT_TEMPLATE_PARAMS = {"task_id": "DAG_NAME_A", "pig_command": "PIG_CMD", "trigger_rule": "dummy"}
+    DEFAULT_TEMPLATE_PARAMS = {
+        "task_id": "DAG_NAME_A",
+        "pig_command": "PIG_CMD",
+        "trigger_rule": "dummy",
+        "action_node_properties": {"key": "value"},
+    }
 
     def test_green_path(self):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
         self.assertValidPython(res)
 
-    @parameterized.expand([({"pig_command": 'A"'},), ({"pig_command": 'PIG_CMD"'},)])
+    @parameterized.expand(
+        [
+            ({"task_id": 'AA"AA"\''},),
+            ({"trigger_rule": 'AA"AA"\''},),
+            ({"pig_command": 'A"'},),
+            ({"pig_command": 'PIG_CMD"'},),
+        ]
+    )
     def test_escape_character(self, mutation):
         template_params = mutate(self.DEFAULT_TEMPLATE_PARAMS, mutation)
         res = render_template(self.TEMPLATE_NAME, **template_params)
@@ -364,6 +448,7 @@ class SparkTemplateTestCase(TestCase, TemplateTestMixin):
         "main_class": "org.apache.spark.examples.mllib.JavaALS",
         "main_jar": None,
         "trigger_rule": "dummy",
+        "action_node_properties": {"key": "value"},
     }
 
     def test_green_path(self):
@@ -389,8 +474,6 @@ class SparkTemplateTestCase(TestCase, TemplateTestMixin):
         [
             ({"task_id": 'AA"AA"\''},),
             ({"trigger_rule": 'AA"AA"\''},),
-            ({"job_properties": {'AA"': "DAG_NAME_A"}},),
-            ({"job_properties": {"AA": 'A"AA'}},),
             ({"name": 'A"'},),
             ({"command": 'A"'},),
             ({"user": 'A"'},),
@@ -413,13 +496,14 @@ class SshTemplateTestCase(TestCase, TemplateTestMixin):
         "command": "ls -l -a",
         "user": "user",
         "host": "apache.org",
+        "action_node_properties": {"key": "value"},
     }
 
     def test_minimal_green_path(self):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
         self.assertValidPython(res)
 
-    @parameterized.expand([({"job_properties": None},)])
+    @parameterized.expand([({"action_node_properties": {}},)])
     def test_optional_parameters(self, mutation):
         template_params = mutate(self.DEFAULT_TEMPLATE_PARAMS, mutation)
         res = render_template(self.TEMPLATE_NAME, **template_params)
@@ -429,8 +513,8 @@ class SshTemplateTestCase(TestCase, TemplateTestMixin):
         [
             ({"task_id": 'AA"AA"\''},),
             ({"trigger_rule": 'AA"AA"\''},),
-            ({"job_properties": {'AA"': "DAG_NAME_A"}},),
-            ({"job_properties": {"AA": 'A"AA'}},),
+            ({"action_node_properties": {'AA"': "DAG_NAME_A"}},),
+            ({"action_node_properties": {"AA": 'A"AA'}},),
             ({"command": 'A"'},),
             ({"user": 'A"'},),
             ({"host": 'A"'},),
@@ -445,13 +529,15 @@ class SshTemplateTestCase(TestCase, TemplateTestMixin):
 class SubwfTemplateTestCase(TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "subwf.tpl"
 
-    DEFAULT_TEMPLATE_PARAMS = {"task_id": "test_id", "app_name": "DAG_NAME_A", "trigger_rule": "dummy"}
+    DEFAULT_TEMPLATE_PARAMS = {"task_id": "test_id", "trigger_rule": "dummy", "app_name": "DAG_NAME_A"}
 
     def test_green_path(self):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
         self.assertValidPython(res)
 
-    @parameterized.expand([({"task_id": 'AA"AA"\''},), ({"trigger_rule": 'AA"AA"\''},)])
+    @parameterized.expand(
+        [({"task_id": 'AA"AA"\''},), ({"trigger_rule": 'AA"AA"\''},), ({"app_name": "APP\"'NAME"},)]
+    )
     def test_escape_character(self, mutation):
         template_params = mutate(self.DEFAULT_TEMPLATE_PARAMS, mutation)
         res = render_template(self.TEMPLATE_NAME, **template_params)
@@ -476,8 +562,8 @@ class WorkflowTemplateTestCase(TestCase, TemplateTestMixin):
         job_properties={"user.name": "USER"},
         config={},
         relations={Relation(from_task_id="TASK_1", to_task_id="TASK_2")},
-        schedule_interval=None,
-        start_days_ago=None,
+        schedule_interval=3,
+        start_days_ago=3,
     )
 
     def test_green_path(self):
@@ -501,10 +587,8 @@ class SubWorkflowTemplateTestCase(TestCase, TemplateTestMixin):
             )
         ],
         job_properties={"user.name": "USER"},
-        config={},
+        config={"key": "value"},
         relations={Relation(from_task_id="TASK_1", to_task_id="TASK_2")},
-        schedule_interval=None,
-        start_days_ago=None,
     )
 
     def test_green_path(self):

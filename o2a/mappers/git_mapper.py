@@ -82,14 +82,14 @@ class GitMapper(ActionMapper):
 
     def on_parse_node(self):
         super().on_parse_node()
-        self.git_uri = get_tag_el_text(self.oozie_node, TAG_GIT_URI, props=self.props, default="")
-        self.git_branch = get_tag_el_text(self.oozie_node, TAG_BRANCH, props=self.props, default="")
+        self.git_uri = get_tag_el_text(self.oozie_node, TAG_GIT_URI, props=self.props, default=None)
+        self.git_branch = get_tag_el_text(self.oozie_node, TAG_BRANCH, props=self.props, default=None)
         self.destination_uri = get_tag_el_text(
-            self.oozie_node, tag=TAG_DESTINATION_URI, props=self.props, default=""
+            self.oozie_node, tag=TAG_DESTINATION_URI, props=self.props, default=None
         )
         self.destination_path = urlparse(self.destination_uri).path
-        self.key_path_uri = get_tag_el_text(self.oozie_node, tag=TAG_KEY_PATH, props=self.props, default="")
-        self.key_path = urlparse(self.key_path_uri).path
+        key_path_uri = get_tag_el_text(self.oozie_node, tag=TAG_KEY_PATH, props=self.props, default=None)
+        self.key_path = urlparse(key_path_uri).path if key_path_uri else None
 
     def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
         action_task = Task(
@@ -98,9 +98,7 @@ class GitMapper(ActionMapper):
             template_params=dict(
                 git_uri=self.git_uri,
                 git_branch=self.git_branch,
-                destination_uri=self.destination_uri,
                 destination_path=self.destination_path,
-                key_path_uri=self.key_path_uri,
                 key_path=self.key_path,
                 props=self.props,
             ),
