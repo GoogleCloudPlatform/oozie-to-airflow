@@ -17,15 +17,15 @@ def {{ task_id | to_var }}_decision():
 {% for key, val in case_dict.items() %}
 {% if loop.first %}
     if {{ key }}:
-        return "{{ val }}"
+        return {{ val | to_python }}
 {% endif %}
 {% if not loop.first and not loop.last %}
     elif {{ key }}:
-        return "{{ val }}"
+        return {{ val | to_python }}
 {% endif %}
 {% if loop.last %}
     else:
-        return "{{ val }}"
+        return {{ val | to_python }}
 {% endif %}
 {% endfor %}
 

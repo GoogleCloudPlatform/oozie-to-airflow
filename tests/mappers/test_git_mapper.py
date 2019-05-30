@@ -135,9 +135,7 @@ class TestGitMapper(unittest.TestCase):
                     template_params={
                         "git_uri": "https://github.com/apache/oozie",
                         "git_branch": "my-awesome-branch",
-                        "destination_uri": "hdfs:///my_git_repo_directory",
                         "destination_path": "/my_git_repo_directory",
-                        "key_path_uri": "hdfs://name-node.second.company.com:8020/awesome-key/",
                         "key_path": "/awesome-key/",
                         "props": PropertySet(
                             config={"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"},
@@ -175,9 +173,7 @@ class TestGitMapper(unittest.TestCase):
                     template_params={
                         "git_uri": "https://github.com/apache/oozie",
                         "git_branch": "my-awesome-branch",
-                        "destination_uri": "hdfs:///my_git_repo_directory",
                         "destination_path": "/my_git_repo_directory",
-                        "key_path_uri": "hdfs://name-node.second.company.com:8020/awesome-key/",
                         "key_path": "/awesome-key/",
                         "props": PropertySet(
                             config={"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"},
