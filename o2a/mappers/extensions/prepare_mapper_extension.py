@@ -13,10 +13,8 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Prepare node mixin"""
-from copy import deepcopy
 from typing import List, Tuple, Optional
 
-from o2a.converter.relation import Relation
 from o2a.converter.task import Task
 from o2a.mappers.base_mapper import BaseMapper
 from o2a.utils import xml_utils

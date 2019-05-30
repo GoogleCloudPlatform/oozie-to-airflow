@@ -17,7 +17,7 @@
     PropertySet(
         config=CONFIG,
         job_properties=JOB_PROPS,
-        action_node_properties={{ action_node_properties | tojson }})
+        action_node_properties={{ action_node_properties | to_python }})
 {% else -%}
     PropertySet(
         config=CONFIG,

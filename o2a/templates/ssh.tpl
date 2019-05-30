@@ -15,8 +15,8 @@
 #}
 {{ task_id | to_var }}_hook = ssh_hook.SSHHook(
     ssh_conn_id='ssh_default',
-    username={{ user | tojson }},
-    remote_host={{ host | tojson }},
+    username={{ user | to_python }},
+    remote_host={{ host | to_python }},
 )
 
 {{ task_id | to_var }} = ssh_operator.SSHOperator(
