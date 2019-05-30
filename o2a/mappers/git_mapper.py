@@ -24,7 +24,8 @@ from airflow.utils.trigger_rule import TriggerRule
 from o2a.converter.relation import Relation
 from o2a.converter.task import Task
 from o2a.mappers.action_mapper import ActionMapper
-from o2a.mappers.prepare_mixin import PrepareMixin
+
+from o2a.mappers.extensions.prepare_mapper_extension import PrepareMapperExtension
 from o2a.o2a_libs.property_utils import PropertySet
 
 from o2a.utils.xml_utils import get_tag_el_text
@@ -55,7 +56,7 @@ def prepare_git_command(
     return cmd
 
 
-class GitMapper(ActionMapper, PrepareMixin):
+class GitMapper(ActionMapper):
     """
     Converts a Shell Oozie action to an Airflow task.
     """
@@ -71,13 +72,13 @@ class GitMapper(ActionMapper, PrepareMixin):
         ActionMapper.__init__(
             self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, props=props, **kwargs
         )
-        PrepareMixin.__init__(self, oozie_node=oozie_node)
         self.git_uri: Optional[str] = None
         self.git_branch: Optional[str] = None
         self.destination_uri: Optional[str] = None
         self.destination_path: Optional[str] = None
         self.key_path_uri: Optional[str] = None
         self.key_path: Optional[str] = None
+        self.prepare_extension: PrepareMapperExtension = PrepareMapperExtension(self)
 
     def on_parse_node(self):
         super().on_parse_node()
@@ -104,17 +105,13 @@ class GitMapper(ActionMapper, PrepareMixin):
                 props=self.props,
             ),
         )
-        tasks: List[Task] = [action_task]
-        relations: List[Relation] = []
-        prepare_task = self.get_prepare_task(name=self.name, trigger_rule=self.trigger_rule, props=self.props)
-        if prepare_task:
-            relations = [Relation(prepare_task.task_id, to_task_id=self.name)]
-            tasks = [prepare_task, action_task]
-        return tasks, relations
+        return self.prepare_extension.insert_prepare_if_needed(  # type: ignore  # make mypy happy
+            tasks=[action_task], relations=[]
+        )
 
     def required_imports(self) -> Set[str]:
         return {"from airflow.utils import dates", "from airflow.contrib.operators import dataproc_operator"}
 
     @property
     def first_task_id(self) -> str:
-        return f"{self.name}_prepare" if self.has_prepare() else self.name
+        return self.prepare_extension.first_task_id  # type: ignore  # make mypy happy

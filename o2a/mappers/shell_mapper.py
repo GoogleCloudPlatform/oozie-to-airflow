@@ -22,12 +22,12 @@ from airflow.utils.trigger_rule import TriggerRule
 from o2a.converter.task import Task
 from o2a.converter.relation import Relation
 from o2a.mappers.action_mapper import ActionMapper
-from o2a.mappers.prepare_mixin import PrepareMixin
+from o2a.mappers.extensions.prepare_mapper_extension import PrepareMapperExtension
 from o2a.o2a_libs.property_utils import PropertySet
 from o2a.utils import el_utils
 
 
-class ShellMapper(ActionMapper, PrepareMixin):
+class ShellMapper(ActionMapper):
     """
     Converts a Shell Oozie action to an Airflow task.
     """
@@ -43,8 +43,8 @@ class ShellMapper(ActionMapper, PrepareMixin):
         ActionMapper.__init__(
             self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, props=props, **kwargs
         )
-        PrepareMixin.__init__(self, oozie_node=oozie_node)
         self._parse_oozie_node()
+        self.prepare_extension: PrepareMapperExtension = PrepareMapperExtension(self)
 
     def _parse_oozie_node(self):
         res_man_text = self.oozie_node.find("resource-manager").text
@@ -65,17 +65,13 @@ class ShellMapper(ActionMapper, PrepareMixin):
                 pig_command=self.pig_command, action_node_properties=self.props.action_node_properties
             ),
         )
-        tasks: List[Task] = [action_task]
-        relations: List[Relation] = []
-        prepare_task = self.get_prepare_task(name=self.name, trigger_rule=self.trigger_rule, props=self.props)
-        if prepare_task:
-            tasks = [prepare_task, action_task]
-            relations = [Relation(from_task_id=prepare_task.task_id, to_task_id=self.name)]
-        return tasks, relations
+        return self.prepare_extension.insert_prepare_if_needed(  # type: ignore  # make mypy happy
+            tasks=[action_task], relations=[]
+        )
 
     def required_imports(self) -> Set[str]:
         return {"from airflow.utils import dates", "from airflow.contrib.operators import dataproc_operator"}
 
     @property
     def first_task_id(self) -> str:
-        return f"{self.name}_prepare" if self.has_prepare() else self.name
+        return self.prepare_extension.first_task_id  # type: ignore  # make mypy happy

@@ -23,14 +23,14 @@ from airflow.utils.trigger_rule import TriggerRule
 from o2a.converter.task import Task
 from o2a.converter.relation import Relation
 from o2a.mappers.action_mapper import ActionMapper
-from o2a.mappers.prepare_mixin import PrepareMixin
+from o2a.mappers.extensions.prepare_mapper_extension import PrepareMapperExtension
 from o2a.o2a_libs.property_utils import PropertySet
 from o2a.utils import el_utils, xml_utils
 from o2a.utils.file_archive_extractors import ArchiveExtractor, FileExtractor
 
 
 # pylint: disable=too-many-instance-attributes
-class PigMapper(ActionMapper, PrepareMixin):
+class PigMapper(ActionMapper):
     """
     Converts a Pig Oozie node to an Airflow task.
     """
@@ -46,11 +46,11 @@ class PigMapper(ActionMapper, PrepareMixin):
         ActionMapper.__init__(
             self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, props=props, **kwargs
         )
-        PrepareMixin.__init__(self, oozie_node=oozie_node)
         self.params_dict: Dict[str, str] = {}
         self.file_extractor = FileExtractor(oozie_node=oozie_node, props=self.props)
         self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, props=self.props)
         self._parse_oozie_node()
+        self.prepare_extension: PrepareMapperExtension = PrepareMapperExtension(self)
 
     def _parse_oozie_node(self):
         res_man_text = self.oozie_node.find("resource-manager").text
@@ -81,13 +81,9 @@ class PigMapper(ActionMapper, PrepareMixin):
                 props=self.props, params_dict=self.params_dict, script_file_name=self.script_file_name
             ),
         )
-        tasks: List[Task] = [action_task]
-        relations: List[Relation] = []
-        prepare_task = self.get_prepare_task(name=self.name, trigger_rule=self.trigger_rule, props=self.props)
-        if prepare_task:
-            tasks = [prepare_task, action_task]
-            relations = [Relation(from_task_id=prepare_task.task_id, to_task_id=self.name)]
-        return tasks, relations
+        return self.prepare_extension.insert_prepare_if_needed(  # type: ignore  # make mypy happy
+            tasks=[action_task], relations=[]
+        )
 
     def _add_symlinks(self, destination_pig_file):
         destination_pig_file.write("set mapred.create.symlink yes;\n")
@@ -123,4 +119,4 @@ class PigMapper(ActionMapper, PrepareMixin):
 
     @property
     def first_task_id(self) -> str:
-        return f"{self.name}_prepare" if self.has_prepare() else self.name
+        return self.prepare_extension.first_task_id  # type: ignore  # make mypy happy

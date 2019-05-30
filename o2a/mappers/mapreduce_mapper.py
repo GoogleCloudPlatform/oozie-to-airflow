@@ -21,14 +21,14 @@ from airflow.utils.trigger_rule import TriggerRule
 from o2a.converter.task import Task
 from o2a.converter.relation import Relation
 from o2a.mappers.action_mapper import ActionMapper
-from o2a.mappers.prepare_mixin import PrepareMixin
+from o2a.mappers.extensions.prepare_mapper_extension import PrepareMapperExtension
 from o2a.o2a_libs.property_utils import PropertySet
 from o2a.utils import el_utils, xml_utils
 from o2a.utils.file_archive_extractors import ArchiveExtractor, FileExtractor
 
 
 # pylint: disable=too-many-instance-attributes
-class MapReduceMapper(ActionMapper, PrepareMixin):
+class MapReduceMapper(ActionMapper):
     """
     Converts a MapReduce Oozie node to an Airflow task.
     """
@@ -51,13 +51,13 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
             props=props,
             **kwargs,
         )
-        PrepareMixin.__init__(self, oozie_node=oozie_node)
         self.params_dict: Dict[str, str] = {}
         self.file_extractor = FileExtractor(oozie_node=oozie_node, props=self.props)
         self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, props=self.props)
         self.name_node = None
         self.hdfs_files = None
         self.hdfs_archives = None
+        self.prepare_extension: PrepareMapperExtension = PrepareMapperExtension(self)
 
     def on_parse_node(self):
         super().on_parse_node()
@@ -88,13 +88,9 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
                 hdfs_archives=self.hdfs_archives,
             ),
         )
-        tasks: List[Task] = [action_task]
-        relations: List[Relation] = []
-        prepare_task = self.get_prepare_task(name=self.name, trigger_rule=self.trigger_rule, props=self.props)
-        if prepare_task:
-            tasks = [prepare_task, action_task]
-            relations = [Relation(from_task_id=prepare_task.task_id, to_task_id=self.name)]
-        return tasks, relations
+        return self.prepare_extension.insert_prepare_if_needed(  # type: ignore  # make mypy happy
+            tasks=[action_task], relations=[]
+        )
 
     @staticmethod
     def _validate_paths(input_directory_path, output_directory_path):
@@ -105,3 +101,7 @@ class MapReduceMapper(ActionMapper, PrepareMixin):
 
     def required_imports(self) -> Set[str]:
         return {"from airflow.utils import dates", "from airflow.contrib.operators import dataproc_operator"}
+
+    @property
+    def first_task_id(self) -> str:
+        return self.prepare_extension.first_task_id  # type: ignore  # make mypy happy
