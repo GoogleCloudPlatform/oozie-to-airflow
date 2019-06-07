@@ -16,4 +16,4 @@ pytest-cov==2.7.1
 safety==1.8.5
 sshtunnel==0.1.4
 twine==1.13.0
-yamllint==1.15.0
+yamllint==1.16.0
