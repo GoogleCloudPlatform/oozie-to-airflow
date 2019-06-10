@@ -5,4 +5,6 @@
     <import namespace="uri:oozie:ssh-action:0.2" schemaLocation="ssh-action-0.2.xsd"/>
     <import namespace="uri:oozie:git-action:0.2" schemaLocation="git-action-1.0.xsd"/>
     <import namespace="uri:oozie:spark-action:1.0" schemaLocation="spark-action-1.0.xsd"/>
+    <import namespace="uri:oozie:hive-action:1.0" schemaLocation="hive-action-1.0.xsd"/>
+    <import namespace="uri:oozie:hive2-action:1.0" schemaLocation="hive2-action-1.0.xsd"/>
 </schema>

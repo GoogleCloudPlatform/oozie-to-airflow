@@ -565,7 +565,7 @@ Currently there is no way specify the shell launcher configuration (it is ignore
 
 ## Spark Example
 
-The Shell example can be run as:
+The Spark example can be run as:
 
 `o2a -i examples/spark -o output/spark`
 
@@ -579,7 +579,7 @@ The converted DAG uses the `DataProcSparkOperator` in Airflow.
 
 ### Current limitations
 
-**1. Ony tasks written in Java are supported**
+**1. Only tasks written in Java are supported**
 
 From the [Oozie documentation](https://oozie.apache.org/docs/5.1.0/DG_ShellActionExtension.html):
 > The jar element indicates a comma separated list of jars or python files.
@@ -658,3 +658,28 @@ In this example the output will appear in `output/el/test_el_dag.py`.
 
 Decision example is not yet fully functional as EL functions are not yet fully implemented so condition is
 hard-coded for now. Once EL functions are implemented, the condition in the example will be updated.
+
+## Hive/Hive2 Example
+
+The Hive example can be run as:
+
+`o2a -i examples/hive -o output/hive`
+
+Make sure to first copy `/examples/hive/configuration.template.properties`, rename it as
+`configuration.properties` and fill in with configuration data.
+
+### Output
+In this example the output will appear in `/output/hive/hive.py`.
+
+The converted DAG uses the `DataProcHiveOperator` in Airflow.
+
+### Current limitations
+
+**1. Only the connection to the local Hive instance is supported. **
+
+Connection configuration options are not supported.
+
+**2. Not all elements are supported**
+
+For Hive, the following elements are not supported: `job-tracker`, `name-node`.
+For Hive2, the following elements are not supported: `job-tracker`, `name-node`, `jdbc-url`, `password`.
