@@ -21,7 +21,7 @@ from parameterized import parameterized
 
 from o2a.converter.exceptions import ParseException
 from o2a.utils import el_utils
-from o2a.utils.el_utils import normalize_path, escape_string_with_python_escapes
+from o2a.utils.el_utils import normalize_path, escape_string_with_python_escapes, replace_url_el
 
 # pylint: disable=too-many-public-methods
 from o2a.o2a_libs.property_utils import PropertySet
@@ -254,6 +254,23 @@ key5=test
                 props=PropertySet(config=config, job_properties=job_properties),
                 allow_no_schema=True,
             )
+
+    @parameterized.expand(
+        [
+            ("${nameNode}/examples/output-data/demo/pig-node",
+             "hdfs://localhost:8020/examples/output-data/demo/pig-node"),
+            ("${nameNode}/examples/output-data/demo/pig-node2",
+             "hdfs://localhost:8020/examples/output-data/demo/pig-node2"),
+            ("hdfs:///examples/output-data/demo/pig-node2", "hdfs:///examples/output-data/demo/pig-node2"),
+        ]
+    )
+    def test_replace_url_el_green_path(self, oozie_url, expected_result):
+        cluster = "my-cluster"
+        region = "europe-west3"
+        job_properties = {"nameNode": "hdfs://localhost:8020"}
+        config = {"dataproc_cluster": cluster, "gcp_region": region}
+        result = replace_url_el(oozie_url, props=PropertySet(config=config, job_properties=job_properties))
+        self.assertEqual(expected_result, result)
 
     @parameterized.expand(
         [

@@ -189,8 +189,27 @@ def comma_separated_string_to_list(line: str) -> Union[List[str], str]:
     return values[0] if len(values) <= 1 else values
 
 
-def normalize_path(url, props: PropertySet, allow_no_schema=False):
+def normalize_path(url: str, props: PropertySet, allow_no_schema=False):
+    """
+    Replaces all EL variables in the url, validates schema and returns only the 'path' part of a url.
+    Example: hdfs://localhost:8082/user/root --> user/root
+    """
     url_with_var = replace_el_with_var(url, props=props, quote=False)
+    url_parts: ParseResult = urlparse(url_with_var)
+    if is_allowed_schema(allow_no_schema, url_with_var):
+        return url_parts.path
+
+
+def replace_url_el(url: str, props: PropertySet, allow_no_schema=False):
+    """
+    Replaces all EL variables in the url, validates schema and returns the url.
+    """
+    url_with_var = replace_el_with_var(url, props=props, quote=False)
+    if is_allowed_schema(allow_no_schema, url_with_var):
+        return url_with_var
+
+
+def is_allowed_schema(allow_no_schema: bool, url_with_var: str):
     url_parts: ParseResult = urlparse(url_with_var)
     allowed_schema = {"hdfs", ""} if allow_no_schema else {"hdfs"}
     if url_parts.scheme not in allowed_schema:
@@ -198,7 +217,7 @@ def normalize_path(url, props: PropertySet, allow_no_schema=False):
             f"Unknown path format. The URL should be provided in the following format: "
             f"hdfs://localhost:9200/path. Current value: {url_with_var}"
         )
-    return url_parts.path
+    return True
 
 
 def escape_string_with_python_escapes(string_to_escape: Optional[str]) -> Optional[str]:
