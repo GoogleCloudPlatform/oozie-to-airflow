@@ -80,7 +80,7 @@ class DistCpMapper(ActionMapper):
         return f"--class=org.apache.hadoop.tools.DistCp -- {self.args}"
 
     def on_parse_node(self):
-        self._parse_config()
+        super().on_parse_node()
         self.args = self._parse_args()
 
     def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:

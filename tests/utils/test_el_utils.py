@@ -257,10 +257,14 @@ key5=test
 
     @parameterized.expand(
         [
-            ("${nameNode}/examples/output-data/demo/pig-node",
-             "hdfs://localhost:8020/examples/output-data/demo/pig-node"),
-            ("${nameNode}/examples/output-data/demo/pig-node2",
-             "hdfs://localhost:8020/examples/output-data/demo/pig-node2"),
+            (
+                "${nameNode}/examples/output-data/demo/pig-node",
+                "hdfs://localhost:8020/examples/output-data/demo/pig-node",
+            ),
+            (
+                "${nameNode}/examples/output-data/demo/pig-node2",
+                "hdfs://localhost:8020/examples/output-data/demo/pig-node2",
+            ),
             ("hdfs:///examples/output-data/demo/pig-node2", "hdfs:///examples/output-data/demo/pig-node2"),
         ]
     )
