@@ -13,19 +13,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Extract params from oozie's action node"""
+from _elementtree import Element
+
+from o2a.o2a_libs.property_utils import PropertySet
 from o2a.utils import xml_utils, el_utils
 
 TAG_PARAM = "param"
 
 
-def extract_param_values_from_action_node(action_node, props):
-    param_nodes = xml_utils.find_nodes_by_tag(action_node, TAG_PARAM)
-
-    if not param_nodes:
-        return None
+def extract_param_values_from_action_node(oozie_node: Element, props: PropertySet):
+    param_nodes = xml_utils.find_nodes_by_tag(oozie_node, TAG_PARAM)
 
     new_params = {}
     for node in param_nodes:
+        if not node.text:
+            continue
         param = el_utils.replace_el_with_var(node.text, props=props, quote=False)
         key, _, value = param.partition("=")
         new_params[key] = value

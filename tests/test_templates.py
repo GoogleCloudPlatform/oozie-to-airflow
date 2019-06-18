@@ -276,6 +276,49 @@ class GitTemplateTestCase(TestCase, TemplateTestMixin):
         self.assertValidPython(res)
 
 
+class HiveTemplateTestCase(TestCase, TemplateTestMixin):
+    TEMPLATE_NAME = "hive.tpl"
+
+    DEFAULT_TEMPLATE_PARAMS = {
+        "task_id": "AA",
+        "trigger_rule": "dummy",
+        "script": "id.q",
+        "query": "SELECT 1",
+        "variables": {
+            "INPUT": "/user/${wf:user()}/${examplesRoot}/input-data/text",
+            "OUTPUT": "/user/${wf:user()}/${examplesRoot}/output-data/demo/hive-node",
+        },
+        "action_node_properties": {"key": "value"},
+    }
+
+    def test_green_path(self):
+        res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
+        self.assertValidPython(res)
+
+    @parameterized.expand([({"variables": {"OUTPUT": None}},), ({"variables": {"INPUT": None}},)])
+    def test_optional_parameters(self, mutation):
+        template_params = mutate(self.DEFAULT_TEMPLATE_PARAMS, mutation)
+        res = render_template(self.TEMPLATE_NAME, **template_params)
+        self.assertValidPython(res)
+
+    @parameterized.expand(
+        [
+            ({"task_id": 'A"'},),
+            ({"trigger_rule": 'A"'},),
+            ({"script": 'A"'},),
+            ({"query": 'A"'},),
+            ({"variables": {'AA"': "DAG_NAME_A"}},),
+            ({"variables": {"AA": 'A"AA'}},),
+            ({"action_node_properties": {'AA"': "DAG_NAME_A"}},),
+            ({"action_node_properties": {"AA": 'A"AA'}},),
+        ]
+    )
+    def test_escape_character(self, mutation):
+        template_params = mutate(self.DEFAULT_TEMPLATE_PARAMS, mutation)
+        res = render_template(self.TEMPLATE_NAME, **template_params)
+        self.assertValidPython(res)
+
+
 class KillTemplateTestCase(TestCase, TemplateTestMixin):
     TEMPLATE_NAME = "kill.tpl"
 

@@ -131,7 +131,7 @@ class TestHiveMapper(unittest.TestCase):
                         ),
                         "archives": [],
                         "files": [],
-                        "variables": None,
+                        "variables": {},
                     },
                 )
             ],
@@ -247,7 +247,7 @@ class TestHiveMapper(unittest.TestCase):
                             "hdfs:///user/${username}/TEST_EXAMPLE_ROOT/apps/pig/test_dir/test2.zip"
                             "#test_link.zip",
                         ],
-                        "variables": None,
+                        "variables": {},
                     },
                 )
             ],
@@ -295,7 +295,7 @@ class TestHiveMapper(unittest.TestCase):
                             "hdfs:///user/TEST_USERNAME/apps/hive/test_dir/test3.zip#test3_zip_dir",
                         ],
                         "files": [],
-                        "variables": None,
+                        "variables": {},
                     },
                 )
             ],

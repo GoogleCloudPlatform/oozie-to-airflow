@@ -22,13 +22,13 @@ from o2a.utils.param_extractor import extract_param_values_from_action_node
 
 
 class ParamExtractorModuleTestCase(unittest.TestCase):
-    def test_extract_param_values_from_action_node_should_return_none_when_not_found(self):
+    def test_extract_param_values_from_action_node_should_return_empty_dict_when_not_found(self):
         props = PropertySet(
             config={}, job_properties={"userName": "TEST_USERNAME", "examplesRoot": "TEST_EXAMPLE_ROOT"}
         )
         node = ET.fromstring("<dummy></dummy>")
         result = extract_param_values_from_action_node(node, props=props)
-        self.assertEqual(None, result)
+        self.assertEqual({}, result)
 
     def test_extract_param_values_from_action_node_should_parse_single_value(self):
         props = PropertySet(config={}, job_properties={})
