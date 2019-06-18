@@ -25,6 +25,7 @@ from o2a.mappers.action_mapper import ActionMapper
 from o2a.mappers.dummy_mapper import DummyMapper
 from o2a.mappers.fs_mapper import FsMapper
 from o2a.mappers.git_mapper import GitMapper
+from o2a.mappers.hive_mapper import HiveMapper
 from o2a.mappers.mapreduce_mapper import MapReduceMapper
 from o2a.mappers.pig_mapper import PigMapper
 from o2a.mappers.shell_mapper import ShellMapper
@@ -42,4 +43,6 @@ ACTION_MAP: Dict[str, Type[ActionMapper]] = {
     "shell": ShellMapper,
     "map-reduce": MapReduceMapper,
     "git": GitMapper,
+    "hive": HiveMapper,
+    "hive2": HiveMapper,
 }

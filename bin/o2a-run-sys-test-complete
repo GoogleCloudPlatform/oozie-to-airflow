@@ -19,7 +19,7 @@ h a: p: C: L: b: c: m: r: z: v A S W
 
 _ALLOWED_PHASES=" prepare-configuration convert prepare-dataproc test-composer test-oozie "
 # shellcheck disable=SC2011
-_ALLOWED_APPLICATIONS=" childwf decision demo el fs git mapreduce pig shell spark ssh subwf "
+_ALLOWED_APPLICATIONS=" childwf decision demo el fs git hive mapreduce pig shell spark ssh subwf "
 
 _LONG_OPTIONS="
 help application: composer-name: composer-location: phase: bucket: cluster:
