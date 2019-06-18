@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Maps Shell action into Airflow's DAG"""
-import shlex
 from typing import List, Set, Tuple
 from xml.etree.ElementTree import Element
 
@@ -55,7 +54,7 @@ class ShellMapper(ActionMapper):
         arg_nodes = self.oozie_node.findall("argument")
         cmd = " ".join([cmd_node.text] + [x.text for x in arg_nodes])
         self.bash_command = el_utils.convert_el_to_jinja(cmd, quote=False)
-        self.pig_command = f"sh {shlex.quote(self.bash_command)}"
+        self.pig_command = f"sh {self.bash_command}"
 
     def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
         action_task = Task(

@@ -113,7 +113,7 @@ class TestShellMapper(unittest.TestCase):
                     task_id="test_id",
                     template_name="shell.tpl",
                     template_params={
-                        "pig_command": "sh 'echo arg1 arg2'",
+                        "pig_command": "sh echo arg1 arg2",
                         "action_node_properties": {
                             "mapred.job.queue.name": "default",
                             "mapred.map.output.compress": "false",
