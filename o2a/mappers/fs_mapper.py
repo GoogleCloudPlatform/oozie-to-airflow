@@ -54,7 +54,7 @@ def prepare_mkdir_command(node: Element, props: PropertySet):
 
 def prepare_delete_command(node: Element, props: PropertySet):
     path = normalize_path(node.attrib[FS_TAG_PATH], props=props)
-    command = "fs -rm -r {path}".format(path=shlex.quote(path))
+    command = "fs -rm -f -r {path}".format(path=shlex.quote(path))
 
     return command
 
