@@ -18,7 +18,7 @@
     trigger_rule={{ trigger_rule | to_python }},
     query_uri='%s/%s' % (CONFIG['gcp_uri_prefix'], {{ script_file_name | to_python }}),
     variables={{ params_dict | to_python }},
-    dataproc_pig_properties={% include "props.tpl" %}.merged,
+    dataproc_pig_properties={% include "props.tpl" %},
     cluster_name=CONFIG['dataproc_cluster'],
     gcp_conn_id=CONFIG['gcp_conn_id'],
     region=CONFIG['gcp_region'],

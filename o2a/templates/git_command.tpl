@@ -14,13 +14,13 @@
   limitations under the License.
 #}
 "$DAGS_FOLDER/../data/git.sh "
-"--cluster={{ '{{' }}params.config['dataproc_cluster']{{ '}}' }} "
-"--region={{ '{{' }}params.config['gcp_region']{{ '}}' }} "
+"--cluster=%s "
+"--region=%s "
 "--git-uri %s "
 "--destination-path %s "
 {% if git_branch != '' %}"--branch %s " {% endif %}
 {% if key_path != '' %}"--key_path %s " {% endif %}
-% (
+% (CONFIG['dataproc_cluster'], CONFIG['gcp_region'],
 shlex.quote({{ git_uri | to_python }}),
 shlex.quote({{ destination_path | to_python }}),
 {% if git_branch != '' %}shlex.quote({{ git_branch | to_python }}),{% endif %}

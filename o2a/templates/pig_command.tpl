@@ -14,6 +14,6 @@
   limitations under the License.
 #}
 "gcloud dataproc jobs submit pig "
-"--cluster={{ '{{' }}params.config['dataproc_cluster']{{ '}}' }} "
-"--region={{ '{{' }}params.config['gcp_region']{{ '}}' }} "
+"--cluster=%s "
+"--region=%s "
 "--execute %s"

@@ -17,9 +17,9 @@
     PropertySet(
         config=CONFIG,
         job_properties=JOB_PROPS,
-        action_node_properties={{ action_node_properties | to_python }})
+        action_node_properties={{ action_node_properties | to_python }}).merged
 {% else -%}
     PropertySet(
         config=CONFIG,
-        job_properties=JOB_PROPS)
+        job_properties=JOB_PROPS).merged
 {% endif %}
