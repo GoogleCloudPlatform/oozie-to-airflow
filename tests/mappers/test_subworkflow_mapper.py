@@ -83,7 +83,6 @@ class TestSubworkflowMapper(TestCase):
         self.assertEqual("hdfs:///user/pig/examples/pig", mapper.props.merged["oozie.wf.application.path"])
         self.assertEqual("localhost:8032", mapper.props.merged["resourceManager"])
         self.assertIsNotNone(mapper.props.merged["user.name"])
-        self.assertTrue(os.path.isfile(self.SUBDAG_TEST_FILEPATH))
 
     @mock.patch("o2a.utils.el_utils.parse_els")
     def test_create_mapper_jinja_no_propagate(self, parse_els):
@@ -104,7 +103,6 @@ class TestSubworkflowMapper(TestCase):
         self.assertEqual(self.main_properties, mapper.props.job_properties)
         # Propagate config node is missing, should NOT forward config job_properties
         self.assertEqual(PropertySet(config={}, job_properties={}), mapper.get_props())
-        self.assertTrue(os.path.isfile(self.SUBDAG_TEST_FILEPATH))
 
     @mock.patch("o2a.utils.el_utils.parse_els")
     def test_to_tasks_and_relations(self, parse_els):
@@ -136,4 +134,5 @@ class TestSubworkflowMapper(TestCase):
             action_mapper=ACTION_MAP,
             trigger_rule=TriggerRule.DUMMY,
             props=PropertySet(job_properties=self.main_properties, config=self.config),
+            renderer=mock.MagicMock(),
         )
