@@ -14,14 +14,11 @@
 # limitations under the License.
 """Tests Oozie Converter"""
 
-import io
-import sys
-from pathlib import Path
 from unittest import mock, TestCase
 from xml.etree.ElementTree import Element
 
 from o2a import o2a
-from o2a.converter.oozie_converter import OozieConverter, AutoflakeArgs
+from o2a.converter.oozie_converter import OozieConverter
 from o2a.converter.mappers import ACTION_MAP
 from o2a.converter.parsed_action_node import ParsedActionNode
 
@@ -32,15 +29,6 @@ from o2a.mappers.dummy_mapper import DummyMapper
 
 
 class TestOozieConverter(TestCase):
-    def setUp(self):
-        self.converter = OozieConverter(
-            dag_name="test_dag",
-            input_directory_path="/input_directory_path/",
-            output_directory_path="/tmp",
-            action_mapper=ACTION_MAP,
-            user="USER",
-        )
-
     def test_parse_args_input_output_file(self):
         input_dir = "/tmp/does.not.exist/"
         output_dir = "/tmp/out/"
@@ -55,98 +43,43 @@ class TestOozieConverter(TestCase):
         args = o2a.parse_args(["-i", input_dir, "-o", output_dir, "-u", user])
         self.assertEqual(args.user, user)
 
-    @mock.patch("o2a.converter.oozie_converter.render_template", return_value="DAG_NAME_A")
-    @mock.patch("builtins.open", return_value=io.StringIO())
-    def test_create_dag_file(self, open_mock, _):
+    @mock.patch("o2a.converter.oozie_converter.parser.OozieParser")
+    def test_convert(self, oozie_parser_mock):
+
         # Given
-        workflow = Workflow(
-            dag_name="A",
-            input_directory_path="in_dir",
-            output_directory_path="out_dir",
-            relations={Relation(from_task_id="DAG_NAME_A", to_task_id="DAG_NAME_B")},
-            nodes=dict(
-                AAA=ParsedActionNode(DummyMapper(Element("dummy"), name="DAG_NAME_A", dag_name="DAG_NAME_B"))
-            ),
-            dependencies={"import IMPORT"},
-        )
-        # When
-        self.converter.create_dag_file(workflow)
-        # Then
-        open_mock.assert_called_once_with("/tmp/test_dag.py", "w")
+        converter = self._create_converter()
+        workflow = self._create_workflow()
+        oozie_parser_mock.return_value.workflow = workflow
 
-    @mock.patch("o2a.converter.oozie_converter.parser.OozieParser.parse_workflow")
-    @mock.patch("o2a.converter.oozie_converter.black")
-    @mock.patch("o2a.converter.oozie_converter.fix_file")
-    @mock.patch("o2a.converter.oozie_converter.SortImports")
-    def test_convert(self, sort_imports_mock, autoflake_fix_file_mock, black_mock, parse_workflow_mock):
+        # When
+        converter.convert()
+
+        # Then
+        converter.renderer.create_subworkflow_file.assert_not_called()
+        converter.renderer.create_workflow_file.assert_called_once_with(
+            workflow=workflow, props=converter.props
+        )
+
+    @mock.patch("o2a.converter.oozie_converter.parser.OozieParser")
+    def test_convert_as_subworkflow(self, oozie_parser_mock):
+
         # Given
-        workflow = Workflow(
-            dag_name="A",
-            input_directory_path="in_dir",
-            output_directory_path="out_dir",
-            relations={Relation(from_task_id="DAG_NAME_A", to_task_id="DAG_NAME_B")},
-            nodes=dict(
-                AAA=ParsedActionNode(DummyMapper(Element("dummy"), name="DAG_NAME_A", dag_name="DAG_NAME_B"))
-            ),
-            dependencies={"import IMPORT"},
-        )
-        parse_workflow_mock.return_value = workflow
+        converter = self._create_converter()
+        workflow = self._create_workflow()
+        oozie_parser_mock.return_value.workflow = workflow
+
         # When
-        self.converter.convert()
+        converter.convert(as_subworkflow=True)
+
         # Then
-        parse_workflow_mock.assert_called_once_with()
-        black_mock.format_file_in_place.assert_called_once_with(
-            Path("/tmp/test_dag.py"), fast=mock.ANY, mode=mock.ANY, write_back=mock.ANY
+        converter.renderer.create_workflow_file.assert_not_called()
+        converter.renderer.create_subworkflow_file.assert_called_once_with(
+            workflow=workflow, props=converter.props
         )
-        autoflake_fix_file_mock.assert_called_once_with(
-            "/tmp/test_dag.py",
-            args=AutoflakeArgs(
-                remove_all_unused_imports=True,
-                ignore_init_module_imports=False,
-                remove_duplicate_keys=False,
-                remove_unused_variables=True,
-                in_place=True,
-                imports=None,
-                expand_star_imports=False,
-                check=False,
-            ),
-            standard_out=sys.stdout,
-        )
-        sort_imports_mock.assert_called_once_with("/tmp/test_dag.py")
-
-    @mock.patch("o2a.converter.oozie_converter.render_template", return_value="TEXT_CONTENT")
-    def test_write_dag_file(self, render_template_mock):
-        relations = {Relation(from_task_id="TASK_1", to_task_id="TASK_2")}
-        nodes = dict(
-            TASK_1=ParsedActionNode(DummyMapper(Element("dummy"), name="TASK_1", dag_name="DAG_NAME_B"))
-        )
-        dependencies = {"import awesome_stuff"}
-        workflow = Workflow(
-            input_directory_path="/tmp/input_directory",
-            output_directory_path="/tmp/input_directory",
-            dag_name="test_dag",
-            relations=relations,
-            nodes=nodes,
-            dependencies=dependencies,
-        )
-
-        content = self.converter.render_workflow(workflow=workflow)
-
-        render_template_mock.assert_called_once_with(
-            dag_name="test_dag",
-            dependencies={"import awesome_stuff"},
-            nodes=[nodes["TASK_1"]],
-            job_properties={"user.name": "USER"},
-            config={},
-            relations={Relation(from_task_id="TASK_1", to_task_id="TASK_2")},
-            schedule_interval=None,
-            start_days_ago=None,
-            template_name="workflow.tpl",
-        )
-
-        self.assertEqual(content, "TEXT_CONTENT")
 
     def test_convert_nodes(self):
+        converter = self._create_converter()
+
         tasks_1 = [
             Task(task_id="first_task", template_name="dummy.tpl"),
             Task(task_id="second_task", template_name="dummy.tpl"),
@@ -162,21 +95,48 @@ class TestOozieConverter(TestCase):
         node_2 = ParsedActionNode(mapper=mapper_2)
         nodes = dict(TASK_1=node_1, TASK_2=node_2)
 
-        self.converter.convert_nodes(nodes=nodes)
+        converter.convert_nodes(nodes=nodes)
+
         self.assertIs(node_1.tasks, tasks_1)
         self.assertIs(node_2.tasks, tasks_2)
         self.assertIs(node_1.relations, relations_1)
         self.assertIs(node_2.relations, relations_2)
 
     def test_copy_extra_assets(self):
+        converter = self._create_converter()
+
         mock_1 = mock.MagicMock()
         mock_2 = mock.MagicMock()
 
-        self.converter.copy_extra_assets(dict(mock_1=mock_1, mock_2=mock_2))
+        converter.copy_extra_assets(dict(mock_1=mock_1, mock_2=mock_2))
 
         mock_1.mapper.copy_extra_assets.assert_called_once_with(
             input_directory_path="/input_directory_path/hdfs", output_directory_path="/tmp"
         )
         mock_2.mapper.copy_extra_assets.assert_called_once_with(
             input_directory_path="/input_directory_path/hdfs", output_directory_path="/tmp"
+        )
+
+    @staticmethod
+    def _create_converter():
+        return OozieConverter(
+            input_directory_path="/input_directory_path/",
+            output_directory_path="/tmp",
+            user="USER",
+            action_mapper=ACTION_MAP,
+            renderer=mock.MagicMock(),
+            dag_name="test_dag",
+        )
+
+    @staticmethod
+    def _create_workflow():
+        return Workflow(
+            dag_name="A",
+            input_directory_path="in_dir",
+            output_directory_path="out_dir",
+            relations={Relation(from_task_id="DAG_NAME_A", to_task_id="DAG_NAME_B")},
+            nodes=dict(
+                AAA=ParsedActionNode(DummyMapper(Element("dummy"), name="DAG_NAME_A", dag_name="DAG_NAME_B"))
+            ),
+            dependencies={"import IMPORT"},
         )

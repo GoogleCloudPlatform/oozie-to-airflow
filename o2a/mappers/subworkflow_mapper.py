@@ -22,12 +22,12 @@ from xml.etree.ElementTree import Element
 from airflow.utils.trigger_rule import TriggerRule
 from o2a.converter.oozie_converter import OozieConverter
 from o2a.converter.relation import Relation
+from o2a.converter.renderers import BaseRenderer
 from o2a.converter.task import Task
 from o2a.definitions import EXAMPLES_PATH
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.o2a_libs.property_utils import PropertySet
 from o2a.utils import el_utils
-from o2a.utils.variable_name_utils import convert_to_python_variable
 
 
 # pylint: disable=too-many-instance-attributes
@@ -46,6 +46,7 @@ class SubworkflowMapper(ActionMapper):
         output_directory_path: str,
         props: PropertySet,
         action_mapper: Dict[str, Type[ActionMapper]],
+        renderer: BaseRenderer,
         trigger_rule=TriggerRule.ALL_SUCCESS,
         **kwargs,
     ):
@@ -64,6 +65,7 @@ class SubworkflowMapper(ActionMapper):
         self.output_directory_path = output_directory_path
         self.dag_name = dag_name
         self.action_mapper = action_mapper
+        self.renderer = renderer
         self._parse_oozie_node()
 
     def _parse_oozie_node(self):
@@ -77,14 +79,12 @@ class SubworkflowMapper(ActionMapper):
         converter = OozieConverter(
             input_directory_path=app_path,
             output_directory_path=self.output_directory_path,
-            start_days_ago=0,
-            template_name="subworkflow.tpl",
+            renderer=self.renderer,
             action_mapper=self.action_mapper,
-            dag_name=f"{self.dag_name}.{self.task_id}",
-            output_dag_name=f"subdag_{convert_to_python_variable(self.app_name)}.py",
+            dag_name=self.app_name,
             initial_props=self.get_props(),
         )
-        converter.convert()
+        converter.convert(as_subworkflow=True)
 
     def get_props(self) -> PropertySet:
         propagate_configuration = self.oozie_node.find("propagate-configuration")

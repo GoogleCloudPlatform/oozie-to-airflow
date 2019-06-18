@@ -22,10 +22,11 @@ import xml.etree.ElementTree as ET
 import uuid
 
 # noinspection PyPackageRequirements
-from typing import Type, Dict
+from typing import Dict, Type
 
 from airflow.utils.trigger_rule import TriggerRule
 
+from o2a.converter.renderers import BaseRenderer
 from o2a.mappers.decision_mapper import DecisionMapper
 from o2a.mappers.dummy_mapper import DummyMapper
 from o2a.mappers.end_mapper import EndMapper
@@ -50,6 +51,7 @@ class OozieParser:
         output_directory_path: str,
         props: PropertySet,
         action_mapper: Dict[str, Type[ActionMapper]],
+        renderer: BaseRenderer,
         dag_name: str,
     ):
         self.workflow = Workflow(
@@ -60,6 +62,7 @@ class OozieParser:
         self.workflow_file = os.path.join(input_directory_path, HDFS_FOLDER, "workflow.xml")
         self.props = props
         self.action_map = action_mapper
+        self.renderer = renderer
 
     def parse_kill_node(self, kill_node: ET.Element):
         """
@@ -217,6 +220,7 @@ class OozieParser:
             props=self.props,
             dag_name=self.workflow.dag_name,
             action_mapper=self.action_map,
+            renderer=self.renderer,
             input_directory_path=self.workflow.input_directory_path,
             output_directory_path=self.workflow.output_directory_path,
         )
