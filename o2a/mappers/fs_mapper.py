@@ -183,6 +183,7 @@ class FsMapper(ActionMapper):
         return Task(
             task_id=task_id,
             template_name="fs_op.tpl",
+            trigger_rule=self.trigger_rule,
             template_params=dict(
                 pig_command=pig_command, action_node_properties=self.props.action_node_properties
             ),

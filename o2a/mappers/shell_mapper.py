@@ -61,6 +61,7 @@ class ShellMapper(ActionMapper):
         action_task = Task(
             task_id=self.name,
             template_name="shell.tpl",
+            trigger_rule=self.trigger_rule,
             template_params=dict(
                 pig_command=self.pig_command, action_node_properties=self.props.action_node_properties
             ),
