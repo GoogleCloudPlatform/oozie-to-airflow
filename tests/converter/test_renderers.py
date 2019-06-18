@@ -18,15 +18,27 @@ import sys
 import unittest
 from unittest import mock
 from pathlib import Path
-
-from lxml.etree import Element
+from xml.etree.ElementTree import Element
 
 from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.relation import Relation
-from o2a.converter.renderers import PythonRenderer, AutoflakeArgs
+from o2a.converter.renderers import PythonRenderer, AutoflakeArgs, DotRenderer
 from o2a.converter.workflow import Workflow
 from o2a.mappers.dummy_mapper import DummyMapper
 from o2a.o2a_libs.property_utils import PropertySet
+
+
+def _create_workflow():
+    return Workflow(
+        dag_name="DAG_NAME",
+        input_directory_path="/tmp/input",
+        output_directory_path="/tmp/output",
+        relations={Relation(from_task_id="DAG_NAME_A", to_task_id="DAG_NAME_B")},
+        nodes=dict(
+            AAA=ParsedActionNode(DummyMapper(Element("dummy"), name="DAG_NAME_A", dag_name="DAG_NAME_B"))
+        ),
+        dependencies={"import IMPORT"},
+    )
 
 
 class PythonRendererTestCase(unittest.TestCase):
@@ -39,7 +51,7 @@ class PythonRendererTestCase(unittest.TestCase):
         self, open_mock, render_template_mock, sort_imports_mock, fix_file_mock, black_mock
     ):
         renderer = self._create_renderer()
-        workflow = self._create_workflow()
+        workflow = _create_workflow()
         props = PropertySet(config=dict(), job_properties=dict())
 
         renderer.create_workflow_file(workflow, props=props)
@@ -55,7 +67,7 @@ class PythonRendererTestCase(unittest.TestCase):
         self, open_mock, render_template_mock, sort_imports_mock, fix_file_mock, black_mock
     ):
         renderer = self._create_renderer()
-        workflow = self._create_workflow()
+        workflow = _create_workflow()
         props = PropertySet(config=dict(), job_properties=dict())
 
         renderer.create_workflow_file(workflow, props=props)
@@ -81,7 +93,7 @@ class PythonRendererTestCase(unittest.TestCase):
         self, open_mock, render_template_mock, sort_imports_mock, fix_file_mock, black_mock
     ):
         renderer = self._create_renderer()
-        workflow = self._create_workflow()
+        workflow = _create_workflow()
         props = PropertySet(config=dict(), job_properties=dict())
 
         renderer.create_subworkflow_file(workflow, props=props)
@@ -106,7 +118,7 @@ class PythonRendererTestCase(unittest.TestCase):
         self, open_mock, render_template_mock, sort_imports_mock, autoflake_fix_file_mock, black_mock
     ):
         renderer = self._create_renderer()
-        workflow = self._create_workflow()
+        workflow = _create_workflow()
         props = PropertySet(config=dict(), job_properties=dict())
 
         renderer.create_workflow_file(workflow, props=props)
@@ -147,3 +159,50 @@ class PythonRendererTestCase(unittest.TestCase):
             ),
             dependencies={"import IMPORT"},
         )
+
+
+class DotRendererTestCase(unittest.TestCase):
+    @mock.patch("o2a.converter.renderers.render_template", return_value="DAG_CONTENT")
+    @mock.patch("builtins.open")
+    def test_create_workflow_file_should_create_file(self, open_mock, render_template_mock):
+        renderer = self._create_renderer()
+        workflow = _create_workflow()
+        props = PropertySet(config=dict(), job_properties=dict())
+
+        renderer.create_workflow_file(workflow, props=props)
+        open_mock.assert_called_once_with("/tmp/output/DAG_NAME.dot", "w")
+        open_mock.return_value.__enter__.return_value.write.assert_called_once_with("DAG_CONTENT")
+
+    @mock.patch("o2a.converter.renderers.render_template", return_value="DAG_CONTENT")
+    @mock.patch("builtins.open")
+    def test_create_workflow_file_should_render_template(self, open_mock, render_template_mock):
+        renderer = self._create_renderer()
+        workflow = _create_workflow()
+        props = PropertySet(config=dict(), job_properties=dict())
+
+        renderer.create_workflow_file(workflow, props=props)
+
+        render_template_mock.assert_called_once_with(
+            dag_name="DAG_NAME",
+            nodes=list(workflow.nodes.values()),
+            relations=workflow.relations,
+            template_name="workflow_dot.tpl",
+        )
+
+    @mock.patch("o2a.converter.renderers.render_template", return_value="DAG_CONTENT")
+    @mock.patch("builtins.open")
+    def test_create_subworkflow_file_should_be_render_template_with_the_same_template(
+        self, open_mock, render_template_mock
+    ):
+        renderer = self._create_renderer()
+        workflow = _create_workflow()
+        props = PropertySet(config=dict(), job_properties=dict())
+
+        renderer.create_subworkflow_file(workflow, props=props)
+        render_template_mock.assert_called_once_with(
+            dag_name=mock.ANY, nodes=mock.ANY, relations=mock.ANY, template_name="workflow_dot.tpl"
+        )
+
+    @staticmethod
+    def _create_renderer():
+        return DotRenderer(schedule_interval=None, start_days_ago=None, output_directory_path="/tmp/output")

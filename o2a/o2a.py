@@ -25,7 +25,7 @@ from subprocess import CalledProcessError, check_call
 from o2a.converter.mappers import ACTION_MAP
 from o2a.converter.oozie_converter import OozieConverter
 from o2a.converter.constants import HDFS_FOLDER
-from o2a.converter.renderers import PythonRenderer
+from o2a.converter.renderers import PythonRenderer, DotRenderer
 from o2a.utils.constants import CONFIG, WORKFLOW_XML
 
 INDENT = 4
@@ -86,7 +86,12 @@ Otherwise please provide it.
             exit(1)
     os.makedirs(output_directory_path, exist_ok=True)
 
-    renderer = PythonRenderer(
+    if args.dot:
+        renderer_class = DotRenderer
+    else:
+        renderer_class = PythonRenderer
+
+    renderer = renderer_class(
         output_directory_path=output_directory_path,
         schedule_interval=schedule_interval,
         start_days_ago=start_days_ago,
@@ -110,7 +115,7 @@ def parse_args(args):
     )
     parser.add_argument("-i", "--input-directory-path", help="Path to input directory", required=True)
     parser.add_argument("-o", "--output-directory-path", help="Desired output directory", required=True)
-    parser.add_argument("-d", "--dag-name", help="Desired DAG name [defaults to input directory name]")
+    parser.add_argument("-n", "--dag-name", help="Desired DAG name [defaults to input directory name]")
     parser.add_argument(
         "-u",
         "--user",
@@ -120,4 +125,5 @@ def parse_args(args):
     parser.add_argument(
         "-v", "--schedule-interval", help="Desired DAG schedule interval as number of days", default=0
     )
+    parser.add_argument("-d", "--dot", help="Renders workflow files in DOT format", action="store_true")
     return parser.parse_args(args)
