@@ -221,6 +221,19 @@ class TestMapReduceMapper(unittest.TestCase):
                         "params_dict": {},
                         "hdfs_files": [],
                         "hdfs_archives": [],
+                        "action_node_properties": {
+                            "mapred.mapper.new-api": "true",
+                            "mapred.reducer.new-api": "true",
+                            "mapred.job.queue.name": "${queueName}",
+                            "mapreduce.job.map.class": "WordCount$Map",
+                            "mapreduce.job.reduce.class": "WordCount$Reduce",
+                            "mapreduce.job.output.key.class": "org.apache.hadoop.io.Text",
+                            "mapreduce.job.output.value.class": "org.apache.hadoop.io.IntWritable",
+                            "mapreduce.input.fileinputformat.inputdir": "/user/mapred/${examplesRoot}/"
+                            "mapreduce/input",
+                            "mapreduce.output.fileoutputformat.outputdir": "/user/mapred/${examplesRoot}/"
+                            "mapreduce/output",
+                        },
                     },
                 ),
             ],
@@ -305,6 +318,19 @@ class TestMapReduceMapperNoPrepare(unittest.TestCase):
                         "params_dict": {},
                         "hdfs_files": [],
                         "hdfs_archives": [],
+                        "action_node_properties": {
+                            "mapred.mapper.new-api": "true",
+                            "mapred.reducer.new-api": "true",
+                            "mapred.job.queue.name": "${queueName}",
+                            "mapreduce.job.map.class": "WordCount$Map",
+                            "mapreduce.job.reduce.class": "WordCount$Reduce",
+                            "mapreduce.job.output.key.class": "org.apache.hadoop.io.Text",
+                            "mapreduce.job.output.value.class": "org.apache.hadoop.io.IntWritable",
+                            "mapreduce.input.fileinputformat.inputdir": "/user/mapred/${examplesRoot}/"
+                            "mapreduce/input",
+                            "mapreduce.output.fileoutputformat.outputdir": "/user/mapred/${examplesRoot}/"
+                            "mapreduce/output",
+                        },
                     },
                 )
             ],
