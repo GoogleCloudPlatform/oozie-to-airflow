@@ -39,10 +39,10 @@
             <case to="first">
                 ${firstNotNull("", "")}
             </case>
-            <case to="kill">
+            <case to="end">
                 ${firstNotNull("test", "")}
             </case>
-            <default to="end"/>
+            <default to="kill"/>
         </switch>
     </decision>
     <action name="first">
