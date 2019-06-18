@@ -18,8 +18,8 @@
     trigger_rule={{ trigger_rule | to_python }},
     main_class=CONFIG['hadoop_main_class'],
     arguments=[
-        "{{ '{{' }} params.props.merged['mapreduce.input.fileinputformat.inputdir'] {{ '}}' }}",
-        "{{ '{{' }} params.props.merged['mapreduce.output.fileoutputformat.outputdir'] {{ '}}' }}"
+        "{{ '{{' }} params['mapreduce.input.fileinputformat.inputdir'] {{ '}}' }}",
+        "{{ '{{' }} params['mapreduce.output.fileoutputformat.outputdir'] {{ '}}' }}"
     ],
     {% if hdfs_files %}
         files={{ hdfs_files | to_python }},
@@ -28,7 +28,7 @@
         archives={{ hdfs_archives | to_python }},
     {% endif %}
     cluster_name=CONFIG['dataproc_cluster'],
-    dataproc_hadoop_properties={% include "props.tpl" %}.merged,
+    dataproc_hadoop_properties={% include "props.tpl" %},
     dataproc_hadoop_jars=CONFIG['hadoop_jars'].split(','),
     gcp_conn_id=CONFIG['gcp_conn_id'],
     region=CONFIG['gcp_region'],
