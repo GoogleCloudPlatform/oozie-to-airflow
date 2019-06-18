@@ -25,6 +25,7 @@ from subprocess import CalledProcessError, check_call
 from o2a.converter.mappers import ACTION_MAP
 from o2a.converter.oozie_converter import OozieConverter
 from o2a.converter.constants import HDFS_FOLDER
+from o2a.converter.renderers import PythonRenderer
 from o2a.utils.constants import CONFIG, WORKFLOW_XML
 
 INDENT = 4
@@ -85,14 +86,19 @@ Otherwise please provide it.
             exit(1)
     os.makedirs(output_directory_path, exist_ok=True)
 
+    renderer = PythonRenderer(
+        output_directory_path=output_directory_path,
+        schedule_interval=schedule_interval,
+        start_days_ago=start_days_ago,
+    )
+
     converter = OozieConverter(
         dag_name=dag_name,
         input_directory_path=input_directory_path,
         output_directory_path=output_directory_path,
         action_mapper=ACTION_MAP,
         user=args.user,
-        start_days_ago=start_days_ago,
-        schedule_interval=schedule_interval,
+        renderer=renderer,
     )
     converter.recreate_output_directory()
     converter.convert()

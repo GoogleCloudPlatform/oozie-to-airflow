@@ -43,6 +43,7 @@ class TestOozieParser(unittest.TestCase):
             props=props,
             action_mapper=ACTION_MAP,
             dag_name="DAG_NAME_B",
+            renderer=mock.MagicMock(),
         )
 
     @mock.patch("o2a.mappers.kill_mapper.KillMapper.on_parse_node", wraps=None)
@@ -574,6 +575,7 @@ class TestOozieExamples(unittest.TestCase):
             props=PropertySet(job_properties=case.job_properties, config=case.config),
             action_mapper=ACTION_MAP,
             dag_name="DAG_NAME_B",
+            renderer=mock.MagicMock(),
         )
         current_parser.parse_workflow()
         self.assertEqual(case.node_names, set(current_parser.workflow.nodes.keys()))
