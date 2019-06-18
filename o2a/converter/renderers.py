@@ -148,3 +148,40 @@ class PythonRenderer(BaseRenderer):
     @staticmethod
     def _sort_imports(output_file_name):
         SortImports(output_file_name)
+
+
+class DotRenderer(BaseRenderer):
+    """
+    Renderer responsible for generating files in the DOT code
+    """
+
+    def create_workflow_file(self, workflow: Workflow, props: PropertySet):
+        output_file_name = os.path.join(self.output_directory_path, workflow.dag_name) + ".dot"
+        self._create_file(
+            output_file_name=output_file_name, template_name="workflow_dot.tpl", workflow=workflow
+        )
+
+    def create_subworkflow_file(self, workflow: Workflow, props: PropertySet):
+        output_file_name = os.path.join(self.output_directory_path, f"subdag_{workflow.dag_name}.dot")
+        self._create_file(
+            output_file_name=output_file_name, template_name="workflow_dot.tpl", workflow=workflow
+        )
+
+    def _create_file(self, output_file_name, template_name: str, workflow: Workflow):
+        with open(output_file_name, "w") as file:
+            logging.info(f"Saving to file: {output_file_name}")
+            dag_content = self._render_content(template_name, workflow)
+            file.write(dag_content)
+
+    @staticmethod
+    def _render_content(template_name, workflow: Workflow):
+        """
+        Creates text representation of the workflow.
+        """
+        content = render_template(
+            dag_name=workflow.dag_name,
+            template_name=template_name,
+            relations=workflow.relations,
+            nodes=list(workflow.nodes.values()),
+        )
+        return content

@@ -59,6 +59,13 @@ class ParsedActionNode:
         return self.error_xml
 
     @property
+    def name(self) -> str:
+        """
+        Returns name of node
+        """
+        return self.mapper.name
+
+    @property
     def first_task_id(self) -> str:
         """
         Returns task_id of first task in mapper
