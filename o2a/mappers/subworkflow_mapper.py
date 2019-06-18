@@ -112,5 +112,5 @@ class SubworkflowMapper(ActionMapper):
             "from airflow.utils import dates",
             "from airflow.contrib.operators import dataproc_operator",
             "from airflow.operators.subdag_operator import SubDagOperator",
-            f"from . import subdag_{self.app_name}",
+            f"import subdag_{self.app_name}",
         }
