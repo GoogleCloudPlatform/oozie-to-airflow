@@ -70,7 +70,10 @@ class PigMapper(ActionMapper):
             template_name="pig.tpl",
             trigger_rule=self.trigger_rule,
             template_params=dict(
-                props=self.props, params_dict=self.params_dict, script_file_name=self.script_file_name
+                props=self.props,
+                params_dict=self.params_dict,
+                script_file_name=self.script_file_name,
+                action_node_properties=self.props.action_node_properties,
             ),
         )
         tasks = [action_task]

@@ -115,6 +115,7 @@ class TestPigMapper(unittest.TestCase):
         tasks, relations = mapper.to_tasks_and_relations()
 
         self.assertEqual(
+            tasks,
             [
                 Task(
                     task_id="test_id_prepare",
@@ -141,10 +142,13 @@ class TestPigMapper(unittest.TestCase):
                             "OUTPUT": "/user/${wf:user()}/${examplesRoot}/output-data/demo/pig-node",
                         },
                         "script_file_name": "id.pig",
+                        "action_node_properties": {
+                            "mapred.job.queue.name": "${queueName}",
+                            "mapred.map.output.compress": "false",
+                        },
                     },
                 ),
             ],
-            tasks,
         )
         self.assertEqual([Relation(from_task_id="test_id_prepare", to_task_id="test_id")], relations)
 
