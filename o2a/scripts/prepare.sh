@@ -34,15 +34,13 @@ while getopts ":c:r:d:m:" OPT; do
 done
 
 for DEL_DIR in ${DEL_DIRS}; do
-    set +e
-    gcloud dataproc jobs submit pig --cluster="${CLUSTER}" --region="${REGION}" --execute "fs -test -d \"${DEL_DIR}\'"
-    # shellcheck disable=SC2181
-    if [[ $? == "0" ]]; then
-        gcloud dataproc jobs submit pig --cluster="${CLUSTER}" --region="${REGION}" --execute "fs -rm -r \"${DEL_DIR}\""
-    fi
-    set -e
+    # Gcloud expects the path not to contain any apostrophes or quotation marks, hence just the ${DEL_DIR}.
+    # TODO: This is not safe e.g. in case of spaces in the path.
+    gcloud dataproc jobs submit pig --cluster="${CLUSTER}" --region="${REGION}" --execute "fs -rm -f -r ${DEL_DIR}"
 done
 
 for MK_DIR in ${MK_DIRS}; do
-    gcloud dataproc jobs submit pig --cluster="${CLUSTER}" --region="${REGION}" --execute "fs -mkdir -p \"${MK_DIR}\""
+    # Gcloud expects the path not to contain any apostrophes or quotation marks, hence just the ${DEL_DIR}.
+    # TODO: This is not safe e.g. in case of spaces in the path.
+    gcloud dataproc jobs submit pig --cluster="${CLUSTER}" --region="${REGION}" --execute "fs -mkdir -p ${MK_DIR}"
 done
