@@ -57,11 +57,11 @@ class PrepareCommandsTest(unittest.TestCase):
         [
             (
                 "<delete path='hdfs://localhost:8020/home/pig/test-fsXXX/test-delete-3'/>",
-                "fs -rm -r /home/pig/test-fsXXX/test-delete-3",
+                "fs -rm -f -r /home/pig/test-fsXXX/test-delete-3",
             ),
             (
                 "<delete path='hdfs://localhost:8020/home/pig/test-fs/test-delete-3'/>",
-                "fs -rm -r /home/pig/test-fs/test-delete-3",
+                "fs -rm -f -r /home/pig/test-fs/test-delete-3",
             ),
         ]
     )
@@ -347,7 +347,7 @@ class FsMapperComplexTestCase(unittest.TestCase):
                     task_id="test_id_fs_5_delete",
                     template_name="fs_op.tpl",
                     template_params={
-                        "pig_command": "fs -rm -r /home/pig/test-delete-1",
+                        "pig_command": "fs -rm -f -r /home/pig/test-delete-1",
                         "action_node_properties": {"test.property.node": "hdfs://"},
                     },
                 ),
