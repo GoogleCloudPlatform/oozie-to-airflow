@@ -55,7 +55,7 @@ class PropertySet:
         return (
             f"PropertySet(config={json.dumps(self.config, indent=2)}, "
             f"job_properties={json.dumps(self.job_properties, indent=2)}, "
-            f"action_node_properties={json.dumps(self.action_node_properties, indent=2)}, "
+            f"action_node_properties={json.dumps(self.action_node_properties, indent=2)})"
         )
 
     def __eq__(self, other):

@@ -25,8 +25,9 @@ from o2a.converter.relation import Relation
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.mappers.extensions.prepare_mapper_extension import PrepareMapperExtension
 from o2a.o2a_libs.property_utils import PropertySet
-from o2a.utils import el_utils, xml_utils
+from o2a.utils import el_utils
 from o2a.utils.file_archive_extractors import ArchiveExtractor, FileExtractor
+from o2a.utils.param_extractor import extract_param_values_from_action_node
 
 
 # pylint: disable=too-many-instance-attributes
@@ -59,18 +60,9 @@ class PigMapper(ActionMapper):
         self.resource_manager = el_utils.replace_el_with_var(res_man_text, props=self.props, quote=False)
         self.name_node = el_utils.replace_el_with_var(name_node_text, props=self.props, quote=False)
         self.script_file_name = el_utils.replace_el_with_var(script, props=self.props, quote=False)
-        self._parse_params()
+        self.params_dict = extract_param_values_from_action_node(self.oozie_node, props=self.props)
         self.files, self.hdfs_files = self.file_extractor.parse_node()
         self.archives, self.hdfs_archives = self.archive_extractor.parse_node()
-
-    def _parse_params(self):
-        param_nodes = xml_utils.find_nodes_by_tag(self.oozie_node, "param")
-        if param_nodes:
-            self.params_dict = {}
-            for node in param_nodes:
-                param = el_utils.replace_el_with_var(node.text, props=self.props, quote=False)
-                key, value = param.split("=")
-                self.params_dict[key] = value
 
     def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
         action_task = Task(

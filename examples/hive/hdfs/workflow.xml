@@ -1,0 +1,119 @@
+<!--
+  Copyright 2019 Google LLC
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+ -->
+
+<!--
+  Licensed to the Apache Software Foundation (ASF) under one
+  or more contributor license agreements.  See the NOTICE file
+  distributed with this work for additional information
+  regarding copyright ownership.  The ASF licenses this file
+  to you under the Apache License, Version 2.0 (the
+  "License"); you may not use this file except in compliance
+  with the License.  You may obtain a copy of the License at
+
+       http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+-->
+<workflow-app xmlns="uri:oozie:workflow:1.0" name="hive-wf">
+
+    <start to="hive-script"/>
+
+    <action name="hive-script">
+        <hive xmlns="uri:oozie:hive-action:1.0">
+            <resource-manager>${resourceManager}</resource-manager>
+            <name-node>${nameNode}</name-node>
+            <configuration>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>${queueName}</value>
+                </property>
+            </configuration>
+            <script>script.q</script>
+            <param>INPUT=/user/${userName}/${examplesRoot}/apps/hive/input-data/</param>
+            <param>OUTPUT=/user/${userName}/${examplesRoot}/apps/hive/output-data/</param>
+        </hive>
+        <ok to="hive-query"/>
+        <error to="fail"/>
+    </action>
+    <action name="hive-query">
+        <hive xmlns="uri:oozie:hive-action:1.0">
+            <resource-manager>${resourceManager}</resource-manager>
+            <name-node>${nameNode}</name-node>
+            <configuration>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>${queueName}</value>
+                </property>
+            </configuration>
+            <query>
+                DROP TABLE IF EXISTS test_query;
+                CREATE EXTERNAL TABLE test_query (a INT) STORED AS TEXTFILE LOCATION '/user/${userName}/${examplesRoot}/apps/hive/input-data/';
+                INSERT OVERWRITE DIRECTORY '/user/${userName}/${examplesRoot}/apps/hive/output-data/' SELECT * FROM test_query;
+            </query>
+        </hive>
+        <ok to="hive2-script"/>
+        <error to="fail"/>
+    </action>
+    <action name="hive2-script">
+        <hive2 xmlns="uri:oozie:hive2-action:1.0">
+            <resource-manager>${resourceManager}</resource-manager>
+            <name-node>${nameNode}</name-node>
+            <configuration>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>${queueName}</value>
+                </property>
+            </configuration>
+            <jdbc-url>jdbc:hive2://localhost:10000/default</jdbc-url>
+            <script>script.q</script>
+            <param>INPUT=/user/${userName}/${examplesRoot}/apps/hive/input-data/</param>
+            <param>OUTPUT=/user/${userName}/${examplesRoot}/apps/hive/output-data/</param>
+        </hive2>
+        <ok to="hive2-query"/>
+        <error to="fail"/>
+    </action>
+    <action name="hive2-query">
+        <hive2 xmlns="uri:oozie:hive2-action:1.0">
+            <resource-manager>${resourceManager}</resource-manager>
+            <name-node>${nameNode}</name-node>
+            <configuration>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>${queueName}</value>
+                </property>
+            </configuration>
+            <jdbc-url>jdbc:hive2://localhost:10000/default</jdbc-url>
+            <query>
+                DROP TABLE IF EXISTS test_query;
+                CREATE EXTERNAL TABLE test_query (a INT) STORED AS TEXTFILE LOCATION '/user/${userName}/${examplesRoot}/apps/hive/input-data/';
+                INSERT OVERWRITE DIRECTORY '/user/${userName}/${examplesRoot}/apps/hive/output-data/' SELECT * FROM test_query;
+            </query>
+        </hive2>
+        <ok to="end"/>
+        <error to="fail"/>
+    </action>
+
+    <kill name="fail">
+        <message>PIG action failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
+    </kill>
+
+    <end name="end"/>
+
+</workflow-app>
