@@ -156,8 +156,8 @@ Example:
 This is the full usage guide, available by running `o2a -h`
 
 ```
-usage: o2a [-h] -i INPUT_DIRECTORY_PATH -o OUTPUT_DIRECTORY_PATH [-d DAG_NAME]
-           [-u USER] [-s START_DAYS_AGO] [-v SCHEDULE_INTERVAL]
+usage: o2a [-h] -i INPUT_DIRECTORY_PATH -o OUTPUT_DIRECTORY_PATH [-n DAG_NAME]
+           [-u USER] [-s START_DAYS_AGO] [-v SCHEDULE_INTERVAL] [-d]
 
 Convert Apache Oozie workflows to Apache Airflow workflows.
 
@@ -167,7 +167,7 @@ optional arguments:
                         Path to input directory
   -o OUTPUT_DIRECTORY_PATH, --output-directory-path OUTPUT_DIRECTORY_PATH
                         Desired output directory
-  -d DAG_NAME, --dag-name DAG_NAME
+  -n DAG_NAME, --dag-name DAG_NAME
                         Desired DAG name [defaults to input directory name]
   -u USER, --user USER  The user to be used in place of all ${user.name}
                         [defaults to user who ran the conversion]
@@ -175,6 +175,7 @@ optional arguments:
                         Desired DAG start as number of days ago
   -v SCHEDULE_INTERVAL, --schedule-interval SCHEDULE_INTERVAL
                         Desired DAG schedule interval as number of days
+  -d, --dot             Renders workflow files in DOT format
 ```
 
 ## Structure of the application folder

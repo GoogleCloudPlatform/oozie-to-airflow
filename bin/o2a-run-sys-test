@@ -64,6 +64,8 @@ export PHASE=${PHASE:=convert}
 DATAPROC_USER=$(read_from_file DATAPROC_USER)
 export DATAPROC_USER=${DATAPROC_USER:=${USER:=example_user}}
 
+RENDER_AS_DOT="false"
+
 RUN_SSH_COMMAND="false"
 
 RUN_OOZIE_WEBUI="false"
@@ -186,6 +188,10 @@ Flags:
 -v, --verbose
         Add even more verbosity when running the script.
 
+-d, --dot
+        Creates files in the DOT representation.
+        If you have the graphviz program in PATH, the files will also be converted to the PNG format.
+        If you have the graphviz program and the imgcat programs in PATH, the files will also be displayed in the console
 
 Optional commands to execute:
 
@@ -380,6 +386,12 @@ do
       echo "Setting up autocomplete"
       echo
       shift ;;
+    -d|--dot)
+      export RENDER_AS_DOT="true"
+      echo
+      echo "Rendering as DOT files"
+      echo
+      shift ;;
     --)
       shift ;
       break ;;
@@ -500,18 +512,64 @@ function submit_pig {
         --execute "${1}"
 }
 
-function convert {
+function convert_python {
     header "Convert workflow.xml to Airflow's ${OUTPUT_DAG_NAME}.py dag for example: ${LOCAL_APP_NAME}"
     if [[ ${WITH_COVERAGE} == "true" ]];  then
         coverage run -a \
-        "${LOCAL_O2A_BIN_SCRIPT}" -i "${LOCAL_APP_DIR}" -o "${LOCAL_OUTPUT_DIR}" -u "${DATAPROC_USER}" \
-           -d "${OUTPUT_DAG_NAME}"
+        "${LOCAL_O2A_BIN_SCRIPT}" \
+            --input-directory-path "${LOCAL_APP_DIR}" \
+            --output-directory-path "${LOCAL_OUTPUT_DIR}" \
+            --user "${DATAPROC_USER}" \
+            --dag-name "${OUTPUT_DAG_NAME}"
     else
-        "${LOCAL_O2A_BIN_SCRIPT}" -i "${LOCAL_APP_DIR}" -o "${LOCAL_OUTPUT_DIR}" -u "${DATAPROC_USER}" \
-           -d "${OUTPUT_DAG_NAME}"
+        "${LOCAL_O2A_BIN_SCRIPT}" \
+            --input-directory-path "${LOCAL_APP_DIR}" \
+            --output-directory-path "${LOCAL_OUTPUT_DIR}" \
+            --user "${DATAPROC_USER}" \
+            --dag-name "${OUTPUT_DAG_NAME}"
     fi
     python -m py_compile "${LOCAL_OUTPUT_DIR}/${OUTPUT_DAG_NAME}.py"
     footer
+}
+
+function convert_dot {
+    header "Convert workflow.xml to dot files for example: ${LOCAL_APP_NAME}"
+    "${LOCAL_O2A_BIN_SCRIPT}" \
+        --input-directory-path "${LOCAL_APP_DIR}" \
+        --output-directory-path "${LOCAL_OUTPUT_DIR}" \
+        --user "${DATAPROC_USER}" \
+        --dag-name "${OUTPUT_DAG_NAME}" \
+        --dot
+
+    set +x
+    if command -v dot > /dev/null; then
+        echo "Rendering DOT files"
+        for dot_file in "${LOCAL_OUTPUT_DIR}"/*.dot; do
+            dot -Tpng "${dot_file}" -o "${dot_file%.dot}.png"
+        done;
+        if  command -v imgcat > /dev/null; then
+            echo "Rendering PNG files"
+            for png_file in "${LOCAL_OUTPUT_DIR}"/*.png; do
+                imgcat -p "${png_file%.dot}"
+            done;
+        else
+            echo "imgcat is not present on path"
+            echo "Skip displaying the image"
+        fi
+    else
+        echo "graphviz is not present on path"
+        echo "Skip converting to the PNG image"
+    fi
+    set -x
+    footer
+}
+
+function convert {
+    if [[ ${RENDER_AS_DOT} == "false" ]]; then
+        convert_python
+    else
+        convert_dot
+    fi
 }
 
 function test_composer {
