@@ -105,8 +105,3 @@ repos:
         language: system
         entry: ./bin/o2a-validate-all-workflows
         files: \workflow.xml$
-  - repo: https://github.com/Lucas-C/pre-commit-hooks-safety
-    sha: "v1.1.0"
-    hooks:
-      - id: python-safety-dependencies-check
-        name: Checks for security vulnerabilities in dependencies
