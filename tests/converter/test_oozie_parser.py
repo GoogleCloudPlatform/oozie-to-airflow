@@ -563,6 +563,20 @@ class TestOozieExamples(unittest.TestCase):
                     config={},
                 ),
             ),
+            (
+                WorkflowTestCase(
+                    name="distcp",
+                    node_names={"distcp-node"},
+                    relations=set(),
+                    job_properties={
+                        "hostname": "AAAA@BBB",
+                        "nameNode": "hdfs://",
+                        "nameNode1": "hdfs://localhost:8081",
+                        "nameNode2": "hdfs://localhost:8082",
+                    },
+                    config={},
+                ),
+            ),
         ],
         name_func=lambda func, num, p: f"{func.__name__}_{num}_{p.args[0].name}",
     )

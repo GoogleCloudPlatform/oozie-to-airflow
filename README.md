@@ -78,12 +78,15 @@ If you want to contribute to the project, please take a look at [CONTRIBUTING.md
   * [Sub\-workflow Example](#sub-workflow-example)
     * [Output](#output-8)
     * [Current limitations](#current-limitations-8)
-  * [Decision Example](#decision-example)
+  * [DistCp Example](#distcp-example)
     * [Output](#output-9)
     * [Current limitations](#current-limitations-9)
-  * [EL Example](#el-example)
+  * [Decision Example](#decision-example)
     * [Output](#output-10)
     * [Current limitations](#current-limitations-10)
+  * [EL Example](#el-example)
+    * [Output](#output-11)
+    * [Current limitations](#current-limitations-11)
 
 Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go)
 
@@ -619,6 +622,26 @@ The converted DAG uses the `SubDagOperator` in Airflow.
 
 Currently generated name of the sub-workflow is fixed which means that only one subworkflow is supported
 per DAG folder. This will be fixed soon.
+
+## DistCp Example
+
+The DistCp example can be run as:
+
+`o2a -i examples/distcp -o output/distcp`
+
+Make sure to first copy `examples/distcp/configuration.template.properties`, rename it as
+`configuration.properties` and fill in with configuration data.
+
+### Output
+In this example the output will appear in `output/distcp/test_distcp_dag.py`.
+
+The converted DAG uses the `BashOperator` in Airflow, which submits the Hadoop DistCp job using the
+`gcloud dataproc jobs submit hadoop` command.
+
+### Current limitations
+
+The system test of the example run with Oozie fails due to unknown reasons. The converted DAG run by Airflow
+completes successfully.
 
 ## Decision Example
 
