@@ -21,6 +21,7 @@ particular actions.
 
 from typing import Type, Dict
 
+from o2a.mappers.distcp_mapper import DistCpMapper
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.mappers.dummy_mapper import DummyMapper
 from o2a.mappers.fs_mapper import FsMapper
@@ -45,4 +46,5 @@ ACTION_MAP: Dict[str, Type[ActionMapper]] = {
     "git": GitMapper,
     "hive": HiveMapper,
     "hive2": HiveMapper,
+    "distcp": DistCpMapper,
 }
