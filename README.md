@@ -676,7 +676,7 @@ The converted DAG uses the `DataProcHiveOperator` in Airflow.
 
 ### Current limitations
 
-**1. Only the connection to the local Hive instance is supported. **
+**1. Only the connection to the local Hive instance is supported.**
 
 Connection configuration options are not supported.
 
