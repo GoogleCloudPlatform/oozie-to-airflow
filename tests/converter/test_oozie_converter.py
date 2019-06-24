@@ -102,6 +102,21 @@ class TestOozieConverter(TestCase):
         self.assertIs(node_1.relations, relations_1)
         self.assertIs(node_2.relations, relations_2)
 
+    def test_convert_dependencies(self):
+        converter = self._create_converter()
+
+        mapper_1 = mock.MagicMock(**{"required_imports.return_value": {"import A", "import B"}})
+        mapper_2 = mock.MagicMock(**{"required_imports.return_value": ("import B", "import C")})
+
+        node_1 = ParsedActionNode(mapper=mapper_1)
+        node_2 = ParsedActionNode(mapper=mapper_2)
+        nodes = dict(TASK_1=node_1, TASK_2=node_2)
+
+        workflow = self._create_workflow(nodes)
+        converter.convert_dependencies(workflow)
+
+        self.assertEqual({"import IMPORT", "import C", "import B", "import A"}, workflow.dependencies)
+
     def test_copy_extra_assets(self):
         converter = self._create_converter()
 
@@ -129,7 +144,7 @@ class TestOozieConverter(TestCase):
         )
 
     @staticmethod
-    def _create_workflow():
+    def _create_workflow(nodes=None):
         return Workflow(
             dag_name="A",
             input_directory_path="in_dir",
@@ -137,6 +152,8 @@ class TestOozieConverter(TestCase):
             relations={Relation(from_task_id="DAG_NAME_A", to_task_id="DAG_NAME_B")},
             nodes=dict(
                 AAA=ParsedActionNode(DummyMapper(Element("dummy"), name="DAG_NAME_A", dag_name="DAG_NAME_B"))
-            ),
+            )
+            if not nodes
+            else nodes,
             dependencies={"import IMPORT"},
         )

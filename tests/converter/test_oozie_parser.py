@@ -58,8 +58,6 @@ class TestOozieParser(unittest.TestCase):
         self.parser.parse_kill_node(ET.fromstring(kill_string))
 
         self.assertIn(node_name, self.parser.workflow.nodes)
-        for depend in self.parser.workflow.nodes[node_name].mapper.required_imports():
-            self.assertIn(depend, self.parser.workflow.dependencies)
 
         on_parse_node_mock.assert_called_once_with()
 
@@ -73,8 +71,6 @@ class TestOozieParser(unittest.TestCase):
         self.parser.parse_end_node(end)
 
         self.assertIn(node_name, self.parser.workflow.nodes)
-        for depend in self.parser.workflow.nodes[node_name].mapper.required_imports():
-            self.assertIn(depend, self.parser.workflow.dependencies)
 
         on_parse_node_mock.assert_called_once_with()
 
@@ -104,8 +100,6 @@ class TestOozieParser(unittest.TestCase):
         self.assertIn(node_name, self.parser.workflow.nodes)
         parse_node_mock.assert_any_call(root, node1)
         parse_node_mock.assert_any_call(root, node2)
-        for depend in node.mapper.required_imports():
-            self.assertIn(depend, self.parser.workflow.dependencies)
 
         on_parse_node_mock.assert_called_once_with()
 
@@ -121,8 +115,6 @@ class TestOozieParser(unittest.TestCase):
         node = self.parser.workflow.nodes[node_name]
         self.assertIn(node_name, self.parser.workflow.nodes)
         self.assertEqual([end_name], node.get_downstreams())
-        for depend in node.mapper.required_imports():
-            self.assertIn(depend, self.parser.workflow.dependencies)
 
         on_parse_node_mock.assert_called_once_with()
 
@@ -145,8 +137,6 @@ class TestOozieParser(unittest.TestCase):
         p_op = self.parser.workflow.nodes[node_name]
         self.assertIn(node_name, self.parser.workflow.nodes)
         self.assertEqual(["down1", "down2", "end1"], p_op.get_downstreams())
-        for depend in p_op.mapper.required_imports():
-            self.assertIn(depend, self.parser.workflow.dependencies)
 
         on_parse_node_mock.assert_called_once_with()
 
@@ -164,8 +154,6 @@ class TestOozieParser(unittest.TestCase):
         p_op = self.parser.workflow.nodes[node_name]
         self.assertIn(node_name, self.parser.workflow.nodes)
         self.assertEqual([end_name], p_op.get_downstreams())
-        for depend in p_op.mapper.required_imports():
-            self.assertIn(depend, self.parser.workflow.dependencies)
 
         on_parse_node_mock.assert_called_once_with()
 
@@ -194,8 +182,7 @@ class TestOozieParser(unittest.TestCase):
         self.assertIn(node_name, self.parser.workflow.nodes)
         self.assertEqual(["end1"], p_op.get_downstreams())
         self.assertEqual("fail1", p_op.get_error_downstream_name())
-        for depend in p_op.mapper.required_imports():
-            self.assertIn(depend, self.parser.workflow.dependencies)
+
         on_parse_node_mock.assert_called_once_with()
 
     def test_parse_action_node_pig_with_file_and_archive(self):
@@ -223,8 +210,6 @@ class TestOozieParser(unittest.TestCase):
         self.assertIn(node_name, self.parser.workflow.nodes)
         self.assertEqual(["end1"], p_op.get_downstreams())
         self.assertEqual("fail1", p_op.get_error_downstream_name())
-        for depend in p_op.mapper.required_imports():
-            self.assertIn(depend, self.parser.workflow.dependencies)
         self.assertEqual(["myNameNode/test_dir/test.txt#test_link.txt"], p_op.mapper.hdfs_files)
         self.assertEqual(["myNameNode/test_dir/test2.zip#test_zip_dir"], p_op.mapper.hdfs_archives)
 
@@ -251,8 +236,6 @@ class TestOozieParser(unittest.TestCase):
         mr_node = self.parser.workflow.nodes[node_name]
         self.assertEqual(["end"], mr_node.get_downstreams())
         self.assertEqual("fail", mr_node.get_error_downstream_name())
-        for depend in mr_node.mapper.required_imports():
-            self.assertIn(depend, self.parser.workflow.dependencies)
 
     @mock.patch("o2a.mappers.dummy_mapper.DummyMapper.on_parse_node", wraps=None)
     def test_parse_action_node_unknown(self, on_parse_node_mock):
@@ -278,8 +261,6 @@ class TestOozieParser(unittest.TestCase):
         self.assertIn(node_name, self.parser.workflow.nodes)
         self.assertEqual(["end1"], p_op.get_downstreams())
         self.assertEqual("fail1", p_op.get_error_downstream_name())
-        for depend in p_op.mapper.required_imports():
-            self.assertIn(depend, self.parser.workflow.dependencies)
 
         on_parse_node_mock.assert_called_once_with()
 
