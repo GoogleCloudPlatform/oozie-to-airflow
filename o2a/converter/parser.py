@@ -82,7 +82,6 @@ class OozieParser:
 
         logging.info(f"Parsed {mapper.name} as Kill Node.")
         self.workflow.nodes[kill_node.attrib["name"]] = p_node
-        self.workflow.dependencies.update(mapper.required_imports())
 
     def parse_end_node(self, end_node):
         """
@@ -96,7 +95,6 @@ class OozieParser:
 
         logging.info(f"Parsed {mapper.name} as End Node.")
         self.workflow.nodes[end_node.attrib["name"]] = p_node
-        self.workflow.dependencies.update(mapper.required_imports())
 
     def parse_fork_node(self, root, fork_node):
         """
@@ -124,7 +122,6 @@ class OozieParser:
                 paths.append(xml_utils.find_node_by_name(root, curr_name))
 
         self.workflow.nodes[fork_name] = p_node
-        self.workflow.dependencies.update(mapper.required_imports())
 
         for path in paths:
             p_node.add_downstream_node_name(path.attrib["name"])
@@ -154,7 +151,6 @@ class OozieParser:
 
         logging.info(f"Parsed {mapper.name} as Join Node.")
         self.workflow.nodes[join_node.attrib["name"]] = p_node
-        self.workflow.dependencies.update(mapper.required_imports())
 
     def parse_decision_node(self, decision_node):
         """
@@ -195,7 +191,6 @@ class OozieParser:
 
         logging.info(f"Parsed {mapper.name} as Decision Node.")
         self.workflow.nodes[decision_node.attrib["name"]] = p_node
-        self.workflow.dependencies.update(mapper.required_imports())
 
     def parse_action_node(self, action_node: ET.Element):
         """
@@ -238,7 +233,6 @@ class OozieParser:
         mapper.on_parse_node()
 
         logging.info(f"Parsed {mapper.name} as Action Node of type {action_name}.")
-        self.workflow.dependencies.update(mapper.required_imports())
 
         self.workflow.nodes[mapper.name] = p_node
 
@@ -269,7 +263,6 @@ class OozieParser:
 
         logging.info(f"Parsed {mapper.name} as Start Node.")
         self.workflow.nodes[start_name] = p_node
-        self.workflow.dependencies.update(mapper.required_imports())
 
     def parse_node(self, root, node):
         """
