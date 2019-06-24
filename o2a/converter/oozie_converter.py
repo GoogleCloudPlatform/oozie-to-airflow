@@ -26,6 +26,7 @@ from o2a.converter import parser
 from o2a.converter.constants import HDFS_FOLDER
 from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.renderers import BaseRenderer
+from o2a.converter.workflow import Workflow
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.utils import el_utils
 from o2a.utils.constants import CONFIG, JOB_PROPS
@@ -91,6 +92,7 @@ class OozieConverter:
 
         workflow = self.parser.workflow
         self.convert_nodes(workflow.nodes)
+        self.convert_dependencies(workflow)
         if as_subworkflow:
             self.renderer.create_subworkflow_file(workflow=workflow, props=self.props)
         else:
@@ -110,6 +112,14 @@ class OozieConverter:
             tasks, relations = p_node.mapper.to_tasks_and_relations()
             p_node.tasks = tasks
             p_node.relations = relations
+
+    @staticmethod
+    def convert_dependencies(workflow: Workflow) -> None:
+        """
+        Create a python imports based on nodes.
+        """
+        for node in workflow.nodes.values():
+            workflow.dependencies.update(node.mapper.required_imports())
 
     def read_config_replace_el(self):
         """
