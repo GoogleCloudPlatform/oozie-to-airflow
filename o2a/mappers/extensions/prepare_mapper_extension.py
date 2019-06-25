@@ -72,7 +72,3 @@ class PrepareMapperExtension:
                 else:
                     raise Exception(f"Unknown XML node in prepare: {node.tag}")
         return delete_paths, mkdir_paths
-
-    @property
-    def first_task_id(self) -> str:
-        return f"{self.mapper.name}_prepare" if self.has_prepare() else f"{self.mapper.name}"

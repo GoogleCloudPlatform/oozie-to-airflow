@@ -23,9 +23,7 @@ from xml.etree import ElementTree as ET
 from parameterized import parameterized
 
 from o2a.converter import parser
-from o2a.converter import parsed_action_node
 from o2a.converter.mappers import ACTION_MAP
-from o2a.converter.relation import Relation
 
 from o2a.definitions import EXAMPLE_DEMO_PATH, EXAMPLES_PATH
 
@@ -313,104 +311,10 @@ class TestOozieParser(unittest.TestCase):
         self.parser.parse_node(root, decision)
         decision_mock.assert_called_once_with(decision)
 
-    def test_create_relations(self):
-        oozie_node = ET.Element("dummy")
-        op1 = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task1", dag_name="DAG_NAME_B")
-        )
-        op1.downstream_names = ["task2", "task3"]
-        op1.error_xml = "fail1"
-        op2 = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task2", dag_name="DAG_NAME_B")
-        )
-        op2.downstream_names = ["task3", "task4"]
-        op2.error_xml = "fail1"
-        op3 = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task3", dag_name="DAG_NAME_B")
-        )
-        op3.downstream_names = ["end1"]
-        op3.error_xml = "fail1"
-        op4 = mock.Mock(
-            **{
-                "first_task_id": "task4_first",
-                "last_task_id": "task4_last",
-                "get_downstreams.return_value": ["task1", "task2", "task3"],
-                "get_error_downstream_name.return_value": "fail1",
-            }
-        )
-        end = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="end1", dag_name="DAG_NAME_B")
-        )
-        fail = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="fail1", dag_name="DAG_NAME_B")
-        )
-        op_dict = {"task1": op1, "task2": op2, "task3": op3, "task4": op4, "end1": end, "fail1": fail}
-        self.parser.workflow.nodes.update(op_dict)
-        self.parser.create_relations()
-
-        self.assertEqual(
-            self.parser.workflow.relations,
-            {
-                Relation(from_task_id="task1", to_task_id="fail1"),
-                Relation(from_task_id="task1", to_task_id="task2"),
-                Relation(from_task_id="task1", to_task_id="task3"),
-                Relation(from_task_id="task2", to_task_id="fail1"),
-                Relation(from_task_id="task2", to_task_id="task3"),
-                Relation(from_task_id="task2", to_task_id="task4_first"),
-                Relation(from_task_id="task3", to_task_id="end1"),
-                Relation(from_task_id="task3", to_task_id="fail1"),
-                Relation(from_task_id="task4_last", to_task_id="fail1"),
-                Relation(from_task_id="task4_last", to_task_id="task1"),
-                Relation(from_task_id="task4_last", to_task_id="task2"),
-                Relation(from_task_id="task4_last", to_task_id="task3"),
-            },
-        )
-
-    def test_update_trigger_rules(self):
-        oozie_node = ET.Element("dummy")
-        op1 = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task1", dag_name="DAG_NAME_B")
-        )
-        op1.downstream_names = ["task2", "task3"]
-        op1.error_xml = "fail1"
-        op2 = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task2", dag_name="DAG_NAME_B")
-        )
-        op2.downstream_names = ["task3"]
-        op2.error_xml = "fail1"
-        op3 = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task3", dag_name="DAG_NAME_B")
-        )
-        op3.downstream_names = ["end1"]
-        op3.error_xml = "fail1"
-        end = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="end1", dag_name="DAG_NAME_B")
-        )
-        fail = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="fail1", dag_name="DAG_NAME_B")
-        )
-        op_dict = {"task1": op1, "task2": op2, "task3": op3, "end1": end, "fail1": fail}
-
-        self.parser.workflow.nodes.update(op_dict)
-        self.parser.create_relations()
-        self.parser.update_trigger_rules()
-
-        self.assertFalse(op1.is_ok)
-        self.assertFalse(op1.is_error)
-        self.assertTrue(op2.is_ok)
-        self.assertFalse(op2.is_error)
-        self.assertTrue(op3.is_ok)
-        self.assertFalse(op2.is_error)
-        self.assertTrue(end.is_ok)
-        self.assertFalse(end.is_error)
-        self.assertFalse(fail.is_ok)
-        self.assertTrue(fail.is_error)
-
 
 class WorkflowTestCase(NamedTuple):
     name: str
     node_names: Set[str]
-    relations: Set[Relation]
     job_properties: Dict[str, str]
     config: Dict[str, str]
 
@@ -421,12 +325,7 @@ class TestOozieExamples(unittest.TestCase):
             (
                 WorkflowTestCase(
                     name="decision",
-                    node_names={"decision-node", "first", "end", "kill"},
-                    relations={
-                        Relation(from_task_id="decision-node", to_task_id="end"),
-                        Relation(from_task_id="decision-node", to_task_id="first"),
-                        Relation(from_task_id="decision-node", to_task_id="kill"),
-                    },
+                    node_names={"start_node_1234", "decision-node", "first", "end", "kill"},
                     job_properties={"nameNode": "hdfs://"},
                     config={},
                 ),
@@ -435,6 +334,7 @@ class TestOozieExamples(unittest.TestCase):
                 WorkflowTestCase(
                     name="demo",
                     node_names={
+                        "start_node_1234",
                         "fork-node",
                         "pig-node",
                         "subworkflow-node",
@@ -443,17 +343,7 @@ class TestOozieExamples(unittest.TestCase):
                         "decision-node",
                         "hdfs-node",
                         "end",
-                    },
-                    relations={
-                        Relation(from_task_id="decision-node", to_task_id="end"),
-                        Relation(from_task_id="decision-node", to_task_id="hdfs-node"),
-                        Relation(from_task_id="fork-node", to_task_id="pig-node_prepare"),
-                        Relation(from_task_id="fork-node", to_task_id="shell-node_prepare"),
-                        Relation(from_task_id="fork-node", to_task_id="subworkflow-node"),
-                        Relation(from_task_id="join-node", to_task_id="decision-node"),
-                        Relation(from_task_id="pig-node", to_task_id="join-node"),
-                        Relation(from_task_id="shell-node", to_task_id="join-node"),
-                        Relation(from_task_id="subworkflow-node", to_task_id="join-node"),
+                        "fail",
                     },
                     job_properties={"nameNode": "hdfs://"},
                     config={},
@@ -462,8 +352,7 @@ class TestOozieExamples(unittest.TestCase):
             (
                 WorkflowTestCase(
                     name="el",
-                    node_names={"ssh"},
-                    relations=set(),
+                    node_names={"start_node_1234", "ssh", "end", "fail"},
                     job_properties={"hostname": "user@BBB", "nameNode": "hdfs://"},
                     config={},
                 ),
@@ -471,20 +360,18 @@ class TestOozieExamples(unittest.TestCase):
             (
                 WorkflowTestCase(
                     name="fs",
-                    node_names={"chmod", "mkdir", "fs-node", "delete", "move", "touchz", "chgrp", "join"},
-                    relations={
-                        Relation(from_task_id="chgrp_fs_1_chgrp", to_task_id="join"),
-                        Relation(from_task_id="chmod_fs_7_chmod", to_task_id="join"),
-                        Relation(from_task_id="delete_fs_1_delete", to_task_id="join"),
-                        Relation(from_task_id="fs-node", to_task_id="chgrp_fs_0_mkdir"),
-                        Relation(from_task_id="fs-node", to_task_id="chmod_fs_0_mkdir"),
-                        Relation(from_task_id="fs-node", to_task_id="delete_fs_0_mkdir"),
-                        Relation(from_task_id="fs-node", to_task_id="mkdir"),
-                        Relation(from_task_id="fs-node", to_task_id="move_fs_0_mkdir"),
-                        Relation(from_task_id="fs-node", to_task_id="touchz"),
-                        Relation(from_task_id="mkdir", to_task_id="join"),
-                        Relation(from_task_id="move_fs_1_move", to_task_id="join"),
-                        Relation(from_task_id="touchz", to_task_id="join"),
+                    node_names={
+                        "start_node_1234",
+                        "end",
+                        "fail",
+                        "chmod",
+                        "mkdir",
+                        "fs-node",
+                        "delete",
+                        "move",
+                        "touchz",
+                        "chgrp",
+                        "join",
                     },
                     job_properties={"hostname": "user@BBB", "nameNode": "hdfs://localhost:8020/"},
                     config={},
@@ -493,8 +380,7 @@ class TestOozieExamples(unittest.TestCase):
             (
                 WorkflowTestCase(
                     name="mapreduce",
-                    node_names={"mr-node"},
-                    relations=set(),
+                    node_names={"start_node_1234", "end", "fail", "mr-node"},
                     job_properties={"dataproc_cluster": "A", "nameNode": "hdfs://"},
                     config={"gcp_region": "B"},
                 ),
@@ -502,8 +388,7 @@ class TestOozieExamples(unittest.TestCase):
             (
                 WorkflowTestCase(
                     name="pig",
-                    node_names={"pig-node"},
-                    relations=set(),
+                    node_names={"start_node_1234", "end", "fail", "pig-node"},
                     job_properties={"oozie.wf.application.path": "hdfs://", "nameNode": "hdfs://"},
                     config={},
                 ),
@@ -511,8 +396,7 @@ class TestOozieExamples(unittest.TestCase):
             (
                 WorkflowTestCase(
                     name="shell",
-                    node_names={"shell-node"},
-                    relations=set(),
+                    node_names={"start_node_1234", "end", "fail", "shell-node"},
                     job_properties={"nameNode": "hdfs://"},
                     config={},
                 ),
@@ -520,8 +404,7 @@ class TestOozieExamples(unittest.TestCase):
             (
                 WorkflowTestCase(
                     name="spark",
-                    node_names={"spark-node"},
-                    relations=set(),
+                    node_names={"start_node_1234", "end", "fail", "spark-node"},
                     job_properties={"nameNode": "hdfs://"},
                     config={"dataproc_cluster": "A", "gcp_region": "B"},
                 ),
@@ -529,8 +412,7 @@ class TestOozieExamples(unittest.TestCase):
             (
                 WorkflowTestCase(
                     name="ssh",
-                    node_names={"ssh"},
-                    relations=set(),
+                    node_names={"start_node_1234", "end", "fail", "ssh"},
                     job_properties={"hostname": "user@BBB", "nameNode": "hdfs://"},
                     config={},
                 ),
@@ -538,8 +420,7 @@ class TestOozieExamples(unittest.TestCase):
             (
                 WorkflowTestCase(
                     name="subwf",
-                    node_names={"subworkflow-node"},
-                    relations=set(),
+                    node_names={"start_node_1234", "end", "fail", "subworkflow-node"},
                     job_properties={},
                     config={},
                 ),
@@ -547,8 +428,7 @@ class TestOozieExamples(unittest.TestCase):
             (
                 WorkflowTestCase(
                     name="distcp",
-                    node_names={"distcp-node"},
-                    relations=set(),
+                    node_names={"start_node_1234", "end", "fail", "distcp-node"},
                     job_properties={
                         "hostname": "AAAA@BBB",
                         "nameNode": "hdfs://",
@@ -561,9 +441,8 @@ class TestOozieExamples(unittest.TestCase):
         ],
         name_func=lambda func, num, p: f"{func.__name__}_{num}_{p.args[0].name}",
     )
-    @mock.patch("o2a.mappers.base_mapper.BaseMapper.on_parse_finish", wraps=None)
     @mock.patch("uuid.uuid4", return_value="1234")
-    def test_parse_workflow_examples(self, case: WorkflowTestCase, _, on_parse_finish_mock):
+    def test_parse_workflow_examples(self, case: WorkflowTestCase, _):
         current_parser = parser.OozieParser(
             input_directory_path=path.join(EXAMPLES_PATH, case.name),
             output_directory_path="/tmp",
@@ -574,5 +453,4 @@ class TestOozieExamples(unittest.TestCase):
         )
         current_parser.parse_workflow()
         self.assertEqual(case.node_names, set(current_parser.workflow.nodes.keys()))
-        self.assertEqual(case.relations, current_parser.workflow.relations)
-        on_parse_finish_mock.assert_called()
+        self.assertEqual(set(), current_parser.workflow.relations)

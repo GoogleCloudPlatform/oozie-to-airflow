@@ -82,7 +82,3 @@ class DistCpMapper(ActionMapper):
 
     def required_imports(self) -> Set[str]:
         return {"import shlex", "from airflow.operators import bash_operator"}
-
-    @property
-    def first_task_id(self) -> str:
-        return self.prepare_extension.first_task_id  # type: ignore

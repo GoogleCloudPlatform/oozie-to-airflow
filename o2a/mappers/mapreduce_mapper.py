@@ -89,7 +89,3 @@ class MapReduceMapper(ActionMapper):
 
     def required_imports(self) -> Set[str]:
         return {"from airflow.utils import dates", "from airflow.contrib.operators import dataproc_operator"}
-
-    @property
-    def first_task_id(self) -> str:
-        return self.prepare_extension.first_task_id  # type: ignore  # make mypy happy

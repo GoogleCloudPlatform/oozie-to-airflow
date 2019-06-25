@@ -20,6 +20,7 @@ from xml.etree.ElementTree import Element
 from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter import parsed_action_node
+from o2a.converter.task import Task
 from o2a.mappers import dummy_mapper
 
 
@@ -40,39 +41,51 @@ class TestParseActiondNode(unittest.TestCase):
         self.assertIn("task1", self.p_node.error_xml)
 
     def test_update_trigger_rule_both(self):
-        self.p_node.set_is_ok(True)
-        self.p_node.set_is_error(True)
+        self.p_node.is_ok = True
+        self.p_node.is_error = True
         self.p_node.update_trigger_rule()
         self.assertTrue(all(task.trigger_rule == TriggerRule.DUMMY for task in self.p_node.tasks))
 
     def test_update_trigger_rule_ok(self):
-        self.p_node.set_is_ok(True)
-        self.p_node.set_is_error(False)
+        self.p_node.is_ok = True
+        self.p_node.is_error = False
         self.p_node.update_trigger_rule()
         self.assertTrue(all(task.trigger_rule == TriggerRule.ALL_SUCCESS for task in self.p_node.tasks))
 
     def test_update_trigger_rule_error(self):
-        self.p_node.set_is_ok(False)
-        self.p_node.set_is_error(True)
+        self.p_node.is_ok = False
+        self.p_node.is_error = True
         self.p_node.update_trigger_rule()
         self.assertTrue(all(task.trigger_rule == TriggerRule.ONE_FAILED for task in self.p_node.tasks))
 
     def test_update_trigger_rule_(self):
-        self.p_node.set_is_ok(False)
-        self.p_node.set_is_error(False)
+        self.p_node.is_ok = False
+        self.p_node.is_error = False
         self.p_node.update_trigger_rule()
         self.assertTrue(all(task.trigger_rule == TriggerRule.DUMMY for task in self.p_node.tasks))
 
 
 class TestParserNodeMultipleOperators(unittest.TestCase):
     def test_first_task_id(self):
-        op1 = mock.Mock(**{"first_task_id": "first_task_id"})
-        p_node = parsed_action_node.ParsedActionNode(op1)
+        op1 = mock.Mock()
+        p_node = parsed_action_node.ParsedActionNode(op1, tasks=self._get_tasks())
 
         self.assertEqual("first_task_id", p_node.first_task_id)
 
     def test_last_task_id(self):
-        op1 = mock.Mock(**{"last_task_id": "last_task_id"})
-        p_node = parsed_action_node.ParsedActionNode(op1)
+        op1 = mock.Mock()
+        p_node = parsed_action_node.ParsedActionNode(op1, tasks=self._get_tasks())
 
         self.assertEqual("last_task_id", p_node.last_task_id)
+
+    @staticmethod
+    def _get_dummy_task(task_id):
+        return Task(task_id=task_id, template_name="dummy.tpl")
+
+    @classmethod
+    def _get_tasks(cls):
+        return [
+            cls._get_dummy_task("first_task_id"),
+            cls._get_dummy_task("second_task_id"),
+            cls._get_dummy_task("last_task_id"),
+        ]

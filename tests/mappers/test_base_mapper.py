@@ -56,7 +56,3 @@ class TestBaseMapper(unittest.TestCase):
             dag_name="DAG_NAME_B",
             props=PropertySet(job_properties={}, config={}),
         )
-
-    def test_dummy_method(self):
-        self.assertEqual(self.mapper.first_task_id, "test_id")
-        self.assertEqual(self.mapper.last_task_id, "test_id")

@@ -51,8 +51,8 @@ class TestKillMapper(unittest.TestCase):
         workflow.nodes["task"] = ParsedActionNode(mock.Mock(autospec=BaseMapper))
         workflow.nodes["fail_task"] = ParsedActionNode(mapper)
         workflow.nodes["success_task"] = ParsedActionNode(mock.Mock(autospec=BaseMapper))
-        workflow.nodes["success_task"].set_is_ok(True)
-        workflow.nodes["fail_task"].set_is_error(True)
+        workflow.nodes["success_task"].is_ok = True
+        workflow.nodes["fail_task"].is_error = True
 
         workflow.relations = {
             Relation(from_task_id="task", to_task_id="fail_task"),
