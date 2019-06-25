@@ -1,0 +1,152 @@
+<!--
+  Copyright 2019 Google LLC
+
+  Licensed under the Apache License, Version 2.0 (the "License");
+  you may not use this file except in compliance with the License.
+  You may obtain a copy of the License at
+
+  http://www.apache.org/licenses/LICENSE-2.0
+
+  Unless required by applicable law or agreed to in writing, software
+  distributed under the License is distributed on an "AS IS" BASIS,
+  WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+  See the License for the specific language governing permissions and
+  limitations under the License.
+ -->
+
+<workflow-app xmlns="uri:oozie:workflow:1.0" name="advancedflow-wf">
+    <start to="task1-1-node"/>
+    <!-- First variant -->
+    <action name="task1-1-node">
+        <fs>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task1-1'/>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task1-1b'/>
+        </fs>
+        <ok to="task1-2-node"/>
+        <error to="fail"/>
+    </action>
+    <action name="task1-2-node">
+        <fs>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task1-2'/>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task1-2b'/>
+        </fs>
+        <ok to="task1-3-node"/>
+        <error to="fail"/>
+    </action>
+    <action name="task1-3-node">
+        <fs>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task1-3'/>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task1-3b'/>
+        </fs>
+        <ok to="task2-1-node"/>
+        <error to="fail"/>
+    </action>
+    <!-- Second variant-->
+    <action name="task2-1-node">
+        <fs>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task2-1'/>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task2-1b'/>
+        </fs>
+        <ok to="task2-2-node"/>
+        <error to="task2-3-node"/>
+    </action>
+    <action name="task2-2-node">
+        <fs>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task2-2'/>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task2-2b'/>
+        </fs>
+        <ok to="task2-3-node"/>
+        <error to="fail"/>
+    </action>
+    <action name="task2-3-node">
+        <fs>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task2-3'/>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task2-3b'/>
+        </fs>
+        <ok to="task3-1-node"/>
+        <error to="fail"/>
+    </action>
+    <!-- Third variant-->
+    <action name="task3-1-node">
+        <fs>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task3-1'/>
+            <move source='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task3-1-error' target='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task3-1-target' />
+        </fs>
+        <ok to="task3-2-node"/>
+        <error to="task3-3-node"/>
+    </action>
+    <action name="task3-2-node">
+        <fs>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task3-2'/>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task3-2b'/>
+        </fs>
+        <ok to="task3-3-node"/>
+        <error to="task3-3-node"/>
+    </action>
+    <action name="task3-3-node">
+        <fs>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task3-3'/>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task3-3b'/>
+        </fs>
+        <ok to="task4-1-node"/>
+        <error to="fail"/>
+    </action>
+    <!-- Fourth variant-->
+    <action name="task4-1-node">
+        <fs>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task4-1'/>
+            <move source='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task4-1-error'
+                  target='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task4-1-target' />
+        </fs>
+        <ok to="end"/>
+        <error to="task4-2-node"/>
+    </action>
+    <action name="task4-2-node">
+        <fs>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task4-2'/>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task4-2b'/>
+        </fs>
+        <ok to="task4-3-node"/>
+        <error to="task4-3-node"/>
+    </action>
+    <action name="task4-3-node">
+        <fs>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task4-3'/>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task4-3b'/>
+        </fs>
+        <ok to="end"/>
+        <error to="fail"/>
+    </action>
+    <!-- Fith variant-->
+    <action name="task5-1-node">
+        <fs>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task5-1'/>
+            <move source='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task5-1-error'
+                  target='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task5-1-target' />
+        </fs>
+        <ok to="end"/>
+        <error to="task5-3-node"/>
+    </action>
+    <action name="task5-2-node">
+        <fs>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task5-2'/>
+            <move source='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task5-2-error'
+                  target='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task5-2-target' />
+        </fs>
+        <ok to="end"/>
+        <error to="task5-3-node"/>
+    </action>
+    <action name="task5-3-node">
+        <fs>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task5-3'/>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task5-3b'/>
+        </fs>
+        <ok to="end"/>
+        <error to="end"/>
+    </action>
+
+    <kill name="fail">
+        <message>Fs workflow failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
+    </kill>
+    <end name="end"/>
+</workflow-app>
