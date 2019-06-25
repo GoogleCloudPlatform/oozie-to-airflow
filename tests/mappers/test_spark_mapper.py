@@ -17,7 +17,6 @@ import ast
 import unittest
 from xml.etree import ElementTree as ET
 
-from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.task import Task
 from o2a.converter.relation import Relation
@@ -87,7 +86,6 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
         mapper = self._get_spark_mapper(spark_node)
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
-        self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(spark_node, mapper.oozie_node)
 
     def test_to_tasks_and_relations_with_prepare_node(self):
@@ -177,7 +175,6 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
             oozie_node=spark_node,
             name="test_id",
             dag_name="DAG_NAME_B",
-            trigger_rule=TriggerRule.DUMMY,
             props=PropertySet(job_properties=EXAMPLE_JOB_PROPS, config=EXAMPLE_CONFIG),
         )
         return mapper

@@ -18,7 +18,6 @@ from copy import deepcopy
 from typing import Dict, Any, List, Tuple
 from xml.etree.ElementTree import Element
 
-from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.relation import Relation
 from o2a.converter.task import Task
@@ -34,23 +33,8 @@ from o2a.o2a_libs.property_utils import PropertySet
 class ActionMapper(BaseMapper, ABC):
     """Base class for all action mappers"""
 
-    def __init__(
-        self,
-        oozie_node: Element,
-        name: str,
-        dag_name: str,
-        props: PropertySet,
-        trigger_rule: str = TriggerRule.ALL_SUCCESS,
-        **kwargs: Any,
-    ):
-        super().__init__(
-            oozie_node=oozie_node,
-            name=name,
-            dag_name=dag_name,
-            props=props,
-            trigger_rule=trigger_rule,
-            **kwargs,
-        )
+    def __init__(self, oozie_node: Element, name: str, dag_name: str, props: PropertySet, **kwargs: Any):
+        super().__init__(oozie_node=oozie_node, name=name, dag_name=dag_name, props=props, **kwargs)
 
     def on_parse_node(self):
         super().on_parse_node()

@@ -45,7 +45,6 @@ class PrepareMapperExtension:
         return Task(
             task_id=self.mapper.name + "_prepare",
             template_name="prepare.tpl",
-            trigger_rule=self.mapper.trigger_rule,
             template_params=dict(delete=delete, mkdir=mkdir),
         )
 

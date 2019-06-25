@@ -38,9 +38,7 @@ class DummyMapper(ActionMapper):
         )
 
     def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
-        tasks: List[Task] = [
-            Task(task_id=self.name, trigger_rule=self.trigger_rule, template_name="dummy.tpl")
-        ]
+        tasks: List[Task] = [Task(task_id=self.name, template_name="dummy.tpl")]
         relations: List[Relation] = []
         return tasks, relations
 

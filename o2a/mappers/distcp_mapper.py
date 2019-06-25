@@ -18,7 +18,6 @@ import shlex
 from typing import Dict, List, Set, Tuple
 from xml.etree.ElementTree import Element
 
-from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.mappers.extensions.prepare_mapper_extension import PrepareMapperExtension
 from o2a.converter.relation import Relation
@@ -34,26 +33,11 @@ class DistCpMapper(ActionMapper):
     Converts a Pig Oozie node to an Airflow task.
     """
 
-    def __init__(
-        self,
-        oozie_node: Element,
-        name: str,
-        dag_name: str,
-        props: PropertySet,
-        trigger_rule: str = TriggerRule.ALL_SUCCESS,
-        **kwargs,
-    ):
+    def __init__(self, oozie_node: Element, name: str, dag_name: str, props: PropertySet, **kwargs):
         ActionMapper.__init__(
-            self,
-            oozie_node=oozie_node,
-            dag_name=dag_name,
-            name=name,
-            props=props,
-            trigger_rule=trigger_rule,
-            **kwargs,
+            self, oozie_node=oozie_node, dag_name=dag_name, name=name, props=props, **kwargs
         )
         self.props = props
-        self.trigger_rule = trigger_rule
         self.params_dict: Dict[str, str] = {}
         self.file_extractor = FileExtractor(oozie_node=oozie_node, props=props)
         self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, props=props)
@@ -87,7 +71,6 @@ class DistCpMapper(ActionMapper):
         action_task = Task(
             task_id=self.name,
             template_name="distcp.tpl",
-            trigger_rule=self.trigger_rule,
             template_params=dict(props=self.props, distcp_command=self._get_distcp_command()),
         )
         tasks = [action_task]

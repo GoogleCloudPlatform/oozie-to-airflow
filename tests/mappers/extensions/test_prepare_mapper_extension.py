@@ -16,7 +16,6 @@
 import unittest
 from xml.etree import ElementTree as ET
 
-from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.task import Task
 from o2a.mappers.base_mapper import BaseMapper
@@ -34,13 +33,7 @@ class TestPrepareMapperExtension(unittest.TestCase):
 
     @staticmethod
     def get_mapper_extension(node: ET.Element, props: PropertySet):
-        mapper = BaseMapper(
-            oozie_node=node,
-            trigger_rule=TriggerRule.DUMMY,
-            name=TEST_MAPPER_NAME,
-            props=props,
-            dag_name="dag",
-        )
+        mapper = BaseMapper(oozie_node=node, name=TEST_MAPPER_NAME, props=props, dag_name="dag")
         return PrepareMapperExtension(mapper)
 
     def test_with_prepare(self):
@@ -70,7 +63,6 @@ class TestPrepareMapperExtension(unittest.TestCase):
             Task(
                 task_id="mapper_prepare",
                 template_name="prepare.tpl",
-                trigger_rule="dummy",
                 template_params={
                     "delete": "/examples/output-data/demo/pig-node /examples/output-data/demo/pig-node2",
                     "mkdir": "/examples/input-data/demo/pig-node /examples/input-data/demo/pig-node2",

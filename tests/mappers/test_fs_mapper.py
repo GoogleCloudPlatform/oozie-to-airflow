@@ -20,7 +20,6 @@ from typing import Dict
 from xml.etree import ElementTree as ET
 
 from parameterized import parameterized
-from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.task import Task
 from o2a.converter.relation import Relation
@@ -489,6 +488,5 @@ def _get_fs_mapper(oozie_node):
         oozie_node=oozie_node,
         name="test_id",
         dag_name="DAG_NAME_B",
-        trigger_rule=TriggerRule.DUMMY,
         props=PropertySet(job_properties={"nameNode": "hdfs://"}, config={}),
     )

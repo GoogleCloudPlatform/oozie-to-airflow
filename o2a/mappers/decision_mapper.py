@@ -18,7 +18,6 @@ from typing import Dict, List, Set, Tuple
 
 from xml.etree.ElementTree import Element
 
-from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.task import Task
 from o2a.converter.relation import Relation
@@ -55,13 +54,7 @@ class DecisionMapper(BaseMapper):
     """
 
     def __init__(
-        self,
-        oozie_node: Element,
-        name: str,
-        dag_name: str,
-        props: PropertySet = None,
-        trigger_rule: str = TriggerRule.ALL_DONE,
-        **kwargs: Dict,
+        self, oozie_node: Element, name: str, dag_name: str, props: PropertySet = None, **kwargs: Dict
     ):
         BaseMapper.__init__(
             self,
@@ -69,7 +62,6 @@ class DecisionMapper(BaseMapper):
             name=name,
             dag_name=dag_name,
             props=props or PropertySet(job_properties={}, config={}),
-            trigger_rule=trigger_rule,
             **kwargs,
         )
         self._get_cases()
@@ -88,7 +80,6 @@ class DecisionMapper(BaseMapper):
         tasks = [
             Task(
                 task_id=self.name,
-                trigger_rule=self.trigger_rule,
                 template_name="decision.tpl",
                 template_params=dict(case_dict=self.case_dict),
             )

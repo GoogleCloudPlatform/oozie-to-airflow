@@ -17,7 +17,6 @@ import ast
 import unittest
 
 from xml.etree import ElementTree as ET
-from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.task import Task
 from o2a.mappers import ssh_mapper
@@ -42,7 +41,6 @@ class TestSSHMapper(unittest.TestCase):
         mapper = self._get_ssh_mapper(job_properties={}, config={})
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
-        self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.ssh_node, mapper.oozie_node)
         self.assertEqual("user", mapper.user)
         self.assertEqual("apache.org", mapper.host)
@@ -56,7 +54,6 @@ class TestSSHMapper(unittest.TestCase):
         mapper = self._get_ssh_mapper(job_properties=job_properties, config={})
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
-        self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.ssh_node, mapper.oozie_node)
         self.assertEqual("user", mapper.user)
         self.assertEqual("apache.org", mapper.host)
@@ -95,7 +92,6 @@ class TestSSHMapper(unittest.TestCase):
             oozie_node=self.ssh_node,
             name="test_id",
             dag_name="DAG_NAME_B",
-            trigger_rule=TriggerRule.DUMMY,
             props=PropertySet(job_properties=job_properties, config=config),
         )
         return mapper

@@ -18,7 +18,6 @@ import unittest
 from collections import OrderedDict
 
 from xml.etree import ElementTree as ET
-from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.task import Task
 from o2a.mappers import decision_mapper
@@ -42,7 +41,6 @@ class TestDecisionMapper(unittest.TestCase):
         mapper = self._get_decision_mapper()
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
-        self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.decision_node, mapper.oozie_node)
         # test conversion from Oozie EL to Jinja
         self.assertEqual("first_not_null('', '')", next(iter(mapper.case_dict)))
@@ -79,10 +77,5 @@ class TestDecisionMapper(unittest.TestCase):
 
     def _get_decision_mapper(self):
         return decision_mapper.DecisionMapper(
-            oozie_node=self.decision_node,
-            name="test_id",
-            dag_name="DAG_NAME_B",
-            trigger_rule=TriggerRule.DUMMY,
-            job_properties={},
-            config={},
+            oozie_node=self.decision_node, name="test_id", dag_name="DAG_NAME_B", job_properties={}, config={}
         )
