@@ -37,7 +37,6 @@ from o2a.utils import xml_utils
 from o2a.converter.constants import HDFS_FOLDER
 from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.workflow import Workflow
-from o2a.converter.relation import Relation
 from o2a.mappers.action_mapper import ActionMapper
 
 
@@ -300,48 +299,3 @@ class OozieParser:
         for node in root:
             logging.debug(f"Parsing node: {node}")
             self.parse_node(root, node)
-
-        self.create_relations()
-        self.update_trigger_rules()
-
-        for node in self.workflow.nodes.copy().values():
-            node.mapper.on_parse_finish(self.workflow)
-
-    def create_relations(self) -> None:
-        """
-        Given a dictionary of task_ids and ParsedActionNodes,
-        returns a set of logical connectives for each task in Airflow.
-
-        :return: Set with strings of task's downstream nodes.
-        """
-        logging.info("Parsing relations between operators.")
-        for p_node in self.workflow.nodes.values():
-            for downstream in p_node.get_downstreams():
-                relation = Relation(
-                    from_task_id=p_node.last_task_id, to_task_id=self.workflow.nodes[downstream].first_task_id
-                )
-                self.workflow.relations.add(relation)
-            error_downstream = p_node.get_error_downstream_name()
-            if error_downstream:
-                relation = Relation(
-                    from_task_id=p_node.last_task_id,
-                    to_task_id=self.workflow.nodes[error_downstream].first_task_id,
-                )
-                self.workflow.relations.add(relation)
-
-    def update_trigger_rules(self) -> None:
-        """
-        Updates the trigger rules of each node based on the downstream and
-        error nodes.
-        """
-        for node in self.workflow.nodes.values():
-            # If a task is referenced  by an "ok to=<task>", flip bit in parsed
-            # node class
-            for downstream in node.get_downstreams():
-                self.workflow.nodes[downstream].set_is_ok(True)
-            error_name = node.get_error_downstream_name()
-            if error_name:
-                # If a task is referenced  by an "error to=<task>", flip
-                # corresponding bit in the parsed node class
-                self.workflow.nodes[error_name].set_is_error(True)
-            node.update_trigger_rule()

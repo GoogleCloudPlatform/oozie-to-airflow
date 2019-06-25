@@ -68,12 +68,12 @@ class TestEndMapper(unittest.TestCase):
         mapper = self._get_end_mapper("end_task")
 
         workflow.nodes["first_task"] = ParsedActionNode(
-            mock.Mock(spec=DecisionMapper, last_task_id="first_task")
+            mock.Mock(spec=DecisionMapper), tasks=[self._get_dummy_task("first_task")]
         )
         workflow.nodes["second_task"] = ParsedActionNode(
-            mock.Mock(spec=BaseMapper, last_task_id="second_task")
+            mock.Mock(spec=BaseMapper), tasks=[self._get_dummy_task("second_task")]
         )
-        workflow.nodes["end_task"] = ParsedActionNode(mapper)
+        workflow.nodes["end_task"] = ParsedActionNode(mapper, tasks=[self._get_dummy_task("end_task")])
 
         workflow.relations = {
             Relation(from_task_id="first_task", to_task_id="end_task"),
@@ -88,3 +88,7 @@ class TestEndMapper(unittest.TestCase):
     def _get_end_mapper(self, name="test_id"):
         mapper = end_mapper.EndMapper(oozie_node=self.oozie_node, name=name, dag_name="DAG_NAME_B")
         return mapper
+
+    @staticmethod
+    def _get_dummy_task(task_id):
+        return Task(task_id=task_id, template_name="dummy.tpl")

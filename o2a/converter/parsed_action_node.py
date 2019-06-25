@@ -70,30 +70,14 @@ class ParsedActionNode:
         """
         Returns task_id of first task in mapper
         """
-        return self.mapper.first_task_id
+        return self.tasks[0].task_id
 
     @property
     def last_task_id(self) -> str:
         """
         Returns task_id of last task in mapper
         """
-        return self.mapper.last_task_id
-
-    def set_is_error(self, is_error: bool):
-        """
-        A bit that switches when the node is the error downstream of any other
-        node.
-        :param is_error: Boolean of is_error or not.
-        """
-        self.is_error = is_error
-
-    def set_is_ok(self, is_ok: bool):
-        """
-        A bit that switches when the node is the ok downstream of any other
-        node.
-        :param is_ok: Boolean of is_ok or not.
-        """
-        self.is_ok = is_ok
+        return self.tasks[-1].task_id
 
     def update_trigger_rule(self):
         """

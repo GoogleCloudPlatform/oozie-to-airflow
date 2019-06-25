@@ -13,22 +13,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Maps Oozie start node to Airflow's DAG"""
-from typing import Set, Tuple, List
+
+from o2a.mappers.dummy_mapper import DummyMapper
 
 
-from o2a.converter.relation import Relation
-from o2a.converter.task import Task
-from o2a.mappers.base_mapper import BaseMapper
-
-
-class StartMapper(BaseMapper):
+class StartMapper(DummyMapper):
     """Maps start node"""
-
-    def required_imports(self) -> Set[str]:
-        return set()
-
-    def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
-        return [], []
 
     def on_parse_finish(self, workflow):
         super().on_parse_finish(self)

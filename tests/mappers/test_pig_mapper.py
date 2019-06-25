@@ -149,12 +149,6 @@ class TestPigMapper(unittest.TestCase):
         )
         self.assertEqual([Relation(from_task_id="test_id_prepare", to_task_id="test_id")], relations)
 
-    def test_first_task_id(self):
-        job_properties = {"nameNode": "hdfs://"}
-        config = {}
-        mapper = self._get_pig_mapper(job_properties=job_properties, config=config)
-        self.assertEqual("test_id_prepare", mapper.first_task_id)
-
     def test_required_imports(self):
         job_properties = {"nameNode": "hdfs://"}
         config = {}

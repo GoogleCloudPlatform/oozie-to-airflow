@@ -140,7 +140,3 @@ class SparkMapper(ActionMapper):
             "from airflow.operators import bash_operator",
             "from airflow.operators import dummy_operator",
         }
-
-    @property
-    def first_task_id(self) -> str:
-        return self.prepare_extension.first_task_id  # type: ignore  # make mypy happy

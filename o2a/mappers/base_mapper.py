@@ -49,20 +49,6 @@ class BaseMapper(ABC):
         """
         raise NotImplementedError("Not Implemented")
 
-    @property
-    def first_task_id(self) -> str:
-        """
-        Returns task_id of first task in mapper
-        """
-        return self.name
-
-    @property
-    def last_task_id(self) -> str:
-        """
-        Returns task_id of last task in mapper
-        """
-        return self.name
-
     def on_parse_node(self):
         """
         Called when processing a node.
