@@ -40,7 +40,7 @@ class KillMapper(BaseMapper):
         )
 
     def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
-        tasks = [Task(task_id=self.name, template_name="kill.tpl", trigger_rule=self.trigger_rule)]
+        tasks = [Task(task_id=self.name, template_name="kill.tpl")]
         relations: List[Relation] = []
         return tasks, relations
 

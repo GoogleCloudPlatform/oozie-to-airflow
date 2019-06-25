@@ -19,7 +19,6 @@ from typing import Dict, Set, Optional, List
 
 from xml.etree.ElementTree import Element
 
-from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.exceptions import ParseException
 from o2a.converter.task import Task
@@ -43,17 +42,8 @@ class HiveMapper(ActionMapper):
     Converts a Hive Oozie node to an Airflow task.
     """
 
-    def __init__(
-        self,
-        oozie_node: Element,
-        name: str,
-        props: PropertySet,
-        trigger_rule: str = TriggerRule.ALL_SUCCESS,
-        **kwargs,
-    ):
-        ActionMapper.__init__(
-            self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, props=props, **kwargs
-        )
+    def __init__(self, oozie_node: Element, name: str, props: PropertySet, **kwargs):
+        ActionMapper.__init__(self, oozie_node=oozie_node, name=name, props=props, **kwargs)
         self.variables: Optional[Dict[str, str]] = None
         self.query: Optional[str] = None
         self.script: Optional[str] = None
@@ -85,7 +75,6 @@ class HiveMapper(ActionMapper):
         action_task = Task(
             task_id=self.name,
             template_name="hive.tpl",
-            trigger_rule=self.trigger_rule,
             template_params=dict(
                 query=self.query,
                 script=self.script,

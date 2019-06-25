@@ -18,7 +18,6 @@ from typing import Dict
 from xml.etree import ElementTree as ET
 from xml.etree.ElementTree import Element
 
-from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.relation import Relation
 from o2a.converter.task import Task
@@ -93,13 +92,11 @@ class TestDistCpMapper(unittest.TestCase):
                 Task(
                     task_id=f"{name}_prepare",
                     template_name="prepare.tpl",
-                    trigger_rule=TriggerRule.ALL_SUCCESS,
                     template_params={"delete": "/tmp/d_path", "mkdir": None},
                 ),
                 Task(
                     task_id=name,
                     template_name=f"{name}.tpl",
-                    trigger_rule=TriggerRule.ALL_SUCCESS,
                     template_params={
                         "props": PropertySet(
                             config={"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"},
@@ -164,7 +161,6 @@ class TestDistCpMapperNoPrepare(unittest.TestCase):
                 Task(
                     task_id=name,
                     template_name=f"{name}.tpl",
-                    trigger_rule=TriggerRule.ALL_SUCCESS,
                     template_params={
                         "props": PropertySet(
                             config={"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"},

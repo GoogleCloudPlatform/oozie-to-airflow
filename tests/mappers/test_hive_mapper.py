@@ -18,7 +18,6 @@ import unittest
 from typing import Dict
 from xml.etree import ElementTree as ET
 
-from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.exceptions import ParseException
 from o2a.converter.task import Task
@@ -111,7 +110,6 @@ class TestHiveMapper(unittest.TestCase):
                 Task(
                     task_id="test_id",
                     template_name="hive.tpl",
-                    trigger_rule="dummy",
                     template_params={
                         "query": "\nDROP TABLE IF EXISTS test_query;\n"
                         "CREATE EXTERNAL TABLE test_query (a INT) STORED AS TEXTFILE\n"
@@ -196,7 +194,6 @@ class TestHiveMapper(unittest.TestCase):
             Task(
                 task_id="test_id_prepare",
                 template_name="prepare.tpl",
-                trigger_rule="dummy",
                 template_params={
                     "delete": "/user/TEST_USERNAME/TEST_EXAMPLE_ROOT/apps/pig/output",
                     "mkdir": "/user/TEST_USERNAME/TEST_EXAMPLE_ROOT/apps/pig/created-folder",
@@ -223,7 +220,6 @@ class TestHiveMapper(unittest.TestCase):
                 Task(
                     task_id="test_id",
                     template_name="hive.tpl",
-                    trigger_rule="dummy",
                     template_params={
                         "query": "\nDROP TABLE IF EXISTS test_query;\n"
                         "CREATE EXTERNAL TABLE test_query (a INT) STORED AS TEXTFILE\n"
@@ -272,7 +268,6 @@ class TestHiveMapper(unittest.TestCase):
                 Task(
                     task_id="test_id",
                     template_name="hive.tpl",
-                    trigger_rule="dummy",
                     template_params={
                         "query": "\nDROP TABLE IF EXISTS test_query;\n"
                         "CREATE EXTERNAL TABLE test_query (a INT) STORED AS TEXTFILE\n"
@@ -341,7 +336,6 @@ class TestHiveMapper(unittest.TestCase):
             oozie_node=self.hive_node,
             name="test_id",
             dag_name="DAG_NAME_B",
-            trigger_rule=TriggerRule.DUMMY,
             props=PropertySet(job_properties=job_properties, config=config),
         )
         return mapper

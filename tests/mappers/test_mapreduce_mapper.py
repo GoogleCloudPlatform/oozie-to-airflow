@@ -17,7 +17,6 @@ import ast
 import unittest
 from xml.etree import ElementTree as ET
 
-from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.relation import Relation
 from o2a.converter.task import Task
@@ -127,7 +126,6 @@ class TestMapReduceMapper(unittest.TestCase):
         mapper = self._get_mapreduce_mapper(job_properties={}, config={})
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
-        self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.mapreduce_node, mapper.oozie_node)
 
     def test_on_parse_node(self):
@@ -140,7 +138,6 @@ class TestMapReduceMapper(unittest.TestCase):
 
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
-        self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.mapreduce_node, mapper.oozie_node)
 
         self.assertEqual("hdfs://", mapper.name_node)
@@ -170,7 +167,6 @@ class TestMapReduceMapper(unittest.TestCase):
             oozie_node=self.mapreduce_node,
             name="test_id",
             dag_name="DAG_NAME_B",
-            trigger_rule=TriggerRule.DUMMY,
             props=PropertySet(
                 job_properties={"nameNode": "hdfs://"},
                 config={
@@ -252,7 +248,6 @@ class TestMapReduceMapper(unittest.TestCase):
             oozie_node=self.mapreduce_node,
             name="test_id",
             dag_name="DAG_NAME_B",
-            trigger_rule=TriggerRule.DUMMY,
             props=PropertySet(job_properties=job_properties, config=config),
         )
 
@@ -265,7 +260,6 @@ class TestMapReduceMapperNoPrepare(unittest.TestCase):
         mapper = self._get_mapreduce_mapper(job_properties={}, config={})
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
-        self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.mapreduce_node, mapper.oozie_node)
 
     def test_to_tasks_and_relations(self):
@@ -273,7 +267,6 @@ class TestMapReduceMapperNoPrepare(unittest.TestCase):
             oozie_node=self.mapreduce_node,
             name="test_id",
             dag_name="DAG_NAME_B",
-            trigger_rule=TriggerRule.DUMMY,
             props=PropertySet(
                 job_properties={"nameNode": "hdfs://"},
                 config={
@@ -349,6 +342,5 @@ class TestMapReduceMapperNoPrepare(unittest.TestCase):
             oozie_node=self.mapreduce_node,
             name="test_id",
             dag_name="DAG_NAME_B",
-            trigger_rule=TriggerRule.DUMMY,
             props=PropertySet(job_properties=job_properties, config=config),
         )

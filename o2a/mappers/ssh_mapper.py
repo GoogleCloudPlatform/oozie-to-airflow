@@ -17,7 +17,6 @@ import shlex
 from typing import List, Set, Tuple
 from xml.etree.ElementTree import Element
 
-from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.task import Task
 from o2a.converter.relation import Relation
@@ -35,17 +34,9 @@ class SSHMapper(ActionMapper):
     """
 
     def __init__(
-        self,
-        oozie_node: Element,
-        name: str,
-        props: PropertySet,
-        trigger_rule: str = TriggerRule.ALL_SUCCESS,
-        template: str = "ssh.tpl",
-        **kwargs,
+        self, oozie_node: Element, name: str, props: PropertySet, template: str = "ssh.tpl", **kwargs
     ):
-        ActionMapper.__init__(
-            self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, props=props, **kwargs
-        )
+        ActionMapper.__init__(self, oozie_node=oozie_node, name=name, props=props, **kwargs)
         self.template = template
         cmd = self.get_command()
 
@@ -84,7 +75,6 @@ class SSHMapper(ActionMapper):
             Task(
                 task_id=self.name,
                 template_name="ssh.tpl",
-                trigger_rule=self.trigger_rule,
                 template_params=dict(
                     props=self.props,
                     # SSH mapper does not support <configuration></configuration> node -

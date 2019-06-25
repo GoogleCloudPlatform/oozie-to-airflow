@@ -17,7 +17,6 @@ from typing import Dict, Set, List, Optional, Tuple
 
 import xml.etree.ElementTree as ET
 
-from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.exceptions import ParseException
 from o2a.converter.task import Task
@@ -44,17 +43,8 @@ SPARK_TAG_JAR = "jar"
 class SparkMapper(ActionMapper):
     """Maps Spark Action"""
 
-    def __init__(
-        self,
-        oozie_node: ET.Element,
-        name: str,
-        props: PropertySet,
-        trigger_rule: str = TriggerRule.ALL_SUCCESS,
-        **kwargs,
-    ):
-        ActionMapper.__init__(
-            self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, props=props, **kwargs
-        )
+    def __init__(self, oozie_node: ET.Element, name: str, props: PropertySet, **kwargs):
+        ActionMapper.__init__(self, oozie_node=oozie_node, name=name, props=props, **kwargs)
         self.java_class = ""
         self.java_jar = ""
         self.job_name: Optional[str] = None
@@ -125,7 +115,6 @@ class SparkMapper(ActionMapper):
         action_task = Task(
             task_id=self.name,
             template_name="spark.tpl",
-            trigger_rule=self.trigger_rule,
             template_params=dict(
                 main_jar=self.java_jar,
                 main_class=self.java_class,

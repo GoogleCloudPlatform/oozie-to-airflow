@@ -110,14 +110,18 @@ class ParsedActionNode:
         """
         if self.is_ok and self.is_error:
             logging.warning(f"Task {self.mapper.name} is both an error node and a ok node.")
-            self.mapper.trigger_rule = TriggerRule.DUMMY
+            for task in self.tasks:
+                task.trigger_rule = TriggerRule.DUMMY
         elif not self.is_ok and not self.is_error:
             # Sets to dummy, but does not warn user about it.
-            self.mapper.trigger_rule = TriggerRule.DUMMY
+            for task in self.tasks:
+                task.trigger_rule = TriggerRule.DUMMY
         elif self.is_ok:
-            self.mapper.trigger_rule = TriggerRule.ALL_SUCCESS
+            for task in self.tasks:
+                task.trigger_rule = TriggerRule.ALL_SUCCESS
         else:
-            self.mapper.trigger_rule = TriggerRule.ONE_FAILED
+            for task in self.tasks:
+                task.trigger_rule = TriggerRule.ONE_FAILED
 
     def __repr__(self) -> str:
         return (

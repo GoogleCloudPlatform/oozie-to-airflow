@@ -19,7 +19,6 @@ from typing import List, Optional, Set, Tuple
 from urllib.parse import urlparse
 from xml.etree.ElementTree import Element
 
-from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.relation import Relation
 from o2a.converter.task import Task
@@ -61,17 +60,8 @@ class GitMapper(ActionMapper):
     Converts a Shell Oozie action to an Airflow task.
     """
 
-    def __init__(
-        self,
-        oozie_node: Element,
-        name: str,
-        props: PropertySet,
-        trigger_rule: str = TriggerRule.ALL_SUCCESS,
-        **kwargs,
-    ):
-        ActionMapper.__init__(
-            self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, props=props, **kwargs
-        )
+    def __init__(self, oozie_node: Element, name: str, props: PropertySet, **kwargs):
+        ActionMapper.__init__(self, oozie_node=oozie_node, name=name, props=props, **kwargs)
         self.git_uri: Optional[str] = None
         self.git_branch: Optional[str] = None
         self.destination_uri: Optional[str] = None

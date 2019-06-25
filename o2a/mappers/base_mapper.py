@@ -18,7 +18,6 @@ from copy import deepcopy
 from typing import Any, List, Set, Tuple
 from xml.etree.ElementTree import Element
 
-from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.relation import Relation
 from o2a.converter.task import Task
@@ -29,20 +28,11 @@ class BaseMapper(ABC):
     """The Base Mapper class - parent for all mappers."""
 
     # pylint: disable = unused-argument
-    def __init__(
-        self,
-        oozie_node: Element,
-        name: str,
-        dag_name: str,
-        props: PropertySet,
-        trigger_rule: str = TriggerRule.ALL_SUCCESS,
-        **kwargs: Any,
-    ):
+    def __init__(self, oozie_node: Element, name: str, dag_name: str, props: PropertySet, **kwargs: Any):
         self.props = deepcopy(props)
         self.oozie_node = oozie_node
         self.dag_name = dag_name
         self.name = name
-        self.trigger_rule = trigger_rule
 
     def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
         """
@@ -101,8 +91,7 @@ class BaseMapper(ABC):
             f"{type(self).__name__}(name={self.name}, "
             f"dag_name={self.dag_name}, "
             f"oozie_node={self.oozie_node}, "
-            f"props={self.props}, "
-            f"trigger_rule={self.trigger_rule}) "
+            f"props={self.props}) "
         )
 
     def __eq__(self, other):

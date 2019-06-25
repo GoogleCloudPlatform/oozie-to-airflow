@@ -16,7 +16,6 @@
 from typing import List, Set, Tuple
 from xml.etree.ElementTree import Element
 
-from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.task import Task
 from o2a.converter.relation import Relation
@@ -31,17 +30,8 @@ class ShellMapper(ActionMapper):
     Converts a Shell Oozie action to an Airflow task.
     """
 
-    def __init__(
-        self,
-        oozie_node: Element,
-        name: str,
-        props: PropertySet,
-        trigger_rule: str = TriggerRule.ALL_SUCCESS,
-        **kwargs,
-    ):
-        ActionMapper.__init__(
-            self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, props=props, **kwargs
-        )
+    def __init__(self, oozie_node: Element, name: str, props: PropertySet, **kwargs):
+        ActionMapper.__init__(self, oozie_node=oozie_node, name=name, props=props, **kwargs)
         self._parse_oozie_node()
         self.prepare_extension: PrepareMapperExtension = PrepareMapperExtension(self)
 
@@ -60,7 +50,6 @@ class ShellMapper(ActionMapper):
         action_task = Task(
             task_id=self.name,
             template_name="shell.tpl",
-            trigger_rule=self.trigger_rule,
             template_params=dict(
                 pig_command=self.pig_command, action_node_properties=self.props.action_node_properties
             ),
