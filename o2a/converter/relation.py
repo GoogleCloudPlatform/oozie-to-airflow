@@ -21,3 +21,4 @@ class Relation(NamedTuple):
 
     from_task_id: str
     to_task_id: str
+    is_error: bool = False
