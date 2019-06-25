@@ -87,6 +87,9 @@
         <fs>
             <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task3-3'/>
             <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task3-3b'/>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task3-3'/>
+            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task3-3b'/>
+
         </fs>
         <ok to="task4-1-node"/>
         <error to="fail"/>
@@ -95,6 +98,18 @@
     <action name="task4-1-node">
         <fs>
             <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task4-1'/>
+            <move source='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task4-1-error'
+                  target='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task4-1-target' />
+            <move source='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task4-1-error'
+                  target='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task4-1-target' />
+            <move source='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task4-1-error'
+                  target='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task4-1-target' />
+            <move source='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task4-1-error'
+                  target='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task4-1-target' />
+            <move source='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task4-1-error'
+                  target='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task4-1-target' />
+            <move source='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task4-1-error'
+                  target='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task4-1-target' />
             <move source='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task4-1-error'
                   target='${nameNode}/user/${userName}/${examplesRoot}/apps/advancedflow/test-task4-1-target' />
         </fs>
