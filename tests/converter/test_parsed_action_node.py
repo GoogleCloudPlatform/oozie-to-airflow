@@ -43,25 +43,25 @@ class TestParseActiondNode(unittest.TestCase):
         self.p_node.set_is_ok(True)
         self.p_node.set_is_error(True)
         self.p_node.update_trigger_rule()
-        self.assertEqual(TriggerRule.DUMMY, self.p_node.mapper.trigger_rule)
+        self.assertTrue(all(task.trigger_rule == TriggerRule.DUMMY for task in self.p_node.tasks))
 
     def test_update_trigger_rule_ok(self):
         self.p_node.set_is_ok(True)
         self.p_node.set_is_error(False)
         self.p_node.update_trigger_rule()
-        self.assertEqual(TriggerRule.ALL_SUCCESS, self.p_node.mapper.trigger_rule)
+        self.assertTrue(all(task.trigger_rule == TriggerRule.ALL_SUCCESS for task in self.p_node.tasks))
 
     def test_update_trigger_rule_error(self):
         self.p_node.set_is_ok(False)
         self.p_node.set_is_error(True)
         self.p_node.update_trigger_rule()
-        self.assertEqual(TriggerRule.ONE_FAILED, self.p_node.mapper.trigger_rule)
+        self.assertTrue(all(task.trigger_rule == TriggerRule.ONE_FAILED for task in self.p_node.tasks))
 
     def test_update_trigger_rule_(self):
         self.p_node.set_is_ok(False)
         self.p_node.set_is_error(False)
         self.p_node.update_trigger_rule()
-        self.assertEqual(TriggerRule.DUMMY, self.p_node.mapper.trigger_rule)
+        self.assertTrue(all(task.trigger_rule == TriggerRule.DUMMY for task in self.p_node.tasks))
 
 
 class TestParserNodeMultipleOperators(unittest.TestCase):

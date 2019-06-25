@@ -17,7 +17,6 @@ import ast
 import unittest
 from unittest import mock
 from xml.etree.ElementTree import Element
-from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.task import Task
@@ -35,7 +34,6 @@ class TestEndMapper(unittest.TestCase):
         mapper = self._get_end_mapper()
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
-        self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
 
     def test_convert_tasks_and_relations(self):
         mapper = self._get_end_mapper()
@@ -88,7 +86,5 @@ class TestEndMapper(unittest.TestCase):
         self.assertEqual({Relation(from_task_id="first_task", to_task_id="end_task")}, workflow.relations)
 
     def _get_end_mapper(self, name="test_id"):
-        mapper = end_mapper.EndMapper(
-            oozie_node=self.oozie_node, name=name, trigger_rule=TriggerRule.DUMMY, dag_name="DAG_NAME_B"
-        )
+        mapper = end_mapper.EndMapper(oozie_node=self.oozie_node, name=name, dag_name="DAG_NAME_B")
         return mapper

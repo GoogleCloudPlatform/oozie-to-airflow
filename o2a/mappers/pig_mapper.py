@@ -18,7 +18,6 @@ from typing import Dict, Set, Tuple, List
 
 from xml.etree.ElementTree import Element
 
-from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.task import Task
 from o2a.converter.relation import Relation
@@ -36,17 +35,8 @@ class PigMapper(ActionMapper):
     Converts a Pig Oozie node to an Airflow task.
     """
 
-    def __init__(
-        self,
-        oozie_node: Element,
-        name: str,
-        props: PropertySet,
-        trigger_rule: str = TriggerRule.ALL_SUCCESS,
-        **kwargs,
-    ):
-        ActionMapper.__init__(
-            self, oozie_node=oozie_node, name=name, trigger_rule=trigger_rule, props=props, **kwargs
-        )
+    def __init__(self, oozie_node: Element, name: str, props: PropertySet, **kwargs):
+        ActionMapper.__init__(self, oozie_node=oozie_node, name=name, props=props, **kwargs)
         self.params_dict: Dict[str, str] = {}
         self.file_extractor = FileExtractor(oozie_node=oozie_node, props=self.props)
         self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, props=self.props)
@@ -68,7 +58,6 @@ class PigMapper(ActionMapper):
         action_task = Task(
             task_id=self.name,
             template_name="pig.tpl",
-            trigger_rule=self.trigger_rule,
             template_params=dict(
                 props=self.props,
                 params_dict=self.params_dict,

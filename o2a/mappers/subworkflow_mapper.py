@@ -19,7 +19,6 @@ from typing import Dict, Set, Type, Tuple, List
 
 from xml.etree.ElementTree import Element
 
-from airflow.utils.trigger_rule import TriggerRule
 from o2a.converter.oozie_converter import OozieConverter
 from o2a.converter.relation import Relation
 from o2a.converter.renderers import BaseRenderer
@@ -47,20 +46,12 @@ class SubworkflowMapper(ActionMapper):
         props: PropertySet,
         action_mapper: Dict[str, Type[ActionMapper]],
         renderer: BaseRenderer,
-        trigger_rule=TriggerRule.ALL_SUCCESS,
         **kwargs,
     ):
         ActionMapper.__init__(
-            self,
-            oozie_node=oozie_node,
-            name=name,
-            dag_name=dag_name,
-            trigger_rule=trigger_rule,
-            props=props,
-            **kwargs,
+            self, oozie_node=oozie_node, name=name, dag_name=dag_name, props=props, **kwargs
         )
         self.task_id = name
-        self.trigger_rule = trigger_rule
         self.input_directory_path = input_directory_path
         self.output_directory_path = output_directory_path
         self.dag_name = dag_name
@@ -97,12 +88,7 @@ class SubworkflowMapper(ActionMapper):
 
     def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
         tasks: List[Task] = [
-            Task(
-                task_id=self.name,
-                template_name="subwf.tpl",
-                trigger_rule=self.trigger_rule,
-                template_params=dict(app_name=self.app_name),
-            )
+            Task(task_id=self.name, template_name="subwf.tpl", template_params=dict(app_name=self.app_name))
         ]
         relations: List[Relation] = []
         return tasks, relations

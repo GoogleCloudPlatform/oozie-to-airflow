@@ -17,7 +17,6 @@ import ast
 import unittest
 from unittest import mock
 from xml.etree.ElementTree import Element
-from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.workflow import Workflow
@@ -34,7 +33,6 @@ class TestStartMapper(unittest.TestCase):
         mapper = self._get_start_mapper()
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
-        self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
 
     def test_to_tasks_and_relations(self):
         mapper = self._get_start_mapper()
@@ -68,7 +66,6 @@ class TestStartMapper(unittest.TestCase):
             oozie_node=self.oozie_node,
             name=name,
             dag_name="DAG_NAME_B",
-            trigger_rule=TriggerRule.DUMMY,
             props=PropertySet(config={}, job_properties={}),
         )
         return mapper

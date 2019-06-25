@@ -19,8 +19,6 @@ from typing import List, Set, Tuple
 
 from xml.etree.ElementTree import Element
 
-from airflow.utils.trigger_rule import TriggerRule
-
 from o2a.converter.relation import Relation
 from o2a.converter.task import Task
 from o2a.mappers.action_mapper import ActionMapper
@@ -116,25 +114,9 @@ class FsMapper(ActionMapper):
     Converts a FS Oozie node to an Airflow task.
     """
 
-    def __init__(
-        self,
-        oozie_node: Element,
-        name: str,
-        dag_name: str,
-        props: PropertySet,
-        trigger_rule: str = TriggerRule.ALL_SUCCESS,
-        **kwargs,
-    ):
-        super().__init__(
-            oozie_node=oozie_node,
-            name=name,
-            props=props,
-            trigger_rule=trigger_rule,
-            dag_name=dag_name,
-            **kwargs,
-        )
+    def __init__(self, oozie_node: Element, name: str, dag_name: str, props: PropertySet, **kwargs):
+        super().__init__(oozie_node=oozie_node, name=name, props=props, dag_name=dag_name, **kwargs)
         self.oozie_node = oozie_node
-        self.trigger_rule = trigger_rule
         self.tasks: List[Task] = []
 
     def on_parse_node(self):
@@ -156,7 +138,7 @@ class FsMapper(ActionMapper):
 
         if not tasks:
             # Each mapper must return at least one task
-            return [Task(task_id=self.name, template_name="dummy.tpl", trigger_rule=self.trigger_rule)]
+            return [Task(task_id=self.name, template_name="dummy.tpl")]
 
         return tasks
 
@@ -183,7 +165,6 @@ class FsMapper(ActionMapper):
         return Task(
             task_id=task_id,
             template_name="fs_op.tpl",
-            trigger_rule=self.trigger_rule,
             template_params=dict(
                 pig_command=pig_command, action_node_properties=self.props.action_node_properties
             ),

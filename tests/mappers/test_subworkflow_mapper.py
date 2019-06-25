@@ -19,7 +19,6 @@ from contextlib import suppress
 from unittest import mock, TestCase
 from xml.etree import ElementTree as ET
 
-from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.mappers import ACTION_MAP
 from o2a.converter.task import Task
@@ -76,7 +75,6 @@ class TestSubworkflowMapper(TestCase):
 
         # Then
         self.assertEqual("test_id", mapper.task_id)
-        self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.subworkflow_node, mapper.oozie_node)
         self.assertEqual("examples", mapper.props.merged["examplesRoot"])
         self.assertEqual("hdfs://", mapper.props.merged["nameNode"])
@@ -98,7 +96,6 @@ class TestSubworkflowMapper(TestCase):
 
         # Then
         self.assertEqual("test_id", mapper.task_id)
-        self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
         self.assertEqual(self.subworkflow_node, mapper.oozie_node)
         self.assertEqual(self.main_properties, mapper.props.job_properties)
         # Propagate config node is missing, should NOT forward config job_properties
@@ -132,7 +129,6 @@ class TestSubworkflowMapper(TestCase):
             name="test_id",
             dag_name="test",
             action_mapper=ACTION_MAP,
-            trigger_rule=TriggerRule.DUMMY,
             props=PropertySet(job_properties=self.main_properties, config=self.config),
             renderer=mock.MagicMock(),
         )

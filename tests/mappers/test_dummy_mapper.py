@@ -16,7 +16,6 @@
 import ast
 import unittest
 from xml.etree.ElementTree import Element
-from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.task import Task
 from o2a.mappers import dummy_mapper
@@ -29,7 +28,6 @@ class TestDummyMapper(unittest.TestCase):
         mapper = self._get_dummy_mapper()
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
-        self.assertEqual(TriggerRule.DUMMY, mapper.trigger_rule)
 
     def test_convert_tasks_and_relations(self):
         mapper = self._get_dummy_mapper()
@@ -46,6 +44,4 @@ class TestDummyMapper(unittest.TestCase):
         ast.parse(imp_str)
 
     def _get_dummy_mapper(self):
-        return dummy_mapper.DummyMapper(
-            oozie_node=self.oozie_node, name="test_id", trigger_rule=TriggerRule.DUMMY, dag_name="DAG_NAME_B"
-        )
+        return dummy_mapper.DummyMapper(oozie_node=self.oozie_node, name="test_id", dag_name="DAG_NAME_B")

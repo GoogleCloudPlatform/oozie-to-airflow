@@ -32,7 +32,6 @@ import unittest
 
 from xml.etree import ElementTree as ET
 
-from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.mappers import base_mapper
 from o2a.o2a_libs.property_utils import PropertySet
@@ -55,7 +54,6 @@ class TestBaseMapper(unittest.TestCase):
             oozie_node=self.node,
             name="test_id",
             dag_name="DAG_NAME_B",
-            trigger_rule=TriggerRule.DUMMY,
             props=PropertySet(job_properties={}, config={}),
         )
 

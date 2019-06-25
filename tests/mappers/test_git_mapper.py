@@ -17,7 +17,6 @@ import ast
 import unittest
 from xml.etree import ElementTree as ET
 
-from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.relation import Relation
 from o2a.converter.task import Task
@@ -109,7 +108,6 @@ class TestGitMapper(unittest.TestCase):
         mapper = self._get_git_mapper(git_node)
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
-        self.assertEqual(TriggerRule.ALL_SUCCESS, mapper.trigger_rule)
         self.assertEqual(git_node, mapper.oozie_node)
 
     def test_convert_to_text_with_prepare_node(self):
@@ -125,13 +123,11 @@ class TestGitMapper(unittest.TestCase):
                 Task(
                     task_id="test_id_prepare",
                     template_name="prepare.tpl",
-                    trigger_rule="all_success",
                     template_params={"delete": "/tmp/d_path", "mkdir": "/tmp/mk_path"},
                 ),
                 Task(
                     task_id="test_id",
                     template_name="git.tpl",
-                    trigger_rule="dummy",
                     template_params={
                         "git_uri": "https://github.com/apache/oozie",
                         "git_branch": "my-awesome-branch",
@@ -169,7 +165,6 @@ class TestGitMapper(unittest.TestCase):
                 Task(
                     task_id="test_id",
                     template_name="git.tpl",
-                    trigger_rule="dummy",
                     template_params={
                         "git_uri": "https://github.com/apache/oozie",
                         "git_branch": "my-awesome-branch",
