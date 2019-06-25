@@ -19,6 +19,7 @@ from unittest import mock
 from xml.etree.ElementTree import Element
 
 from o2a.converter.parsed_action_node import ParsedActionNode
+from o2a.converter.task import Task
 from o2a.converter.workflow import Workflow
 from o2a.converter.relation import Relation
 from o2a.mappers.base_mapper import BaseMapper
@@ -37,7 +38,7 @@ class TestStartMapper(unittest.TestCase):
     def test_to_tasks_and_relations(self):
         mapper = self._get_start_mapper()
         tasks, relations = mapper.to_tasks_and_relations()
-        self.assertEqual(tasks, [])
+        self.assertEqual(tasks, [Task(task_id="test_id", template_name="dummy.tpl", template_params={})])
         self.assertEqual(relations, [])
 
     def test_required_imports(self):

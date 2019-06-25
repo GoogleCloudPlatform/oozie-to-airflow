@@ -213,12 +213,6 @@ class FsMapperSingleTestCase(unittest.TestCase):
         imp_str = "\n".join(imps)
         self.assertIsNotNone(ast.parse(imp_str))
 
-    def test_get_first_task_id(self):
-        self.assertEqual("test_id", self.mapper.first_task_id)
-
-    def test_get_last_task_id(self):
-        self.assertEqual("test_id", self.mapper.last_task_id)
-
 
 class FsMapperEmptyTestCase(unittest.TestCase):
     def setUp(self):
@@ -236,12 +230,6 @@ class FsMapperEmptyTestCase(unittest.TestCase):
         imps = self.mapper.required_imports()
         imp_str = "\n".join(imps)
         self.assertIsNotNone(ast.parse(imp_str))
-
-    def test_get_first_task_id(self):
-        self.assertEqual("test_id", self.mapper.first_task_id)
-
-    def test_get_last_task_id(self):
-        self.assertEqual("test_id", self.mapper.last_task_id)
 
 
 class FsMapperComplexTestCase(unittest.TestCase):
@@ -475,12 +463,6 @@ class FsMapperComplexTestCase(unittest.TestCase):
         imps = self.mapper.required_imports()
         imp_str = "\n".join(imps)
         self.assertIsNotNone(ast.parse(imp_str))
-
-    def test_get_first_task_id(self):
-        self.assertEqual(self.mapper.first_task_id, "test_id_fs_0_mkdir")
-
-    def test_get_last_task_id(self):
-        self.assertEqual(self.mapper.last_task_id, "test_id_fs_17_chgrp")
 
 
 def _get_fs_mapper(oozie_node):

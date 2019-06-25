@@ -25,6 +25,7 @@ import logging
 from o2a.converter import parser
 from o2a.converter.constants import HDFS_FOLDER
 from o2a.converter.parsed_action_node import ParsedActionNode
+from o2a.converter.relation import Relation
 from o2a.converter.renderers import BaseRenderer
 from o2a.converter.workflow import Workflow
 from o2a.mappers.action_mapper import ActionMapper
@@ -93,6 +94,12 @@ class OozieConverter:
         workflow = self.parser.workflow
         self.convert_nodes(workflow.nodes)
         self.convert_dependencies(workflow)
+        self.convert_relations(workflow)
+        self.update_trigger_rules(workflow)
+
+        for node in workflow.nodes.copy().values():
+            node.mapper.on_parse_finish(workflow)
+
         if as_subworkflow:
             self.renderer.create_subworkflow_file(workflow=workflow, props=self.props)
         else:
@@ -115,16 +122,47 @@ class OozieConverter:
 
     @staticmethod
     def convert_dependencies(workflow: Workflow) -> None:
-        """
-        Create a python imports based on nodes.
-        """
+        logging.info("Converting dependencies.")
         for node in workflow.nodes.values():
             workflow.dependencies.update(node.mapper.required_imports())
+
+    @staticmethod
+    def convert_relations(workflow: Workflow) -> None:
+        logging.info("Converting relations between nodes.")
+        for p_node in workflow.nodes.values():
+            for downstream in p_node.get_downstreams():
+                relation = Relation(
+                    from_task_id=p_node.last_task_id, to_task_id=workflow.nodes[downstream].first_task_id
+                )
+                workflow.relations.add(relation)
+            error_downstream = p_node.get_error_downstream_name()
+            if error_downstream:
+                relation = Relation(
+                    from_task_id=p_node.last_task_id,
+                    to_task_id=workflow.nodes[error_downstream].first_task_id,
+                )
+                workflow.relations.add(relation)
+
+    @staticmethod
+    def update_trigger_rules(workflow: Workflow) -> None:
+        logging.info("Updating trigger rules.")
+        for node in workflow.nodes.values():
+            # If a task is referenced  by an "ok to=<task>", flip bit in parsed
+            # node class
+            for downstream in node.get_downstreams():
+                workflow.nodes[downstream].is_ok = True
+            error_name = node.get_error_downstream_name()
+            if error_name:
+                # If a task is referenced  by an "error to=<task>", flip
+                # corresponding bit in the parsed node class
+                workflow.nodes[error_name].is_error = True
+            node.update_trigger_rule()
 
     def read_config_replace_el(self):
         """
         Reads configuration properties to config dictionary.
         Replaces EL properties within.
+
         :return: None
         """
         self.config = el_utils.parse_els(properties_file=self.config_file, props=self.props)
@@ -133,6 +171,7 @@ class OozieConverter:
         """
         Reads job properties and updates job_properties dictionary with the read values
         Replaces EL job_properties within.
+
         :return: None
         """
         self.job_properties.update(

@@ -61,16 +61,6 @@ class TestDistCpMapper(unittest.TestCase):
         self.assertIsNotNone(self.distcp_node)
         self.assertTrue(isinstance(self.distcp_node, Element))
 
-    def test_first_task_id(self):
-        # Given
-        mapper, _ = _get_distcp_mapper(self.distcp_node, job_properties={}, config={})
-
-        # When
-        first_task_id = mapper.first_task_id
-
-        # Then
-        self.assertEqual("distcp_prepare", first_task_id)
-
     def test_task_and_relations(self):
         # Given
         mapper, name = _get_distcp_mapper(
@@ -129,16 +119,6 @@ class TestDistCpMapperNoPrepare(unittest.TestCase):
     def test_setup(self):
         self.assertIsNotNone(self.distcp_node)
         self.assertTrue(isinstance(self.distcp_node, Element))
-
-    def test_first_task_id_no_prepare(self):
-        # Given
-        mapper, _ = _get_distcp_mapper(self.distcp_node, job_properties={}, config={})
-
-        # When
-        first_task_id = mapper.first_task_id
-
-        # Then
-        self.assertEqual("distcp", first_task_id)
 
     def test_task_and_relations_no_prepare(self):
         # Given

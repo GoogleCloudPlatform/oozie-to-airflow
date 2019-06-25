@@ -318,13 +318,6 @@ class TestHiveMapper(unittest.TestCase):
         ):
             mapper.on_parse_node()
 
-    def test_first_task_id(self):
-        self.hive_node.append(ET.fromstring(FRAGMENT_QUERY))
-        self.hive_node.append(ET.fromstring(FRAGMENT_PREPARE))
-
-        mapper = self._get_hive_mapper(job_properties=self.job_properties, config=self.config)
-        self.assertEqual("test_id_prepare", mapper.first_task_id)
-
     def test_required_imports(self):
         mapper = self._get_hive_mapper(job_properties=self.job_properties, config=self.config)
         imps = mapper.required_imports()

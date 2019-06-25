@@ -16,16 +16,21 @@
 
 from unittest import mock, TestCase
 from xml.etree.ElementTree import Element
+from xml.etree import ElementTree as ET
 
 from o2a import o2a
 from o2a.converter.oozie_converter import OozieConverter
-from o2a.converter.mappers import ACTION_MAP
 from o2a.converter.parsed_action_node import ParsedActionNode
 
 from o2a.converter.task import Task
 from o2a.converter.workflow import Workflow
-from o2a.converter.relation import Relation
 from o2a.mappers.dummy_mapper import DummyMapper
+
+from o2a.converter import parsed_action_node
+from o2a.converter.mappers import ACTION_MAP
+from o2a.converter.relation import Relation
+
+from o2a.mappers import dummy_mapper
 
 
 class TestOozieConverter(TestCase):
@@ -132,6 +137,113 @@ class TestOozieConverter(TestCase):
             input_directory_path="/input_directory_path/hdfs", output_directory_path="/tmp"
         )
 
+    def test_convert_relations(self):
+        oozie_node = ET.Element("dummy")
+        op1 = parsed_action_node.ParsedActionNode(
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task1", dag_name="DAG_NAME_B1"),
+            tasks=[self._create_task("task1")],
+        )
+        op1.downstream_names = ["task2", "task3"]
+        op1.error_xml = "fail1"
+        op2 = parsed_action_node.ParsedActionNode(
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task2", dag_name="DAG_NAME_B2"),
+            tasks=[self._create_task("task2")],
+        )
+        op2.downstream_names = ["task3", "task4"]
+        op2.error_xml = "fail1"
+        op3 = parsed_action_node.ParsedActionNode(
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task3", dag_name="DAG_NAME_B3"),
+            tasks=[self._create_task("task3")],
+        )
+        op3.downstream_names = ["end1"]
+        op3.error_xml = "fail1"
+        op4 = mock.Mock(
+            **{
+                "first_task_id": "task4_first",
+                "last_task_id": "task4_last",
+                "get_downstreams.return_value": ["task1", "task2", "task3"],
+                "get_error_downstream_name.return_value": "fail1",
+            }
+        )
+        end = parsed_action_node.ParsedActionNode(
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="end1", dag_name="DAG_NAME_B4"),
+            tasks=[self._create_task("end1")],
+        )
+        fail = parsed_action_node.ParsedActionNode(
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="fail1", dag_name="DAG_NAME_B5"),
+            tasks=[self._create_task("fail1")],
+        )
+        op_dict = {"task1": op1, "task2": op2, "task3": op3, "task4": op4, "end1": end, "fail1": fail}
+        workflow = self._create_workflow(nodes=op_dict)
+        converter = self._create_converter()
+        workflow.relations = set()
+        converter.convert_relations(workflow)
+
+        self.assertEqual(
+            workflow.relations,
+            {
+                Relation(from_task_id="task1", to_task_id="fail1"),
+                Relation(from_task_id="task1", to_task_id="task2"),
+                Relation(from_task_id="task1", to_task_id="task3"),
+                Relation(from_task_id="task2", to_task_id="fail1"),
+                Relation(from_task_id="task2", to_task_id="task3"),
+                Relation(from_task_id="task2", to_task_id="task4_first"),
+                Relation(from_task_id="task3", to_task_id="end1"),
+                Relation(from_task_id="task3", to_task_id="fail1"),
+                Relation(from_task_id="task4_last", to_task_id="fail1"),
+                Relation(from_task_id="task4_last", to_task_id="task1"),
+                Relation(from_task_id="task4_last", to_task_id="task2"),
+                Relation(from_task_id="task4_last", to_task_id="task3"),
+            },
+        )
+
+    def test_update_trigger_rules(self):
+        oozie_node = ET.Element("dummy")
+        op1 = parsed_action_node.ParsedActionNode(
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task1", dag_name="DAG_NAME_B"),
+            tasks=[self._create_task("task1")],
+        )
+        op1.downstream_names = ["task2", "task3"]
+        op1.error_xml = "fail1"
+        op2 = parsed_action_node.ParsedActionNode(
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task2", dag_name="DAG_NAME_B"),
+            tasks=[self._create_task("task2")],
+        )
+        op2.downstream_names = ["task3"]
+        op2.error_xml = "fail1"
+        op3 = parsed_action_node.ParsedActionNode(
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task3", dag_name="DAG_NAME_B"),
+            tasks=[self._create_task("task3")],
+        )
+        op3.downstream_names = ["end1"]
+        op3.error_xml = "fail1"
+        end = parsed_action_node.ParsedActionNode(
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="end1", dag_name="DAG_NAME_B"),
+            tasks=[self._create_task("end1")],
+        )
+        fail = parsed_action_node.ParsedActionNode(
+            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="fail1", dag_name="DAG_NAME_B"),
+            tasks=[self._create_task("fail1")],
+        )
+        op_dict = {"task1": op1, "task2": op2, "task3": op3, "end1": end, "fail1": fail}
+        workflow = self._create_workflow(nodes=op_dict)
+        converter = self._create_converter()
+
+        workflow.relations = set()
+        converter.convert_relations(workflow)
+        converter.update_trigger_rules(workflow)
+
+        self.assertFalse(op1.is_ok)
+        self.assertFalse(op1.is_error)
+        self.assertTrue(op2.is_ok)
+        self.assertFalse(op2.is_error)
+        self.assertTrue(op3.is_ok)
+        self.assertFalse(op2.is_error)
+        self.assertTrue(end.is_ok)
+        self.assertFalse(end.is_error)
+        self.assertFalse(fail.is_ok)
+        self.assertTrue(fail.is_error)
+
     @staticmethod
     def _create_converter():
         return OozieConverter(
@@ -157,3 +269,7 @@ class TestOozieConverter(TestCase):
             else nodes,
             dependencies={"import IMPORT"},
         )
+
+    @staticmethod
+    def _create_task(task_id):
+        return Task(task_id=task_id, template_name="dummy.tpl")
