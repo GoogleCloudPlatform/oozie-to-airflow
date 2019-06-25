@@ -140,6 +140,7 @@ class OozieConverter:
                 relation = Relation(
                     from_task_id=p_node.last_task_id,
                     to_task_id=workflow.nodes[error_downstream].first_task_id,
+                    is_error=True,
                 )
                 workflow.relations.add(relation)
 
