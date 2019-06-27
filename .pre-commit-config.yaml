@@ -80,7 +80,7 @@ repos:
     hooks:
       - id: pylint
         name: Checks for common programming errors with pylint
-  - repo: git@github.com:thlorenz/doctoc
+  - repo: https://github.com/thlorenz/doctoc.git
     rev: "v1.4.0"
     hooks:
       - id: doctoc
