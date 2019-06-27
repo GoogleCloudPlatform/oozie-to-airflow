@@ -26,6 +26,9 @@ from o2a.converter.mappers import ACTION_MAP
 from o2a.converter.oozie_converter import OozieConverter
 from o2a.converter.constants import HDFS_FOLDER
 from o2a.converter.renderers import PythonRenderer, DotRenderer
+from o2a.transformers.remove_end_transformer import RemoveEndTransformer
+from o2a.transformers.remove_kill_transformer import RemoveKillTransformer
+from o2a.transformers.remove_start_transformer import RemoveStartTransformer
 from o2a.utils.constants import CONFIG, WORKFLOW_XML
 
 INDENT = 4
@@ -97,13 +100,16 @@ Otherwise please provide it.
         start_days_ago=start_days_ago,
     )
 
+    transformers = [RemoveEndTransformer(), RemoveKillTransformer(), RemoveStartTransformer()]
+
     converter = OozieConverter(
         dag_name=dag_name,
         input_directory_path=input_directory_path,
         output_directory_path=output_directory_path,
         action_mapper=ACTION_MAP,
-        user=args.user,
         renderer=renderer,
+        transformers=transformers,
+        user=args.user,
     )
     converter.recreate_output_directory()
     converter.convert()
