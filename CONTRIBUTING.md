@@ -17,32 +17,35 @@
 Table of Contents
 =================
 
-* [Table of Contents](#table-of-contents)
-* [How to Contribute](#how-to-contribute)
-  * [Contributor License Agreement](#contributor-license-agreement)
-  * [Code reviews](#code-reviews)
-  * [Community Guidelines](#community-guidelines)
-* [Architecture of the solution](#architecture-of-the-solution)
-* [Local development environment](#local-development-environment)
-  * [Local environment setup](#local-environment-setup)
-  * [Static code analysis and pre\-commit hooks](#static-code-analysis-and-pre-commit-hooks)
-  * [Running Unit Tests](#running-unit-tests)
-  * [Running all example conversions](#running-all-example-conversions)
-  * [Dependency graphs](#dependency-graphs)
-* [Cloud test environment with Dataproc and Composer](#cloud-test-environment-with-dataproc-and-composer)
-  * [Cloud environment setup](#cloud-environment-setup)
-    * [Cloud Composer](#cloud-composer)
-    * [Cloud Dataproc Cluster with Oozie](#cloud-dataproc-cluster-with-oozie)
-    * [Creating Dataproc cluster](#creating-dataproc-cluster)
-  * [Running system tests](#running-system-tests)
-    * [System tests](#system-tests)
-    * [Caching latest used parameters by run\-sys\-test](#caching-latest-used-parameters-by-run-sys-test)
-    * [Test phases](#test-phases)
-    * [Test scenarios](#test-scenarios)
-    * [Running system tests with sub\-workflows](#running-system-tests-with-sub-workflows)
-    * [Packaging the application and uploading to PyPi](#packaging-the-application-and-uploading-to-pypi)
+<!-- START doctoc generated TOC please keep comment here to allow auto update -->
+<!-- DON'T EDIT THIS SECTION, INSTEAD RE-RUN doctoc TO UPDATE -->
 
-Created by [gh-md-toc](https://github.com/ekalinin/github-markdown-toc.go)
+
+- [How to Contribute](#how-to-contribute)
+  - [Contributor License Agreement](#contributor-license-agreement)
+  - [Code reviews](#code-reviews)
+  - [Community Guidelines](#community-guidelines)
+- [Architecture of the solution](#architecture-of-the-solution)
+- [Local development environment](#local-development-environment)
+  - [Local environment setup](#local-environment-setup)
+  - [Static code analysis and pre-commit hooks](#static-code-analysis-and-pre-commit-hooks)
+  - [Running Unit Tests](#running-unit-tests)
+  - [Running all example conversions](#running-all-example-conversions)
+  - [Dependency graphs](#dependency-graphs)
+- [Cloud test environment with Dataproc and Composer](#cloud-test-environment-with-dataproc-and-composer)
+  - [Cloud environment setup](#cloud-environment-setup)
+    - [Cloud Composer](#cloud-composer)
+    - [Cloud Dataproc Cluster with Oozie](#cloud-dataproc-cluster-with-oozie)
+    - [Creating Dataproc cluster](#creating-dataproc-cluster)
+  - [Running system tests](#running-system-tests)
+    - [System tests](#system-tests)
+    - [Caching latest used parameters by run-sys-test](#caching-latest-used-parameters-by-run-sys-test)
+    - [Test phases](#test-phases)
+    - [Test scenarios](#test-scenarios)
+    - [Running system tests with sub-workflows](#running-system-tests-with-sub-workflows)
+    - [Packaging the application and uploading to PyPi](#packaging-the-application-and-uploading-to-pypi)
+
+<!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
 # How to Contribute
 
