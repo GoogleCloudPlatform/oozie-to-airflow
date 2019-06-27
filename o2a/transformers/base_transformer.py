@@ -12,10 +12,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Maps Oozie start node to Airflow's DAG"""
+"""Base transformer classes"""
+from abc import ABC, abstractmethod
 
-from o2a.mappers.dummy_mapper import DummyMapper
+from o2a.converter.workflow import Workflow
 
 
-class StartMapper(DummyMapper):
-    """Maps start node"""
+# pylint: disable=too-few-public-methods
+class BaseWorkflowTransformer(ABC):
+    """
+    Base class for all transformers
+    """
+
+    @abstractmethod
+    def process_workflow(self, workflow: Workflow):
+        pass

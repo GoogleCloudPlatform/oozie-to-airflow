@@ -13,44 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Kill mapper - maps the workflow end"""
-from typing import List, Optional, Set, Tuple
-from xml.etree.ElementTree import Element
 
-from o2a.converter.task import Task
-from o2a.converter.workflow import Workflow
-from o2a.converter.relation import Relation
-from o2a.mappers.base_mapper import BaseMapper
-from o2a.o2a_libs.property_utils import PropertySet
+from o2a.mappers.dummy_mapper import DummyMapper
 
 
-class KillMapper(BaseMapper):
+class KillMapper(DummyMapper):
     """
     Converts a Kill Oozie node to an Airflow task.
     """
-
-    def __init__(
-        self, oozie_node: Element, name: str, dag_name: str, props: Optional[PropertySet] = None, **kwargs
-    ):
-        super().__init__(
-            oozie_node=oozie_node,
-            name=name,
-            dag_name=dag_name,
-            props=props or PropertySet(job_properties={}, config={}),
-            **kwargs,
-        )
-
-    def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
-        tasks = [Task(task_id=self.name, template_name="kill.tpl")]
-        relations: List[Relation] = []
-        return tasks, relations
-
-    def required_imports(self) -> Set[str]:
-        return {"from airflow.operators import bash_operator"}
-
-    def on_parse_finish(self, workflow: Workflow):
-        super().on_parse_finish(workflow)
-        if workflow.nodes[self.name].is_error:
-            del workflow.nodes[self.name]
-            workflow.relations -= {
-                relation for relation in workflow.relations if relation.to_task_id == self.name
-            }

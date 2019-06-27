@@ -15,7 +15,7 @@
 """Converts Oozie application workflow into Airflow's DAG
 """
 import shutil
-from typing import Dict, Type
+from typing import Dict, Type, List
 
 import os
 
@@ -29,6 +29,7 @@ from o2a.converter.relation import Relation
 from o2a.converter.renderers import BaseRenderer
 from o2a.converter.workflow import Workflow
 from o2a.mappers.action_mapper import ActionMapper
+from o2a.transformers.base_transformer import BaseWorkflowTransformer
 from o2a.utils import el_utils
 from o2a.utils.constants import CONFIG, JOB_PROPS
 from o2a.o2a_libs.property_utils import PropertySet
@@ -36,7 +37,17 @@ from o2a.o2a_libs.property_utils import PropertySet
 
 # pylint: disable=too-many-instance-attributes
 class OozieConverter:
-    """Converts Oozie Workflow app to Airflow's DAG
+    """
+    Converts Oozie Workflow app to Airflow's DAG
+
+    :param dag_name: Desired output DAG name.
+    :param input_directory_path: Oozie workflow directory.
+    :param output_directory_path: Desired output directory.
+    :param action_mapper: List of charters that support action nodes
+    :param renderer: Renderer that will be used for the output file
+    :param transformers: List of transformers that will transform a workflow
+    :param user: Username.  # TODO remove me and use real ${user} EL
+    :param initial_props: Initial PropertySet object
     """
 
     def __init__(
@@ -46,17 +57,11 @@ class OozieConverter:
         output_directory_path: str,
         action_mapper: Dict[str, Type[ActionMapper]],
         renderer: BaseRenderer,
+        transformers: List[BaseWorkflowTransformer] = None,
         user: str = None,
         initial_props: PropertySet = None,
     ):
-        """
-        :param input_directory_path: Oozie workflow directory.
-        :param output_directory_path: Desired output directory.
-        :param user: Username.  # TODO remove me and use real ${user} EL
-        :param start_days_ago: Desired DAG start date, expressed as number of days ago from the present day
-        :param schedule_interval: Desired DAG schedule interval, expressed as number of days
-        :param dag_name: Desired output DAG name.
-        """
+
         # Each OozieParser class corresponds to one workflow, where one can get
         # the workflow's required dependencies (imports), operator relations,
         # and operator execution sequence.
@@ -66,6 +71,7 @@ class OozieConverter:
         self.config_file = os.path.join(input_directory_path, CONFIG)
         self.job_properties_file = os.path.join(input_directory_path, JOB_PROPS)
         self.renderer = renderer
+        self.transformers = transformers or []
         # Propagate the configuration in case initial property set is passed
         self.job_properties = {} if not initial_props else initial_props.job_properties
         self.job_properties["user.name"] = user or os.environ["USER"]
@@ -92,13 +98,14 @@ class OozieConverter:
         self.parser.parse_workflow()
 
         workflow = self.parser.workflow
+
+        self.apply_transformers(workflow)
+
         self.convert_nodes(workflow.nodes)
-        self.convert_dependencies(workflow)
-        self.convert_relations(workflow)
         self.update_trigger_rules(workflow)
 
-        for node in workflow.nodes.copy().values():
-            node.mapper.on_parse_finish(workflow)
+        self.convert_relations(workflow)
+        self.convert_dependencies(workflow)
 
         if as_subworkflow:
             self.renderer.create_subworkflow_file(workflow=workflow, props=self.props)
@@ -189,3 +196,8 @@ class OozieConverter:
                 input_directory_path=os.path.join(self.input_directory_path, HDFS_FOLDER),
                 output_directory_path=self.output_directory_path,
             )
+
+    def apply_transformers(self, workflow: Workflow):
+        logging.info(f"Applying transformers")
+        for transformer in self.transformers:
+            transformer.process_workflow(workflow)
