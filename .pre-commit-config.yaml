@@ -80,6 +80,11 @@ repos:
     hooks:
       - id: pylint
         name: Checks for common programming errors with pylint
+  - repo: https://github.com/thlorenz/doctoc.git
+    rev: "v1.4.0"
+    hooks:
+      - id: doctoc
+        files: ^README\.md|CONTRIBUTING\.md$
   - repo: local
     hooks:
       - id: autoflake
