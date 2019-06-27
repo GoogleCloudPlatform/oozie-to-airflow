@@ -36,14 +36,15 @@ class RemoveInaccessibleNodeTransformer(BaseWorkflowTransformer):
         for node in workflow.nodes.copy().values():
             if node not in accessible_nodes:
                 del workflow.nodes[node.name]
-                workflow.relations -= {r for r in workflow.relations if r.to_task_id == node.last_task_id}
+                to_delete = {r for r in workflow.relations if r.from_task_id == node.last_task_id}
+                workflow.relations -= to_delete
 
     @staticmethod
     def _find_accessible_nodes(workflow: Workflow):
         """
         Finds nodes that are reachable from any Start node.
         """
-        start_nodes = (node for node in workflow.nodes.values() if isinstance(node.mapper, StartMapper))
+        start_nodes = workflow.get_nodes_by_type(StartMapper)
         visited_node: Dict[str, ParsedActionNode] = dict()
 
         def visit_node(node: ParsedActionNode):

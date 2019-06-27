@@ -27,8 +27,29 @@ from o2a.mappers.start_mapper import StartMapper
 from o2a.transformers.remove_inaccessible_node_transformer import RemoveInaccessibleNodeTransformer
 
 
-class RemoveEndTransformerTest(unittest.TestCase):
-    def test_should_keep_connected_nodes(self):
+class RemoveInaccessibleNodeTransformerTest(unittest.TestCase):
+    def test_should_keep_connected_nodes_in_correct_flow(self):
+        """
+        Graph before:
+
+        .. graphviz::
+
+           digraph foo {
+              S -> A
+           }
+
+        Graph after:
+
+        .. graphviz::
+
+           digraph foo {
+              S -> A
+           }
+
+        Where:
+        A - first_task
+        S - start_task
+        """
         transformer = RemoveInaccessibleNodeTransformer()
 
         workflow = Workflow(input_directory_path="", output_directory_path="", dag_name="DAG_NAME_B")
@@ -72,6 +93,27 @@ class RemoveEndTransformerTest(unittest.TestCase):
         )
 
     def test_should_keep_connected_nodes_in_error_state(self):
+        """
+        Graph before:
+
+        .. graphviz::
+
+           digraph foo {
+              S -> A
+           }
+
+        Graph after:
+
+        .. graphviz::
+
+           digraph foo {
+              S -> A
+           }
+
+        Where:
+        A - first_task
+        S - start_task
+        """
         transformer = RemoveInaccessibleNodeTransformer()
 
         workflow = Workflow(input_directory_path="", output_directory_path="", dag_name="DAG_NAME_B")
@@ -103,6 +145,29 @@ class RemoveEndTransformerTest(unittest.TestCase):
         )
 
     def test_should_remove_inaccessible_node(self):
+        """
+        Graph before:
+
+        .. graphviz::
+
+           digraph foo {
+              S -> A
+              B -> A
+           }
+
+        Graph after:
+
+        .. graphviz::
+
+           digraph foo {
+              S -> A
+           }
+
+        Where:
+        A - first_task
+        B - second_task
+        S - start_task
+        """
         transformer = RemoveInaccessibleNodeTransformer()
 
         workflow = Workflow(input_directory_path="", output_directory_path="", dag_name="DAG_NAME_B")
@@ -119,19 +184,82 @@ class RemoveEndTransformerTest(unittest.TestCase):
         first_node = ParsedActionNode(mapper=first_mapper, tasks=[self._get_dummy_task(first_mapper.name)])
         second_node = ParsedActionNode(mapper=second_mapper, tasks=[self._get_dummy_task(second_mapper.name)])
         start_node = ParsedActionNode(mapper=start_mapper, tasks=[self._get_dummy_task(start_mapper.name)])
+
+        second_node.downstream_names = [first_mapper.name]
         start_node.downstream_names = [first_mapper.name]
+
         workflow.nodes[first_mapper.name] = first_node
         workflow.nodes[second_mapper.name] = second_node
         workflow.nodes[start_mapper.name] = start_node
 
-        workflow.relations = {Relation(from_task_id=start_mapper.name, to_task_id=first_mapper.name)}
+        workflow.relations = {
+            Relation(from_task_id=second_mapper.name, to_task_id=first_mapper.name),
+            Relation(from_task_id=start_mapper.name, to_task_id=first_mapper.name),
+        }
 
         transformer.process_workflow(workflow)
 
         self.assertEqual({start_mapper.name, first_mapper.name}, set(workflow.nodes.keys()))
         self.assertEqual(
-            {Relation(from_task_id="start_task", to_task_id="first_task", is_error=False)}, workflow.relations
+            {Relation(from_task_id=start_mapper.name, to_task_id=first_mapper.name)}, workflow.relations
         )
+
+    def test_should_remove_group_of_inaccessible_nodes(self):
+        """
+        Graph before:
+
+        .. graphviz::
+
+            digraph foo {
+                A -> B
+                B -> S
+            }
+
+        Graph after:
+
+        .. graphviz::
+
+            digraph foo {
+                S
+            }
+
+        Where:
+        A - first_task
+        B - second_task
+        S - start_task
+        """
+        transformer = RemoveInaccessibleNodeTransformer()
+
+        workflow = Workflow(input_directory_path="", output_directory_path="", dag_name="DAG_NAME_B")
+
+        first_mapper = mock.Mock(spec=BaseMapper)
+        first_mapper.name = "first_task"
+
+        second_mapper = mock.Mock(spec=BaseMapper)
+        second_mapper.name = "second_task"
+
+        start_mapper = mock.Mock(spec=StartMapper)
+        start_mapper.name = "start_task"
+
+        first_node = ParsedActionNode(mapper=first_mapper, tasks=[self._get_dummy_task(first_mapper.name)])
+        second_node = ParsedActionNode(mapper=second_mapper, tasks=[self._get_dummy_task(second_mapper.name)])
+        start_node = ParsedActionNode(mapper=start_mapper, tasks=[self._get_dummy_task(start_mapper.name)])
+
+        first_mapper.downstream_names = [second_mapper.name]
+        second_mapper.downstream_names = [start_mapper.name]
+        workflow.nodes[first_mapper.name] = first_node
+        workflow.nodes[second_mapper.name] = second_node
+        workflow.nodes[start_mapper.name] = start_node
+
+        workflow.relations = {
+            Relation(from_task_id=first_mapper.name, to_task_id=second_mapper.name),
+            Relation(from_task_id=second_mapper.name, to_task_id=start_mapper.name),
+        }
+
+        transformer.process_workflow(workflow)
+
+        self.assertEqual({start_mapper.name}, set(workflow.nodes.keys()))
+        self.assertEqual(set(), workflow.relations)
 
     @staticmethod
     def _get_dummy_task(task_id):
