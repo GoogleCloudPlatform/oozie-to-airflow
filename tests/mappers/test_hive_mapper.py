@@ -152,7 +152,6 @@ class TestHiveMapper(unittest.TestCase):
                 Task(
                     task_id="test_id",
                     template_name="hive.tpl",
-                    trigger_rule="dummy",
                     template_params={
                         "query": None,
                         "script": "script.q",

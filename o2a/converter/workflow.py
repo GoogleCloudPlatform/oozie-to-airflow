@@ -14,7 +14,7 @@
 # limitations under the License.
 """Workflow"""
 from collections import OrderedDict
-from typing import Set, Dict
+from typing import Set, Dict, Type
 
 from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.relation import Relation
@@ -52,6 +52,25 @@ class Workflow:  # pylint: disable=too-few-public-methods
             "from airflow.utils.trigger_rule import TriggerRule",
             "from airflow.utils import dates",
         }
+
+    def get_nodes_by_type(self, mapper_type: Type):
+        return [node for node in self.nodes.values() if isinstance(node.mapper, mapper_type)]
+
+    def find_upstream_nodes(self, target_node):
+        result = []
+        for node in self.nodes.values():
+            if target_node.name in node.downstream_names or target_node.name == node.error_xml:
+                result.append(node)
+        return result
+
+    def remove_node(self, node_to_delete: ParsedActionNode):
+        del self.nodes[node_to_delete.name]
+
+        for node in self.nodes.values():
+            if node_to_delete.name in node.downstream_names:
+                node.downstream_names.remove(node_to_delete.name)
+            if node.error_xml == node_to_delete.name:
+                node.error_xml = None
 
     def __repr__(self) -> str:
         return (
