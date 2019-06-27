@@ -13,3 +13,7 @@
 # limitations under the License.
 ---
 extends: default
+
+rules:
+  line-length:
+    max: 110
