@@ -122,6 +122,23 @@ class TestOozieConverter(TestCase):
 
         self.assertEqual({"import IMPORT", "import C", "import B", "import A"}, workflow.dependencies)
 
+    @mock.patch("o2a.converter.oozie_converter.parser.OozieParser")
+    def test_apply_transformers(self, oozie_parser_mock):
+        workflow = self._create_workflow()
+        oozie_parser_mock.return_value.workflow = workflow
+
+        transformer_1 = mock.MagicMock()
+        transformer_2 = mock.MagicMock()
+
+        converter = self._create_converter()
+
+        converter.transformers = [transformer_1, transformer_2]
+
+        converter.apply_transformers(workflow)
+
+        transformer_1.process_workflow.assert_called_once_with(workflow)
+        transformer_2.process_workflow.assert_called_once_with(workflow)
+
     def test_copy_extra_assets(self):
         converter = self._create_converter()
 

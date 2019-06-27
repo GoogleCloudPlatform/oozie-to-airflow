@@ -12,10 +12,22 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Maps Oozie start node to Airflow's DAG"""
+"""
+Remove Start Transformer
+"""
 
-from o2a.mappers.dummy_mapper import DummyMapper
+from o2a.converter.workflow import Workflow
+from o2a.mappers.start_mapper import StartMapper
+from o2a.transformers.base_transformer import BaseWorkflowTransformer
 
 
-class StartMapper(DummyMapper):
-    """Maps start node"""
+# pylint: disable=too-few-public-methods
+class RemoveStartTransformer(BaseWorkflowTransformer):
+    """
+    Remove Start nodes with all relations.
+    """
+
+    def process_workflow(self, workflow: Workflow):
+        start_nodes = workflow.get_nodes_by_type(StartMapper)
+        for start_node in start_nodes:
+            workflow.remove_node(start_node)
