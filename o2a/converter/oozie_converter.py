@@ -101,10 +101,6 @@ class OozieConverter:
         self.convert_nodes(workflow.nodes)
         self.convert_relations(workflow)
         self.update_trigger_rules(workflow)
-
-        for node in workflow.nodes.copy().values():
-            node.mapper.on_parse_finish(workflow)
-
         self.apply_transformers(workflow)
         self.convert_dependencies(workflow)
 
