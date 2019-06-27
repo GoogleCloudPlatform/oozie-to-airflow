@@ -106,7 +106,7 @@ GRAMMAR = r"""
 
     INVOCATION_COLON: ":"
 
-    JAVA: /[a-zA-Z_]+/
+    JAVA: /(?!true|false|null)([a-zA-Z_]+)/
 
     BOOL: "true" | "false"
 
@@ -232,7 +232,8 @@ def _translate_token(token: Token) -> str:
     if token.type == "BOOL":
         if token.value == "true":
             token.value = True
-        token.value = False
+        else:
+            token.value = False
 
     if token.type == "JAVA":
         token.value = _camel_to_snake(token.value)

@@ -60,6 +60,8 @@ class TestElParser(unittest.TestCase):
                 '${"bool" == bool ? print("ok") : print("not ok")}',
                 '{{print("ok") if "bool" == bool else print("not ok")}}',
             ),
+            ('${f(x) ? print("ok") : print("not ok")}', '{{print("ok") if f(x) else print("not ok")}}'),
+            ('${!false ? print("ok") : print("not ok")}', '{{print("ok") if !False else print("not ok")}}'),
             ("some pure text ${coord:user()}", "some pure text {{coord_user()}}"),
             (
                 "${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/${outputDir}",
@@ -112,6 +114,14 @@ class TestElParser(unittest.TestCase):
             ("#{'${'}", "{{'${'}}"),
             ("${'${'}", "{{'${'}}"),
             ("${function()} literal and #{OtherFunction}", "{{function()}} literal and {{other_function}}"),
+            ("${2 ne 4}", "{{2 != 4}}"),
+            ("${2 lt 4}", "{{2 < 4}}"),
+            ("${2 le 4}", "{{2 <= 4}}"),
+            ("${2 ge 4}", "{{2 >= 4}}"),
+            ("${2 && 4}", "{{2 and 4}}"),
+            ("${f(x) == true}", "{{f(x) == True}}"),
+            ("${f(x) == false}", "{{f(x) == False}}"),
+            ("${f(x) == null}", "{{f(x) == None}}"),
         ]
     )
     def test_translations(self, input_sentence, output_sentence):
