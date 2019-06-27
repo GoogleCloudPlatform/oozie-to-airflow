@@ -18,12 +18,20 @@ O2A_DIR="$( cd "${MY_DIR}/.." && pwd )"
 
 pushd "${O2A_DIR}"
 
-for EXAMPLE in $(cd examples; ls)
+OUTPUT_FORMAT=${1-py}
+
+for EXAMPLE in $(find examples -name workflow.xml | cut -d "/" -f 2)
 do
     "${MY_DIR}/o2a-run-sys-test" --phase prepare-configuration -a "${EXAMPLE}"
 done
-for EXAMPLE in $(cd examples; ls)
+for EXAMPLE in $(find examples -name workflow.xml | cut -d "/" -f 2)
 do
-    "${MY_DIR}/o2a-run-sys-test" --phase convert -a "${EXAMPLE}"
+    if [[ "${OUTPUT_FORMAT}" == "py" ]]; then
+        "${MY_DIR}/o2a-run-sys-test" --phase convert -a "${EXAMPLE}"
+    elif [[ "${OUTPUT_FORMAT}" == "dot" ]]; then
+        "${MY_DIR}/o2a-run-sys-test" --phase convert -a "${EXAMPLE}" --dot
+    else
+        echo "Unknown format. Supported format: dot, py."
+        exit 1
+    fi
 done
-popd
