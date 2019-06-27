@@ -14,7 +14,7 @@
 # limitations under the License.
 """Workflow"""
 from collections import OrderedDict
-from typing import Set, Dict
+from typing import Set, Dict, Type
 
 from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.relation import Relation
@@ -52,6 +52,9 @@ class Workflow:  # pylint: disable=too-few-public-methods
             "from airflow.utils.trigger_rule import TriggerRule",
             "from airflow.utils import dates",
         }
+
+    def get_nodes_by_type(self, mapper_type: Type):
+        return [node for node in self.nodes.values() if isinstance(node.mapper, mapper_type)]
 
     def __repr__(self) -> str:
         return (

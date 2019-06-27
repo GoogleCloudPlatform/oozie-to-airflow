@@ -15,23 +15,22 @@
 """
 Remove Kill Transformer
 """
-
-from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.workflow import Workflow
 from o2a.mappers.kill_mapper import KillMapper
-from o2a.transformers.base_transformer import TypeNodeWorkflowTransformer
+from o2a.transformers.base_transformer import BaseWorkflowTransformer
 
 
-class RemoveKillTransformer(TypeNodeWorkflowTransformer):
+# pylint: disable=too-few-public-methods
+class RemoveKillTransformer(BaseWorkflowTransformer):
     """
     Remove Kill nodes with all relations when it's used in error flow.
     """
 
-    wanted_type = KillMapper
-
-    def process_node(self, wanted_node: ParsedActionNode, workflow: Workflow):
-        if workflow.nodes[wanted_node.name].is_error:
-            del workflow.nodes[wanted_node.name]
-            workflow.relations -= {
-                relation for relation in workflow.relations if relation.to_task_id == wanted_node.name
-            }
+    def process_workflow(self, workflow: Workflow):
+        kill_nodes = workflow.get_nodes_by_type(KillMapper)
+        for kill_node in kill_nodes:
+            if workflow.nodes[kill_node.name].is_error:
+                del workflow.nodes[kill_node.name]
+                workflow.relations -= {
+                    relation for relation in workflow.relations if relation.to_task_id == kill_node.name
+                }

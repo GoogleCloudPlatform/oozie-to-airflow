@@ -14,9 +14,7 @@
 # limitations under the License.
 """Base transformer classes"""
 from abc import ABC, abstractmethod
-from typing import Type
 
-from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.workflow import Workflow
 
 
@@ -28,25 +26,4 @@ class BaseWorkflowTransformer(ABC):
 
     @abstractmethod
     def process_workflow(self, workflow: Workflow):
-        pass
-
-
-class TypeNodeWorkflowTransformer(BaseWorkflowTransformer):
-    """
-    A transformer that lets you simplify the processing of one type of node.
-    """
-
-    @property
-    @abstractmethod
-    def wanted_type(self) -> Type:
-        raise NotImplementedError("Not Implemented")
-
-    def process_workflow(self, workflow: Workflow):
-        wanted_nodes = [node for node in workflow.nodes.values() if isinstance(node.mapper, self.wanted_type)]
-
-        for wanted_node in wanted_nodes:
-            self.process_node(wanted_node, workflow)
-
-    @abstractmethod
-    def process_node(self, wanted_node: ParsedActionNode, workflow: Workflow):
         pass

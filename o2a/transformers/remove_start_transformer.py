@@ -16,21 +16,21 @@
 Remove Start Transformer
 """
 
-from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.workflow import Workflow
 from o2a.mappers.start_mapper import StartMapper
-from o2a.transformers.base_transformer import TypeNodeWorkflowTransformer
+from o2a.transformers.base_transformer import BaseWorkflowTransformer
 
 
-class RemoveStartTransformer(TypeNodeWorkflowTransformer):
+# pylint: disable=too-few-public-methods
+class RemoveStartTransformer(BaseWorkflowTransformer):
     """
     Remove Start nodes with all relations.
     """
 
-    wanted_type = StartMapper
-
-    def process_node(self, wanted_node: ParsedActionNode, workflow: Workflow):
-        del workflow.nodes[wanted_node.name]
-        workflow.relations -= {
-            relation for relation in workflow.relations if relation.from_task_id == wanted_node.name
-        }
+    def process_workflow(self, workflow: Workflow):
+        start_nodes = workflow.get_nodes_by_type(StartMapper)
+        for start_node in start_nodes:
+            del workflow.nodes[start_node.name]
+            workflow.relations -= {
+                relation for relation in workflow.relations if relation.from_task_id == start_node.name
+            }

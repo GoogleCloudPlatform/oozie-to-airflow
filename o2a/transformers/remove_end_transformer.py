@@ -15,41 +15,35 @@
 """
 Remove End Transformer
 """
-from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.workflow import Workflow
 from o2a.mappers.decision_mapper import DecisionMapper
 from o2a.mappers.end_mapper import EndMapper
-from o2a.transformers.base_transformer import TypeNodeWorkflowTransformer
+from o2a.transformers.base_transformer import BaseWorkflowTransformer
 
 
-class RemoveEndTransformer(TypeNodeWorkflowTransformer):
+# pylint: disable=too-few-public-methods
+class RemoveEndTransformer(BaseWorkflowTransformer):
     """
     Remove End nodes with all relations when it's not connected to Decision Node.
     """
 
-    wanted_type = EndMapper
-
-    def __init__(self):
-        self.decision_node_ids = None
-
     def process_workflow(self, workflow: Workflow):
-        self.decision_node_ids = {
-            node.last_task_id for node in workflow.nodes.values() if isinstance(node.mapper, DecisionMapper)
-        }
-        super().process_workflow(workflow)
+        decision_nodes = workflow.get_nodes_by_type(DecisionMapper)
+        decision_node_ids = {node.last_task_id for node in decision_nodes}
+        end_nodes = workflow.get_nodes_by_type(EndMapper)
 
-    def process_node(self, wanted_node: ParsedActionNode, workflow: Workflow):
-        upstream_task_ids = {
-            relation.from_task_id
-            for relation in workflow.relations
-            if relation.to_task_id == wanted_node.name
-        }
+        for end_node in end_nodes:
+            upstream_task_ids = {
+                relation.from_task_id
+                for relation in workflow.relations
+                if relation.to_task_id == end_node.name
+            }
 
-        if not self.decision_node_ids.intersection(upstream_task_ids):
-            del workflow.nodes[wanted_node.name]
+            if not decision_node_ids.intersection(upstream_task_ids):
+                del workflow.nodes[end_node.name]
 
-        workflow.relations -= {
-            relation
-            for relation in workflow.relations
-            if relation.to_task_id == wanted_node.name and relation.from_task_id not in self.decision_node_ids
-        }
+            workflow.relations -= {
+                relation
+                for relation in workflow.relations
+                if relation.to_task_id == end_node.name and relation.from_task_id not in decision_node_ids
+            }
