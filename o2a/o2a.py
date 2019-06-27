@@ -27,6 +27,7 @@ from o2a.converter.oozie_converter import OozieConverter
 from o2a.converter.constants import HDFS_FOLDER
 from o2a.converter.renderers import PythonRenderer, DotRenderer
 from o2a.transformers.remove_end_transformer import RemoveEndTransformer
+from o2a.transformers.remove_inaccessible_node_transformer import RemoveInaccessibleNodeTransformer
 from o2a.transformers.remove_kill_transformer import RemoveKillTransformer
 from o2a.transformers.remove_start_transformer import RemoveStartTransformer
 from o2a.utils.constants import CONFIG, WORKFLOW_XML
@@ -100,7 +101,12 @@ Otherwise please provide it.
         start_days_ago=start_days_ago,
     )
 
-    transformers = [RemoveEndTransformer(), RemoveKillTransformer(), RemoveStartTransformer()]
+    transformers = [
+        RemoveInaccessibleNodeTransformer(),
+        RemoveEndTransformer(),
+        RemoveKillTransformer(),
+        RemoveStartTransformer(),
+    ]
 
     converter = OozieConverter(
         dag_name=dag_name,
