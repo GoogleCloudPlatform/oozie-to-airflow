@@ -18,13 +18,42 @@ env:
 python:
   - "3.6"
 cache: pip
+addons:
+  apt:
+    packages:
+      - graphviz
+      - coreutils
+      - libxml2-utils
 install:
   - pip uninstall -y mock
   - pip install -r requirements.txt
-  - sudo apt-get install coreutils libxml2-utils
+  - sudo apt-get install
 script:
+  - export GCLOUD_KEY_FILE=.travis/o2a-build-artifacts-sa.json
+  - export ARTIFACTS_BUCKET=o2a-build-artifacts
+  - export BUCKET_URL="https://${ARTIFACTS_BUCKET}.storage.googleapis.com/commit-${TRAVIS_COMMIT}"
+  - gcloud auth activate-service-account --key-file=${GCLOUD_KEY_FILE}
   - ./bin/o2a-run-all-configurations
   - pre-commit run --all-files
-  - ./bin/o2a-run-all-conversions
+  - ./bin/o2a-generate-dependency-graph
+  - ./bin/o2a-generate-index images
+  - gsutil -m cp -R images gs://${ARTIFACTS_BUCKET}/commit-${TRAVIS_COMMIT}/images
+  - ./bin/o2a-run-all-conversions py
+  - ./bin/o2a-generate-index output
+  - gsutil -m cp -R output gs://${ARTIFACTS_BUCKET}/commit-${TRAVIS_COMMIT}/output-py
+  - rm -rf output
+  - ./bin/o2a-run-all-conversions dot
+  - ./bin/o2a-generate-index output
+  - gsutil -m cp -R output gs://${ARTIFACTS_BUCKET}/commit-${TRAVIS_COMMIT}/output-dot
+  - 'echo ================================================================================'
+  - 'echo Build artifacts URls'
+  - 'echo ================================================================================'
+  - 'echo "Images: ${BUCKET_URL}/images/index.html"'
+  - 'echo "Dot files: ${BUCKET_URL}/output-dot/index.html"'
+  - 'echo "Python files: ${BUCKET_URL}/output-py/index.html"'
+
 after_success:
   - bash <(curl -s https://codecov.io/bash)
+before_install:
+  - openssl aes-256-cbc -K $encrypted_45bde5987408_key -iv $encrypted_45bde5987408_iv
+    -in .travis/o2a-build-artifacts-sa.json.enc -out .travis/o2a-build-artifacts-sa.json -d

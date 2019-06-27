@@ -13,14 +13,53 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 #}
+{% macro relation_color(relation) -%}
+    {% if relation.is_error %}
+        red
+    {% else %}
+        green
+    {% endif %}
+{%- endmacro %}
+
+{% macro task_color(task) -%}
+    {% if task.trigger_rule == 'all_success' %}
+        darkgreen
+    {% elif task.trigger_rule == 'all_failed' %}
+        darkred
+    {% elif task.trigger_rule == 'all_done' %}
+        darkblue
+    {% elif task.trigger_rule == 'one_success' %}
+        green
+    {% elif task.trigger_rule == 'one_failed' %}
+        red
+    {% elif task.trigger_rule == 'dummy' %}
+        orange
+    {% else  %}
+        black
+    {% endif %}
+{%- endmacro %}
+
+{% macro node_color(node) -%}
+    {% if node.is_ok and node.is_error %}
+        blue
+    {% elif node.is_ok %}
+        green
+    {% elif node.is_error %}
+        red
+    {% else %}
+        black
+    {% endif %}
+{%- endmacro %}
+
 digraph {
     label="{{ dag_name }}";
-    rankdir="LR";
     {% for node in nodes %}
         subgraph cluster_{{ node.name | to_var }} {
             label="{{ node.name }}"
+            color={{ node_color(node) }}
             {% for task in node.tasks %}
                 {{ task.task_id | to_var }}
+                [color={{ task_color(task) }}]
                 [shape=none]
                 [label=<
                     <table border='0' cellborder='1' cellspacing="0">
@@ -40,12 +79,12 @@ digraph {
                 >]
             {% endfor %}
             {% for relation in node.relations %}
-                {{ relation.from_task_id | to_var }} -> {{ relation.to_task_id | to_var }}
+                {{ relation.from_task_id | to_var }} -> {{ relation.to_task_id | to_var }} [color={{ relation_color(relation) }}]
             {% endfor %}
         }
     {% endfor %}
 
     {% for relation in relations %}
-        {{ relation.from_task_id | to_var }} -> {{ relation.to_task_id | to_var }}
+        {{ relation.from_task_id | to_var }} -> {{ relation.to_task_id | to_var }} [color={{ relation_color(relation) }}]
     {% endfor %}
 }
