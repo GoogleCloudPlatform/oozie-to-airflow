@@ -15,10 +15,17 @@
 """Tests for all EL to Jinjia parser"""
 
 import unittest
+from collections import namedtuple
 
 from parameterized import parameterized
 
+from jinja2 import Template
+
 from o2a.o2a_libs.el_parser import translate
+import o2a.o2a_libs.functions as functions
+
+
+Dag = namedtuple("Dag", ("dag_id"))
 
 
 class TestElParser(unittest.TestCase):
@@ -53,9 +60,9 @@ class TestElParser(unittest.TestCase):
             ),
             ("#{customer.lName}", "{{customer.l_name}}"),
             ("#{customer.calcTotal}", "{{customer.calc_total}}"),
-            ('${wf:conf("jump.to") eq "ssh"}', '{{wf_conf("jump.to") == "ssh"}}'),
-            ('${wf:conf("jump.to") eq "parallel"}', '{{wf_conf("jump.to") == "parallel"}}'),
-            ('${wf:conf("jump.to") eq "single"}', '{{wf_conf("jump.to") == "single"}}'),
+            ('${wf:conf("jump.to") eq "ssh"}', '{{conf == "ssh"}}'),
+            ('${wf:conf("jump.to") eq "parallel"}', '{{conf == "parallel"}}'),
+            ('${wf:conf("jump.to") eq "single"}', '{{conf == "single"}}'),
             (
                 '${"bool" == bool ? print("ok") : print("not ok")}',
                 '{{print("ok") if "bool" == bool else print("not ok")}}',
@@ -65,7 +72,7 @@ class TestElParser(unittest.TestCase):
             ("some pure text ${coord:user()}", "some pure text {{coord_user()}}"),
             (
                 "${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/${outputDir}",
-                "{{name_node}}/user/{{wf_user()}}/{{examples_root}}/output-data/{{output_dir}}",
+                "{{name_node}}/user/{{params.props.merged.user.name}}/{{examples_root}}/output-data/{{output_dir}}",  # noqa  # pylint: disable=line-too-long
             ),
             ("${YEAR}/${MONTH}/${DAY}/${HOUR}", "{{year}}/{{month}}/{{day}}/{{hour}}"),
             ("pure text without any.function wf:function()", "pure text without any.function wf:function()"),
@@ -103,7 +110,7 @@ class TestElParser(unittest.TestCase):
                 "${fs:exists(concat(concat(concat(concat(concat(nameNode, '/user/'),"
                 "wf:user()), '/'), examplesRoot), '/output-data/demo/mr-node')) == 'true'}",
                 "{{fs_exists(concat(concat(concat(concat(concat(name_node,'/user/'),"
-                "wf_user()),'/'),examples_root),'/output-data/demo/mr-node')) == 'true'}}",
+                "params.props.merged.user.name),'/'),examples_root),'/output-data/demo/mr-node')) == 'true'}}",  # noqa  # pylint: disable=line-too-long
             ),
             (
                 "${wf:actionData('getDirInfo')['dir.num-files'] gt 23 || "
@@ -128,3 +135,20 @@ class TestElParser(unittest.TestCase):
         translation = translate(input_sentence)
         output_sentence = output_sentence
         self.assertEqual(translation, output_sentence)
+
+    @parameterized.expand(
+        [
+            ("Job name is ${'test_job'}", "Job name is test_job", {}),
+            ("${2 + 4}", "6", {}),
+            ("${name == 'name'}", "True", {"name": "name"}),
+            # ("${concat('aaa', 'bbb')}", "aaabbb", {"functions": functions}),
+            # ("${trim('  aaa  ')}", "aaa", {"functions": functions}),
+            ("${wf:id()}", "xxx", {"run_id": "xxx", "functions": functions}),
+            ("${wf:name()}", "xxx", {"dag": Dag(dag_id="xxx"), "functions": functions}),
+        ]
+    )
+    def test_rendering(self, input_sentence, output_sentence, kwargs):
+        translation = translate(input_sentence, functions_module="functions")
+        render = Template(translation).render(**kwargs)
+
+        self.assertEqual(render, output_sentence)
