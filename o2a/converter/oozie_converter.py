@@ -76,18 +76,18 @@ class OozieConverter:
         self.job_properties = {} if not initial_props else initial_props.job_properties
         self.job_properties["user.name"] = user or os.environ["USER"]
         self.config: Dict[str, str] = {}
+        self.workflow = Workflow(
+            dag_name=dag_name,
+            input_directory_path=input_directory_path,
+            output_directory_path=output_directory_path,
+        )
         self.props = PropertySet(
             job_properties=self.job_properties, config=self.config, action_node_properties={}
         )
         self.read_and_update_job_properties_replace_el()
         self.read_config_replace_el()
         self.parser = parser.OozieParser(
-            input_directory_path=input_directory_path,
-            output_directory_path=output_directory_path,
-            props=self.props,
-            action_mapper=action_mapper,
-            renderer=self.renderer,
-            dag_name=dag_name,
+            props=self.props, action_mapper=action_mapper, renderer=self.renderer, workflow=self.workflow
         )
 
     def recreate_output_directory(self):
@@ -96,25 +96,21 @@ class OozieConverter:
 
     def convert(self, as_subworkflow=False):
         self.parser.parse_workflow()
+        self.apply_transformers()
 
-        workflow = self.parser.workflow
+        self.convert_nodes()
+        self.update_trigger_rules()
 
-        self.apply_transformers(workflow)
-
-        self.convert_nodes(workflow.nodes)
-        self.update_trigger_rules(workflow)
-
-        self.convert_relations(workflow)
-        self.convert_dependencies(workflow)
+        self.convert_relations()
+        self.convert_dependencies()
 
         if as_subworkflow:
-            self.renderer.create_subworkflow_file(workflow=workflow, props=self.props)
+            self.renderer.create_subworkflow_file(workflow=self.workflow, props=self.props)
         else:
-            self.renderer.create_workflow_file(workflow=workflow, props=self.props)
-        self.copy_extra_assets(workflow.nodes)
+            self.renderer.create_workflow_file(workflow=self.workflow, props=self.props)
+        self.copy_extra_assets(self.workflow.nodes)
 
-    @staticmethod
-    def convert_nodes(nodes: Dict[str, ParsedActionNode]):
+    def convert_nodes(self):
         """
         For each Oozie node, converts it into relations and internal relations.
 
@@ -122,48 +118,45 @@ class OozieConverter:
         and ParsedActionNode.relations
         """
         logging.info("Converting nodes to tasks and inner relations")
-        for p_node in nodes.values():
+        for p_node in self.workflow.nodes.values():
             tasks, relations = p_node.mapper.to_tasks_and_relations()
             p_node.tasks = tasks
             p_node.relations = relations
 
-    @staticmethod
-    def convert_dependencies(workflow: Workflow) -> None:
+    def convert_dependencies(self) -> None:
         logging.info("Converting dependencies.")
-        for node in workflow.nodes.values():
-            workflow.dependencies.update(node.mapper.required_imports())
+        for node in self.workflow.nodes.values():
+            self.workflow.dependencies.update(node.mapper.required_imports())
 
-    @staticmethod
-    def convert_relations(workflow: Workflow) -> None:
+    def convert_relations(self) -> None:
         logging.info("Converting relations between nodes.")
-        for p_node in workflow.nodes.values():
+        for p_node in self.workflow.nodes.values():
             for downstream in p_node.get_downstreams():
                 relation = Relation(
-                    from_task_id=p_node.last_task_id, to_task_id=workflow.nodes[downstream].first_task_id
+                    from_task_id=p_node.last_task_id, to_task_id=self.workflow.nodes[downstream].first_task_id
                 )
-                workflow.relations.add(relation)
+                self.workflow.relations.add(relation)
             error_downstream = p_node.get_error_downstream_name()
             if error_downstream:
                 relation = Relation(
                     from_task_id=p_node.last_task_id,
-                    to_task_id=workflow.nodes[error_downstream].first_task_id,
+                    to_task_id=self.workflow.nodes[error_downstream].first_task_id,
                     is_error=True,
                 )
-                workflow.relations.add(relation)
+                self.workflow.relations.add(relation)
 
-    @staticmethod
-    def update_trigger_rules(workflow: Workflow) -> None:
+    def update_trigger_rules(self) -> None:
         logging.info("Updating trigger rules.")
-        for node in workflow.nodes.values():
+        for node in self.workflow.nodes.values():
             # If a task is referenced  by an "ok to=<task>", flip bit in parsed
             # node class
             for downstream in node.get_downstreams():
-                workflow.nodes[downstream].is_ok = True
+                self.workflow.nodes[downstream].is_ok = True
             error_name = node.get_error_downstream_name()
             if error_name:
                 # If a task is referenced  by an "error to=<task>", flip
                 # corresponding bit in the parsed node class
-                workflow.nodes[error_name].is_error = True
+                self.workflow.nodes[error_name].is_error = True
             node.update_trigger_rule()
 
     def read_config_replace_el(self):
@@ -197,7 +190,7 @@ class OozieConverter:
                 output_directory_path=self.output_directory_path,
             )
 
-    def apply_transformers(self, workflow: Workflow):
+    def apply_transformers(self):
         logging.info(f"Applying transformers")
         for transformer in self.transformers:
-            transformer.process_workflow(workflow)
+            transformer.process_workflow(self.workflow)

@@ -24,6 +24,7 @@ from parameterized import parameterized
 
 from o2a.converter import parser
 from o2a.converter.mappers import ACTION_MAP
+from o2a.converter.workflow import Workflow
 
 from o2a.definitions import EXAMPLE_DEMO_PATH, EXAMPLES_PATH
 
@@ -35,13 +36,11 @@ from o2a.o2a_libs.property_utils import PropertySet
 class TestOozieParser(unittest.TestCase):
     def setUp(self):
         props = PropertySet(job_properties={}, config={})
+        workflow = Workflow(
+            input_directory_path=EXAMPLE_DEMO_PATH, output_directory_path="/tmp", dag_name="DAG_NAME_B"
+        )
         self.parser = parser.OozieParser(
-            input_directory_path=EXAMPLE_DEMO_PATH,
-            output_directory_path="/tmp",
-            props=props,
-            action_mapper=ACTION_MAP,
-            dag_name="DAG_NAME_B",
-            renderer=mock.MagicMock(),
+            workflow=workflow, props=props, action_mapper=ACTION_MAP, renderer=mock.MagicMock()
         )
 
     @mock.patch("o2a.mappers.kill_mapper.KillMapper.on_parse_node", wraps=None)
@@ -443,12 +442,15 @@ class TestOozieExamples(unittest.TestCase):
     )
     @mock.patch("uuid.uuid4", return_value="1234")
     def test_parse_workflow_examples(self, case: WorkflowTestCase, _):
-        current_parser = parser.OozieParser(
+        workflow = Workflow(
             input_directory_path=path.join(EXAMPLES_PATH, case.name),
             output_directory_path="/tmp",
+            dag_name="DAG_NAME_B",
+        )
+        current_parser = parser.OozieParser(
+            workflow=workflow,
             props=PropertySet(job_properties=case.job_properties, config=case.config),
             action_mapper=ACTION_MAP,
-            dag_name="DAG_NAME_B",
             renderer=mock.MagicMock(),
         )
         current_parser.parse_workflow()
