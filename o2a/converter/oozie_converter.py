@@ -39,6 +39,10 @@ class OozieConverter:
     """
     Converts Oozie Workflow app to Airflow's DAG
 
+    Each OozieParser class corresponds to one workflow, where one can get
+    the workflow's required dependencies (imports), operator relations,
+    and operator execution sequence.
+
     :param dag_name: Desired output DAG name.
     :param input_directory_path: Oozie workflow directory.
     :param output_directory_path: Desired output directory.
@@ -60,32 +64,25 @@ class OozieConverter:
         user: str = None,
         initial_props: PropertySet = None,
     ):
-
-        # Each OozieParser class corresponds to one workflow, where one can get
-        # the workflow's required dependencies (imports), operator relations,
-        # and operator execution sequence.
-        self.input_directory_path = input_directory_path
-        self.output_directory_path = output_directory_path
-        self.dag_name = dag_name
+        self.workflow = Workflow(
+            dag_name=dag_name,
+            input_directory_path=input_directory_path,
+            output_directory_path=output_directory_path,
+        )
         self.renderer = renderer
         self.transformers = transformers or []
         # Propagate the configuration in case initial property set is passed
         job_properties = {} if not initial_props else initial_props.job_properties
         job_properties["user.name"] = user or os.environ["USER"]
         self.props = PropertySet(job_properties=job_properties)
-        self.workflow = Workflow(
-            dag_name=dag_name,
-            input_directory_path=input_directory_path,
-            output_directory_path=output_directory_path,
-        )
+        self.property_parser = PropertyParser(props=self.props, workflow=self.workflow)
         self.parser = parser.OozieParser(
             props=self.props, action_mapper=action_mapper, renderer=self.renderer, workflow=self.workflow
         )
-        self.property_parser = PropertyParser(props=self.props, workflow=self.workflow)
 
     def recreate_output_directory(self):
-        shutil.rmtree(self.output_directory_path, ignore_errors=True)
-        os.makedirs(self.output_directory_path, exist_ok=True)
+        shutil.rmtree(self.workflow.output_directory_path, ignore_errors=True)
+        os.makedirs(self.workflow.output_directory_path, exist_ok=True)
 
     def convert(self, as_subworkflow=False):
         self.property_parser.parse_property()
@@ -160,8 +157,8 @@ class OozieConverter:
         for node in nodes.values():
             logging.info(f"Copies additional assets for the node: {node.mapper.name}")
             node.mapper.copy_extra_assets(
-                input_directory_path=os.path.join(self.input_directory_path, HDFS_FOLDER),
-                output_directory_path=self.output_directory_path,
+                input_directory_path=os.path.join(self.workflow.input_directory_path, HDFS_FOLDER),
+                output_directory_path=self.workflow.output_directory_path,
             )
 
     def apply_transformers(self):
