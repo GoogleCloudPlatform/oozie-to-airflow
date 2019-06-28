@@ -25,13 +25,12 @@ import logging
 from o2a.converter import parser
 from o2a.converter.constants import HDFS_FOLDER
 from o2a.converter.parsed_action_node import ParsedActionNode
+from o2a.converter.property_parser import PropertyParser
 from o2a.converter.relation import Relation
 from o2a.converter.renderers import BaseRenderer
 from o2a.converter.workflow import Workflow
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.transformers.base_transformer import BaseWorkflowTransformer
-from o2a.utils import el_utils
-from o2a.utils.constants import CONFIG, JOB_PROPS
 from o2a.o2a_libs.property_utils import PropertySet
 
 
@@ -68,33 +67,28 @@ class OozieConverter:
         self.input_directory_path = input_directory_path
         self.output_directory_path = output_directory_path
         self.dag_name = dag_name
-        self.config_file = os.path.join(input_directory_path, CONFIG)
-        self.job_properties_file = os.path.join(input_directory_path, JOB_PROPS)
         self.renderer = renderer
         self.transformers = transformers or []
         # Propagate the configuration in case initial property set is passed
-        self.job_properties = {} if not initial_props else initial_props.job_properties
-        self.job_properties["user.name"] = user or os.environ["USER"]
-        self.config: Dict[str, str] = {}
+        job_properties = {} if not initial_props else initial_props.job_properties
+        job_properties["user.name"] = user or os.environ["USER"]
+        self.props = PropertySet(job_properties=job_properties)
         self.workflow = Workflow(
             dag_name=dag_name,
             input_directory_path=input_directory_path,
             output_directory_path=output_directory_path,
         )
-        self.props = PropertySet(
-            job_properties=self.job_properties, config=self.config, action_node_properties={}
-        )
-        self.read_and_update_job_properties_replace_el()
-        self.read_config_replace_el()
         self.parser = parser.OozieParser(
             props=self.props, action_mapper=action_mapper, renderer=self.renderer, workflow=self.workflow
         )
+        self.property_parser = PropertyParser(props=self.props, workflow=self.workflow)
 
     def recreate_output_directory(self):
         shutil.rmtree(self.output_directory_path, ignore_errors=True)
         os.makedirs(self.output_directory_path, exist_ok=True)
 
     def convert(self, as_subworkflow=False):
+        self.property_parser.parse_property()
         self.parser.parse_workflow()
         self.apply_transformers()
 
@@ -158,26 +152,6 @@ class OozieConverter:
                 # corresponding bit in the parsed node class
                 self.workflow.nodes[error_name].is_error = True
             node.update_trigger_rule()
-
-    def read_config_replace_el(self):
-        """
-        Reads configuration properties to config dictionary.
-        Replaces EL properties within.
-
-        :return: None
-        """
-        self.config = el_utils.parse_els(properties_file=self.config_file, props=self.props)
-
-    def read_and_update_job_properties_replace_el(self):
-        """
-        Reads job properties and updates job_properties dictionary with the read values
-        Replaces EL job_properties within.
-
-        :return: None
-        """
-        self.job_properties.update(
-            el_utils.parse_els(properties_file=self.job_properties_file, props=self.props)
-        )
 
     def copy_extra_assets(self, nodes: Dict[str, ParsedActionNode]):
         """
