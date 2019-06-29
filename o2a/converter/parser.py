@@ -46,19 +46,13 @@ class OozieParser:
 
     def __init__(
         self,
-        input_directory_path: str,
-        output_directory_path: str,
         props: PropertySet,
         action_mapper: Dict[str, Type[ActionMapper]],
         renderer: BaseRenderer,
-        dag_name: str,
+        workflow: Workflow,
     ):
-        self.workflow = Workflow(
-            dag_name=dag_name,
-            input_directory_path=input_directory_path,
-            output_directory_path=output_directory_path,
-        )
-        self.workflow_file = os.path.join(input_directory_path, HDFS_FOLDER, "workflow.xml")
+        self.workflow = workflow
+        self.workflow_file = os.path.join(workflow.input_directory_path, HDFS_FOLDER, "workflow.xml")
         self.props = props
         self.action_map = action_mapper
         self.renderer = renderer

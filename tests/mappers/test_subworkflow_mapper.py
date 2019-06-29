@@ -99,7 +99,7 @@ class TestSubworkflowMapper(TestCase):
         self.assertEqual(self.subworkflow_node, mapper.oozie_node)
         self.assertEqual(self.main_properties, mapper.props.job_properties)
         # Propagate config node is missing, should NOT forward config job_properties
-        self.assertEqual(PropertySet(config={}, job_properties={}), mapper.get_props())
+        self.assertEqual(PropertySet(config={}, job_properties={}), mapper.get_child_props())
 
     @mock.patch("o2a.utils.el_utils.parse_els")
     def test_to_tasks_and_relations(self, parse_els):

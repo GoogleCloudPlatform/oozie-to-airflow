@@ -50,16 +50,16 @@ class TestOozieConverter(TestCase):
 
     @mock.patch("o2a.converter.oozie_converter.parser.OozieParser")
     def test_convert(self, oozie_parser_mock):
-
         # Given
         converter = self._create_converter()
         workflow = self._create_workflow()
-        oozie_parser_mock.return_value.workflow = workflow
+        converter.workflow = workflow
 
         # When
         converter.convert()
 
         # Then
+        oozie_parser_mock.return_value.parse_workflow.assert_called_once_with()
         converter.renderer.create_subworkflow_file.assert_not_called()
         converter.renderer.create_workflow_file.assert_called_once_with(
             workflow=workflow, props=converter.props
@@ -67,16 +67,16 @@ class TestOozieConverter(TestCase):
 
     @mock.patch("o2a.converter.oozie_converter.parser.OozieParser")
     def test_convert_as_subworkflow(self, oozie_parser_mock):
-
         # Given
         converter = self._create_converter()
         workflow = self._create_workflow()
-        oozie_parser_mock.return_value.workflow = workflow
+        converter.workflow = workflow
 
         # When
         converter.convert(as_subworkflow=True)
 
         # Then
+        oozie_parser_mock.return_value.parse_workflow.assert_called_once_with()
         converter.renderer.create_workflow_file.assert_not_called()
         converter.renderer.create_subworkflow_file.assert_called_once_with(
             workflow=workflow, props=converter.props
@@ -99,8 +99,9 @@ class TestOozieConverter(TestCase):
         node_1 = ParsedActionNode(mapper=mapper_1)
         node_2 = ParsedActionNode(mapper=mapper_2)
         nodes = dict(TASK_1=node_1, TASK_2=node_2)
+        converter.workflow.nodes = nodes
 
-        converter.convert_nodes(nodes=nodes)
+        converter.convert_nodes()
 
         self.assertIs(node_1.tasks, tasks_1)
         self.assertIs(node_2.tasks, tasks_2)
@@ -118,23 +119,24 @@ class TestOozieConverter(TestCase):
         nodes = dict(TASK_1=node_1, TASK_2=node_2)
 
         workflow = self._create_workflow(nodes)
-        converter.convert_dependencies(workflow)
+        converter.workflow = workflow
+
+        converter.convert_dependencies()
 
         self.assertEqual({"import IMPORT", "import C", "import B", "import A"}, workflow.dependencies)
 
-    @mock.patch("o2a.converter.oozie_converter.parser.OozieParser")
-    def test_apply_transformers(self, oozie_parser_mock):
+    def test_apply_transformers(self):
         workflow = self._create_workflow()
-        oozie_parser_mock.return_value.workflow = workflow
 
         transformer_1 = mock.MagicMock()
         transformer_2 = mock.MagicMock()
 
         converter = self._create_converter()
+        converter.workflow = workflow
 
         converter.transformers = [transformer_1, transformer_2]
 
-        converter.apply_transformers(workflow)
+        converter.apply_transformers()
 
         transformer_1.process_workflow.assert_called_once_with(workflow)
         transformer_2.process_workflow.assert_called_once_with(workflow)
@@ -194,7 +196,9 @@ class TestOozieConverter(TestCase):
         workflow = self._create_workflow(nodes=op_dict)
         converter = self._create_converter()
         workflow.relations = set()
-        converter.convert_relations(workflow)
+        converter.workflow = workflow
+
+        converter.convert_relations()
 
         self.assertEqual(
             workflow.relations,
@@ -247,8 +251,9 @@ class TestOozieConverter(TestCase):
         converter = self._create_converter()
 
         workflow.relations = set()
-        converter.convert_relations(workflow)
-        converter.update_trigger_rules(workflow)
+        converter.workflow = workflow
+        converter.convert_relations()
+        converter.update_trigger_rules()
 
         self.assertFalse(op1.is_ok)
         self.assertFalse(op1.is_error)

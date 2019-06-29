@@ -73,11 +73,11 @@ class SubworkflowMapper(ActionMapper):
             renderer=self.renderer,
             action_mapper=self.action_mapper,
             dag_name=self.app_name,
-            initial_props=self.get_props(),
+            initial_props=self.get_child_props(),
         )
         converter.convert(as_subworkflow=True)
 
-    def get_props(self) -> PropertySet:
+    def get_child_props(self) -> PropertySet:
         propagate_configuration = self.oozie_node.find("propagate-configuration")
         # Below the `is not None` is necessary due to Element's __bool__() return value:
         # `len(self._children) != 0`,
