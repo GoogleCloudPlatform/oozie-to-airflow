@@ -31,12 +31,12 @@ class PropertySet:
 
     def __init__(
         self,
-        config: Dict[str, str],
         job_properties: Dict[str, str],
+        config: Dict[str, str] = None,
         action_node_properties: Dict[str, str] = None,
     ):
-        self.config: Dict[str, str] = config
-        self.job_properties: Dict[str, str] = job_properties
+        self.job_properties: Dict[str, str] = job_properties or {}
+        self.config: Dict[str, str] = config or {}
         self.action_node_properties: Dict[str, str] = action_node_properties or {}
 
     @property
