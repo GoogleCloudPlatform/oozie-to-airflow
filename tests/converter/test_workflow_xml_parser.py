@@ -22,7 +22,7 @@ from xml.etree import ElementTree as ET
 
 from parameterized import parameterized
 
-from o2a.converter import parser
+from o2a.converter import workflow_xml_parser
 from o2a.converter.mappers import ACTION_MAP
 from o2a.converter.workflow import Workflow
 
@@ -39,7 +39,7 @@ class TestWorkflowXmlParser(unittest.TestCase):
         workflow = Workflow(
             input_directory_path=EXAMPLE_DEMO_PATH, output_directory_path="/tmp", dag_name="DAG_NAME_B"
         )
-        self.parser = parser.WorkflowXmlParser(
+        self.parser = workflow_xml_parser.WorkflowXmlParser(
             workflow=workflow, props=props, action_mapper=ACTION_MAP, renderer=mock.MagicMock()
         )
 
@@ -72,7 +72,7 @@ class TestWorkflowXmlParser(unittest.TestCase):
         on_parse_node_mock.assert_called_once_with()
 
     @mock.patch("o2a.mappers.dummy_mapper.DummyMapper.on_parse_node", wraps=None)
-    @mock.patch("o2a.converter.parser.WorkflowXmlParser.parse_node")
+    @mock.patch("o2a.converter.workflow_xml_parser.WorkflowXmlParser.parse_node")
     def test_parse_fork_node(self, parse_node_mock, on_parse_node_mock):
         node_name = "fork_name"
         # language=XML
@@ -261,49 +261,49 @@ class TestWorkflowXmlParser(unittest.TestCase):
 
         on_parse_node_mock.assert_called_once_with()
 
-    @mock.patch("o2a.converter.parser.WorkflowXmlParser.parse_action_node")
+    @mock.patch("o2a.converter.workflow_xml_parser.WorkflowXmlParser.parse_action_node")
     def test_parse_node_action(self, action_mock):
         root = ET.Element("root")
         action = ET.SubElement(root, "action", attrib={"name": "test_name"})
         self.parser.parse_node(root, action)
         action_mock.assert_called_once_with(action)
 
-    @mock.patch("o2a.converter.parser.WorkflowXmlParser.parse_start_node")
+    @mock.patch("o2a.converter.workflow_xml_parser.WorkflowXmlParser.parse_start_node")
     def test_parse_node_start(self, start_mock):
         root = ET.Element("root")
         start = ET.SubElement(root, "start", attrib={"name": "test_name"})
         self.parser.parse_node(root, start)
         start_mock.assert_called_once_with(start)
 
-    @mock.patch("o2a.converter.parser.WorkflowXmlParser.parse_kill_node")
+    @mock.patch("o2a.converter.workflow_xml_parser.WorkflowXmlParser.parse_kill_node")
     def test_parse_node_kill(self, kill_mock):
         root = ET.Element("root")
         kill = ET.SubElement(root, "kill", attrib={"name": "test_name"})
         self.parser.parse_node(root, kill)
         kill_mock.assert_called_once_with(kill)
 
-    @mock.patch("o2a.converter.parser.WorkflowXmlParser.parse_end_node")
+    @mock.patch("o2a.converter.workflow_xml_parser.WorkflowXmlParser.parse_end_node")
     def test_parse_node_end(self, end_mock):
         root = ET.Element("root")
         end = ET.SubElement(root, "end", attrib={"name": "test_name"})
         self.parser.parse_node(root, end)
         end_mock.assert_called_once_with(end)
 
-    @mock.patch("o2a.converter.parser.WorkflowXmlParser.parse_fork_node")
+    @mock.patch("o2a.converter.workflow_xml_parser.WorkflowXmlParser.parse_fork_node")
     def test_parse_node_fork(self, fork_mock):
         root = ET.Element("root")
         fork = ET.SubElement(root, "fork", attrib={"name": "test_name"})
         self.parser.parse_node(root, fork)
         fork_mock.assert_called_once_with(root, fork)
 
-    @mock.patch("o2a.converter.parser.WorkflowXmlParser.parse_join_node")
+    @mock.patch("o2a.converter.workflow_xml_parser.WorkflowXmlParser.parse_join_node")
     def test_parse_node_join(self, join_mock):
         root = ET.Element("root")
         join = ET.SubElement(root, "join", attrib={"name": "test_name"})
         self.parser.parse_node(root, join)
         join_mock.assert_called_once_with(join)
 
-    @mock.patch("o2a.converter.parser.WorkflowXmlParser.parse_decision_node")
+    @mock.patch("o2a.converter.workflow_xml_parser.WorkflowXmlParser.parse_decision_node")
     def test_parse_node_decision(self, decision_mock):
         root = ET.Element("root")
         decision = ET.SubElement(root, "decision", attrib={"name": "test_name"})
@@ -447,7 +447,7 @@ class TestOozieExamples(unittest.TestCase):
             output_directory_path="/tmp",
             dag_name="DAG_NAME_B",
         )
-        current_parser = parser.WorkflowXmlParser(
+        current_parser = workflow_xml_parser.WorkflowXmlParser(
             workflow=workflow,
             props=PropertySet(job_properties=case.job_properties, config=case.config),
             action_mapper=ACTION_MAP,

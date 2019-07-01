@@ -48,7 +48,7 @@ class TestOozieConverter(TestCase):
         args = o2a.parse_args(["-i", input_dir, "-o", output_dir, "-u", user])
         self.assertEqual(args.user, user)
 
-    @mock.patch("o2a.converter.oozie_converter.parser.WorkflowXmlParser")
+    @mock.patch("o2a.converter.oozie_converter.workflow_xml_parser.WorkflowXmlParser")
     def test_convert(self, oozie_parser_mock):
         # Given
         converter = self._create_converter()
@@ -65,7 +65,7 @@ class TestOozieConverter(TestCase):
             workflow=workflow, props=converter.props
         )
 
-    @mock.patch("o2a.converter.oozie_converter.parser.WorkflowXmlParser")
+    @mock.patch("o2a.converter.oozie_converter.workflow_xml_parser.WorkflowXmlParser")
     def test_convert_as_subworkflow(self, oozie_parser_mock):
         # Given
         converter = self._create_converter()

@@ -22,7 +22,7 @@ import os
 import logging
 
 
-from o2a.converter import parser
+from o2a.converter import workflow_xml_parser
 from o2a.converter.constants import HDFS_FOLDER
 from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.property_parser import PropertyParser
@@ -76,7 +76,7 @@ class OozieConverter:
         job_properties["user.name"] = user or os.environ["USER"]
         self.props = PropertySet(job_properties=job_properties)
         self.property_parser = PropertyParser(props=self.props, workflow=self.workflow)
-        self.parser = parser.WorkflowXmlParser(
+        self.parser = workflow_xml_parser.WorkflowXmlParser(
             props=self.props, action_mapper=action_mapper, renderer=self.renderer, workflow=self.workflow
         )
 
