@@ -8,4 +8,5 @@
     <import namespace="uri:oozie:hive-action:1.0" schemaLocation="hive-action-1.0.xsd"/>
     <import namespace="uri:oozie:hive2-action:1.0" schemaLocation="hive2-action-1.0.xsd"/>
     <import namespace="uri:oozie:distcp-action:1.0" schemaLocation="distcp-action-1.0.xsd"/>
+    <import namespace="uri:oozie:email-action:0.2" schemaLocation="email-action-0.2.xsd"/>
 </schema>
