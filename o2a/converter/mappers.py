@@ -23,6 +23,7 @@ from typing import Type, Dict
 
 from o2a.mappers.distcp_mapper import DistCpMapper
 from o2a.mappers.action_mapper import ActionMapper
+from o2a.mappers.email_mapper import EmailMapper
 from o2a.mappers.fs_mapper import FsMapper
 from o2a.mappers.git_mapper import GitMapper
 from o2a.mappers.hive_mapper import HiveMapper
@@ -45,4 +46,5 @@ ACTION_MAP: Dict[str, Type[ActionMapper]] = {
     "hive": HiveMapper,
     "hive2": HiveMapper,
     "distcp": DistCpMapper,
+    "email": EmailMapper,
 }
