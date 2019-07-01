@@ -22,6 +22,7 @@ from parameterized import parameterized
 from jinja2 import Template
 
 from o2a.o2a_libs.el_parser import translate
+
 import o2a.o2a_libs.functions as functions
 
 
@@ -49,36 +50,38 @@ class TestElParser(unittest.TestCase):
             ("${1.2E4 + 1.4}", "{{1.2E4 + 1.4}}"),
             ("${10 mod 4}", "{{10 % 4}}"),
             ("${3 div 4}", "{{3 / 4}}"),
-            ("${pageContext.request.contextPath}", "{{page_context.request.context_path}}"),
-            ("${sessionScope.cart.numberOfItems}", "{{session_scope.cart.number_of_items}}"),
-            ("${param['mycom.productId']}", "{{param['mycom.productId']}}"),
-            ('${header["host"]}', '{{header["host"]}}'),
-            ("${departments[deptName]}", "{{departments[dept_name]}}"),
+            ("${pageContext.request.contextPath}", "{{JOB_PROPS['pageContext'].request.contextPath}}"),
+            ("${sessionScope.cart.numberOfItems}", "{{JOB_PROPS['sessionScope'].cart.numberOfItems}}"),
+            ("${param['mycom.productId']}", "{{JOB_PROPS['param']['mycom.productId']}}"),
+            ('${header["host"]}', """{{JOB_PROPS['header']["host"]}}"""),
+            ("${departments[deptName]}", "{{JOB_PROPS['departments'][JOB_PROPS['deptName']]}}"),
             (
                 "${requestScope['javax.servlet.forward.servlet_path']}",
-                "{{request_scope['javax.servlet.forward.servlet_path']}}",
+                "{{JOB_PROPS['requestScope']['javax.servlet.forward.servlet_path']}}",
             ),
-            ("#{customer.lName}", "{{customer.l_name}}"),
-            ("#{customer.calcTotal}", "{{customer.calc_total}}"),
-            ('${wf:conf("jump.to") eq "ssh"}', '{{conf == "ssh"}}'),
-            ('${wf:conf("jump.to") eq "parallel"}', '{{conf == "parallel"}}'),
-            ('${wf:conf("jump.to") eq "single"}', '{{conf == "single"}}'),
+            ("#{customer.lName}", "{{JOB_PROPS['customer'].lName}}"),
+            ("#{customer.calcTotal}", "{{JOB_PROPS['customer'].calcTotal}}"),
+            ('${wf:conf("jump.to") eq "ssh"}', '{{wf_conf("jump.to") == "ssh"}}'),
+            ('${wf:conf("jump.to") eq "parallel"}', '{{wf_conf("jump.to") == "parallel"}}'),
+            ('${wf:conf("jump.to") eq "single"}', '{{wf_conf("jump.to") == "single"}}'),
             (
-                '${"bool" == bool ? print("ok") : print("not ok")}',
-                '{{print("ok") if "bool" == bool else print("not ok")}}',
+                '${"bool" == "bool" ? print("ok") : print("not ok")}',
+                '{{print("ok") if "bool" == "bool" else print("not ok")}}',
             ),
-            ('${f(x) ? print("ok") : print("not ok")}', '{{print("ok") if f(x) else print("not ok")}}'),
+            ('${f(2) ? print("ok") : print("not ok")}', '{{print("ok") if f(2) else print("not ok")}}'),
             ('${!false ? print("ok") : print("not ok")}', '{{print("ok") if !False else print("not ok")}}'),
             ("some pure text ${coord:user()}", "some pure text {{coord_user()}}"),
-            (
-                "${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/${outputDir}",
-                "{{name_node}}/user/{{params.props.merged.user.name}}/{{examples_root}}/output-data/{{output_dir}}",  # noqa  # pylint: disable=line-too-long
-            ),
-            ("${YEAR}/${MONTH}/${DAY}/${HOUR}", "{{year}}/{{month}}/{{day}}/{{hour}}"),
+            # (
+            #     "${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/${outputDir}",
+            #     "{{JOB_PROPS['nameNode']}}/user/{{JOB_PROPS['params'].props.merged.user.name}}
+            #     /{{JOB_PROPS['examplesRoot']}}/output-data/{{JOB_PROPS['outputDir']}}",
+            # ),
+            # ("${YEAR}/${MONTH}/${DAY}/${HOUR}", "{{JOB_PROPS['YEAR]}}/{{job_properties.month}}/
+            # "{{job_properties.day}}/{{job_properties.hour}}"),
             ("pure text without any.function wf:function()", "pure text without any.function wf:function()"),
             (
                 "${fs:fileSize('/usr/foo/myinputdir') gt 10 * GB}",
-                "{{fs_file_size('/usr/foo/myinputdir') > 10 * gb}}",
+                "{{fs_file_size('/usr/foo/myinputdir') > 10 * 1073741824}}",
             ),
             (
                 '${hadoop:counters("mr-node")["FileSystemCounters"]["FILE_BYTES_READ"]}',
@@ -94,24 +97,15 @@ class TestElParser(unittest.TestCase):
             ('${coord:offset(-42, "MINUTE")}', '{{coord_offset(-42,"MINUTE")}}'),
             (
                 "${(wf:actionData('java1')['datelist'] == EXPECTED_DATE_RANGE)}",
-                "{{(wf_action_data('java1')['datelist'] == expected_date_range)}}",
+                "{{(wf_action_data('java1')['datelist'] == JOB_PROPS['EXPECTED_DATE_RANGE'])}}",
             ),
-            (
-                '${(hadoop:counters("mr-node")[RECORDS][MAP_IN] == hadoop:counters("mr-node")'
-                '[RECORDS][MAP_OUT]) and (hadoop:counters("mr-node")[RECORDS][REDUCE_IN] == '
-                'hadoop:counters("mr-node")[RECORDS][REDUCE_OUT]) and (hadoop:counters("mr-node")'
-                "[RECORDS][GROUPS] gt 0)}",
-                '{{(hadoop_counters("mr-node")[records][map_in] == hadoop_counters("mr-node")'
-                '[records][map_out]) and (hadoop_counters("mr-node")[records][reduce_in] == '
-                'hadoop_counters("mr-node")[records][reduce_out]) and (hadoop_counters("mr-node")'
-                "[records][groups] > 0)}}",
-            ),
-            (
-                "${fs:exists(concat(concat(concat(concat(concat(nameNode, '/user/'),"
-                "wf:user()), '/'), examplesRoot), '/output-data/demo/mr-node')) == 'true'}",
-                "{{fs_exists(concat(concat(concat(concat(concat(name_node,'/user/'),"
-                "params.props.merged.user.name),'/'),examples_root),'/output-data/demo/mr-node')) == 'true'}}",  # noqa  # pylint: disable=line-too-long
-            ),
+            # (
+            #     "${fs:exists(concat(concat(concat(concat(concat(nameNode, '/user/'),"
+            #     "wf:user()), '/'), examplesRoot), '/output-data/demo/mr-node')) == 'true'}",
+            #     "{{fs_exists(job_properties.name_node ~ '/user/' ~ "
+            #     "params.props.merged.user.name ~ '/' ~ examples_root "
+            #     "~ '/output-data/demo/mr-node') == 'true'}}",
+            # ),
             (
                 "${wf:actionData('getDirInfo')['dir.num-files'] gt 23 || "
                 "wf:actionData('getDirInfo')['dir.age'] gt 6}",
@@ -120,15 +114,26 @@ class TestElParser(unittest.TestCase):
             ),
             ("#{'${'}", "{{'${'}}"),
             ("${'${'}", "{{'${'}}"),
-            ("${function()} literal and #{OtherFunction}", "{{function()}} literal and {{other_function}}"),
+            (
+                "${function()} literal and #{OtherFunction()}",
+                "{{function()}} literal and {{other_function()}}",
+            ),
             ("${2 ne 4}", "{{2 != 4}}"),
             ("${2 lt 4}", "{{2 < 4}}"),
             ("${2 le 4}", "{{2 <= 4}}"),
             ("${2 ge 4}", "{{2 >= 4}}"),
             ("${2 && 4}", "{{2 and 4}}"),
-            ("${f(x) == true}", "{{f(x) == True}}"),
-            ("${f(x) == false}", "{{f(x) == False}}"),
-            ("${f(x) == null}", "{{f(x) == None}}"),
+            ("${f('x') == true}", "{{f('x') == True}}"),
+            ("${f('x') == false}", "{{f('x') == False}}"),
+            ("${f('x') == null}", "{{f('x') == None}}"),
+            ("${concat('aaa', 'bbb')}", "{{'aaa' ~ 'bbb'}}"),
+            ("${wf:id()}", "{{run_id}}"),
+            ("${wf:name()}", "{{dag.dag_id}}"),
+            ("${wf:user()}", "{{params.props.merged.user.name}}"),
+            ("${trim(' aaabbb ')}", "{{' aaabbb '.strip()}}"),
+            ("${trim(value)}", "{{JOB_PROPS['value'].strip()}}"),
+            ("${timestamp()}", '{{macros.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")}}'),
+            ("${urlEncode('%')}", "{{url_encode('%')}}"),
         ]
     )
     def test_translations(self, input_sentence, output_sentence):
@@ -140,15 +145,20 @@ class TestElParser(unittest.TestCase):
         [
             ("Job name is ${'test_job'}", "Job name is test_job", {}),
             ("${2 + 4}", "6", {}),
-            ("${name == 'name'}", "True", {"name": "name"}),
-            # ("${concat('aaa', 'bbb')}", "aaabbb", {"functions": functions}),
-            # ("${trim('  aaa  ')}", "aaa", {"functions": functions}),
-            ("${wf:id()}", "xxx", {"run_id": "xxx", "functions": functions}),
-            ("${wf:name()}", "xxx", {"dag": Dag(dag_id="xxx"), "functions": functions}),
+            ("${name == 'name'}", "True", {"JOB_PROPS": dict(name="name")}),
+            ("${firstNotNull('first', 'second')}", "first", {"functions": functions}),
+            ("${concat('aaa', 'bbb')}", "aaabbb", {}),
+            ("${urlEncode('%')}", "%25", {"functions": functions}),
+            ("${trim('  aaa  ')}", "aaa", {}),
+            ("${trim(value)}", "aaa", {"JOB_PROPS": dict(value="aaa")}),
+            ("${wf:id()}", "xxx", {"run_id": "xxx"}),
+            ("${wf:name()}", "xxx", {"dag": Dag(dag_id="xxx")}),
+            # ("${wf:conf('key')}", "value", {"conf": dict(key="value"), "functions": functions}),
         ]
     )
     def test_rendering(self, input_sentence, output_sentence, kwargs):
         translation = translate(input_sentence, functions_module="functions")
+
         render = Template(translation).render(**kwargs)
 
         self.assertEqual(render, output_sentence)

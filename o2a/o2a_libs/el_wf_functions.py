@@ -13,30 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """All WF EL functions"""
-# pylint: disable=unused-argument
-
-
-def wf_id():
-    """
-    It returns the workflow job ID for the current workflow job.
-
-    In airflow it can be found using Jinja templating for `run_id`
-    This has the effect that some parameters cannot be templated, and thus
-    this will fail.
-    """
-    return "{{ run_id }}"
-
-
-def wf_name():
-    """
-    It returns the workflow application name for the current workflow job.
-
-    This has the effect that some parameters cannot be templated, and thus
-    this will fail.
-
-    :return: Current DAG id.
-    """
-    return "{{ dag.dag_id }}"
+from jinja2 import contextfunction
 
 
 def wf_app_path():
@@ -47,7 +24,8 @@ def wf_app_path():
     """
 
 
-def wf_conf():
+@contextfunction
+def wf_conf(context, key: str):
     """
     It returns the value of the workflow job configuration property for the
     current workflow job, or an empty string if undefined.
@@ -55,14 +33,10 @@ def wf_conf():
     This has the effect that some parameters cannot be templated, and thus
     this will fail.
     """
+    if not isinstance(context["conf"], dict):
+        raise TypeError("Config is not a dict.")
 
-
-def wf_user():
-    """
-    Returns the user name that started the current workflow job.
-
-    """
-    return "{{ params.props.merged.user.name }}"
+    return context["conf"].get(key, "")
 
 
 def wf_group():
@@ -73,7 +47,7 @@ def wf_group():
     """
 
 
-def wf_callback(state_variable):
+def wf_callback(state_variable):  # pylint: disable=unused-argument
     """
     It returns the callback URL for the current workflow action node, stateVar
     can be a valid exit state (=OK= or ERROR ) for the action or a token to be
@@ -90,7 +64,7 @@ def wf_callback(state_variable):
     """
 
 
-def wf_transition(node):
+def wf_transition(node):  # pylint: disable=unused-argument
     """
     It returns the transition taken by the specified workflow action node, or
     an empty string if the action has not being executed or it has not completed
@@ -106,7 +80,7 @@ def wf_last_error_node():
     """
 
 
-def wf_error_code(node):
+def wf_error_code(node):  # pylint: disable=unused-argument
     """
     It returns the error code for the specified action node, or an empty string if
     the action node has not exited with ERROR state.
@@ -115,7 +89,7 @@ def wf_error_code(node):
     """
 
 
-def wf_error_message(message):
+def wf_error_message(message):  # pylint: disable=unused-argument
     """
     It returns the error message for the specified action node, or an empty string
     if no action node has not exited with ERROR state.
@@ -131,7 +105,7 @@ def wf_run():
     """
 
 
-def wf_action_data(node):
+def wf_action_data(node):  # pylint: disable=unused-argument
     """
     This function is only applicable to action nodes that produce output data on
     completion.
@@ -141,21 +115,21 @@ def wf_action_data(node):
     """
 
 
-def wf_action_external_id(node):
+def wf_action_external_id(node):  # pylint: disable=unused-argument
     """
     It returns the external Id for an action node, or an empty string if the
     action has not being executed or it has not completed yet.
     """
 
 
-def wf_action_tracker_uri(node):
+def wf_action_tracker_uri(node):  # pylint: disable=unused-argument
     """
     It returns the tracker URI for an action node, or an empty string if the action
     has not being executed or it has not completed yet.
     """
 
 
-def wf_action_external_status(node):
+def wf_action_external_status(node):  # pylint: disable=unused-argument
     """
     It returns the external status for an action node, or an empty string if the
     action has not being executed or it has not completed yet.
