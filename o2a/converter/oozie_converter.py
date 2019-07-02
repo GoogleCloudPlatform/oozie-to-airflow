@@ -87,12 +87,13 @@ class OozieConverter:
     def convert(self, as_subworkflow=False):
         self.property_parser.parse_property()
         self.parser.parse_workflow()
+
         self.apply_transformers()
-
         self.convert_nodes()
-        self.update_trigger_rules()
 
+        self.add_state_handlers()
         self.convert_relations()
+
         self.convert_dependencies()
 
         if as_subworkflow:
@@ -124,31 +125,23 @@ class OozieConverter:
         for p_node in self.workflow.nodes.values():
             for downstream in p_node.get_downstreams():
                 relation = Relation(
-                    from_task_id=p_node.last_task_id, to_task_id=self.workflow.nodes[downstream].first_task_id
+                    from_task_id=p_node.last_task_id_of_ok_flow,
+                    to_task_id=self.workflow.nodes[downstream].first_task_id,
                 )
                 self.workflow.relations.add(relation)
             error_downstream = p_node.get_error_downstream_name()
             if error_downstream:
                 relation = Relation(
-                    from_task_id=p_node.last_task_id,
+                    from_task_id=p_node.last_task_id_of_error_flow,
                     to_task_id=self.workflow.nodes[error_downstream].first_task_id,
                     is_error=True,
                 )
                 self.workflow.relations.add(relation)
 
-    def update_trigger_rules(self) -> None:
-        logging.info("Updating trigger rules.")
+    def add_state_handlers(self) -> None:
+        logging.info("Adding error handlers")
         for node in self.workflow.nodes.values():
-            # If a task is referenced  by an "ok to=<task>", flip bit in parsed
-            # node class
-            for downstream in node.get_downstreams():
-                self.workflow.nodes[downstream].is_ok = True
-            error_name = node.get_error_downstream_name()
-            if error_name:
-                # If a task is referenced  by an "error to=<task>", flip
-                # corresponding bit in the parsed node class
-                self.workflow.nodes[error_name].is_error = True
-            node.update_trigger_rule()
+            node.add_state_handler_if_needed()
 
     def copy_extra_assets(self, nodes: Dict[str, ParsedActionNode]):
         """

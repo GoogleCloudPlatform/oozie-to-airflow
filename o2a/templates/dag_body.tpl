@@ -14,7 +14,7 @@
   limitations under the License.
 #}
 {% for node in nodes %}
-{% for task in node.tasks %}
+{% for task in node.all_tasks %}
 {{ task.rendered_template }}
 {% endfor %}
 {% for relation in node.relations %}

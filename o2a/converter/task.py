@@ -28,7 +28,7 @@ class Task:  # pylint: disable=too-few-public-methods
         self,
         task_id: str,
         template_name: str,
-        trigger_rule: str = TriggerRule.ALL_SUCCESS,
+        trigger_rule: str = TriggerRule.ONE_SUCCESS,
         template_params: Dict[str, Any] = None,
     ):
         self.task_id = task_id
