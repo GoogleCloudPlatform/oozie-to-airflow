@@ -17,7 +17,6 @@ import unittest
 from unittest import mock
 from xml.etree.ElementTree import Element
 
-from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter import parsed_action_node
 from o2a.converter.task import Task
@@ -29,6 +28,7 @@ class TestParseActiondNode(unittest.TestCase):
         oozie_node = Element("dummy")
         op1 = dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task1", dag_name="DAG_NAME_B")
         self.p_node = parsed_action_node.ParsedActionNode(op1)
+        self.p_node.tasks, self.p_node.relations = op1.to_tasks_and_relations()
 
     def test_add_downstream_node_name(self):
         self.p_node.add_downstream_node_name("task1")
@@ -40,43 +40,27 @@ class TestParseActiondNode(unittest.TestCase):
         self.assertIn("task1", self.p_node.get_error_downstream_name())
         self.assertIn("task1", self.p_node.error_xml)
 
-    def test_update_trigger_rule_both(self):
-        self.p_node.is_ok = True
-        self.p_node.is_error = True
-        self.p_node.update_trigger_rule()
-        self.assertTrue(all(task.trigger_rule == TriggerRule.DUMMY for task in self.p_node.tasks))
-
-    def test_update_trigger_rule_ok(self):
-        self.p_node.is_ok = True
-        self.p_node.is_error = False
-        self.p_node.update_trigger_rule()
-        self.assertTrue(all(task.trigger_rule == TriggerRule.ALL_SUCCESS for task in self.p_node.tasks))
-
-    def test_update_trigger_rule_error(self):
-        self.p_node.is_ok = False
-        self.p_node.is_error = True
-        self.p_node.update_trigger_rule()
-        self.assertTrue(all(task.trigger_rule == TriggerRule.ONE_FAILED for task in self.p_node.tasks))
-
-    def test_update_trigger_rule_(self):
-        self.p_node.is_ok = False
-        self.p_node.is_error = False
-        self.p_node.update_trigger_rule()
-        self.assertTrue(all(task.trigger_rule == TriggerRule.DUMMY for task in self.p_node.tasks))
-
 
 class TestParserNodeMultipleOperators(unittest.TestCase):
     def test_first_task_id(self):
-        op1 = mock.Mock()
+        op1 = mock.Mock(name="node_name")
         p_node = parsed_action_node.ParsedActionNode(op1, tasks=self._get_tasks())
 
         self.assertEqual("first_task_id", p_node.first_task_id)
 
-    def test_last_task_id(self):
+    def test_last_task_id_of_error_flow(self):
+        op1 = mock.Mock()
+        op1.name = "TASK"
+        p_node = parsed_action_node.ParsedActionNode(op1, tasks=self._get_tasks())
+        p_node.error_xml = "AAAA"
+        p_node.add_state_handler_if_needed()
+        self.assertEqual("TASK_error", p_node.last_task_id_of_error_flow)
+
+    def test_last_task_id_of_ok_flow(self):
         op1 = mock.Mock()
         p_node = parsed_action_node.ParsedActionNode(op1, tasks=self._get_tasks())
 
-        self.assertEqual("last_task_id", p_node.last_task_id)
+        self.assertEqual("last_task_id", p_node.last_task_id_of_ok_flow)
 
     @staticmethod
     def _get_dummy_task(task_id):

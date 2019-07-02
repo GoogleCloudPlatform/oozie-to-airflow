@@ -30,6 +30,7 @@ from o2a.converter.renderers import BaseRenderer
 from o2a.mappers.decision_mapper import DecisionMapper
 from o2a.mappers.dummy_mapper import DummyMapper
 from o2a.mappers.end_mapper import EndMapper
+from o2a.mappers.join_mapper import JoinMapper
 from o2a.mappers.kill_mapper import KillMapper
 from o2a.mappers.start_mapper import StartMapper
 from o2a.o2a_libs.property_utils import PropertySet
@@ -133,7 +134,7 @@ class WorkflowXmlParser:
         finish. As the parser we are assuming the Oozie workflow follows the
         schema perfectly.
         """
-        mapper = DummyMapper(
+        mapper = JoinMapper(
             oozie_node=join_node, name=join_node.attrib["name"], dag_name=self.workflow.dag_name
         )
 
