@@ -41,7 +41,7 @@ from o2a.mappers.action_mapper import ActionMapper
 
 
 # noinspection PyDefaultArgument
-class OozieParser:
+class WorkflowXmlParser:
     """Parses XML of an Oozie workflow"""
 
     def __init__(
