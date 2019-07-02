@@ -20,7 +20,7 @@
     {% if script %}query_uri='{}/{}'.format(CONFIG['gcp_uri_prefix'], {{ script | to_python }}),{% endif %}
     {% if query %}query={{ query | to_python }},{% endif %}
     {% if variables %}variables={{ variables | to_python }},{% endif %}
-    dataproc_hive_properties={% include "props.tpl" %}.merged,
+    dataproc_hive_properties={% include "props.tpl" %},
     cluster_name=CONFIG['dataproc_cluster'],
     gcp_conn_id=CONFIG['gcp_conn_id'],
     region=CONFIG['gcp_region'],
