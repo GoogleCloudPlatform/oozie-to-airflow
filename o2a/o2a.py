@@ -26,6 +26,7 @@ from o2a.converter.mappers import ACTION_MAP
 from o2a.converter.oozie_converter import OozieConverter
 from o2a.converter.constants import HDFS_FOLDER
 from o2a.converter.renderers import PythonRenderer, DotRenderer
+from o2a.transformers.add_workflow_notificaton_transformer import AddWorkflowNotificationTransformer
 from o2a.transformers.remove_end_transformer import RemoveEndTransformer
 from o2a.transformers.remove_fork_transformer import RemoveForkTransformer
 from o2a.transformers.remove_inaccessible_node_transformer import RemoveInaccessibleNodeTransformer
@@ -110,6 +111,7 @@ Otherwise please provide it.
         RemoveStartTransformer(),
         RemoveJoinTransformer(),
         RemoveForkTransformer(),
+        AddWorkflowNotificationTransformer(),
     ]
 
     converter = OozieConverter(

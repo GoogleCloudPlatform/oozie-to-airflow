@@ -113,7 +113,7 @@ class TestOozieConverter(TestCase):
         self.assertIs(node_1.relations, relations_1)
         self.assertIs(node_2.relations, relations_2)
 
-    def test_apply_transformers(self):
+    def test_apply_preconvert_transformers(self):
         workflow = self._create_workflow()
 
         transformer_1 = mock.MagicMock()
@@ -124,10 +124,30 @@ class TestOozieConverter(TestCase):
 
         converter.transformers = [transformer_1, transformer_2]
 
-        converter.apply_transformers()
+        converter.apply_preconvert_transformers()
 
         transformer_1.process_workflow_after_parse_workflow_xml.assert_called_once_with(workflow)
         transformer_2.process_workflow_after_parse_workflow_xml.assert_called_once_with(workflow)
+
+    def test_apply_postconvert_transformers(self):
+        workflow = self._create_workflow()
+
+        transformer_1 = mock.MagicMock()
+        transformer_2 = mock.MagicMock()
+
+        converter = self._create_converter()
+        converter.workflow = workflow
+
+        converter.transformers = [transformer_1, transformer_2]
+
+        converter.apply_postconvert_transformers()
+
+        transformer_1.process_workflow_after_convert_nodes.assert_called_once_with(
+            workflow, props=converter.props
+        )
+        transformer_2.process_workflow_after_convert_nodes.assert_called_once_with(
+            workflow, props=converter.props
+        )
 
     def test_copy_extra_assets(self):
         converter = self._create_converter()
@@ -299,6 +319,7 @@ class TestOozieConvertByExamples(TestCase):
                 "from airflow.operators import dummy_operator",
                 "from airflow.operators import python_operator",
                 "from airflow.operators.subdag_operator import SubDagOperator",
+                "from airflow.operators import bash_operator, dummy_operator",
                 "from airflow.utils import dates",
                 "from airflow.utils.trigger_rule import TriggerRule",
                 "from o2a.o2a_libs.el_basic_functions import *",

@@ -15,7 +15,7 @@
 """Workflow"""
 import os
 from collections import OrderedDict
-from typing import Set, Dict, Type
+from typing import Set, Dict, Type, List
 
 from o2a.converter.constants import HDFS_FOLDER, LIB_FOLDER
 from o2a.converter.parsed_action_node import ParsedActionNode
@@ -56,6 +56,7 @@ class Workflow:
             "from airflow import models",
             "from airflow.utils.trigger_rule import TriggerRule",
             "from airflow.utils import dates",
+            "from airflow.operators import bash_operator, dummy_operator",
         }
         self.library_folder = os.path.join(self.input_directory_path, HDFS_FOLDER, LIB_FOLDER)
         self.jar_files = get_lib_files(self.library_folder, extension=".jar")
@@ -69,6 +70,38 @@ class Workflow:
             if target_node.name in node.downstream_names or target_node.name == node.error_downstream_name:
                 result.append(node)
         return result
+
+    def find_upstream_task_group(self, target_task_group) -> List[TaskGroup]:
+        result = []
+        for task_group in self.task_groups.values():
+            if (
+                target_task_group.name in task_group.downstream_names
+                or target_task_group.name == task_group.error_downstream_name
+            ):
+                result.append(task_group)
+        return result
+
+    def get_task_group_without_upstream(self):
+        task_groups = []
+        for task_group in self.task_groups.values():
+            upstream_task_group = self.find_upstream_task_group(task_group)
+            if not upstream_task_group:
+                task_groups.append(task_group)
+        return task_groups
+
+    def get_task_group_without_ok_downstream(self):
+        task_groups = []
+        for task_group in self.task_groups.values():
+            if not task_group.downstream_names:
+                task_groups.append(task_group)
+        return task_groups
+
+    def get_task_group_without_error_downstream(self):
+        task_groups = []
+        for task_group in self.task_groups.values():
+            if not task_group.error_downstream_name:
+                task_groups.append(task_group)
+        return task_groups
 
     def remove_node(self, node_to_delete: ParsedActionNode):
         del self.nodes[node_to_delete.name]
