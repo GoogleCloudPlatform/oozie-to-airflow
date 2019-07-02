@@ -16,6 +16,7 @@
 EL functions map module.
 """
 import re
+from o2a.o2a_libs.el_wf_functions import wf_conf
 
 
 def first_not_null(str_one, str_two):
@@ -119,23 +120,23 @@ def trim(src_str: str) -> str:
     return str(src_str) + ".strip()" if src_str else ""
 
 
-STATIC_FUNCTIONS = {
+FUNCTION_MAP = {
     "wf_id": "run_id",
     "wf_name": "dag.dag_id",
     "wf_user": "params.props.merged.user.name",
     "timestamp": 'macros.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")',
+    "wf_app_path": "params['nameNode']/user/params['userName']}/params['examplesRoot']}/apps/hive",
+    "concat": concat,
+    "trim": trim,
+    "wf_conf": wf_conf,
 }
 
 
 def evaluate_function(name: str, args: tuple) -> str:
-    static = STATIC_FUNCTIONS.get(name, "")
-    if static:
-        return static
-
-    if name == "concat":
-        return concat(*args)
-
-    if name == "trim":
-        return trim(*args)
+    func = FUNCTION_MAP.get(name, None)
+    if func:
+        if isinstance(func, str):
+            return func
+        return func(*args)  # type: ignore
 
     return ""

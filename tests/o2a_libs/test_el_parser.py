@@ -12,7 +12,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Tests for all EL to Jinjia parser"""
+"""Tests for all EL to Jinja parser"""
 
 import unittest
 from collections import namedtuple
@@ -50,20 +50,20 @@ class TestElParser(unittest.TestCase):
             ("${1.2E4 + 1.4}", "{{1.2E4 + 1.4}}"),
             ("${10 mod 4}", "{{10 % 4}}"),
             ("${3 div 4}", "{{3 / 4}}"),
-            ("${pageContext.request.contextPath}", "{{JOB_PROPS['pageContext'].request.contextPath}}"),
-            ("${sessionScope.cart.numberOfItems}", "{{JOB_PROPS['sessionScope'].cart.numberOfItems}}"),
-            ("${param['mycom.productId']}", "{{JOB_PROPS['param']['mycom.productId']}}"),
-            ('${header["host"]}', """{{JOB_PROPS['header']["host"]}}"""),
-            ("${departments[deptName]}", "{{JOB_PROPS['departments'][JOB_PROPS['deptName']]}}"),
+            ("${pageContext.request.contextPath}", "{{params['pageContext'].request.contextPath}}"),
+            ("${sessionScope.cart.numberOfItems}", "{{params['sessionScope'].cart.numberOfItems}}"),
+            ("${param['mycom.productId']}", "{{params['param']['mycom.productId']}}"),
+            ('${header["host"]}', """{{params['header']["host"]}}"""),
+            ("${departments[deptName]}", "{{params['departments'][params['deptName']]}}"),
             (
                 "${requestScope['javax.servlet.forward.servlet_path']}",
-                "{{JOB_PROPS['requestScope']['javax.servlet.forward.servlet_path']}}",
+                "{{params['requestScope']['javax.servlet.forward.servlet_path']}}",
             ),
-            ("#{customer.lName}", "{{JOB_PROPS['customer'].lName}}"),
-            ("#{customer.calcTotal}", "{{JOB_PROPS['customer'].calcTotal}}"),
-            ('${wf:conf("jump.to") eq "ssh"}', '{{wf_conf("jump.to") == "ssh"}}'),
-            ('${wf:conf("jump.to") eq "parallel"}', '{{wf_conf("jump.to") == "parallel"}}'),
-            ('${wf:conf("jump.to") eq "single"}', '{{wf_conf("jump.to") == "single"}}'),
+            ("#{customer.lName}", "{{params['customer'].lName}}"),
+            ("#{customer.calcTotal}", "{{params['customer'].calcTotal}}"),
+            ('${wf:conf("jump.to") eq "ssh"}', '{{params["jump.to"] == "ssh"}}'),
+            ('${wf:conf("jump.to") eq "parallel"}', '{{params["jump.to"] == "parallel"}}'),
+            ('${wf:conf("jump.to") eq "single"}', '{{params["jump.to"] == "single"}}'),
             (
                 '${"bool" == "bool" ? print("ok") : print("not ok")}',
                 '{{print("ok") if "bool" == "bool" else print("not ok")}}',
@@ -71,13 +71,15 @@ class TestElParser(unittest.TestCase):
             ('${f(2) ? print("ok") : print("not ok")}', '{{print("ok") if f(2) else print("not ok")}}'),
             ('${!false ? print("ok") : print("not ok")}', '{{print("ok") if !False else print("not ok")}}'),
             ("some pure text ${coord:user()}", "some pure text {{coord_user()}}"),
-            # (
-            #     "${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/${outputDir}",
-            #     "{{JOB_PROPS['nameNode']}}/user/{{JOB_PROPS['params'].props.merged.user.name}}
-            #     /{{JOB_PROPS['examplesRoot']}}/output-data/{{JOB_PROPS['outputDir']}}",
-            # ),
-            # ("${YEAR}/${MONTH}/${DAY}/${HOUR}", "{{JOB_PROPS['YEAR]}}/{{job_properties.month}}/
-            # "{{job_properties.day}}/{{job_properties.hour}}"),
+            (
+                "${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/${outputDir}",
+                "{{params['nameNode']}}/user/{{params.props.merged.user.name}}"
+                "/{{params['examplesRoot']}}/output-data/{{params['outputDir']}}",
+            ),
+            (
+                "${YEAR}/${MONTH}/${DAY}/${HOUR}",
+                "{{params['YEAR']}}/{{params['MONTH']}}/{{params['DAY']}}/{{params['HOUR']}}",
+            ),
             ("pure text without any.function wf:function()", "pure text without any.function wf:function()"),
             (
                 "${fs:fileSize('/usr/foo/myinputdir') gt 10 * GB}",
@@ -97,15 +99,8 @@ class TestElParser(unittest.TestCase):
             ('${coord:offset(-42, "MINUTE")}', '{{coord_offset(-42,"MINUTE")}}'),
             (
                 "${(wf:actionData('java1')['datelist'] == EXPECTED_DATE_RANGE)}",
-                "{{(wf_action_data('java1')['datelist'] == JOB_PROPS['EXPECTED_DATE_RANGE'])}}",
+                "{{(wf_action_data('java1')['datelist'] == params['EXPECTED_DATE_RANGE'])}}",
             ),
-            # (
-            #     "${fs:exists(concat(concat(concat(concat(concat(nameNode, '/user/'),"
-            #     "wf:user()), '/'), examplesRoot), '/output-data/demo/mr-node')) == 'true'}",
-            #     "{{fs_exists(job_properties.name_node ~ '/user/' ~ "
-            #     "params.props.merged.user.name ~ '/' ~ examples_root "
-            #     "~ '/output-data/demo/mr-node') == 'true'}}",
-            # ),
             (
                 "${wf:actionData('getDirInfo')['dir.num-files'] gt 23 || "
                 "wf:actionData('getDirInfo')['dir.age'] gt 6}",
@@ -118,6 +113,7 @@ class TestElParser(unittest.TestCase):
                 "${function()} literal and #{OtherFunction()}",
                 "{{function()}} literal and {{other_function()}}",
             ),
+            ("${concat(value, 'xxx')}", "{{params['value'] ~ 'xxx'}}"),
             ("${2 ne 4}", "{{2 != 4}}"),
             ("${2 lt 4}", "{{2 < 4}}"),
             ("${2 le 4}", "{{2 <= 4}}"),
@@ -131,7 +127,7 @@ class TestElParser(unittest.TestCase):
             ("${wf:name()}", "{{dag.dag_id}}"),
             ("${wf:user()}", "{{params.props.merged.user.name}}"),
             ("${trim(' aaabbb ')}", "{{' aaabbb '.strip()}}"),
-            ("${trim(value)}", "{{JOB_PROPS['value'].strip()}}"),
+            ("${trim(value)}", "{{params['value'].strip()}}"),
             ("${timestamp()}", '{{macros.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")}}'),
             ("${urlEncode('%')}", "{{url_encode('%')}}"),
         ]
@@ -145,15 +141,15 @@ class TestElParser(unittest.TestCase):
         [
             ("Job name is ${'test_job'}", "Job name is test_job", {}),
             ("${2 + 4}", "6", {}),
-            ("${name == 'name'}", "True", {"JOB_PROPS": dict(name="name")}),
+            ("${name == 'name'}", "True", {"params": dict(name="name")}),
             ("${firstNotNull('first', 'second')}", "first", {"functions": functions}),
             ("${concat('aaa', 'bbb')}", "aaabbb", {}),
             ("${urlEncode('%')}", "%25", {"functions": functions}),
             ("${trim('  aaa  ')}", "aaa", {}),
-            ("${trim(value)}", "aaa", {"JOB_PROPS": dict(value="aaa")}),
+            ("${trim(value)}", "aaa", {"params": dict(value="aaa")}),
             ("${wf:id()}", "xxx", {"run_id": "xxx"}),
             ("${wf:name()}", "xxx", {"dag": Dag(dag_id="xxx")}),
-            # ("${wf:conf('key')}", "value", {"conf": dict(key="value"), "functions": functions}),
+            ("${wf:conf('key')}", "value", {"params": dict(key="value"), "functions": functions}),
         ]
     )
     def test_rendering(self, input_sentence, output_sentence, kwargs):

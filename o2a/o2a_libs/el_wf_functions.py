@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """All WF EL functions"""
-from jinja2 import contextfunction
 
 
 def wf_app_path():
@@ -24,8 +23,7 @@ def wf_app_path():
     """
 
 
-@contextfunction
-def wf_conf(context, key: str):
+def wf_conf(key: str) -> str:
     """
     It returns the value of the workflow job configuration property for the
     current workflow job, or an empty string if undefined.
@@ -33,10 +31,7 @@ def wf_conf(context, key: str):
     This has the effect that some parameters cannot be templated, and thus
     this will fail.
     """
-    if not isinstance(context["conf"], dict):
-        raise TypeError("Config is not a dict.")
-
-    return context["conf"].get(key, "")
+    return "params[{}]".format(key)
 
 
 def wf_group():

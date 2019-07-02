@@ -28,7 +28,6 @@ from lark import Lark, Tree, Token
 
 from .functions import evaluate_function
 
-# TODO: java identifier [A-Za-z_][0-9A-Za-z_]*
 
 EL_CONSTANTS = {"KB": 1024 ** 1, "MB": 1024 ** 2, "GB": 1024 ** 3, "TB": 1024 ** 4, "PB": 1024 ** 5}
 
@@ -236,6 +235,8 @@ def _translate_token(token: Token) -> str:
     """
     Translates non-python values to python equivalents.
     """
+    params = "params['{}']"
+
     if token.type == "BEGIN":
         token.value = " {{"
 
@@ -258,12 +259,12 @@ def _translate_token(token: Token) -> str:
             token.value = False
 
     if token.type == "JAVA":
-        token.value = "JOB_PROPS['{}']".format(token.value)
+        token.value = params.format(token.value)
 
     if token.type == "FIRST_JAVA":
         if token.value in EL_CONSTANTS.keys():
             return str(EL_CONSTANTS[token.value])
-        token.value = "JOB_PROPS['{}']".format(token.value)
+        token.value = params.format(token.value)
 
     return str(token.value)
 
@@ -287,12 +288,14 @@ def _get_args(tree: Tree, fun_mod: str) -> tuple:
         if isinstance(child, Token) and child.type == "LPAR":
             register = True
             continue
+
         if isinstance(child, Token) and child.type == "LPAR":
             break
 
+        if isinstance(child, Token) and child.value in (",", ")"):
+            continue
+
         if register:
-            if isinstance(child, Token) and child.value in (",", ")"):
-                continue
             args.append(_translate_el(child, fun_mod))
 
     return tuple(args)
