@@ -45,8 +45,8 @@ class SparkMapper(ActionMapper):
 
     def __init__(self, oozie_node: ET.Element, name: str, props: PropertySet, **kwargs):
         ActionMapper.__init__(self, oozie_node=oozie_node, name=name, props=props, **kwargs)
-        self.java_class = ""
-        self.java_jar = ""
+        self.java_class: Optional[str] = None
+        self.java_jar: Optional[str] = None
         self.job_name: Optional[str] = None
         self.jars: List[str] = []
         self.application_args: List[str] = []
@@ -76,7 +76,8 @@ class SparkMapper(ActionMapper):
 
         app_args = xml_utils.find_nodes_by_tag(self.oozie_node, SPARK_TAG_ARGS)
         for arg in app_args:
-            self.application_args.append(el_utils.replace_el_with_var(arg.text, self.props, quote=False))
+            if arg.text:
+                self.application_args.append(el_utils.replace_el_with_var(arg.text, self.props, quote=False))
 
     @staticmethod
     def _parse_spark_opts(spark_opts_node: ET.Element):
