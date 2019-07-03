@@ -123,13 +123,13 @@ class OozieConverter:
     def convert_relations(self) -> None:
         logging.info("Converting relations between nodes.")
         for p_node in self.workflow.nodes.values():
-            for downstream in p_node.get_downstreams():
+            for downstream in p_node.downstream_names:
                 relation = Relation(
                     from_task_id=p_node.last_task_id_of_ok_flow,
                     to_task_id=self.workflow.nodes[downstream].first_task_id,
                 )
                 self.workflow.relations.add(relation)
-            error_downstream = p_node.get_error_downstream_name()
+            error_downstream = p_node.error_downstream_name
             if error_downstream:
                 relation = Relation(
                     from_task_id=p_node.last_task_id_of_error_flow,

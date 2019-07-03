@@ -32,13 +32,11 @@ class TestParseActiondNode(unittest.TestCase):
 
     def test_add_downstream_node_name(self):
         self.p_node.downstream_names.append("task1")
-        self.assertIn("task1", self.p_node.get_downstreams())
         self.assertIn("task1", self.p_node.downstream_names)
 
     def test_set_downstream_error_node_name(self):
-        self.p_node.error_xml = "task1"
-        self.assertIn("task1", self.p_node.get_error_downstream_name())
-        self.assertIn("task1", self.p_node.error_xml)
+        self.p_node.error_downstream_name = "task1"
+        self.assertIn("task1", self.p_node.error_downstream_name)
 
 
 class TestParserNodeMultipleOperators(unittest.TestCase):
@@ -52,7 +50,7 @@ class TestParserNodeMultipleOperators(unittest.TestCase):
         op1 = mock.Mock()
         op1.name = "TASK"
         p_node = parsed_action_node.ParsedActionNode(op1, tasks=self._get_tasks())
-        p_node.error_xml = "AAAA"
+        p_node.error_downstream_name = "AAAA"
         p_node.add_state_handler_if_needed()
         self.assertEqual("TASK_error", p_node.last_task_id_of_error_flow)
 

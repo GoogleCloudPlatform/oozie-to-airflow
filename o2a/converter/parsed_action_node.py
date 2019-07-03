@@ -32,17 +32,11 @@ class ParsedActionNode:
         self.downstream_names: List[str] = []
         self.is_error: bool = False
         self.is_ok: bool = False
-        self.error_xml: Optional[str] = None
+        self.error_downstream_name: Optional[str] = None
         self.tasks: List[Task] = tasks or []
         self.relations: List[Relation] = relations or []
         self.error_handler_task: Optional[Task] = None
         self.ok_handler_task: Optional[Task] = None
-
-    def get_downstreams(self) -> List[str]:
-        return self.downstream_names
-
-    def get_error_downstream_name(self) -> Optional[str]:
-        return self.error_xml
 
     @property
     def name(self) -> str:
@@ -88,7 +82,7 @@ class ParsedActionNode:
         to handle the ok path and the error path.
         If the error path and the ok path is not-specified, no action is performed.
         """
-        if not self.error_xml:
+        if not self.error_downstream_name:
             return
         error_handler_task_id = self.mapper.name + "_error"
         error_handler = Task(
@@ -123,7 +117,7 @@ class ParsedActionNode:
         return (
             f"ParsedActionNode(mapper={self.mapper}, "
             f"downstream_names={self.downstream_names}, "
-            f"error_xml={self.error_xml}, "
+            f"error_downstream_name={self.error_downstream_name}, "
             f"tasks={self.tasks}, relations={self.relations})"
         )
 
