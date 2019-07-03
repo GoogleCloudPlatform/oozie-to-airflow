@@ -42,6 +42,7 @@
             <prepare>
                 <delete path="${nameNode}/user/${userName}/${examplesRoot}/apps/mapreduce/${outputDir}"/>
             </prepare>
+            <job-xml>./job-queue-conf.xml</job-xml>
             <configuration>
                 <property>
                     <name>mapred.mapper.new-api</name>
@@ -50,10 +51,6 @@
                 <property>
                     <name>mapred.reducer.new-api</name>
                     <value>true</value>
-                </property>
-                <property>
-                    <name>mapred.job.queue.name</name>
-                    <value>${queueName}</value>
                 </property>
                 <property>
                     <name>mapreduce.job.map.class</name>

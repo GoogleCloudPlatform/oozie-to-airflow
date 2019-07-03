@@ -56,7 +56,6 @@ class HiveMapper(ActionMapper):
 
     def on_parse_node(self, workflow: Workflow):
         super().on_parse_node(workflow)
-        self._parse_config()
         self.query = get_tag_el_text(self.oozie_node, TAG_QUERY, self.props)
         self.script = get_tag_el_text(self.oozie_node, TAG_SCRIPT, self.props)
         if not self.query and not self.script:
