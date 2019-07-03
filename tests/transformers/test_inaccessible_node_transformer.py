@@ -120,7 +120,7 @@ class RemoveInaccessibleNodeTransformerTest(unittest.TestCase):
         first_node = ParsedActionNode(mapper=first_mapper, tasks=[self._get_dummy_task(first_mapper.name)])
         start_node = ParsedActionNode(mapper=start_mapper, tasks=[self._get_dummy_task(start_mapper.name)])
 
-        start_node.error_xml = first_node.name
+        start_node.error_downstream_name = first_node.name
 
         workflow.nodes[first_mapper.name] = first_node
         workflow.nodes[start_mapper.name] = start_node
@@ -130,8 +130,8 @@ class RemoveInaccessibleNodeTransformerTest(unittest.TestCase):
         self.assertEqual({start_mapper.name, first_mapper.name}, set(workflow.nodes.keys()))
         self.assertEqual([], start_node.downstream_names)
         self.assertEqual([], first_node.downstream_names)
-        self.assertEqual(first_mapper.name, start_node.error_xml)
-        self.assertEqual(None, first_node.error_xml)
+        self.assertEqual(first_mapper.name, start_node.error_downstream_name)
+        self.assertEqual(None, first_node.error_downstream_name)
 
     def test_should_remove_inaccessible_node(self):
         """

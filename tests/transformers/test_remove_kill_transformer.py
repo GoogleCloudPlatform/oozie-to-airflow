@@ -38,7 +38,7 @@ class RemoveKillTransformerTest(unittest.TestCase):
 
         first_node = ParsedActionNode(first_mapper)
         second_node = ParsedActionNode(second_mapper)
-        first_node.error_xml = second_mapper.name
+        first_node.error_downstream_name = second_mapper.name
 
         workflow.nodes[first_mapper.name] = first_node
         workflow.nodes[second_mapper.name] = second_node

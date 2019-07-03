@@ -59,7 +59,7 @@ class Workflow:  # pylint: disable=too-few-public-methods
     def find_upstream_nodes(self, target_node):
         result = []
         for node in self.nodes.values():
-            if target_node.name in node.downstream_names or target_node.name == node.error_xml:
+            if target_node.name in node.downstream_names or target_node.name == node.error_downstream_name:
                 result.append(node)
         return result
 
@@ -69,8 +69,8 @@ class Workflow:  # pylint: disable=too-few-public-methods
         for node in self.nodes.values():
             if node_to_delete.name in node.downstream_names:
                 node.downstream_names.remove(node_to_delete.name)
-            if node.error_xml == node_to_delete.name:
-                node.error_xml = None
+            if node.error_downstream_name == node_to_delete.name:
+                node.error_downstream_name = None
 
     def __repr__(self) -> str:
         return (

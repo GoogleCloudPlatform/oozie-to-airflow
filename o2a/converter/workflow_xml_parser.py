@@ -222,7 +222,7 @@ class WorkflowXmlParser:
         error_node = action_node.find("error")
         if error_node is None:
             raise Exception("Missing error node in {}".format(action_node))
-        p_node.error_xml = error_node.attrib["to"]
+        p_node.error_downstream_name = error_node.attrib["to"]
 
         mapper.on_parse_node()
 

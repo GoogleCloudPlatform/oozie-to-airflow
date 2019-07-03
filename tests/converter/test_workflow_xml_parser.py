@@ -93,7 +93,7 @@ class TestWorkflowXmlParser(unittest.TestCase):
         node1, node2 = root.findall("action")[0:2]
         self.parser.parse_fork_node(root, fork)
         node = self.parser.workflow.nodes[node_name]
-        self.assertEqual(["task1", "task2"], node.get_downstreams())
+        self.assertEqual(["task1", "task2"], node.downstream_names)
         self.assertIn(node_name, self.parser.workflow.nodes)
         parse_node_mock.assert_any_call(root, node1)
         parse_node_mock.assert_any_call(root, node2)
@@ -111,7 +111,7 @@ class TestWorkflowXmlParser(unittest.TestCase):
 
         node = self.parser.workflow.nodes[node_name]
         self.assertIn(node_name, self.parser.workflow.nodes)
-        self.assertEqual([end_name], node.get_downstreams())
+        self.assertEqual([end_name], node.downstream_names)
 
         on_parse_node_mock.assert_called_once_with()
 
@@ -133,7 +133,7 @@ class TestWorkflowXmlParser(unittest.TestCase):
 
         p_op = self.parser.workflow.nodes[node_name]
         self.assertIn(node_name, self.parser.workflow.nodes)
-        self.assertEqual(["down1", "down2", "end1"], p_op.get_downstreams())
+        self.assertEqual(["down1", "down2", "end1"], p_op.downstream_names)
 
         on_parse_node_mock.assert_called_once_with()
 
@@ -150,7 +150,7 @@ class TestWorkflowXmlParser(unittest.TestCase):
 
         p_op = self.parser.workflow.nodes[node_name]
         self.assertIn(node_name, self.parser.workflow.nodes)
-        self.assertEqual([end_name], p_op.get_downstreams())
+        self.assertEqual([end_name], p_op.downstream_names)
 
         on_parse_node_mock.assert_called_once_with()
 
@@ -177,8 +177,8 @@ class TestWorkflowXmlParser(unittest.TestCase):
 
         p_op = self.parser.workflow.nodes[node_name]
         self.assertIn(node_name, self.parser.workflow.nodes)
-        self.assertEqual(["end1"], p_op.get_downstreams())
-        self.assertEqual("fail1", p_op.get_error_downstream_name())
+        self.assertEqual(["end1"], p_op.downstream_names)
+        self.assertEqual("fail1", p_op.error_downstream_name)
 
         on_parse_node_mock.assert_called_once_with()
 
@@ -205,8 +205,8 @@ class TestWorkflowXmlParser(unittest.TestCase):
 
         p_op = self.parser.workflow.nodes[node_name]
         self.assertIn(node_name, self.parser.workflow.nodes)
-        self.assertEqual(["end1"], p_op.get_downstreams())
-        self.assertEqual("fail1", p_op.get_error_downstream_name())
+        self.assertEqual(["end1"], p_op.downstream_names)
+        self.assertEqual("fail1", p_op.error_downstream_name)
         self.assertEqual(["myNameNode/test_dir/test.txt#test_link.txt"], p_op.mapper.hdfs_files)
         self.assertEqual(["myNameNode/test_dir/test2.zip#test_zip_dir"], p_op.mapper.hdfs_archives)
 
@@ -231,8 +231,8 @@ class TestWorkflowXmlParser(unittest.TestCase):
         self.parser.parse_action_node(action_node)
         self.assertIn(node_name, self.parser.workflow.nodes)
         mr_node = self.parser.workflow.nodes[node_name]
-        self.assertEqual(["end"], mr_node.get_downstreams())
-        self.assertEqual("fail", mr_node.get_error_downstream_name())
+        self.assertEqual(["end"], mr_node.downstream_names)
+        self.assertEqual("fail", mr_node.error_downstream_name)
 
     @mock.patch("o2a.mappers.dummy_mapper.DummyMapper.on_parse_node", wraps=None)
     def test_parse_action_node_unknown(self, on_parse_node_mock):
@@ -256,8 +256,8 @@ class TestWorkflowXmlParser(unittest.TestCase):
 
         p_op = self.parser.workflow.nodes[node_name]
         self.assertIn(node_name, self.parser.workflow.nodes)
-        self.assertEqual(["end1"], p_op.get_downstreams())
-        self.assertEqual("fail1", p_op.get_error_downstream_name())
+        self.assertEqual(["end1"], p_op.downstream_names)
+        self.assertEqual("fail1", p_op.error_downstream_name)
 
         on_parse_node_mock.assert_called_once_with()
 
@@ -517,4 +517,4 @@ class TestOozieExamples(unittest.TestCase):
         for node_name, expected_node in case.nodes.items():
             node = workflow.nodes[node_name]
             self.assertEqual(expected_node.downstream_names, node.downstream_names)
-            self.assertEqual(expected_node.error_xml, node.error_xml)
+            self.assertEqual(expected_node.error_xml, node.error_downstream_name)

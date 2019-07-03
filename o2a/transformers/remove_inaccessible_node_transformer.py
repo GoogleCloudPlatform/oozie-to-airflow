@@ -51,8 +51,8 @@ class RemoveInaccessibleNodeTransformer(BaseWorkflowTransformer):
             visited_node[node.name] = node
 
             all_downstream_node_names = [*node.downstream_names]
-            if node.error_xml:
-                all_downstream_node_names.append(node.error_xml)
+            if node.error_downstream_name:
+                all_downstream_node_names.append(node.error_downstream_name)
 
             for node_name in all_downstream_node_names:
                 visit_node(workflow.nodes[node_name])

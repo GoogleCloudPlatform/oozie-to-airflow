@@ -163,26 +163,26 @@ class TestOozieConverter(TestCase):
             tasks=[self._create_task("task1")],
         )
         op1.downstream_names = ["task2", "task3"]
-        op1.error_xml = "fail1"
+        op1.error_downstream_name = "fail1"
         op2 = parsed_action_node.ParsedActionNode(
             dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task2", dag_name="DAG_NAME_B2"),
             tasks=[self._create_task("task2")],
         )
         op2.downstream_names = ["task3", "task4"]
-        op2.error_xml = "fail1"
+        op2.error_downstream_name = "fail1"
         op3 = parsed_action_node.ParsedActionNode(
             dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task3", dag_name="DAG_NAME_B3"),
             tasks=[self._create_task("task3")],
         )
         op3.downstream_names = ["end1"]
-        op3.error_xml = "fail1"
+        op3.error_downstream_name = "fail1"
         op4 = mock.Mock(
             **{
                 "first_task_id": "task4_first",
                 "last_task_id_of_ok_flow": "task4_last",
                 "last_task_id_of_error_flow": "task4_last",
-                "get_downstreams.return_value": ["task1", "task2", "task3"],
-                "get_error_downstream_name.return_value": "fail1",
+                "downstream_names": ["task1", "task2", "task3"],
+                "error_downstream_name": "fail1",
             }
         )
         end = parsed_action_node.ParsedActionNode(
