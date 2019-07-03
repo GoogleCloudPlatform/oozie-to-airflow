@@ -38,21 +38,6 @@ class ParsedActionNode:
         self.error_handler_task: Optional[Task] = None
         self.ok_handler_task: Optional[Task] = None
 
-    def add_downstream_node_name(self, node_name: str):
-        """
-        Adds a single downstream name string to the list `downstream_names`.
-        :param node_name: The name to append to the list
-        """
-        self.downstream_names.append(node_name)
-
-    def set_error_node_name(self, error_name: str):
-        """
-        Sets the error_xml class variable to the supplied `error_name`
-        :param error_name: The downstream error node, Oozie nodes can only have
-            one error downstream.
-        """
-        self.error_xml = error_name
-
     def get_downstreams(self) -> List[str]:
         return self.downstream_names
 

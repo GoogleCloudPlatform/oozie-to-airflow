@@ -31,12 +31,12 @@ class TestParseActiondNode(unittest.TestCase):
         self.p_node.tasks, self.p_node.relations = op1.to_tasks_and_relations()
 
     def test_add_downstream_node_name(self):
-        self.p_node.add_downstream_node_name("task1")
+        self.p_node.downstream_names.append("task1")
         self.assertIn("task1", self.p_node.get_downstreams())
         self.assertIn("task1", self.p_node.downstream_names)
 
     def test_set_downstream_error_node_name(self):
-        self.p_node.set_error_node_name("task1")
+        self.p_node.error_xml = "task1"
         self.assertIn("task1", self.p_node.get_error_downstream_name())
         self.assertIn("task1", self.p_node.error_xml)
 
