@@ -29,7 +29,7 @@ from lark import Lark, Tree, Token
 from .functions import evaluate_function
 
 
-EL_CONSTANTS = {"KB": 1024 ** 1, "MB": 1024 ** 2, "GB": 1024 ** 3, "TB": 1024 ** 4, "PB": 1024 ** 5}
+EL_CONSTANTS = {"KB": "1024", "MB": "1024 ** 2", "GB": "1024 ** 3", "TB": "1024 ** 4", "PB": "1024 ** 5"}
 
 GRAMMAR = r"""
     start: (lvalue (start)?)* | (rvalue (start)?)* | literal_expression (rvalue (start)?)?

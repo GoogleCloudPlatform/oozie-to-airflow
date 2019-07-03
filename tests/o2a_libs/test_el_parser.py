@@ -83,7 +83,7 @@ class TestElParser(unittest.TestCase):
             ("pure text without any.function wf:function()", "pure text without any.function wf:function()"),
             (
                 "${fs:fileSize('/usr/foo/myinputdir') gt 10 * GB}",
-                "{{fs_file_size('/usr/foo/myinputdir') > 10 * 1073741824}}",
+                "{{fs_file_size('/usr/foo/myinputdir') > 10 * 1024 ** 3}}",
             ),
             (
                 '${hadoop:counters("mr-node")["FileSystemCounters"]["FILE_BYTES_READ"]}',
@@ -139,22 +139,33 @@ class TestElParser(unittest.TestCase):
 
     @parameterized.expand(
         [
-            ("Job name is ${'test_job'}", "Job name is test_job", {}),
-            ("${2 + 4}", "6", {}),
-            ("${name == 'name'}", "True", {"params": dict(name="name")}),
-            ("${firstNotNull('first', 'second')}", "first", {"functions": functions}),
-            ("${concat('aaa', 'bbb')}", "aaabbb", {}),
-            ("${urlEncode('%')}", "%25", {"functions": functions}),
-            ("${trim('  aaa  ')}", "aaa", {}),
-            ("${trim(value)}", "aaa", {"params": dict(value="aaa")}),
-            ("${wf:id()}", "xxx", {"run_id": "xxx"}),
-            ("${wf:name()}", "xxx", {"dag": Dag(dag_id="xxx")}),
-            ("${wf:conf('key')}", "value", {"params": dict(key="value"), "functions": functions}),
+            ("Job name is ${'test_job'}", "Job name is {{'test_job'}}", "Job name is test_job", {}),
+            ("${2 + 4}", "{{2 + 4}}", "6", {}),
+            ("${name == 'name'}", "{{params['name'] == 'name'}}", "True", {"params": dict(name="name")}),
+            (
+                "${firstNotNull('first', 'second')}",
+                "{{functions.first_not_null('first','second')}}",
+                "first",
+                {"functions": functions},
+            ),
+            ("${concat('aaa', 'bbb')}", "{{'aaa' ~ 'bbb'}}", "aaabbb", {}),
+            ("${urlEncode('%')}", "{{functions.url_encode('%')}}", "%25", {"functions": functions}),
+            ("${trim(' aaa ')}", "{{' aaa '.strip()}}", "aaa", {}),
+            ("${trim(value)}", "{{params['value'].strip()}}", "aaa", {"params": dict(value="aaa")}),
+            ("${wf:id()}", "{{run_id}}", "xxx", {"run_id": "xxx"}),
+            ("${wf:name()}", "{{dag.dag_id}}", "xxx", {"dag": Dag(dag_id="xxx")}),
+            (
+                "${wf:conf('key')}",
+                "{{params['key']}}",
+                "value",
+                {"params": dict(key="value"), "functions": functions},
+            ),
         ]
     )
-    def test_rendering(self, input_sentence, output_sentence, kwargs):
-        translation = translate(input_sentence, functions_module="functions")
+    def test_rendering(self, input_sentence, translation, output_sentence, kwargs):
+        translated = translate(input_sentence, functions_module="functions")
 
-        render = Template(translation).render(**kwargs)
+        self.assertEqual(translated, translation)
+        render = Template(translated).render(**kwargs)
 
         self.assertEqual(render, output_sentence)
