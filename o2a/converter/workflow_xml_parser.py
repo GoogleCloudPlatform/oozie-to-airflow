@@ -28,8 +28,8 @@ from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.renderers import BaseRenderer
 from o2a.mappers.decision_mapper import DecisionMapper
-from o2a.mappers.dummy_mapper import DummyMapper
 from o2a.mappers.end_mapper import EndMapper
+from o2a.mappers.fork_mapper import ForkMapper
 from o2a.mappers.join_mapper import JoinMapper
 from o2a.mappers.kill_mapper import KillMapper
 from o2a.mappers.start_mapper import StartMapper
@@ -102,7 +102,7 @@ class WorkflowXmlParser:
         end at the join node.
         """
         fork_name = fork_node.attrib["name"]
-        mapper = DummyMapper(oozie_node=fork_node, name=fork_name, dag_name=self.workflow.dag_name)
+        mapper = ForkMapper(oozie_node=fork_node, name=fork_name, dag_name=self.workflow.dag_name)
         p_node = ParsedActionNode(mapper)
 
         mapper.on_parse_node()
