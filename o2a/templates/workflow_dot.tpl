@@ -57,10 +57,10 @@
 
 digraph {
     label="{{ dag_name }}";
-    {% for node in nodes %}
-        subgraph cluster_{{ node.name | to_var }} {
-            label="{{ node.name }}"
-            {% for task in node.all_tasks %}
+    {% for task_group in task_groups %}
+        subgraph cluster_{{ task_group.name | to_var }} {
+            label="{{ task_group.name }}"
+            {% for task in task_group.all_tasks %}
                 {{ task.task_id | to_var }}
                 [color={{ task_color(task) }}]
                 [shape=none]
@@ -81,7 +81,7 @@ digraph {
                     </table>
                 >]
             {% endfor %}
-            {% for relation in node.relations %}
+            {% for relation in task_group.relations %}
                 {{ relation.from_task_id | to_var }} -> {{ relation.to_task_id | to_var }}
                 [color={{ relation_color(relation) }}]
                 [label="{{ inner_relation_label(relation) }}"]

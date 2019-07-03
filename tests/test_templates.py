@@ -17,15 +17,14 @@ import ast
 from copy import deepcopy
 from random import randint
 from typing import Dict, Any, Union, List
-from unittest import mock, TestCase
+from unittest import TestCase
 
 from parameterized import parameterized
 from airflow.utils.trigger_rule import TriggerRule
 
-from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.task import Task
 from o2a.converter.relation import Relation
-from o2a.mappers.dummy_mapper import DummyMapper
+from o2a.converter.task_group import TaskGroup
 from o2a.utils.template_utils import render_template
 
 DELETE_MARKER: Any = {}
@@ -593,9 +592,9 @@ class WorkflowTemplateTestCase(TestCase, TemplateTestMixin):
     DEFAULT_TEMPLATE_PARAMS = dict(
         dag_name="test_dag",
         dependencies={"import awesome_stuff"},
-        nodes=[
-            ParsedActionNode(
-                mock.MagicMock(spec=DummyMapper),
+        task_groups=[
+            TaskGroup(
+                name="TASK_GROUP",
                 tasks=[
                     Task(task_id="first_task", template_name="dummy.tpl"),
                     Task(task_id="second_task", template_name="dummy.tpl"),
@@ -619,9 +618,9 @@ class SubWorkflowTemplateTestCase(TestCase, TemplateTestMixin):
 
     DEFAULT_TEMPLATE_PARAMS = dict(
         dependencies={"import awesome_stuff"},
-        nodes=[
-            ParsedActionNode(
-                mock.MagicMock(spec=DummyMapper),
+        task_groups=[
+            TaskGroup(
+                name="AAA",
                 tasks=[
                     Task(task_id="first_task", template_name="dummy.tpl"),
                     Task(task_id="second_task", template_name="dummy.tpl"),

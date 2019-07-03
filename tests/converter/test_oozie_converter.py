@@ -16,21 +16,18 @@
 
 from unittest import mock, TestCase
 from xml.etree.ElementTree import Element
-from xml.etree import ElementTree as ET
 
 from o2a import o2a
 from o2a.converter.oozie_converter import OozieConverter
 from o2a.converter.parsed_action_node import ParsedActionNode
 
 from o2a.converter.task import Task
+from o2a.converter.task_group import TaskGroup
 from o2a.converter.workflow import Workflow
 from o2a.mappers.dummy_mapper import DummyMapper
 
-from o2a.converter import parsed_action_node
 from o2a.converter.mappers import ACTION_MAP
 from o2a.converter.relation import Relation
-
-from o2a.mappers import dummy_mapper
 
 
 class TestOozieConverter(TestCase):
@@ -108,23 +105,6 @@ class TestOozieConverter(TestCase):
         self.assertIs(node_1.relations, relations_1)
         self.assertIs(node_2.relations, relations_2)
 
-    def test_convert_dependencies(self):
-        converter = self._create_converter()
-
-        mapper_1 = mock.MagicMock(**{"required_imports.return_value": {"import A", "import B"}})
-        mapper_2 = mock.MagicMock(**{"required_imports.return_value": ("import B", "import C")})
-
-        node_1 = ParsedActionNode(mapper=mapper_1)
-        node_2 = ParsedActionNode(mapper=mapper_2)
-        nodes = dict(TASK_1=node_1, TASK_2=node_2)
-
-        workflow = self._create_workflow(nodes)
-        converter.workflow = workflow
-
-        converter.convert_dependencies()
-
-        self.assertEqual({"import IMPORT", "import C", "import B", "import A"}, workflow.dependencies)
-
     def test_apply_transformers(self):
         workflow = self._create_workflow()
 
@@ -157,25 +137,25 @@ class TestOozieConverter(TestCase):
         )
 
     def test_convert_relations(self):
-        oozie_node = ET.Element("dummy")
-        op1 = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task1", dag_name="DAG_NAME_B1"),
+
+        op1 = TaskGroup(
+            name="task1",
             tasks=[self._create_task("task1")],
+            downstream_names=["task2", "task3"],
+            error_downstream_name="fail1",
         )
-        op1.downstream_names = ["task2", "task3"]
-        op1.error_downstream_name = "fail1"
-        op2 = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task2", dag_name="DAG_NAME_B2"),
+        op2 = TaskGroup(
+            name="task2",
             tasks=[self._create_task("task2")],
+            downstream_names=["task3", "task4"],
+            error_downstream_name="fail1",
         )
-        op2.downstream_names = ["task3", "task4"]
-        op2.error_downstream_name = "fail1"
-        op3 = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="task3", dag_name="DAG_NAME_B3"),
+        op3 = TaskGroup(
+            name="task3",
             tasks=[self._create_task("task3")],
+            downstream_names=["end1"],
+            error_downstream_name="fail1",
         )
-        op3.downstream_names = ["end1"]
-        op3.error_downstream_name = "fail1"
         op4 = mock.Mock(
             **{
                 "first_task_id": "task4_first",
@@ -185,26 +165,20 @@ class TestOozieConverter(TestCase):
                 "error_downstream_name": "fail1",
             }
         )
-        end = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="end1", dag_name="DAG_NAME_B4"),
-            tasks=[self._create_task("end1")],
-        )
-        fail = parsed_action_node.ParsedActionNode(
-            dummy_mapper.DummyMapper(oozie_node=oozie_node, name="fail1", dag_name="DAG_NAME_B5"),
-            tasks=[self._create_task("fail1")],
-        )
+        end = TaskGroup(name="end1", tasks=[self._create_task("end1")])
+        fail = TaskGroup(name="fail1", tasks=[self._create_task("fail1")])
         op_dict = {"task1": op1, "task2": op2, "task3": op3, "task4": op4, "end1": end, "fail1": fail}
-        workflow = self._create_workflow(nodes=op_dict)
+        workflow = self._create_workflow(task_groups=op_dict)
         converter = self._create_converter()
 
-        workflow.relations = set()
+        workflow.task_group_relations = set()
         converter.workflow = workflow
 
         converter.add_state_handlers()
         converter.convert_relations()
 
         self.assertEqual(
-            workflow.relations,
+            workflow.task_group_relations,
             {
                 Relation(from_task_id="task1_error", to_task_id="fail1", is_error=True),
                 Relation(from_task_id="task1_ok", to_task_id="task2", is_error=False),
@@ -222,14 +196,14 @@ class TestOozieConverter(TestCase):
         )
 
     def test_add_error_handlers(self):
-        nodes = {"TASK_A": mock.MagicMock(), "TASK_B": mock.MagicMock()}
+        task_groups = {"TASK_A": mock.MagicMock(), "TASK_B": mock.MagicMock()}
         converter = self._create_converter()
-        workflow = self._create_workflow(nodes)
+        workflow = self._create_workflow(task_groups=task_groups)
         converter.workflow = workflow
         converter.add_state_handlers()
 
-        nodes["TASK_A"].add_state_handler_if_needed.assert_called_once_with()
-        nodes["TASK_B"].add_state_handler_if_needed.assert_called_once_with()
+        task_groups["TASK_A"].add_state_handler_if_needed.assert_called_once_with()
+        task_groups["TASK_B"].add_state_handler_if_needed.assert_called_once_with()
 
     @staticmethod
     def _create_converter():
@@ -243,17 +217,18 @@ class TestOozieConverter(TestCase):
         )
 
     @staticmethod
-    def _create_workflow(nodes=None):
+    def _create_workflow(nodes=None, task_groups=None):
         return Workflow(
             dag_name="A",
             input_directory_path="in_dir",
             output_directory_path="out_dir",
-            relations={Relation(from_task_id="DAG_NAME_A", to_task_id="DAG_NAME_B")},
+            task_group_relations={Relation(from_task_id="DAG_NAME_A", to_task_id="DAG_NAME_B")},
             nodes=dict(
                 AAA=ParsedActionNode(DummyMapper(Element("dummy"), name="DAG_NAME_A", dag_name="DAG_NAME_B"))
             )
             if not nodes
             else nodes,
+            task_groups=dict() if not task_groups else task_groups,
             dependencies={"import IMPORT"},
         )
 

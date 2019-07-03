@@ -13,11 +13,11 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 #}
-{% for node in nodes %}
-{% for task in node.all_tasks %}
+{% for task_group in task_groups %}
+{% for task in task_group.all_tasks %}
 {{ task.rendered_template }}
 {% endfor %}
-{% for relation in node.relations %}
+{% for relation in task_group.relations %}
 {{ relation.from_task_id | to_var }}.set_downstream({{ relation.to_task_id | to_var }})
 {% endfor %}
 {% endfor %}

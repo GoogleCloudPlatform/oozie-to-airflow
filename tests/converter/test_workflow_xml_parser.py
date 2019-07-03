@@ -512,7 +512,6 @@ class TestOozieExamples(unittest.TestCase):
         )
 
         current_parser.parse_workflow()
-        self.assertEqual(set(), current_parser.workflow.relations)
         self.assertEqual(case.nodes.keys(), set(current_parser.workflow.nodes.keys()))
         for node_name, expected_node in case.nodes.items():
             node = workflow.nodes[node_name]
