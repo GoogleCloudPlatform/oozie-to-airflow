@@ -30,8 +30,6 @@ class ParsedActionNode:
     def __init__(self, mapper: BaseMapper, tasks=None, relations=None):
         self.mapper = mapper
         self.downstream_names: List[str] = []
-        self.is_error: bool = False
-        self.is_ok: bool = False
         self.error_downstream_name: Optional[str] = None
         self.tasks: List[Task] = tasks or []
         self.relations: List[Relation] = relations or []
