@@ -18,6 +18,7 @@ from typing import Set, Dict, Type
 
 from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.relation import Relation
+from o2a.converter.task_group import TaskGroup
 
 
 # This is a container for data, so it does not contain public methods intentionally.
@@ -29,17 +30,19 @@ class Workflow:  # pylint: disable=too-few-public-methods
         input_directory_path: str,
         output_directory_path: str,
         dag_name: str,
-        relations: Set[Relation] = None,
+        task_group_relations: Set[Relation] = None,
         nodes: Dict[str, ParsedActionNode] = None,
+        task_groups: Dict[str, TaskGroup] = None,
         dependencies: Set[str] = None,
     ) -> None:
         self.input_directory_path = input_directory_path
         self.output_directory_path = output_directory_path
         self.dag_name = dag_name
-        self.relations = relations or set()
+        self.task_group_relations = task_group_relations or set()
         # Dictionary is ordered purely for output being somewhat ordered the
         # same as how Oozie workflow was parsed.
         self.nodes = nodes or OrderedDict()
+        self.task_groups = task_groups or OrderedDict()
         # These are the general dependencies required that every operator
         # requires.
         self.dependencies = dependencies or {
@@ -75,7 +78,7 @@ class Workflow:  # pylint: disable=too-few-public-methods
     def __repr__(self) -> str:
         return (
             f'Workflow(dag_name="{self.dag_name}", input_directory_path="{self.input_directory_path}", '
-            f'output_directory_path="{self.output_directory_path}", relations={self.relations}, '
+            f'output_directory_path="{self.output_directory_path}", relations={self.task_group_relations}, '
             f"nodes={self.nodes.keys()}, dependencies={self.dependencies})"
         )
 

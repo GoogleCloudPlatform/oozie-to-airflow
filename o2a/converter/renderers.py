@@ -113,8 +113,8 @@ class PythonRenderer(BaseRenderer):
             start_days_ago=self.start_days_ago,
             job_properties=converted_job_properties,
             config=props.config,
-            relations=workflow.relations,
-            nodes=list(workflow.nodes.values()),
+            relations=workflow.task_group_relations,
+            task_groups=list(workflow.task_groups.values()),
             dependencies=workflow.dependencies,
         )
         return content
@@ -181,7 +181,7 @@ class DotRenderer(BaseRenderer):
         content = render_template(
             dag_name=workflow.dag_name,
             template_name=template_name,
-            relations=workflow.relations,
-            nodes=list(workflow.nodes.values()),
+            relations=workflow.task_group_relations,
+            task_groups=list(workflow.task_groups.values()),
         )
         return content
