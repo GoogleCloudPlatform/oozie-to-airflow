@@ -22,6 +22,7 @@ from xml.etree.ElementTree import Element
 
 from o2a.converter.relation import Relation
 from o2a.converter.task import Task
+from o2a.converter.workflow import Workflow
 from o2a.mappers.action_mapper import ActionMapper
 
 from o2a.mappers.extensions.prepare_mapper_extension import PrepareMapperExtension
@@ -69,8 +70,8 @@ class GitMapper(ActionMapper):
         self.key_path: Optional[str] = None
         self.prepare_extension: PrepareMapperExtension = PrepareMapperExtension(self)
 
-    def on_parse_node(self):
-        super().on_parse_node()
+    def on_parse_node(self, workflow: Workflow):
+        super().on_parse_node(workflow)
         self.git_uri = get_tag_el_text(self.oozie_node, TAG_GIT_URI, props=self.props)
         self.git_branch = get_tag_el_text(self.oozie_node, TAG_BRANCH, props=self.props)
         destination_uri = get_tag_el_text(self.oozie_node, tag=TAG_DESTINATION_URI, props=self.props)

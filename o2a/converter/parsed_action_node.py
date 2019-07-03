@@ -27,8 +27,8 @@ from o2a.mappers.base_mapper import BaseMapper
 class ParsedActionNode:
     """Class for parsed Oozie workflow node"""
 
-    def __init__(self, mapper: BaseMapper, tasks=None, relations=None):
-        self.mapper = mapper
+    def __init__(self, mapper, tasks=None, relations=None):
+        self.mapper: BaseMapper = mapper
         self.downstream_names: List[str] = []
         self.is_error: bool = False
         self.is_ok: bool = False

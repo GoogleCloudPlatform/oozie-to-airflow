@@ -21,6 +21,7 @@ import xml.etree.ElementTree as ET
 from o2a.converter.exceptions import ParseException
 from o2a.converter.task import Task
 from o2a.converter.relation import Relation
+from o2a.converter.workflow import Workflow
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.mappers.extensions.prepare_mapper_extension import PrepareMapperExtension
 from o2a.o2a_libs.property_utils import PropertySet
@@ -58,8 +59,8 @@ class SparkMapper(ActionMapper):
         self.spark_opts: Dict[str, str] = {}
         self.prepare_extension: PrepareMapperExtension = PrepareMapperExtension(self)
 
-    def on_parse_node(self):
-        super().on_parse_node()
+    def on_parse_node(self, workflow: Workflow):
+        super().on_parse_node(workflow)
         _, self.hdfs_files = self.file_extractor.parse_node()
         _, self.hdfs_archives = self.archive_extractor.parse_node()
 

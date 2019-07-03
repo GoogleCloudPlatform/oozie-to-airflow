@@ -13,9 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests fs mapper"""
-
 import ast
 import unittest
+from unittest import mock
 from typing import Dict
 from xml.etree import ElementTree as ET
 
@@ -188,7 +188,7 @@ class FsMapperSingleTestCase(unittest.TestCase):
         self.node = ET.fromstring(node_str)
 
         self.mapper = _get_fs_mapper(oozie_node=self.node)
-        self.mapper.on_parse_node()
+        self.mapper.on_parse_node(mock.MagicMock())
 
     def test_to_tasks_and_relations(self):
         tasks, relations = self.mapper.to_tasks_and_relations()
@@ -218,7 +218,7 @@ class FsMapperEmptyTestCase(unittest.TestCase):
     def setUp(self):
         self.node = ET.Element("fs")
         self.mapper = _get_fs_mapper(oozie_node=self.node)
-        self.mapper.on_parse_node()
+        self.mapper.on_parse_node(mock.MagicMock())
 
     def test_to_tasks_and_relations(self):
         tasks, relations = self.mapper.to_tasks_and_relations()
@@ -282,7 +282,7 @@ class FsMapperComplexTestCase(unittest.TestCase):
         self.node = ET.fromstring(node_str)
 
         self.mapper = _get_fs_mapper(oozie_node=self.node)
-        self.mapper.on_parse_node()
+        self.mapper.on_parse_node(mock.MagicMock())
 
     def test_to_tasks_and_relations(self):
         tasks, relations = self.mapper.to_tasks_and_relations()

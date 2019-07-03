@@ -18,7 +18,7 @@ import shlex
 from typing import Dict, List, Set, Tuple
 from xml.etree.ElementTree import Element
 
-
+from o2a.converter.workflow import Workflow
 from o2a.mappers.extensions.prepare_mapper_extension import PrepareMapperExtension
 from o2a.converter.relation import Relation
 from o2a.converter.task import Task
@@ -63,8 +63,8 @@ class DistCpMapper(ActionMapper):
     def _get_distcp_command(self):
         return f"--class=org.apache.hadoop.tools.DistCp -- {self.args}"
 
-    def on_parse_node(self):
-        super().on_parse_node()
+    def on_parse_node(self, workflow: Workflow):
+        super().on_parse_node(workflow)
         self.args = self._parse_args()
 
     def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:

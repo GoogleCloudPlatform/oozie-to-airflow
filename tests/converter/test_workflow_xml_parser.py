@@ -56,7 +56,7 @@ class TestWorkflowXmlParser(unittest.TestCase):
 
         self.assertIn(node_name, self.parser.workflow.nodes)
 
-        on_parse_node_mock.assert_called_once_with()
+        on_parse_node_mock.assert_called_once_with(self.parser.workflow)
 
     @mock.patch("o2a.mappers.end_mapper.EndMapper.on_parse_node", wraps=None)
     def test_parse_end_node(self, on_parse_node_mock):
@@ -69,7 +69,7 @@ class TestWorkflowXmlParser(unittest.TestCase):
 
         self.assertIn(node_name, self.parser.workflow.nodes)
 
-        on_parse_node_mock.assert_called_once_with()
+        on_parse_node_mock.assert_called_once_with(self.parser.workflow)
 
     @mock.patch("o2a.mappers.dummy_mapper.DummyMapper.on_parse_node", wraps=None)
     @mock.patch("o2a.converter.workflow_xml_parser.WorkflowXmlParser.parse_node")
@@ -98,7 +98,7 @@ class TestWorkflowXmlParser(unittest.TestCase):
         parse_node_mock.assert_any_call(root, node1)
         parse_node_mock.assert_any_call(root, node2)
 
-        on_parse_node_mock.assert_called_once_with()
+        on_parse_node_mock.assert_called_once_with(self.parser.workflow)
 
     @mock.patch("o2a.mappers.dummy_mapper.DummyMapper.on_parse_node", wraps=None)
     def test_parse_join_node(self, on_parse_node_mock):
@@ -113,7 +113,7 @@ class TestWorkflowXmlParser(unittest.TestCase):
         self.assertIn(node_name, self.parser.workflow.nodes)
         self.assertEqual([end_name], node.get_downstreams())
 
-        on_parse_node_mock.assert_called_once_with()
+        on_parse_node_mock.assert_called_once_with(self.parser.workflow)
 
     @mock.patch("o2a.mappers.decision_mapper.DecisionMapper.on_parse_node", wraps=None)
     def test_parse_decision_node(self, on_parse_node_mock):
@@ -135,7 +135,7 @@ class TestWorkflowXmlParser(unittest.TestCase):
         self.assertIn(node_name, self.parser.workflow.nodes)
         self.assertEqual(["down1", "down2", "end1"], p_op.get_downstreams())
 
-        on_parse_node_mock.assert_called_once_with()
+        on_parse_node_mock.assert_called_once_with(self.parser.workflow)
 
     @mock.patch("o2a.mappers.start_mapper.StartMapper.on_parse_node", wraps=None)
     @mock.patch("uuid.uuid4")
@@ -152,7 +152,7 @@ class TestWorkflowXmlParser(unittest.TestCase):
         self.assertIn(node_name, self.parser.workflow.nodes)
         self.assertEqual([end_name], p_op.get_downstreams())
 
-        on_parse_node_mock.assert_called_once_with()
+        on_parse_node_mock.assert_called_once_with(self.parser.workflow)
 
     @mock.patch("o2a.mappers.ssh_mapper.SSHMapper.on_parse_node", wraps=None)
     def test_parse_action_node_ssh(self, on_parse_node_mock):
@@ -180,7 +180,7 @@ class TestWorkflowXmlParser(unittest.TestCase):
         self.assertEqual(["end1"], p_op.get_downstreams())
         self.assertEqual("fail1", p_op.get_error_downstream_name())
 
-        on_parse_node_mock.assert_called_once_with()
+        on_parse_node_mock.assert_called_once_with(self.parser.workflow)
 
     def test_parse_action_node_pig_with_file_and_archive(self):
         self.parser.action_map = {"pig": pig_mapper.PigMapper}
@@ -259,7 +259,7 @@ class TestWorkflowXmlParser(unittest.TestCase):
         self.assertEqual(["end1"], p_op.get_downstreams())
         self.assertEqual("fail1", p_op.get_error_downstream_name())
 
-        on_parse_node_mock.assert_called_once_with()
+        on_parse_node_mock.assert_called_once_with(self.parser.workflow)
 
     @mock.patch("o2a.converter.workflow_xml_parser.WorkflowXmlParser.parse_action_node")
     def test_parse_node_action(self, action_mock):

@@ -21,6 +21,7 @@ from xml.etree.ElementTree import Element
 
 from o2a.converter.relation import Relation
 from o2a.converter.task import Task
+from o2a.converter.workflow import Workflow
 from o2a.mappers.base_mapper import BaseMapper
 from o2a.utils import xml_utils, el_utils
 
@@ -36,8 +37,8 @@ class ActionMapper(BaseMapper, ABC):
     def __init__(self, oozie_node: Element, name: str, dag_name: str, props: PropertySet, **kwargs: Any):
         super().__init__(oozie_node=oozie_node, name=name, dag_name=dag_name, props=props, **kwargs)
 
-    def on_parse_node(self):
-        super().on_parse_node()
+    def on_parse_node(self, workflow: Workflow):
+        super().on_parse_node(workflow)
         self._parse_config()
 
     def _parse_config(self):

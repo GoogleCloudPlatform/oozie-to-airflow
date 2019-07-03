@@ -15,6 +15,7 @@
 """Tests for the MapReduce mapper"""
 import ast
 import unittest
+from unittest import mock
 from xml.etree import ElementTree as ET
 
 
@@ -134,7 +135,7 @@ class TestMapReduceMapper(unittest.TestCase):
         config = {"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"}
 
         mapper = self._get_mapreduce_mapper(job_properties=job_properties, config=config)
-        mapper.on_parse_node()
+        mapper.on_parse_node(mock.MagicMock())
 
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
@@ -177,7 +178,7 @@ class TestMapReduceMapper(unittest.TestCase):
                 },
             ),
         )
-        mapper.on_parse_node()
+        mapper.on_parse_node(mock.MagicMock())
 
         tasks, relations = mapper.to_tasks_and_relations()
 
@@ -277,7 +278,7 @@ class TestMapReduceMapperNoPrepare(unittest.TestCase):
                 },
             ),
         )
-        mapper.on_parse_node()
+        mapper.on_parse_node(mock.MagicMock())
         tasks, relations = mapper.to_tasks_and_relations()
 
         self.assertEqual(

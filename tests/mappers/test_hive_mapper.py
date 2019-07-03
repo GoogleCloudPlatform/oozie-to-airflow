@@ -15,9 +15,9 @@
 """Tests give mapper"""
 import ast
 import unittest
+from unittest import mock
 from typing import Dict
 from xml.etree import ElementTree as ET
-
 
 from o2a.converter.exceptions import ParseException
 from o2a.converter.task import Task
@@ -101,7 +101,7 @@ class TestHiveMapper(unittest.TestCase):
         self.hive_node.append(ET.fromstring(FRAGMENT_QUERY))
 
         mapper = self._get_hive_mapper(job_properties=self.job_properties, config=self.config)
-        mapper.on_parse_node()
+        mapper.on_parse_node(mock.MagicMock())
 
         tasks, relations = mapper.to_tasks_and_relations()
 
@@ -143,7 +143,7 @@ class TestHiveMapper(unittest.TestCase):
             self.hive_node.append(element)
 
         mapper = self._get_hive_mapper(job_properties=self.job_properties, config=self.config)
-        mapper.on_parse_node()
+        mapper.on_parse_node(mock.MagicMock())
 
         tasks, relations = mapper.to_tasks_and_relations()
 
@@ -184,7 +184,7 @@ class TestHiveMapper(unittest.TestCase):
         self.hive_node.append(ET.fromstring(FRAGMENT_PREPARE))
 
         mapper = self._get_hive_mapper(job_properties=self.job_properties, config=self.config)
-        mapper.on_parse_node()
+        mapper.on_parse_node(mock.MagicMock())
 
         tasks, relations = mapper.to_tasks_and_relations()
 
@@ -209,7 +209,7 @@ class TestHiveMapper(unittest.TestCase):
             self.hive_node.append(element)
 
         mapper = self._get_hive_mapper(job_properties=self.job_properties, config=self.config)
-        mapper.on_parse_node()
+        mapper.on_parse_node(mock.MagicMock())
 
         tasks, relations = mapper.to_tasks_and_relations()
 
@@ -257,7 +257,7 @@ class TestHiveMapper(unittest.TestCase):
             self.hive_node.append(element)
 
         mapper = self._get_hive_mapper(job_properties=self.job_properties, config=self.config)
-        mapper.on_parse_node()
+        mapper.on_parse_node(mock.MagicMock())
 
         tasks, relations = mapper.to_tasks_and_relations()
 
@@ -303,7 +303,7 @@ class TestHiveMapper(unittest.TestCase):
         with self.assertRaisesRegex(
             ParseException, "Action Configuration does not include script or query element"
         ):
-            mapper.on_parse_node()
+            mapper.on_parse_node(mock.MagicMock())
 
     def test_on_parse_should_raise_exception_when_query_and_script_are_set_at_the_same_time(self):
         self.hive_node.append(ET.fromstring(FRAGMENT_QUERY))
@@ -315,7 +315,7 @@ class TestHiveMapper(unittest.TestCase):
             ParseException,
             "Action Configuration include script and query element. Only one can be set at the same time.",
         ):
-            mapper.on_parse_node()
+            mapper.on_parse_node(mock.MagicMock())
 
     def test_required_imports(self):
         mapper = self._get_hive_mapper(job_properties=self.job_properties, config=self.config)

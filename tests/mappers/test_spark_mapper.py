@@ -15,6 +15,7 @@
 """Tests Spark Mapper"""
 import ast
 import unittest
+from unittest import mock
 from xml.etree import ElementTree as ET
 
 
@@ -91,7 +92,7 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
     def test_to_tasks_and_relations_with_prepare_node(self):
         spark_node = ET.fromstring(EXAMPLE_XML_WITH_PREPARE)
         mapper = self._get_spark_mapper(spark_node)
-        mapper.on_parse_node()
+        mapper.on_parse_node(mock.MagicMock())
 
         tasks, relations = mapper.to_tasks_and_relations()
 
@@ -128,7 +129,7 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
     def test_to_tasks_and_relations_without_prepare_node(self):
         spark_node = ET.fromstring(EXAMPLE_XML_WITHOUT_PREPARE)
         mapper = self._get_spark_mapper(spark_node)
-        mapper.on_parse_node()
+        mapper.on_parse_node(mock.MagicMock())
 
         tasks, relations = mapper.to_tasks_and_relations()
 

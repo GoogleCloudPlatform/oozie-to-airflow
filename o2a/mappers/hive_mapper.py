@@ -22,6 +22,7 @@ from xml.etree.ElementTree import Element
 
 from o2a.converter.exceptions import ParseException
 from o2a.converter.task import Task
+from o2a.converter.workflow import Workflow
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.mappers.extensions.prepare_mapper_extension import PrepareMapperExtension
 from o2a.o2a_libs.property_utils import PropertySet
@@ -53,8 +54,8 @@ class HiveMapper(ActionMapper):
         self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, props=self.props)
         self.prepare_extension: PrepareMapperExtension = PrepareMapperExtension(self)
 
-    def on_parse_node(self):
-        super().on_parse_node()
+    def on_parse_node(self, workflow: Workflow):
+        super().on_parse_node(workflow)
         self._parse_config()
         self.query = get_tag_el_text(self.oozie_node, TAG_QUERY, self.props)
         self.script = get_tag_el_text(self.oozie_node, TAG_SCRIPT, self.props)

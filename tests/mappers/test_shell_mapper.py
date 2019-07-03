@@ -15,6 +15,7 @@
 """Tests shell mapper"""
 import ast
 import unittest
+from unittest import mock
 from xml.etree import ElementTree as ET
 
 
@@ -55,7 +56,7 @@ class TestShellMapper(unittest.TestCase):
 
     def test_create_mapper_no_jinja(self):
         mapper = self._get_shell_mapper(job_properties={}, config={})
-        mapper.on_parse_node()
+        mapper.on_parse_node(mock.MagicMock())
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
         self.assertEqual(self.shell_node, mapper.oozie_node)
@@ -77,7 +78,7 @@ class TestShellMapper(unittest.TestCase):
         config = {"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"}
 
         mapper = self._get_shell_mapper(job_properties=job_properties, config=config)
-        mapper.on_parse_node()
+        mapper.on_parse_node(mock.MagicMock())
 
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
@@ -91,7 +92,7 @@ class TestShellMapper(unittest.TestCase):
         job_properties = {"nameNode": "hdfs://localhost:9020/", "queueName": "default"}
         config = {"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"}
         mapper = self._get_shell_mapper(job_properties=job_properties, config=config)
-        mapper.on_parse_node()
+        mapper.on_parse_node(mock.MagicMock())
         tasks, relations = mapper.to_tasks_and_relations()
 
         self.assertEqual(

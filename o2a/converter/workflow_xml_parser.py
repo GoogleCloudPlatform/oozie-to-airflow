@@ -72,7 +72,7 @@ class WorkflowXmlParser:
         )
         p_node = ParsedActionNode(mapper)
 
-        mapper.on_parse_node()
+        mapper.on_parse_node(self.workflow)
 
         logging.info(f"Parsed {mapper.name} as Kill Node.")
         self.workflow.nodes[kill_node.attrib["name"]] = p_node
@@ -85,7 +85,7 @@ class WorkflowXmlParser:
         mapper = EndMapper(oozie_node=end_node, name=end_node.attrib["name"], dag_name=self.workflow.dag_name)
         p_node = ParsedActionNode(mapper)
 
-        mapper.on_parse_node()
+        mapper.on_parse_node(self.workflow)
 
         logging.info(f"Parsed {mapper.name} as End Node.")
         self.workflow.nodes[end_node.attrib["name"]] = p_node
@@ -105,7 +105,7 @@ class WorkflowXmlParser:
         mapper = ForkMapper(oozie_node=fork_node, name=fork_name, dag_name=self.workflow.dag_name)
         p_node = ParsedActionNode(mapper)
 
-        mapper.on_parse_node()
+        mapper.on_parse_node(self.workflow)
 
         logging.info(f"Parsed {mapper.name} as Fork Node.")
         paths = []
@@ -141,7 +141,7 @@ class WorkflowXmlParser:
         p_node = ParsedActionNode(mapper)
         p_node.add_downstream_node_name(join_node.attrib["to"])
 
-        mapper.on_parse_node()
+        mapper.on_parse_node(self.workflow)
 
         logging.info(f"Parsed {mapper.name} as Join Node.")
         self.workflow.nodes[join_node.attrib["name"]] = p_node
@@ -181,7 +181,7 @@ class WorkflowXmlParser:
         for cases in decision_node[0]:
             p_node.add_downstream_node_name(cases.attrib["to"])
 
-        mapper.on_parse_node()
+        mapper.on_parse_node(self.workflow)
 
         logging.info(f"Parsed {mapper.name} as Decision Node.")
         self.workflow.nodes[decision_node.attrib["name"]] = p_node
@@ -224,7 +224,7 @@ class WorkflowXmlParser:
             raise Exception("Missing error node in {}".format(action_node))
         p_node.set_error_node_name(error_node.attrib["to"])
 
-        mapper.on_parse_node()
+        mapper.on_parse_node(self.workflow)
 
         logging.info(f"Parsed {mapper.name} as Action Node of type {action_name}.")
 
@@ -253,7 +253,7 @@ class WorkflowXmlParser:
         p_node = ParsedActionNode(mapper)
         p_node.add_downstream_node_name(start_node.attrib["to"])
 
-        mapper.on_parse_node()
+        mapper.on_parse_node(self.workflow)
 
         logging.info(f"Parsed {mapper.name} as Start Node.")
         self.workflow.nodes[start_name] = p_node

@@ -21,6 +21,7 @@ from xml.etree.ElementTree import Element
 
 from o2a.converter.relation import Relation
 from o2a.converter.task import Task
+from o2a.converter.workflow import Workflow
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.o2a_libs.property_utils import PropertySet
 from o2a.utils.relation_utils import chain
@@ -119,8 +120,8 @@ class FsMapper(ActionMapper):
         self.oozie_node = oozie_node
         self.tasks: List[Task] = []
 
-    def on_parse_node(self):
-        super().on_parse_node()
+    def on_parse_node(self, workflow: Workflow):
+        super().on_parse_node(workflow)
         self.tasks = self.parse_tasks()
 
     def parse_tasks(self) -> List[Task]:

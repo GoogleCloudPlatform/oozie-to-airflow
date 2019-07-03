@@ -14,6 +14,7 @@
 # limitations under the License.
 """Tests distcp_mapper"""
 import unittest
+from unittest import mock
 from typing import Dict
 from xml.etree import ElementTree as ET
 from xml.etree.ElementTree import Element
@@ -23,9 +24,9 @@ from o2a.converter.relation import Relation
 from o2a.converter.task import Task
 from o2a.mappers.distcp_mapper import DistCpMapper
 
-# language=XML
 from o2a.o2a_libs.property_utils import PropertySet
 
+# language=XML
 EXAMPLE_XML = """
 <distcp>
     <resource-manager>${resourceManager}</resource-manager>
@@ -68,7 +69,7 @@ class TestDistCpMapper(unittest.TestCase):
         )
 
         # When
-        mapper.on_parse_node()
+        mapper.on_parse_node(mock.MagicMock())
         tasks, relations = mapper.to_tasks_and_relations()
 
         # Then
@@ -127,7 +128,7 @@ class TestDistCpMapperNoPrepare(unittest.TestCase):
         )
 
         # When
-        mapper.on_parse_node()
+        mapper.on_parse_node(mock.MagicMock())
         tasks, relations = mapper.to_tasks_and_relations()
 
         # Then

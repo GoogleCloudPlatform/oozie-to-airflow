@@ -15,6 +15,7 @@
 """Tests Spark Mapper"""
 import ast
 import unittest
+from unittest import mock
 from xml.etree import ElementTree as ET
 
 
@@ -114,7 +115,7 @@ class TestGitMapper(unittest.TestCase):
         git_node = ET.fromstring(EXAMPLE_XML)
 
         mapper = self._get_git_mapper(git_node)
-        mapper.on_parse_node()
+        mapper.on_parse_node(mock.MagicMock())
 
         tasks, relations = mapper.to_tasks_and_relations()
 
@@ -156,7 +157,7 @@ class TestGitMapper(unittest.TestCase):
         prepare_node = spark_node.find("prepare")
         spark_node.remove(prepare_node)
         mapper = self._get_git_mapper(spark_node)
-        mapper.on_parse_node()
+        mapper.on_parse_node(mock.MagicMock())
 
         tasks, relations = mapper.to_tasks_and_relations()
 

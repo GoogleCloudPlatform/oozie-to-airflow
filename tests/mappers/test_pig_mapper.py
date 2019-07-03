@@ -15,6 +15,7 @@
 """Tests pig mapper"""
 import ast
 import unittest
+from unittest import mock
 from xml.etree import ElementTree as ET
 
 
@@ -62,7 +63,7 @@ class TestPigMapper(unittest.TestCase):
         job_properties = {"nameNode": "hdfs://"}
         config = {}
         mapper = self._get_pig_mapper(job_properties=job_properties, config=config)
-        mapper.on_parse_node()
+        mapper.on_parse_node(mock.MagicMock())
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
         self.assertEqual(self.pig_node, mapper.oozie_node)
@@ -90,7 +91,7 @@ class TestPigMapper(unittest.TestCase):
         config = {}
 
         mapper = self._get_pig_mapper(job_properties=job_properties, config=config)
-        mapper.on_parse_node()
+        mapper.on_parse_node(mock.MagicMock())
 
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
@@ -108,7 +109,7 @@ class TestPigMapper(unittest.TestCase):
         job_properties = {"nameNode": "hdfs://"}
         config = {"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"}
         mapper = self._get_pig_mapper(job_properties=job_properties, config=config)
-        mapper.on_parse_node()
+        mapper.on_parse_node(mock.MagicMock())
         tasks, relations = mapper.to_tasks_and_relations()
 
         self.assertEqual(

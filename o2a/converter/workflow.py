@@ -16,7 +16,6 @@
 from collections import OrderedDict
 from typing import Set, Dict, Type
 
-from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.relation import Relation
 
 
@@ -30,16 +29,18 @@ class Workflow:  # pylint: disable=too-few-public-methods
         output_directory_path: str,
         dag_name: str,
         relations: Set[Relation] = None,
-        nodes: Dict[str, ParsedActionNode] = None,
+        nodes=None,
         dependencies: Set[str] = None,
     ) -> None:
+        from o2a.converter.parsed_action_node import ParsedActionNode
+
         self.input_directory_path = input_directory_path
         self.output_directory_path = output_directory_path
         self.dag_name = dag_name
         self.relations = relations or set()
         # Dictionary is ordered purely for output being somewhat ordered the
         # same as how Oozie workflow was parsed.
-        self.nodes = nodes or OrderedDict()
+        self.nodes: Dict[str, ParsedActionNode] = nodes or OrderedDict()
         # These are the general dependencies required that every operator
         # requires.
         self.dependencies = dependencies or {
@@ -63,7 +64,7 @@ class Workflow:  # pylint: disable=too-few-public-methods
                 result.append(node)
         return result
 
-    def remove_node(self, node_to_delete: ParsedActionNode):
+    def remove_node(self, node_to_delete):
         del self.nodes[node_to_delete.name]
 
         for node in self.nodes.values():
