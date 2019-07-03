@@ -118,7 +118,7 @@ class WorkflowXmlParser:
         self.workflow.nodes[fork_name] = p_node
 
         for path in paths:
-            p_node.add_downstream_node_name(path.attrib["name"])
+            p_node.downstream_names.append(path.attrib["name"])
             logging.info(f"Added {mapper.name}'s downstream: {path.attrib['name']}")
 
             # Theoretically these will all be action nodes, however I don't
@@ -139,7 +139,7 @@ class WorkflowXmlParser:
         )
 
         p_node = ParsedActionNode(mapper)
-        p_node.add_downstream_node_name(join_node.attrib["to"])
+        p_node.downstream_names.append(join_node.attrib["to"])
 
         mapper.on_parse_node()
 
@@ -179,7 +179,7 @@ class WorkflowXmlParser:
 
         p_node = ParsedActionNode(mapper)
         for cases in decision_node[0]:
-            p_node.add_downstream_node_name(cases.attrib["to"])
+            p_node.downstream_names.append(cases.attrib["to"])
 
         mapper.on_parse_node()
 
@@ -218,11 +218,11 @@ class WorkflowXmlParser:
         ok_node = action_node.find("ok")
         if ok_node is None:
             raise Exception("Missing ok node in {}".format(action_node))
-        p_node.add_downstream_node_name(ok_node.attrib["to"])
+        p_node.downstream_names.append(ok_node.attrib["to"])
         error_node = action_node.find("error")
         if error_node is None:
             raise Exception("Missing error node in {}".format(action_node))
-        p_node.set_error_node_name(error_node.attrib["to"])
+        p_node.error_xml = error_node.attrib["to"]
 
         mapper.on_parse_node()
 
@@ -251,7 +251,7 @@ class WorkflowXmlParser:
         )
 
         p_node = ParsedActionNode(mapper)
-        p_node.add_downstream_node_name(start_node.attrib["to"])
+        p_node.downstream_names.append(start_node.attrib["to"])
 
         mapper.on_parse_node()
 
