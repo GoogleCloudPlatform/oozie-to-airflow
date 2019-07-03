@@ -35,7 +35,7 @@ class RemoveEndTransformer(BaseWorkflowTransformer):
         for end_node in end_nodes:
             upstream_nodes = workflow.find_upstream_nodes(end_node)
             upstream_node_names = {node.name for node in upstream_nodes}
-            print(upstream_node_names)
+
             if not decision_node_names.intersection(upstream_node_names):
                 workflow.remove_node(end_node)
             else:
