@@ -16,12 +16,15 @@
 
 set -x
 
+DEL_DIRS=()
+MK_DIRS=()
+
 while getopts ":c:r:d:m:" OPT; do
      case ${OPT} in
-        c) CLUSTER=$OPTARG;;
-        r) REGION=$OPTARG;;
-        d) DEL_DIRS=$OPTARG;;
-        m) MK_DIRS=$OPTARG;;
+        c) CLUSTER="$OPTARG";;
+        r) REGION="$OPTARG";;
+        d) DEL_DIRS+=("$OPTARG");;
+        m) MK_DIRS+=("$OPTARG");;
         \?)
             echo "Invalid option: -$OPTARG" >&2
             exit 1
@@ -32,15 +35,15 @@ while getopts ":c:r:d:m:" OPT; do
             ;;
      esac
 done
+shift "$((OPTIND -1))"
 
-for DEL_DIR in ${DEL_DIRS}; do
+
+for DEL_DIR in "${DEL_DIRS[@]}"; do
     # Gcloud expects the path not to contain any apostrophes or quotation marks, hence just the ${DEL_DIR}.
-    # TODO: This is not safe e.g. in case of spaces in the path.
     gcloud dataproc jobs submit pig --cluster="${CLUSTER}" --region="${REGION}" --execute "fs -rm -f -r ${DEL_DIR}"
 done
 
-for MK_DIR in ${MK_DIRS}; do
+for MK_DIR in "${MK_DIRS[@]}"; do
     # Gcloud expects the path not to contain any apostrophes or quotation marks, hence just the ${DEL_DIR}.
-    # TODO: This is not safe e.g. in case of spaces in the path.
     gcloud dataproc jobs submit pig --cluster="${CLUSTER}" --region="${REGION}" --execute "fs -mkdir -p ${MK_DIR}"
 done
