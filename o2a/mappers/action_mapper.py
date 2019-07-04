@@ -63,17 +63,17 @@ class ActionMapper(BaseMapper, ABC):
 
     def _parse_config(self):
         job_xml_nodes = find_nodes_by_tag(self.oozie_node, TAG_JOB_XML)
-        new_properties = extract_properties_from_job_xml_nodes(
+        job_xml_properties = extract_properties_from_job_xml_nodes(
             job_xml_nodes=job_xml_nodes, input_directory_path=self.input_directory_path, props=self.props
         )
-        self.props.action_node_properties.update(new_properties)
+        self.props.action_node_properties.update(job_xml_properties)
 
         configuration_node = find_node_by_tag(self.oozie_node, TAG_CONFIGURATION)
         if configuration_node is not None:
-            new_properties = extract_properties_from_configuration_node(
+            conf_node_properties = extract_properties_from_configuration_node(
                 config_node=configuration_node, props=self.props
             )
-            self.props.action_node_properties.update(new_properties)
+            self.props.action_node_properties.update(conf_node_properties)
 
     @staticmethod
     def prepend_task(

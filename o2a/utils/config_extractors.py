@@ -68,7 +68,10 @@ def extract_properties_from_job_xml_nodes(
         config_tree = ET.parse(file_path)
         config_node = config_tree.getroot()
         if not config_node:
-            raise ParseException("XML File must have a configuration element.")
+            raise ParseException(
+                "A job-xml configuration node is specified in the workflow XML, however its value is empty. "
+                "Make sure the path to a valid configuration file is present."
+            )
         new_properties = extract_properties_from_configuration_node(config_node, props=props)
         properties_dict.update(new_properties)
 
