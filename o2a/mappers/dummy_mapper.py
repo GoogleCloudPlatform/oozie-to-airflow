@@ -19,12 +19,15 @@ from xml.etree.ElementTree import Element
 
 from o2a.converter.relation import Relation
 from o2a.converter.task import Task
-from o2a.mappers.action_mapper import ActionMapper
+from o2a.mappers.base_mapper import BaseMapper
 from o2a.o2a_libs.property_utils import PropertySet
 
 
-class DummyMapper(ActionMapper):
-    """Dummy mapper used in place of not-yet-implemented mappers """
+class DummyMapper(BaseMapper):
+    """Dummy mapper. It always returns one tasks that does nothing.
+
+    It used in place of not-yet-implemented mappers and as the base class for control nodes.
+    """
 
     def __init__(
         self, oozie_node: Element, name: str, dag_name: str, props: Optional[PropertySet] = None, **kwargs

@@ -27,7 +27,9 @@ from typing import Dict, Type, List
 from airflow.utils.trigger_rule import TriggerRule
 
 from o2a.converter.renderers import BaseRenderer
+from o2a.mappers.base_mapper import BaseMapper
 from o2a.mappers.decision_mapper import DecisionMapper
+from o2a.mappers.dummy_mapper import DummyMapper
 from o2a.mappers.end_mapper import EndMapper
 from o2a.mappers.fork_mapper import ForkMapper
 from o2a.mappers.join_mapper import JoinMapper
@@ -202,21 +204,28 @@ class WorkflowXmlParser:
         action_operation_node = action_node[0]
         action_name = action_operation_node.tag
 
+        mapper: BaseMapper
         if action_name not in self.action_map:
             action_name = "unknown"
-
-        map_class = self.action_map[action_name]
-        mapper = map_class(
-            oozie_node=action_operation_node,
-            name=action_node.attrib["name"],
-            props=self.props,
-            dag_name=self.workflow.dag_name,
-            action_mapper=self.action_map,
-            renderer=self.renderer,
-            input_directory_path=self.workflow.input_directory_path,
-            output_directory_path=self.workflow.output_directory_path,
-            transformers=self.transformers,
-        )
+            mapper = DummyMapper(
+                oozie_node=action_operation_node,
+                name=action_node.attrib["name"],
+                dag_name=self.workflow.dag_name,
+                props=self.props,
+            )
+        else:
+            map_class = self.action_map[action_name]
+            mapper = map_class(
+                oozie_node=action_operation_node,
+                name=action_node.attrib["name"],
+                props=self.props,
+                dag_name=self.workflow.dag_name,
+                action_mapper=self.action_map,
+                renderer=self.renderer,
+                input_directory_path=self.workflow.input_directory_path,
+                output_directory_path=self.workflow.output_directory_path,
+                transformers=self.transformers,
+            )
 
         p_node = ParsedActionNode(mapper)
         ok_node = action_node.find("ok")

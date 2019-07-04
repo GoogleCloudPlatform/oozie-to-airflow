@@ -201,5 +201,6 @@ class TestGitMapper(unittest.TestCase):
             name="test_id",
             dag_name="DAG_NAME_B",
             props=PropertySet(job_properties=EXAMPLE_JOB_PROPS, config=EXAMPLE_CONFIG),
+            input_directory_path="/tmp/input-directory-path/",
         )
         return mapper

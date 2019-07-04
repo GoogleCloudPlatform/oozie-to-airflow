@@ -471,4 +471,5 @@ def _get_fs_mapper(oozie_node):
         name="test_id",
         dag_name="DAG_NAME_B",
         props=PropertySet(job_properties={"nameNode": "hdfs://"}, config={}),
+        input_directory_path="/tmp/input-directory-path/",
     )

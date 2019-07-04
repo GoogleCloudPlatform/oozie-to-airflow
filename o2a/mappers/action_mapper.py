@@ -33,8 +33,24 @@ from o2a.o2a_libs.property_utils import PropertySet
 class ActionMapper(BaseMapper, ABC):
     """Base class for all action mappers"""
 
-    def __init__(self, oozie_node: Element, name: str, dag_name: str, props: PropertySet, **kwargs: Any):
-        super().__init__(oozie_node=oozie_node, name=name, dag_name=dag_name, props=props, **kwargs)
+    def __init__(
+        self,
+        oozie_node: Element,
+        name: str,
+        dag_name: str,
+        props: PropertySet,
+        input_directory_path: str,
+        **kwargs: Any,
+    ):
+        super().__init__(
+            oozie_node=oozie_node,
+            name=name,
+            dag_name=dag_name,
+            props=props,
+            input_directory_path=input_directory_path,
+            **kwargs,
+        )
+        self.input_directory_path = input_directory_path
 
     def on_parse_node(self):
         super().on_parse_node()

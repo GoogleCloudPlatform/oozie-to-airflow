@@ -170,5 +170,6 @@ def _get_distcp_mapper(distcp_node: Element, job_properties: Dict[str, str], con
         dag_name=name,
         name=name,
         props=PropertySet(job_properties=job_properties, config=config),
+        input_directory_path="/tmp/input-directory-path/",
     )
     return mapper, name

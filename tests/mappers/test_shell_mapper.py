@@ -135,4 +135,5 @@ class TestShellMapper(unittest.TestCase):
             name="test_id",
             dag_name="DAG_NAME_B",
             props=PropertySet(job_properties=job_properties, config=config),
+            input_directory_path="/tmp/input-directory-path/",
         )
