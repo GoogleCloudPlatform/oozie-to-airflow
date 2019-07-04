@@ -35,7 +35,7 @@ while getopts ":c:r:d:m:" OPT; do
             ;;
      esac
 done
-shift $((OPTIND -1))
+shift "$((OPTIND -1))"
 
 
 for DEL_DIR in "${DEL_DIRS[@]}"; do
