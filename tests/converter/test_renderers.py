@@ -23,6 +23,8 @@ from xml.etree.ElementTree import Element
 from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.relation import Relation
 from o2a.converter.renderers import PythonRenderer, AutoflakeArgs, DotRenderer
+from o2a.converter.task import Task
+from o2a.converter.task_group import TaskGroup
 from o2a.converter.workflow import Workflow
 from o2a.mappers.dummy_mapper import DummyMapper
 from o2a.o2a_libs.property_utils import PropertySet
@@ -33,9 +35,11 @@ def _create_workflow():
         dag_name="DAG_NAME",
         input_directory_path="/tmp/input",
         output_directory_path="/tmp/output",
-        relations={Relation(from_task_id="DAG_NAME_A", to_task_id="DAG_NAME_B")},
-        nodes=dict(
-            AAA=ParsedActionNode(DummyMapper(Element("dummy"), name="DAG_NAME_A", dag_name="DAG_NAME_B"))
+        task_group_relations={Relation(from_task_id="DAG_NAME_A", to_task_id="DAG_NAME_B")},
+        task_groups=dict(
+            TASK_NAME=TaskGroup(
+                name="DAG_NAME_A", tasks=[Task(task_id="task_name", template_name="dummy.tpl")]
+            )
         ),
         dependencies={"import IMPORT"},
     )
@@ -77,8 +81,8 @@ class PythonRendererTestCase(unittest.TestCase):
             dag_name="DAG_NAME",
             dependencies={"import IMPORT"},
             job_properties={},
-            nodes=list(workflow.nodes.values()),
-            relations=workflow.relations,
+            task_groups=list(workflow.task_groups.values()),
+            relations=workflow.task_group_relations,
             schedule_interval=None,
             start_days_ago=None,
             template_name="workflow.tpl",
@@ -102,7 +106,7 @@ class PythonRendererTestCase(unittest.TestCase):
             dag_name=mock.ANY,
             dependencies=mock.ANY,
             job_properties=mock.ANY,
-            nodes=mock.ANY,
+            task_groups=mock.ANY,
             relations=mock.ANY,
             schedule_interval=mock.ANY,
             start_days_ago=mock.ANY,
@@ -153,7 +157,7 @@ class PythonRendererTestCase(unittest.TestCase):
             dag_name="DAG_NAME",
             input_directory_path="/tmp/input",
             output_directory_path="/tmp/output",
-            relations={Relation(from_task_id="DAG_NAME_A", to_task_id="DAG_NAME_B")},
+            task_group_relations={Relation(from_task_id="DAG_NAME_A", to_task_id="DAG_NAME_B")},
             nodes=dict(
                 AAA=ParsedActionNode(DummyMapper(Element("dummy"), name="DAG_NAME_A", dag_name="DAG_NAME_B"))
             ),
@@ -184,8 +188,8 @@ class DotRendererTestCase(unittest.TestCase):
 
         render_template_mock.assert_called_once_with(
             dag_name="DAG_NAME",
-            nodes=list(workflow.nodes.values()),
-            relations=workflow.relations,
+            task_groups=list(workflow.task_groups.values()),
+            relations=workflow.task_group_relations,
             template_name="workflow_dot.tpl",
         )
 
@@ -200,7 +204,7 @@ class DotRendererTestCase(unittest.TestCase):
 
         renderer.create_subworkflow_file(workflow, props=props)
         render_template_mock.assert_called_once_with(
-            dag_name=mock.ANY, nodes=mock.ANY, relations=mock.ANY, template_name="workflow_dot.tpl"
+            dag_name=mock.ANY, task_groups=mock.ANY, relations=mock.ANY, template_name="workflow_dot.tpl"
         )
 
     @staticmethod

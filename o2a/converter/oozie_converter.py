@@ -28,6 +28,7 @@ from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.property_parser import PropertyParser
 from o2a.converter.relation import Relation
 from o2a.converter.renderers import BaseRenderer
+from o2a.converter.task_group import TaskGroup
 from o2a.converter.workflow import Workflow
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.transformers.base_transformer import BaseWorkflowTransformer
@@ -110,37 +111,42 @@ class OozieConverter:
         and ParsedActionNode.relations
         """
         logging.info("Converting nodes to tasks and inner relations")
-        for p_node in self.workflow.nodes.values():
+        for name, p_node in self.workflow.nodes.copy().items():
             tasks, relations = p_node.mapper.to_tasks_and_relations()
+            dependencies = p_node.mapper.required_imports()
             p_node.tasks = tasks
             p_node.relations = relations
+            self.workflow.task_groups[name] = TaskGroup(
+                name=name, tasks=tasks, relations=relations, dependencies=dependencies
+            )
+            del self.workflow.nodes[name]
 
     def convert_dependencies(self) -> None:
         logging.info("Converting dependencies.")
-        for node in self.workflow.nodes.values():
-            self.workflow.dependencies.update(node.mapper.required_imports())
+        for task_group in self.workflow.task_groups.values():
+            self.workflow.dependencies.update(task_group.dependencies)
 
     def convert_relations(self) -> None:
-        logging.info("Converting relations between nodes.")
-        for p_node in self.workflow.nodes.values():
-            for downstream in p_node.get_downstreams():
+        logging.info("Converting relations between tasks groups.")
+        for task_group in self.workflow.task_groups.values():
+            for downstream in task_group.downstream_names:
                 relation = Relation(
-                    from_task_id=p_node.last_task_id_of_ok_flow,
-                    to_task_id=self.workflow.nodes[downstream].first_task_id,
+                    from_task_id=task_group.last_task_id_of_ok_flow,
+                    to_task_id=self.workflow.task_groups[downstream].first_task_id,
                 )
-                self.workflow.relations.add(relation)
-            error_downstream = p_node.get_error_downstream_name()
+                self.workflow.task_group_relations.add(relation)
+            error_downstream = task_group.error_downstream_name
             if error_downstream:
                 relation = Relation(
-                    from_task_id=p_node.last_task_id_of_error_flow,
-                    to_task_id=self.workflow.nodes[error_downstream].first_task_id,
+                    from_task_id=task_group.last_task_id_of_error_flow,
+                    to_task_id=self.workflow.task_groups[error_downstream].first_task_id,
                     is_error=True,
                 )
-                self.workflow.relations.add(relation)
+                self.workflow.task_group_relations.add(relation)
 
     def add_state_handlers(self) -> None:
         logging.info("Adding error handlers")
-        for node in self.workflow.nodes.values():
+        for node in self.workflow.task_groups.values():
             node.add_state_handler_if_needed()
 
     def copy_extra_assets(self, nodes: Dict[str, ParsedActionNode]):
