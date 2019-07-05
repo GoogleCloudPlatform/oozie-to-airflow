@@ -78,7 +78,11 @@ class OozieConverter:
         self.props = PropertySet(job_properties=job_properties)
         self.property_parser = PropertyParser(props=self.props, workflow=self.workflow)
         self.parser = workflow_xml_parser.WorkflowXmlParser(
-            props=self.props, action_mapper=action_mapper, renderer=self.renderer, workflow=self.workflow
+            props=self.props,
+            action_mapper=action_mapper,
+            renderer=self.renderer,
+            workflow=self.workflow,
+            transformers=self.transformers,
         )
 
     def recreate_output_directory(self):

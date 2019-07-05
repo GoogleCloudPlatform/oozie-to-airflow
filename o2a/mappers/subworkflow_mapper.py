@@ -26,6 +26,7 @@ from o2a.converter.task import Task
 from o2a.definitions import EXAMPLES_PATH
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.o2a_libs.property_utils import PropertySet
+from o2a.transformers.base_transformer import BaseWorkflowTransformer
 from o2a.utils import el_utils
 
 
@@ -46,6 +47,7 @@ class SubworkflowMapper(ActionMapper):
         props: PropertySet,
         action_mapper: Dict[str, Type[ActionMapper]],
         renderer: BaseRenderer,
+        transformers: List[BaseWorkflowTransformer] = None,
         **kwargs,
     ):
         ActionMapper.__init__(
@@ -57,6 +59,7 @@ class SubworkflowMapper(ActionMapper):
         self.dag_name = dag_name
         self.action_mapper = action_mapper
         self.renderer = renderer
+        self.transformers = transformers
         self._parse_oozie_node()
 
     def _parse_oozie_node(self):
@@ -74,6 +77,7 @@ class SubworkflowMapper(ActionMapper):
             action_mapper=self.action_mapper,
             dag_name=self.app_name,
             initial_props=self.get_child_props(),
+            transformers=self.transformers,
         )
         converter.convert(as_subworkflow=True)
 
