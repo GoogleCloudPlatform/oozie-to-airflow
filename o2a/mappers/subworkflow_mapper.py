@@ -59,7 +59,7 @@ class SubworkflowMapper(ActionMapper):
         self.dag_name = dag_name
         self.action_mapper = action_mapper
         self.renderer = renderer
-        self.transformers = transformers
+        self.transformers = transformers or []
         self._parse_oozie_node()
 
     def _parse_oozie_node(self):
