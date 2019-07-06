@@ -13,9 +13,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Tests Oozie Converter"""
-
+from os import path
 from unittest import mock, TestCase
 from xml.etree.ElementTree import Element
+
 
 from o2a import o2a
 from o2a.converter.oozie_converter import OozieConverter
@@ -24,10 +25,17 @@ from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.task import Task
 from o2a.converter.task_group import TaskGroup
 from o2a.converter.workflow import Workflow
+from o2a.definitions import EXAMPLES_PATH
 from o2a.mappers.dummy_mapper import DummyMapper
 
 from o2a.converter.mappers import ACTION_MAP
 from o2a.converter.relation import Relation
+from o2a.transformers.remove_end_transformer import RemoveEndTransformer
+from o2a.transformers.remove_fork_transformer import RemoveForkTransformer
+from o2a.transformers.remove_inaccessible_node_transformer import RemoveInaccessibleNodeTransformer
+from o2a.transformers.remove_join_transformer import RemoveJoinTransformer
+from o2a.transformers.remove_kill_transformer import RemoveKillTransformer
+from o2a.transformers.remove_start_transformer import RemoveStartTransformer
 
 
 class TestOozieConverter(TestCase):
@@ -235,3 +243,71 @@ class TestOozieConverter(TestCase):
     @staticmethod
     def _create_task(task_id):
         return Task(task_id=task_id, template_name="dummy.tpl")
+
+
+class TestOozieConvertByExamples(TestCase):
+    def test_should_convert_dem_workflow(self):
+        renderer = mock.MagicMock()
+
+        transformers = [
+            RemoveInaccessibleNodeTransformer(),
+            RemoveEndTransformer(),
+            RemoveKillTransformer(),
+            RemoveStartTransformer(),
+            RemoveJoinTransformer(),
+            RemoveForkTransformer(),
+        ]
+
+        input_directory_path = path.join(EXAMPLES_PATH, "demo")
+        converter = OozieConverter(
+            dag_name="demo",
+            input_directory_path=input_directory_path,
+            output_directory_path="/tmp/",
+            action_mapper=ACTION_MAP,
+            renderer=renderer,
+            transformers=transformers,
+            user="user",
+        )
+        converter.recreate_output_directory()
+        converter.convert()
+        _, kwargs = renderer.create_workflow_file.call_args
+        workflow: Workflow = kwargs["workflow"]
+        self.assertEqual(input_directory_path, workflow.input_directory_path)
+        self.assertEqual("/tmp/", workflow.output_directory_path)
+        self.assertEqual("demo", workflow.dag_name)
+        self.assertEqual(
+            {
+                Relation(from_task_id="decision-node", to_task_id="end", is_error=False),
+                Relation(from_task_id="decision-node", to_task_id="hdfs-node", is_error=False),
+                Relation(from_task_id="join-node", to_task_id="decision-node", is_error=False),
+                Relation(from_task_id="pig-node", to_task_id="join-node", is_error=False),
+                Relation(from_task_id="shell-node", to_task_id="join-node", is_error=False),
+                Relation(from_task_id="subworkflow-node", to_task_id="join-node", is_error=False),
+            },
+            workflow.task_group_relations,
+        )
+        self.assertEqual({}, workflow.nodes)
+        self.assertEqual(
+            {"pig-node", "subworkflow-node", "shell-node", "join-node", "decision-node", "hdfs-node", "end"},
+            workflow.task_groups.keys(),
+        )
+        self.assertEqual(
+            {
+                "from airflow import models",
+                "from airflow.contrib.operators import dataproc_operator",
+                "from airflow.operators import bash_operator",
+                "from airflow.operators import dummy_operator",
+                "from airflow.operators import python_operator",
+                "from airflow.operators.subdag_operator import SubDagOperator",
+                "from airflow.utils import dates",
+                "from airflow.utils.trigger_rule import TriggerRule",
+                "from o2a.o2a_libs.el_basic_functions import *",
+                "from o2a.o2a_libs.el_basic_functions import first_not_null",
+                "from o2a.o2a_libs.el_wf_functions import *",
+                "from o2a.o2a_libs.property_utils import PropertySet",
+                "import datetime",
+                "import shlex",
+                "import subdag_childwf",
+            },
+            workflow.dependencies,
+        )
