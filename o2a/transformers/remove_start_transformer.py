@@ -27,7 +27,7 @@ class RemoveStartTransformer(BaseWorkflowTransformer):
     Remove Start nodes with all relations.
     """
 
-    def process_workflow(self, workflow: Workflow):
+    def process_workflow_after_parse_workflow_xml(self, workflow: Workflow):
         start_nodes = workflow.get_nodes_by_type(StartMapper)
         for start_node in start_nodes:
             workflow.remove_node(start_node)

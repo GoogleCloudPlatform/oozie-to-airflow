@@ -178,4 +178,4 @@ class OozieConverter:
     def apply_transformers(self):
         logging.info(f"Applying transformers")
         for transformer in self.transformers:
-            transformer.process_workflow(self.workflow)
+            transformer.process_workflow_after_parse_workflow_xml(self.workflow)

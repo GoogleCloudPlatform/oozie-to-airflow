@@ -46,7 +46,7 @@ class RemoveEndTransformerTest(unittest.TestCase):
         workflow.nodes[first_mapper.name] = first_node
         workflow.nodes[end_mapper.name] = end_node
 
-        transformer.process_workflow(workflow)
+        transformer.process_workflow_after_parse_workflow_xml(workflow)
 
         self.assertEqual({first_mapper.name}, set(workflow.nodes.keys()))
         self.assertEqual([], first_node.downstream_names)
@@ -74,7 +74,7 @@ class RemoveEndTransformerTest(unittest.TestCase):
         workflow.nodes[second_mapper.name] = second_node
         workflow.nodes[end_mapper.name] = end_node
 
-        transformer.process_workflow(workflow)
+        transformer.process_workflow_after_parse_workflow_xml(workflow)
 
         self.assertEqual(
             {decision_mapper.name, second_mapper.name, end_mapper.name}, set(workflow.nodes.keys())

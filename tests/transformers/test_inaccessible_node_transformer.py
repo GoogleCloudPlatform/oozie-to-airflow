@@ -76,7 +76,7 @@ class RemoveInaccessibleNodeTransformerTest(unittest.TestCase):
         workflow.nodes[second_mapper.name] = second_node
         workflow.nodes[start_mapper.name] = start_node
 
-        transformer.process_workflow(workflow)
+        transformer.process_workflow_after_parse_workflow_xml(workflow)
 
         self.assertEqual(
             {start_mapper.name, first_mapper.name, second_mapper.name}, set(workflow.nodes.keys())
@@ -125,7 +125,7 @@ class RemoveInaccessibleNodeTransformerTest(unittest.TestCase):
         workflow.nodes[first_mapper.name] = first_node
         workflow.nodes[start_mapper.name] = start_node
 
-        transformer.process_workflow(workflow)
+        transformer.process_workflow_after_parse_workflow_xml(workflow)
 
         self.assertEqual({start_mapper.name, first_mapper.name}, set(workflow.nodes.keys()))
         self.assertEqual([], start_node.downstream_names)
@@ -181,7 +181,7 @@ class RemoveInaccessibleNodeTransformerTest(unittest.TestCase):
         workflow.nodes[first_mapper.name] = first_node
         workflow.nodes[second_mapper.name] = second_node
         workflow.nodes[start_mapper.name] = start_node
-        transformer.process_workflow(workflow)
+        transformer.process_workflow_after_parse_workflow_xml(workflow)
 
         self.assertEqual({start_mapper.name, first_mapper.name}, set(workflow.nodes.keys()))
         self.assertEqual([first_node.name], start_node.downstream_names)
@@ -234,7 +234,7 @@ class RemoveInaccessibleNodeTransformerTest(unittest.TestCase):
         workflow.nodes[second_mapper.name] = second_node
         workflow.nodes[start_mapper.name] = start_node
 
-        transformer.process_workflow(workflow)
+        transformer.process_workflow_after_parse_workflow_xml(workflow)
 
         self.assertEqual({start_mapper.name}, set(workflow.nodes.keys()))
         self.assertEqual([second_mapper.name], first_mapper.downstream_names)

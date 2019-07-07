@@ -126,8 +126,8 @@ class TestOozieConverter(TestCase):
 
         converter.apply_transformers()
 
-        transformer_1.process_workflow.assert_called_once_with(workflow)
-        transformer_2.process_workflow.assert_called_once_with(workflow)
+        transformer_1.process_workflow_after_parse_workflow_xml.assert_called_once_with(workflow)
+        transformer_2.process_workflow_after_parse_workflow_xml.assert_called_once_with(workflow)
 
     def test_copy_extra_assets(self):
         converter = self._create_converter()

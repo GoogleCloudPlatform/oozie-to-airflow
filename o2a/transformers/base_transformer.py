@@ -25,5 +25,5 @@ class BaseWorkflowTransformer(ABC):
     """
 
     @abstractmethod
-    def process_workflow(self, workflow: Workflow):
+    def process_workflow_after_parse_workflow_xml(self, workflow: Workflow):
         pass

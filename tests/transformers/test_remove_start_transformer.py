@@ -44,7 +44,7 @@ class RemoveEndTransformerTest(unittest.TestCase):
             mapper=start_mapper, tasks=[self._get_dummy_task(start_mapper.name)]
         )
 
-        transformer.process_workflow(workflow)
+        transformer.process_workflow_after_parse_workflow_xml(workflow)
 
         self.assertEqual({other_mapper.name}, set(workflow.nodes.keys()))
 
