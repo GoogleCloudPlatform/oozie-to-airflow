@@ -15,11 +15,10 @@
 """Maps FS node to Airflow's DAG"""
 
 import shlex
-from typing import List, Set, Tuple
+from typing import List, Set
 
 from xml.etree.ElementTree import Element
 
-from o2a.converter.relation import Relation
 from o2a.converter.task import Task
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.o2a_libs.property_utils import PropertySet
@@ -142,7 +141,7 @@ class FsMapper(ActionMapper):
 
         return tasks
 
-    def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
+    def to_tasks_and_relations(self):
         return self.tasks, chain(self.tasks)
 
     def required_imports(self) -> Set[str]:

@@ -15,7 +15,7 @@
 """ DistCp Mapper module """
 
 import shlex
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Set
 from xml.etree.ElementTree import Element
 
 
@@ -67,7 +67,7 @@ class DistCpMapper(ActionMapper):
         super().on_parse_node()
         self.args = self._parse_args()
 
-    def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
+    def to_tasks_and_relations(self):
         action_task = Task(
             task_id=self.name,
             template_name="distcp.tpl",

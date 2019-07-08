@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Maps Shell action into Airflow's DAG"""
-from typing import List, Set, Tuple
+from typing import List, Set
 from xml.etree.ElementTree import Element
 
 
@@ -46,7 +46,7 @@ class ShellMapper(ActionMapper):
         self.bash_command = el_utils.convert_el_to_jinja(cmd, quote=False)
         self.pig_command = f"sh {self.bash_command}"
 
-    def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
+    def to_tasks_and_relations(self):
         action_task = Task(
             task_id=self.name,
             template_name="shell.tpl",
