@@ -117,7 +117,12 @@ class OozieConverter:
             p_node.tasks = tasks
             p_node.relations = relations
             self.workflow.task_groups[name] = TaskGroup(
-                name=name, tasks=tasks, relations=relations, dependencies=dependencies
+                name=name,
+                tasks=tasks,
+                relations=relations,
+                dependencies=dependencies,
+                downstream_names=p_node.downstream_names,
+                error_downstream_name=p_node.error_downstream_name,
             )
             del self.workflow.nodes[name]
 
