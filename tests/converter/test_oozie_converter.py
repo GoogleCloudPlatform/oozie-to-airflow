@@ -246,7 +246,7 @@ class TestOozieConverter(TestCase):
 
 
 class TestOozieConvertByExamples(TestCase):
-    def test_should_convert_dem_workflow(self):
+    def test_should_convert_demo_workflow(self):
         renderer = mock.MagicMock()
 
         transformers = [
