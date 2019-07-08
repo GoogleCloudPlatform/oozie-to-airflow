@@ -120,7 +120,7 @@ class TaskGroup:
 
     def __repr__(self) -> str:
         return (
-            f"ParsedActionNode(name={self.name}, "
+            f"TaskGroup(name={self.name}, "
             f"downstream_names={self.downstream_names}, "
             f"error_downstream_name={self.error_downstream_name}, "
             f"tasks={self.tasks}, relations={self.relations})"
