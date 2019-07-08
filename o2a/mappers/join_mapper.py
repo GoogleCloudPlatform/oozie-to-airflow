@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Maps Oozie join node to Airflow's task"""
-from typing import List, Tuple
+from typing import List
 
 from airflow.utils.trigger_rule import TriggerRule
 
@@ -27,7 +27,7 @@ class JoinMapper(DummyMapper):
     Converts a Join node to an Airflow's task.
     """
 
-    def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
+    def to_tasks_and_relations(self):
         tasks: List[Task] = [
             Task(task_id=self.name, template_name="dummy.tpl", trigger_rule=TriggerRule.ALL_SUCCESS)
         ]

@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Maps Spark action to Airflow Dag"""
-from typing import Dict, Set, List, Optional, Tuple
+from typing import Dict, List, Optional, Set
 
 import xml.etree.ElementTree as ET
 
@@ -112,7 +112,7 @@ class SparkMapper(ActionMapper):
 
         return conf
 
-    def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
+    def to_tasks_and_relations(self):
         action_task = Task(
             task_id=self.name,
             template_name="spark.tpl",

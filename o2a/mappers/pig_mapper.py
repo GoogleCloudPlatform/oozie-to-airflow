@@ -14,7 +14,7 @@
 # limitations under the License.
 """Maps Oozie pig node to Airflow's DAG"""
 import os
-from typing import Dict, Set, Tuple, List
+from typing import Dict, List, Set
 
 from xml.etree.ElementTree import Element
 
@@ -54,7 +54,7 @@ class PigMapper(ActionMapper):
         self.files, self.hdfs_files = self.file_extractor.parse_node()
         self.archives, self.hdfs_archives = self.archive_extractor.parse_node()
 
-    def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
+    def to_tasks_and_relations(self):
         action_task = Task(
             task_id=self.name,
             template_name="pig.tpl",

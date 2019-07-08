@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Maps Oozie pig node to Airflow's DAG"""
-from typing import Dict, Set, Tuple, List, Optional
+from typing import Dict, List, Optional, Set
 from xml.etree.ElementTree import Element
 
 
@@ -54,7 +54,7 @@ class MapReduceMapper(ActionMapper):
         _, self.hdfs_files = self.file_extractor.parse_node()
         _, self.hdfs_archives = self.archive_extractor.parse_node()
 
-    def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
+    def to_tasks_and_relations(self):
         action_task = Task(
             task_id=self.name,
             template_name="mapreduce.tpl",

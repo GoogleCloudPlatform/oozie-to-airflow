@@ -14,7 +14,7 @@
 # limitations under the License.
 """Maps decision node to Airflow's DAG"""
 import collections
-from typing import Dict, List, Set, Tuple
+from typing import Dict, List, Set
 
 from xml.etree.ElementTree import Element
 
@@ -76,7 +76,7 @@ class DecisionMapper(BaseMapper):
             else:  # Default return value
                 self.case_dict["default"] = case.attrib["to"]
 
-    def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
+    def to_tasks_and_relations(self):
         tasks = [
             Task(
                 task_id=self.name,

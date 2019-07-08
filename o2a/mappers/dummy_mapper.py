@@ -14,7 +14,7 @@
 # limitations under the License.
 """Dummy Mapper that is used as temporary solution while we are implementing the real mappers.
 """
-from typing import List, Optional, Set, Tuple
+from typing import List, Optional, Set
 from xml.etree.ElementTree import Element
 
 from o2a.converter.relation import Relation
@@ -40,7 +40,7 @@ class DummyMapper(BaseMapper):
             **kwargs,
         )
 
-    def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
+    def to_tasks_and_relations(self):
         tasks: List[Task] = [Task(task_id=self.name, template_name="dummy.tpl")]
         relations: List[Relation] = []
         return tasks, relations
