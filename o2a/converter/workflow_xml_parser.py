@@ -22,7 +22,7 @@ import xml.etree.ElementTree as ET
 import uuid
 
 # noinspection PyPackageRequirements
-from typing import Dict, Type
+from typing import Dict, Type, List
 
 from airflow.utils.trigger_rule import TriggerRule
 
@@ -39,6 +39,7 @@ from o2a.converter.constants import HDFS_FOLDER
 from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.workflow import Workflow
 from o2a.mappers.action_mapper import ActionMapper
+from o2a.transformers.base_transformer import BaseWorkflowTransformer
 
 
 # noinspection PyDefaultArgument
@@ -51,12 +52,14 @@ class WorkflowXmlParser:
         action_mapper: Dict[str, Type[ActionMapper]],
         renderer: BaseRenderer,
         workflow: Workflow,
+        transformers: List[BaseWorkflowTransformer] = None,
     ):
         self.workflow = workflow
         self.workflow_file = os.path.join(workflow.input_directory_path, HDFS_FOLDER, "workflow.xml")
         self.props = props
         self.action_map = action_mapper
         self.renderer = renderer
+        self.transformers = transformers
 
     def parse_kill_node(self, kill_node: ET.Element):
         """
@@ -212,6 +215,7 @@ class WorkflowXmlParser:
             renderer=self.renderer,
             input_directory_path=self.workflow.input_directory_path,
             output_directory_path=self.workflow.output_directory_path,
+            transformers=self.transformers,
         )
 
         p_node = ParsedActionNode(mapper)
