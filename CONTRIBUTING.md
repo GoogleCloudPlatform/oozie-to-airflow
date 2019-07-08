@@ -286,10 +286,11 @@ Flags:
 
 Optional commands to execute:
 
--K, --shell-access
-        Open shell access to Airflow cluster.
+-K, --shell-to-composer-worker
+        Open shell access to Airflow's worker. This allows you to test commands in the context of the Airflow instance.
+        It is worth noting that it is possible to access the database.
 
--S, --ssh-to-cluster-master
+-S, --ssh-to-dataproc-master
         SSH to dataproc's cluster master. Arguments after -- are passed to gcloud ssh command as extra args.
 
 -W, --open-oozie-web-ui
