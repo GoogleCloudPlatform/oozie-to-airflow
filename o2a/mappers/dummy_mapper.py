@@ -26,7 +26,7 @@ from o2a.o2a_libs.property_utils import PropertySet
 class DummyMapper(BaseMapper):
     """Dummy mapper. It always returns one tasks that does nothing.
 
-    It used in place of not-yet-implemented mappers and as the base class for control nodes.
+    It's used in place of not-yet-implemented mappers and as the base class for control nodes.
     """
 
     def __init__(

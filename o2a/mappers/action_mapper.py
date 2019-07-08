@@ -57,7 +57,7 @@ class ActionMapper(BaseMapper, ABC):
         )
         self.input_directory_path = input_directory_path
 
-    def on_parse_node(self,):
+    def on_parse_node(self):
         super().on_parse_node()
         self._parse_config()
 
