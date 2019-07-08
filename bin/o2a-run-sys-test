@@ -636,11 +636,13 @@ function fetch_composer_environment_info {
         COMPOSER_DAG_BUCKET=$(gcloud beta composer environments describe "${COMPOSER_NAME}" --location "${COMPOSER_LOCATION}" --format='value(config.dagGcsPrefix)')
         COMPOSER_DAG_BUCKET=${COMPOSER_DAG_BUCKET%/dags}
         COMPOSER_DAG_BUCKET=${COMPOSER_DAG_BUCKET#gs://}
-        echo "DAG Bucket: ${COMPOSER_DAG_BUCKET}"
     fi
     COMPOSER_GKE_CLUSTER_NAME=$(gcloud beta composer environments describe "${COMPOSER_NAME}" --location "${COMPOSER_LOCATION}" '--format=value(config.gkeCluster)' | cut -d '/' -f 6)
-    echo "GKE CLUSTER NAME: ${COMPOSER_GKE_CLUSTER_NAME}"
     COMPOSER_WEB_UI_URL=$(gcloud beta composer environments describe "${COMPOSER_NAME}" --location "${COMPOSER_LOCATION}" --format='value(config.airflowUri)')
+    set +x
+    echo
+    echo "DAG Bucket: ${COMPOSER_DAG_BUCKET}"
+    echo "GKE CLUSTER NAME: ${COMPOSER_GKE_CLUSTER_NAME}"
     echo "WEB UI URL: ${COMPOSER_WEB_UI_URL}"
     echo
     footer
