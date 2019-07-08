@@ -683,9 +683,20 @@ function download_test_artifacts {
     CURRENT_ARTIFACTS_OUTPUT="${LOCAL_ARTIFACTS_DIR}/${ENVIRONMENT}"
     TMP_LOCAL_PATH="/tmp/o2a-artifacts-$(date | md5sum | head -c 7)"
     submit_pig "fs -copyToLocal ${HDFS_REMOTE_APP_DIR} ${TMP_LOCAL_PATH}"
+    rm -rf "${CURRENT_ARTIFACTS_OUTPUT}" || true
     mkdir -p "${CURRENT_ARTIFACTS_OUTPUT}"
     scp_folder_from_dataproc "${TMP_LOCAL_PATH}/*" "${CURRENT_ARTIFACTS_OUTPUT}"
     run_command_on_dataproc "sudo rm -rf ${TMP_LOCAL_PATH}"
+
+    footer
+}
+
+function compare_test_artifacts {
+    header "Comparing artifacts between Oozie and Airflow for: ${LOCAL_APP_NAME}"
+
+    OOZIE_ARTIFACTS_OUTPUT="${LOCAL_ARTIFACTS_DIR}/oozie"
+    COMPOSER_ARTIFACTS_OUTPUT="${LOCAL_ARTIFACTS_DIR}/composer"
+    diff -r "${OOZIE_ARTIFACTS_OUTPUT}" "${COMPOSER_ARTIFACTS_OUTPUT}"
 
     footer
 }
@@ -826,6 +837,17 @@ elif [[ "${PHASE}" == "test-oozie" ]]; then
     fetch_dataproc_environment_info
     test_oozie
     download_test_artifacts "oozie"
+elif [[ "${PHASE}" == "test-compare-artifacts" ]]; then
+    fetch_dataproc_environment_info
+    fetch_composer_environment_info
+    prepare_configuration
+    convert
+    prepare_composer
+    test_composer
+    download_test_artifacts "composer"
+    test_oozie
+    download_test_artifacts "oozie"
+    compare_test_artifacts
 fi
 
 set +x
