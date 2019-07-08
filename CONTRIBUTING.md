@@ -324,7 +324,8 @@ The following phases are defined for the system tests:
 
 * **prepare-configuration** - prepares configuration based on passed Dataproc/Composer parameters
 
-* **convert** - converts the example application workflow to DAG and stores it in output/<APPLICATION> directory
+* **convert** - converts the example application workflow to DAG and stores it in ``output/<APPLICATION>``
+  directory
 
 * **prepare-dataproc** - prepares Dataproc cluster to execute both Composer and Oozie jobs. The preparation is:
 
@@ -334,9 +335,11 @@ The following phases are defined for the system tests:
 
    * HDFS: /user/${user.name}/examples/apps/<APPLICATION> - the application is stored in this HDFS directory
 
-* **test-composer** - runs tests on Composer instance
+* **test-composer** - runs tests on Composer instance. Artifacts are downloaded to the
+ ``output-artifacts/<APPLICATION>/composer`` directory.
 
-* **test-oozie** - runs tests on Oozie in Hadoop cluster
+* **test-oozie** - runs tests on Oozie in Hadoop cluster. Artifacts are downloaded to the
+  ``output-artifacts/<APPLICATION>/oozie`` directory.
 
 ### Test scenarios
 

@@ -10,7 +10,8 @@ __pycache__
 
 .mypy_cache
 .o2a-run-sys-test-cache-dir
-output
+output/
+output-artifacts/
 /build/
 /dist/
 *.egg-info/
