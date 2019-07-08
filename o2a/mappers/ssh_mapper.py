@@ -14,7 +14,7 @@
 # limitations under the License.
 """Maps SSH Oozie node to Airflow's DAG"""
 import shlex
-from typing import List, Set, Tuple
+from typing import List, Set
 from xml.etree.ElementTree import Element
 
 
@@ -69,7 +69,7 @@ class SSHMapper(ActionMapper):
             host_key = self.props.merged[host_key]
         return host_key
 
-    def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
+    def to_tasks_and_relations(self):
         # SSH does not support prepare node so no need for prepare task
         tasks = [
             Task(

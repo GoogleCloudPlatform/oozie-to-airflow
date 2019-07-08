@@ -14,7 +14,7 @@
 # limitations under the License.
 """Maps Shell action into Airflow's DAG"""
 import shlex
-from typing import List, Optional, Set, Tuple
+from typing import List, Optional, Set
 
 from urllib.parse import urlparse
 from xml.etree.ElementTree import Element
@@ -79,7 +79,7 @@ class GitMapper(ActionMapper):
         key_path_uri = get_tag_el_text(self.oozie_node, tag=TAG_KEY_PATH, props=self.props)
         self.key_path = urlparse(key_path_uri).path if key_path_uri else None
 
-    def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
+    def to_tasks_and_relations(self):
         action_task = Task(
             task_id=self.name,
             template_name="git.tpl",

@@ -15,7 +15,7 @@
 """Maps subworkflow of Oozie to Airflow's sub-dag"""
 import logging
 import os
-from typing import Dict, Set, Type, Tuple, List
+from typing import Dict, List, Set, Type
 
 from xml.etree.ElementTree import Element
 
@@ -90,7 +90,7 @@ class SubworkflowMapper(ActionMapper):
             self.props if propagate_configuration is not None else PropertySet(config={}, job_properties={})
         )
 
-    def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
+    def to_tasks_and_relations(self):
         tasks: List[Task] = [
             Task(task_id=self.name, template_name="subwf.tpl", template_params=dict(app_name=self.app_name))
         ]
