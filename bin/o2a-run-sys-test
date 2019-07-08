@@ -112,8 +112,6 @@ function prepare_configuration {
 }
 
 function prepare_dataproc {
-    HDFS_REMOTE_ALL_APPS_DIR=/user/${DATAPROC_USER}/examples/apps
-    HDFS_REMOTE_APP_DIR=${HDFS_REMOTE_ALL_APPS_DIR}/${LOCAL_APP_NAME}
     header "Prepare HDFS ${HDFS_REMOTE_APP_DIR} via master's ${DATAPROC_FILESYSTEM_ALL_APPS_DIR} \
 for example application: ${LOCAL_APP_NAME}"
 
@@ -531,6 +529,10 @@ function scp_folder_to_dataproc {
     gcloud compute scp --zone="${DATAPROC_MASTER_ZONE}" --recurse "${1}" "${DATAPROC_CLUSTER_MASTER}:${2}"
 }
 
+function scp_folder_from_dataproc {
+    gcloud compute scp --zone="${DATAPROC_MASTER_ZONE}" --recurse "${DATAPROC_CLUSTER_MASTER}:${1}" "${2}"
+}
+
 function scp_file_to_dataproc {
     gcloud compute scp --zone="${DATAPROC_MASTER_ZONE}" "${1}" "${DATAPROC_CLUSTER_MASTER}:${2}"
 }
@@ -673,6 +675,21 @@ function test_oozie {
     footer
 }
 
+function download_test_artifacts {
+    ENVIRONMENT=${1}
+
+    header "Copying test artifacts for ${ENVIRONMENT^}"
+
+    CURRENT_ARTIFACTS_OUTPUT="${LOCAL_ARTIFACTS_DIR}/${ENVIRONMENT}"
+    TMP_LOCAL_PATH="/tmp/o2a-artifacts-$(date | md5sum | head -c 7)"
+    submit_pig "fs -copyToLocal ${HDFS_REMOTE_APP_DIR} ${TMP_LOCAL_PATH}"
+    mkdir -p "${CURRENT_ARTIFACTS_OUTPUT}"
+    scp_folder_from_dataproc "${TMP_LOCAL_PATH}/*" "${CURRENT_ARTIFACTS_OUTPUT}"
+    run_command_on_dataproc "sudo rm -rf ${TMP_LOCAL_PATH}"
+
+    footer
+}
+
 function fetch_composer_environment_info {
     header "Fetching information about the Composer environment"
     echo
@@ -708,6 +725,8 @@ function fetch_dataproc_environment_info {
     DATAPROC_FILESYSTEM_ALL_APPS_DIR=/home/${DATAPROC_USER}/o2a
     DATAPROC_FILESYSTEM_APP_DIR=${DATAPROC_FILESYSTEM_ALL_APPS_DIR}/${LOCAL_APP_NAME}
     DATAPROC_FILESYSTEM_APP_PROPERTIES=${DATAPROC_FILESYSTEM_ALL_APPS_DIR}/${LOCAL_APP_NAME}.properties
+    HDFS_REMOTE_ALL_APPS_DIR=/user/${DATAPROC_USER}/examples/apps
+    HDFS_REMOTE_APP_DIR=${HDFS_REMOTE_ALL_APPS_DIR}/${LOCAL_APP_NAME}
     echo
     footer
 }
@@ -752,6 +771,7 @@ RANDOM_PREFIX=$(echo $RANDOM $RANDOM $RANDOM $RANDOM $RANDOM | md5sum | cut -c -
 LOCAL_APP_DIR="${LOCAL_O2A_PROJECT_DIR}/${LOCAL_EXAMPLE_DIR}/${LOCAL_APP_NAME}"
 
 LOCAL_OUTPUT_DIR="${O2A_DIR}/output/${LOCAL_APP_NAME}"
+LOCAL_ARTIFACTS_DIR="${O2A_DIR}/output-artifacts/${LOCAL_APP_NAME}"
 LOCAL_O2A_LIBS_DIR="${LOCAL_O2A_PROJECT_DIR}/o2a/o2a_libs"
 LOCAL_SCRIPTS_DIR="${LOCAL_O2A_PROJECT_DIR}/o2a/scripts"
 OUTPUT_DAG_NAME="test_${LOCAL_APP_NAME}_dag"
@@ -801,9 +821,11 @@ elif [[ "${PHASE}" == "test-composer" ]]; then
     convert
     prepare_composer
     test_composer
+    download_test_artifacts "composer"
 elif [[ "${PHASE}" == "test-oozie" ]]; then
     fetch_dataproc_environment_info
     test_oozie
+    download_test_artifacts "oozie"
 fi
 
 set +x
