@@ -31,7 +31,7 @@ class PropertySet:
 
     def __init__(
         self,
-        job_properties: Dict[str, str],
+        job_properties: Dict[str, str] = None,
         config: Dict[str, str] = None,
         action_node_properties: Dict[str, str] = None,
     ):
