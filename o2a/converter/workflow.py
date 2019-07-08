@@ -13,9 +13,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Workflow"""
+import os
 from collections import OrderedDict
-from typing import Set, Dict, Type
+from typing import Set, Dict, Type, List
 
+from o2a.converter.constants import HDFS_FOLDER, LIB_FOLDER
 from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.relation import Relation
 from o2a.converter.task_group import TaskGroup
@@ -55,6 +57,15 @@ class Workflow:  # pylint: disable=too-few-public-methods
             "from airflow.utils.trigger_rule import TriggerRule",
             "from airflow.utils import dates",
         }
+        self.library_folder = os.path.join(self.input_directory_path, HDFS_FOLDER, LIB_FOLDER)
+        self.jar_files = self.get_lib_files(extension=".jar")
+
+    def get_lib_files(self, extension: str) -> List[str]:
+        if os.path.exists(self.library_folder):
+            if os.path.isdir(self.library_folder):
+                return [file for file in os.listdir(self.library_folder) if file.endswith(extension)]
+            raise Exception(f"The {self.library_folder} exists but it is not a directory!")
+        return []
 
     def get_nodes_by_type(self, mapper_type: Type):
         return [node for node in self.nodes.values() if isinstance(node.mapper, mapper_type)]
