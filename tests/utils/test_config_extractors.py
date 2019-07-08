@@ -30,8 +30,8 @@ from o2a.utils.xml_utils import find_nodes_by_tag
 
 
 # pylint: disable=invalid-name
-class extract_properties_from_configuration_nodeTestCase(unittest.TestCase):
-    def test_miniaml_green_path(self):
+class ConfigExtractorsModuleTestCase(unittest.TestCase):
+    def test_extract_properties_from_configuration_node_miniaml_green_path(self):
         # language=XML
         config_node_str = """
     <configuration>
@@ -49,7 +49,7 @@ class extract_properties_from_configuration_nodeTestCase(unittest.TestCase):
         properties = extract_properties_from_configuration_node(config_node, props=PropertySet())
         self.assertEqual(properties, {"mapred.mapper.new-api": "true", "mapred.reducer.new-api": "true"})
 
-    def test_empty(self):
+    def test_extract_properties_from_configuration_node_when_empty(self):
         # language=XML
         config_node_str = """
     <configuration>
@@ -59,7 +59,7 @@ class extract_properties_from_configuration_nodeTestCase(unittest.TestCase):
         properties = extract_properties_from_configuration_node(config_node, props=PropertySet())
         self.assertEqual(properties, {})
 
-    def test_el_replace(self):
+    def test_extract_properties_from_configuration_node_should_el_replace(self):
         # language=XML
         config_node_str = """
     <configuration>
@@ -75,7 +75,9 @@ class extract_properties_from_configuration_nodeTestCase(unittest.TestCase):
         )
         self.assertEqual(properties, {"mapred.reducer.new-api": "/user/mapred/AAA/config/output"})
 
-    def test_name_element_is_required(self):
+    def test_extract_properties_from_configuration_node_should_raise_exception_when_name_element_is_missing(
+        self
+    ):
         # language=XML
         config_node_str = """
     <configuration>
@@ -86,11 +88,15 @@ class extract_properties_from_configuration_nodeTestCase(unittest.TestCase):
 """
         config_node = ET.fromstring(config_node_str)
         with self.assertRaisesRegex(
-            ParseException, 'Element "property" must have direct children elements: name, value'
+            ParseException,
+            'Element "property" should have direct children elements: name, value. One of them does not '
+            "exist. Make sure the configuration element is valid.",
         ):
             extract_properties_from_configuration_node(config_node, props=PropertySet())
 
-    def test_value_element_is_required(self):
+    def test_extract_properties_from_configuration_node_should_raise_exception_when_value_element_is_missing(
+        self
+    ):
         # language=XML
         config_node_str = """
     <configuration>
@@ -101,11 +107,15 @@ class extract_properties_from_configuration_nodeTestCase(unittest.TestCase):
 """
         config_node = ET.fromstring(config_node_str)
         with self.assertRaisesRegex(
-            ParseException, 'Element "property" must have direct children elements: name, value'
+            ParseException,
+            'Element "property" should have direct children elements: name, value. One of them does '
+            "not exist. Make sure the configuration element is valid.",
         ):
             extract_properties_from_configuration_node(config_node, props=PropertySet())
 
-    def test_name_element_must_have_content(self):
+    def test_extract_properties_from_configuration_node_should_raise_exception_when_name_element_is_empty(
+        self
+    ):
         # language=XML
         config_node_str = """
     <configuration>
@@ -116,10 +126,16 @@ class extract_properties_from_configuration_nodeTestCase(unittest.TestCase):
     </configuration>
 """
         config_node = ET.fromstring(config_node_str)
-        with self.assertRaisesRegex(ParseException, 'Element "name" must have content'):
+        with self.assertRaisesRegex(
+            ParseException,
+            'Element "name" should have content, however its value is empty. Make sure the element has the '
+            "correct content.",
+        ):
             extract_properties_from_configuration_node(config_node, props=PropertySet())
 
-    def test_value_element_must_have_content(self):
+    def test_extract_properties_from_configuration_node_should_raise_exception_when_value_element_is_empty(
+        self
+    ):
         # language=XML
         config_node_str = """
     <configuration>
@@ -130,14 +146,15 @@ class extract_properties_from_configuration_nodeTestCase(unittest.TestCase):
     </configuration>
 """
         config_node = ET.fromstring(config_node_str)
-        with self.assertRaisesRegex(ParseException, 'Element "value" must have content'):
+        with self.assertRaisesRegex(
+            ParseException,
+            'Element "value" should have content, however its value is empty. Make sure the element has the '
+            "correct content.",
+        ):
             extract_properties_from_configuration_node(config_node, props=PropertySet())
 
-
-# pylint: disable=invalid-name
-class extract_properties_from_job_xml_nodesTestCase(unittest.TestCase):
     @mock.patch("o2a.utils.config_extractors.ET.parse")
-    def test_minimal_grren_path(self, parse_mock):
+    def test_extract_properties_from_job_xml_nodes_minimal_green_path(self, parse_mock):
         # language=XML
         action = ET.ElementTree(
             ET.fromstring(
@@ -174,7 +191,7 @@ class extract_properties_from_job_xml_nodesTestCase(unittest.TestCase):
         self.assertEqual(result, {"KEY1": "VALUE1", "KEY2": "VALUE2"})
 
     @mock.patch("o2a.utils.config_extractors.ET.parse")
-    def test_multiple_configuration(self, parse_mock):
+    def test_extract_properties_from_job_xml_nodes_should_parse_multie_elements(self, parse_mock):
         # language=XML
         action = ET.ElementTree(
             ET.fromstring(
