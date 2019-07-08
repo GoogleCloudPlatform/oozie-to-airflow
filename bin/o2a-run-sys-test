@@ -126,7 +126,7 @@ for example application: ${LOCAL_APP_NAME}"
             exit 1
         fi
         run_command_on_dataproc "mkdir -p \"${DATAPROC_FILESYSTEM_ALL_APPS_DIR}\""
-        scp_folder "${LOCAL_APP_DIR}/hdfs/" "${DATAPROC_FILESYSTEM_APP_DIR}"
+        scp_folder_to_dataproc "${LOCAL_APP_DIR}/hdfs/" "${DATAPROC_FILESYSTEM_APP_DIR}"
     else
         echo
         echo "Missing ${LOCAL_APP_DIR}/hdfs folder. It should contain at least workflow.xml"
@@ -142,7 +142,7 @@ for example application: ${LOCAL_APP_NAME}"
         -e "s/^resourceManager.*$/resourceManager=${DATAPROC_CLUSTER_MASTER}:8032/" \
         -e "s/\${user\.name}/${DATAPROC_USER}/" \
         "${LOCAL_APP_DIR}/job.properties"  > "${LOCAL_APP_PROPERTIES}"
-    scp_file "${LOCAL_APP_PROPERTIES}" "${DATAPROC_FILESYSTEM_APP_PROPERTIES}"
+    scp_file_to_dataproc "${LOCAL_APP_PROPERTIES}" "${DATAPROC_FILESYSTEM_APP_PROPERTIES}"
 
     submit_pig "fs -rm -r -f ${HDFS_REMOTE_APP_DIR}"
     submit_pig "fs -mkdir -p ${HDFS_REMOTE_ALL_APPS_DIR}"
@@ -527,11 +527,11 @@ function run_command_on_dataproc {
     gcloud compute ssh "${DATAPROC_CLUSTER_MASTER}" --zone="${DATAPROC_MASTER_ZONE}" --command "${1}"
 }
 
-function scp_folder {
+function scp_folder_to_dataproc {
     gcloud compute scp --zone="${DATAPROC_MASTER_ZONE}" --recurse "${1}" "${DATAPROC_CLUSTER_MASTER}:${2}"
 }
 
-function scp_file {
+function scp_file_to_dataproc {
     gcloud compute scp --zone="${DATAPROC_MASTER_ZONE}" "${1}" "${DATAPROC_CLUSTER_MASTER}:${2}"
 }
 
