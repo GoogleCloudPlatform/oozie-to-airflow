@@ -68,9 +68,13 @@ RENDER_AS_DOT="false"
 
 RUN_SSH_COMMAND="false"
 
+RUN_ACCESS_SHELL="false"
+
 RUN_OOZIE_WEBUI="false"
 
 SETUP_AUTOCOMPLETE="false"
+
+COMPOSER_GKE_CLUSTER_NAME=""
 
 COMPOSER_WEB_UI_URL=""
 
@@ -154,7 +158,7 @@ function prepare_composer {
 usage() {
       echo """
 
-Usage: ${CMDNAME} [FLAGS] [-A|-S]
+Usage: ${CMDNAME} [FLAGS] [-A|-S|-K|-W]
 
 Executes prepare or run phase for integration testing of O2A converter.
 
@@ -195,6 +199,8 @@ Flags:
 
 Optional commands to execute:
 
+-K, --shell-access
+        Open shell access to Airflow cluster.
 
 -S, --ssh-to-cluster-master
         SSH to dataproc's cluster master. Arguments after -- are passed to gcloud ssh command as extra args.
@@ -368,6 +374,12 @@ do
       echo "Verbosity turned on"
       echo
       shift ;;
+    -K|--shell-access)
+      export RUN_ACCESS_SHELL="true"
+      echo
+      echo "Connecting to Airflow cluster"
+      echo
+      shift ;;
     -S|--ssh-to-cluster-master)
       export RUN_SSH_COMMAND="true"
       echo
@@ -404,6 +416,17 @@ do
       ;;
   esac
 done
+
+function shell_access {
+    gcloud container clusters get-credentials "${COMPOSER_GKE_CLUSTER_NAME}" --zone europe-west1-b
+    WORKER_NAME=$(kubectl get pods | grep "airflow-worker" | grep "Running" | head -1 | cut -d " " -f 1)
+    if [[ ${WORKER_NAME} == "" ]]; then
+        echo "No running airflow-worker!"
+        exit 1
+    fi
+    echo "Connecting to worker..."
+    kubectl exec -it "${WORKER_NAME}" --container airflow-worker -- /bin/bash
+}
 
 function ssh_to_cluster_master {
     echo
@@ -613,9 +636,13 @@ function fetch_composer_environment_info {
         COMPOSER_DAG_BUCKET=$(gcloud beta composer environments describe "${COMPOSER_NAME}" --location "${COMPOSER_LOCATION}" --format='value(config.dagGcsPrefix)')
         COMPOSER_DAG_BUCKET=${COMPOSER_DAG_BUCKET%/dags}
         COMPOSER_DAG_BUCKET=${COMPOSER_DAG_BUCKET#gs://}
-        echo "DAG Bucket: ${COMPOSER_DAG_BUCKET}"
     fi
+    COMPOSER_GKE_CLUSTER_NAME=$(gcloud beta composer environments describe "${COMPOSER_NAME}" --location "${COMPOSER_LOCATION}" '--format=value(config.gkeCluster)' | cut -d '/' -f 6)
     COMPOSER_WEB_UI_URL=$(gcloud beta composer environments describe "${COMPOSER_NAME}" --location "${COMPOSER_LOCATION}" --format='value(config.airflowUri)')
+    set +x
+    echo
+    echo "DAG Bucket: ${COMPOSER_DAG_BUCKET}"
+    echo "GKE CLUSTER NAME: ${COMPOSER_GKE_CLUSTER_NAME}"
     echo "WEB UI URL: ${COMPOSER_WEB_UI_URL}"
     echo
     footer
@@ -657,6 +684,13 @@ if [[ ${SETUP_AUTOCOMPLETE} == "true" ]]; then
     setup_autocomplete
     exit
 fi
+
+if [[ ${RUN_ACCESS_SHELL} == "true" ]]; then
+    fetch_composer_environment_info
+    shell_access
+    exit
+fi
+
 
 WITH_COVERAGE=${WITH_COVERAGE:="false"}
 LOCAL_O2A_BIN_SCRIPT="${MY_DIR}/o2a"
