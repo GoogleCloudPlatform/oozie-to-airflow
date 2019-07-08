@@ -15,17 +15,22 @@
 """Base class for all action nappers"""
 from abc import ABC
 from copy import deepcopy
-from typing import Dict, Any, List, Tuple
+from typing import Any, List, Tuple
 from xml.etree.ElementTree import Element
-
 
 from o2a.converter.relation import Relation
 from o2a.converter.task import Task
 from o2a.mappers.base_mapper import BaseMapper
-from o2a.utils import xml_utils, el_utils
-
 
 from o2a.o2a_libs.property_utils import PropertySet
+
+from o2a.utils.config_extractors import (
+    TAG_JOB_XML,
+    extract_properties_from_job_xml_nodes,
+    TAG_CONFIGURATION,
+    extract_properties_from_configuration_node,
+)
+from o2a.utils.xml_utils import find_nodes_by_tag, find_node_by_tag
 
 
 # pylint: disable=abstract-method
@@ -33,25 +38,42 @@ from o2a.o2a_libs.property_utils import PropertySet
 class ActionMapper(BaseMapper, ABC):
     """Base class for all action mappers"""
 
-    def __init__(self, oozie_node: Element, name: str, dag_name: str, props: PropertySet, **kwargs: Any):
-        super().__init__(oozie_node=oozie_node, name=name, dag_name=dag_name, props=props, **kwargs)
+    def __init__(
+        self,
+        oozie_node: Element,
+        name: str,
+        dag_name: str,
+        props: PropertySet,
+        input_directory_path: str,
+        **kwargs: Any,
+    ):
+        super().__init__(
+            oozie_node=oozie_node,
+            name=name,
+            dag_name=dag_name,
+            props=props,
+            input_directory_path=input_directory_path,
+            **kwargs,
+        )
+        self.input_directory_path = input_directory_path
 
     def on_parse_node(self):
         super().on_parse_node()
         self._parse_config()
 
     def _parse_config(self):
-        action_node_properties: Dict[str, str] = {}
-        config = self.oozie_node.find("configuration")
-        if config:
-            props = self.props
-            property_nodes = xml_utils.find_nodes_by_tag(config, "property")
-            if property_nodes:
-                for node in property_nodes:
-                    name = node.find("name").text
-                    value = el_utils.replace_el_with_var(node.find("value").text, props=props, quote=False)
-                    action_node_properties[name] = value
-        self.props.action_node_properties = action_node_properties
+        job_xml_nodes = find_nodes_by_tag(self.oozie_node, TAG_JOB_XML)
+        job_xml_properties = extract_properties_from_job_xml_nodes(
+            job_xml_nodes=job_xml_nodes, input_directory_path=self.input_directory_path, props=self.props
+        )
+        self.props.action_node_properties.update(job_xml_properties)
+
+        configuration_node = find_node_by_tag(self.oozie_node, TAG_CONFIGURATION)
+        if configuration_node is not None:
+            conf_node_properties = extract_properties_from_configuration_node(
+                config_node=configuration_node, props=self.props
+            )
+            self.props.action_node_properties.update(conf_node_properties)
 
     @staticmethod
     def prepend_task(

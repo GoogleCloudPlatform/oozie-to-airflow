@@ -51,7 +51,13 @@ class SubworkflowMapper(ActionMapper):
         **kwargs,
     ):
         ActionMapper.__init__(
-            self, oozie_node=oozie_node, name=name, dag_name=dag_name, props=props, **kwargs
+            self,
+            oozie_node=oozie_node,
+            name=name,
+            dag_name=dag_name,
+            props=props,
+            input_directory_path=input_directory_path,
+            **kwargs,
         )
         self.task_id = name
         self.input_directory_path = input_directory_path

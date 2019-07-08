@@ -176,6 +176,7 @@ class TestMapReduceMapper(unittest.TestCase):
                     "hadoop_main_class": "WordCount",
                 },
             ),
+            input_directory_path="/tmp/input-directory-path/",
         )
         mapper.on_parse_node()
 
@@ -249,6 +250,7 @@ class TestMapReduceMapper(unittest.TestCase):
             name="test_id",
             dag_name="DAG_NAME_B",
             props=PropertySet(job_properties=job_properties, config=config),
+            input_directory_path="/tmp/input-directory-path/",
         )
 
 
@@ -276,6 +278,7 @@ class TestMapReduceMapperNoPrepare(unittest.TestCase):
                     "hadoop_main_class": "WordCount",
                 },
             ),
+            input_directory_path="/tmp/input-directory-path/",
         )
         mapper.on_parse_node()
         tasks, relations = mapper.to_tasks_and_relations()
@@ -343,4 +346,5 @@ class TestMapReduceMapperNoPrepare(unittest.TestCase):
             name="test_id",
             dag_name="DAG_NAME_B",
             props=PropertySet(job_properties=job_properties, config=config),
+            input_directory_path="/tmp/input-directory-path/",
         )
