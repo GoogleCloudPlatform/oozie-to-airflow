@@ -62,6 +62,8 @@ export COMPOSER_DAG_BUCKET=${COMPOSER_DAG_BUCKET:=""}
 
 COMPOSER_GKE_CLUSTER_NAME=""
 
+COMPOSER_GKE_WORKER_NAME=""
+
 COMPOSER_WEB_UI_URL=""
 
 # Script global variables
@@ -424,14 +426,8 @@ do
 done
 
 function ssh_to_composer_worker {
-    gcloud container clusters get-credentials "${COMPOSER_GKE_CLUSTER_NAME}" --zone europe-west1-b
-    WORKER_NAME=$(kubectl get pods | grep "airflow-worker" | grep "Running" | head -1 | cut -d " " -f 1)
-    if [[ ${WORKER_NAME} == "" ]]; then
-        echo "No running airflow-worker!"
-        exit 1
-    fi
     echo "Connecting to worker..."
-    kubectl exec -it "${WORKER_NAME}" --container airflow-worker -- /bin/bash
+    kubectl exec -it "${COMPOSER_GKE_WORKER_NAME}" --container airflow-worker -- /bin/bash
 }
 
 function ssh_to_dataproc_master {
@@ -523,6 +519,9 @@ function footer {
     echo
 }
 
+function run_command_on_composer {
+    kubectl exec -t "${COMPOSER_GKE_WORKER_NAME}" --container airflow-worker -- "$@"
+}
 
 function run_command_on_dataproc {
     gcloud compute ssh "${DATAPROC_CLUSTER_MASTER}" --zone="${DATAPROC_MASTER_ZONE}" --command "${1}"
@@ -601,22 +600,45 @@ function convert {
     fi
 }
 
+function random_date_in_past {
+    CURRENT_TIMESTAMP=$(date +"%s")
+    NEW_TIMESTAMP=$((CURRENT_TIMESTAMP-RANDOM-RANDOM))
+    date -r ${NEW_TIMESTAMP} '+%Y-%m-%d %H:%M:%S'
+}
+
 function test_composer {
     header "Triggers example application on Composer: ${LOCAL_APP_NAME}"
     gsutil cp -r "${LOCAL_OUTPUT_DIR}/*" "gs://${COMPOSER_DAG_BUCKET}/dags/"
-
-    gcloud composer environments run "${COMPOSER_NAME}" --location "${COMPOSER_LOCATION}" list_dags
-    gcloud composer environments run "${COMPOSER_NAME}" --location "${COMPOSER_LOCATION}" trigger_dag\
-       -- "${OUTPUT_DAG_NAME}"
+    echo "Waiting until the scheduler finds a new dag file."
+    sleep 30
+    TEST_EXECUTION_DATE="$(random_date_in_past)"
+    run_command_on_composer airflow list_dags
+    run_command_on_composer airflow trigger_dag "${OUTPUT_DAG_NAME}" -e "${TEST_EXECUTION_DATE}"
     echo
     echo "You can check the progress at the address: ${COMPOSER_WEB_UI_URL}"
     echo
+    DAG_STATUS="running"
+    while [ "${DAG_STATUS}" == "running" ] ; do
+        echo "Waiting for a change in the job status"
+        sleep 1
+        DAG_STATUS="$(run_command_on_composer airflow dag_state "${OUTPUT_DAG_NAME}" "${TEST_EXECUTION_DATE}" 2> /dev/null \
+        | tail -n 1 \
+        | sed "s/$(printf '\r')\$//g")"
+    done
+    if [[ "${DAG_STATUS}" != "success" ]]; then
+        echo "The DAG finished with no-success state."
+        echo "Current DAG status: ${DAG_STATUS}"
+        exit 1
+    fi
+    echo "The DAG finished with success state."
     footer
 }
 
 function test_oozie {
     header "Triggers example application on Oozie: ${LOCAL_APP_NAME}"
-    JOB_ID_LINE=$(run_command_on_dataproc "sudo oozie job --config ${DATAPROC_FILESYSTEM_APP_PROPERTIES} -run" | tee /dev/tty | grep '^job: ')
+    JOB_ID_LINE=$(run_command_on_dataproc "sudo oozie job --config ${DATAPROC_FILESYSTEM_APP_PROPERTIES} -run" \
+        | tee /dev/tty \
+        | grep '^job: ')
     # Skip prefix
     # "job: " = 5 characters
     JOB_ID="${JOB_ID_LINE:5}"
@@ -631,8 +653,24 @@ function test_oozie {
     echo "Once you setup the proxy, hadoop interface will be available in the browser with proxy at:"
     echo "http://${DATAPROC_CLUSTER_MASTER}:8088"
     echo
+    set -x
+    JOB_STATUS='RUNNING'
+    while [ "${JOB_STATUS}" == "RUNNING" ] ; do
+       echo "Waiting for a change in the job status"
+       sleep 1
+       JOB_STATUS=$(run_command_on_dataproc "oozie job -info ${JOB_ID}" 2> /dev/null \
+           | grep -e 'Status\s\+: [A-Z]\+' \
+           | cut -d ":" -f 2 | tail -c +2 \
+           | sed "s/$(printf '\r')//g")
+    done
+
+    if [[ "${JOB_STATUS}" != "SUCCEEDED" ]]; then
+        echo "The job finished with no succeeded status."
+        echo "Current job status: ${JOB_STATUS}"
+        exit 1
+    fi
+    echo "The job finished with succeeded status."
     footer
-    echo
 }
 
 function fetch_composer_environment_info {
@@ -644,12 +682,19 @@ function fetch_composer_environment_info {
         COMPOSER_DAG_BUCKET=${COMPOSER_DAG_BUCKET#gs://}
     fi
     COMPOSER_GKE_CLUSTER_NAME=$(gcloud beta composer environments describe "${COMPOSER_NAME}" --location "${COMPOSER_LOCATION}" '--format=value(config.gkeCluster)' | cut -d '/' -f 6)
+    gcloud container clusters get-credentials "${COMPOSER_GKE_CLUSTER_NAME}" --zone europe-west1-b
+    COMPOSER_GKE_WORKER_NAME=$(kubectl get pods | grep "airflow-worker" | grep "Running" | head -1 | cut -d " " -f 1)
+    if [[ ${COMPOSER_GKE_WORKER_NAME} == "" ]]; then
+        echo "No running airflow-worker!"
+        exit 1
+    fi
     COMPOSER_WEB_UI_URL=$(gcloud beta composer environments describe "${COMPOSER_NAME}" --location "${COMPOSER_LOCATION}" --format='value(config.airflowUri)')
     set +x
     echo
-    echo "DAG Bucket: ${COMPOSER_DAG_BUCKET}"
-    echo "GKE CLUSTER NAME: ${COMPOSER_GKE_CLUSTER_NAME}"
-    echo "WEB UI URL: ${COMPOSER_WEB_UI_URL}"
+    echo "DAG Bucket:       ${COMPOSER_DAG_BUCKET}"
+    echo "GKE Cluster Name: ${COMPOSER_GKE_CLUSTER_NAME}"
+    echo "GKE Worker Name:  ${COMPOSER_GKE_WORKER_NAME}"
+    echo "WEB UI URL:       ${COMPOSER_WEB_UI_URL}"
     echo
     footer
 }
