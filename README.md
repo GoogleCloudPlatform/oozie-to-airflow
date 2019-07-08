@@ -54,44 +54,44 @@ If you want to contribute to the project, please take a look at [CONTRIBUTING.md
   - [EL Functions](#el-functions)
 - [Examples](#examples)
   - [Demo Example](#demo-example)
-    - [Current limitations](#current-limitations)
+    - [Known limitations](#known-limitations)
     - [Output](#output)
   - [Childwf Example](#childwf-example)
     - [Output](#output-1)
-    - [Current limitations](#current-limitations-1)
+    - [Known limitations](#known-limitations-1)
   - [SSH Example](#ssh-example)
     - [Output](#output-2)
-    - [Current limitations](#current-limitations-2)
+    - [Known limitations](#known-limitations-2)
   - [MapReduce Example](#mapreduce-example)
     - [Output](#output-3)
-    - [Current limitations](#current-limitations-3)
+    - [Known limitations](#known-limitations-3)
   - [FS Example](#fs-example)
     - [Output](#output-4)
-    - [Current limitations](#current-limitations-4)
+    - [Known limitations](#known-limitations-4)
   - [Pig Example](#pig-example)
     - [Output](#output-5)
-    - [Current limitations](#current-limitations-5)
+    - [Known limitations](#known-limitations-5)
   - [Shell Example](#shell-example)
     - [Output](#output-6)
-    - [Current limitations](#current-limitations-6)
+    - [Known limitations](#known-limitations-6)
   - [Spark Example](#spark-example)
     - [Output](#output-7)
-    - [Current limitations](#current-limitations-7)
+    - [Known limitations](#known-limitations-7)
   - [Sub-workflow Example](#sub-workflow-example)
     - [Output](#output-8)
-    - [Current limitations](#current-limitations-8)
+    - [Known limitations](#known-limitations-8)
   - [DistCp Example](#distcp-example)
     - [Output](#output-9)
-    - [Current limitations](#current-limitations-9)
+    - [Known limitations](#known-limitations-9)
   - [Decision Example](#decision-example)
     - [Output](#output-10)
-    - [Current limitations](#current-limitations-10)
+    - [Known limitations](#known-limitations-10)
   - [EL Example](#el-example)
     - [Output](#output-11)
-    - [Current limitations](#current-limitations-11)
+    - [Known limitations](#known-limitations-11)
   - [Hive/Hive2 Example](#hivehive2-example)
     - [Output](#output-12)
-    - [Current limitations](#current-limitations-12)
+    - [Known limitations](#known-limitations-12)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -378,7 +378,7 @@ The demo can be run as:
 
 This will parse and write to an output file in the `output/demo` directory.
 
-### Current limitations
+### Known limitations
 
 The decision node is not fully functional as there is not currently
 support for all EL functions. So in order for it to run in Airflow you must
@@ -400,7 +400,7 @@ Make sure to first copy `examples/subwf/configuration.template.properties`, rena
 ### Output
 In this example the output will appear in `output/childwf/test_childwf_dag.py`.
 
-### Current limitations
+### Known limitations
 
 No known limitations.
 
@@ -442,7 +442,7 @@ In this example the output will appear in `/output/ssh/test_ssh_dag.py`.
 
 The converted DAG uses the `SSHOperator` in Airflow.
 
-### Current limitations
+### Known limitations
 
 No known limitations.
 
@@ -460,7 +460,7 @@ In this example the output will appear in `/output/mapreduce/test_mapreduce_dag.
 
 The converted DAG uses the `DataProcHadoopOperator` in Airflow.
 
-### Current limitations
+### Known limitations
 
 **1. Exit status not available**
 
@@ -503,7 +503,7 @@ In this example the output will appear in `/output/fs/test_fs_dag.py`.
 
 The converted DAG uses the `BashOperator` in Airflow.
 
-### Current limitations
+### Known limitations
 
 Not all FS operations are currently idempotent. This will be fixed.
 
@@ -521,7 +521,7 @@ In this example the output will appear in `output/pig/test_pig_dag.py`.
 
 The converted DAG uses the `DataProcPigOperator` in Airflow.
 
-### Current limitations
+### Known limitations
 
 **1. Configuration options**
 
@@ -552,7 +552,7 @@ The converted DAG uses the `BashOperator` in Airflow, which executes the desired
 action with Pig by invoking `gcloud dataproc jobs submit pig --cluster=<cluster> --region=<region>
 --execute 'sh <action> <args>'`.
 
-### Current limitations
+### Known limitations
 
 **1. Exit status not available**
 
@@ -586,7 +586,7 @@ In this example the output will appear in `/output/spark/spark.py`.
 
 The converted DAG uses the `DataProcSparkOperator` in Airflow.
 
-### Current limitations
+### Known limitations
 
 **1. Only tasks written in Java are supported**
 
@@ -623,7 +623,7 @@ which contains the factory method `sub_dag()` returning the actual Airflow subda
 
 The converted DAG uses the `SubDagOperator` in Airflow.
 
-### Current limitations
+### Known limitations
 
 Currently generated name of the sub-workflow is fixed which means that only one subworkflow is supported
 per DAG folder. This will be fixed soon.
@@ -643,7 +643,7 @@ In this example the output will appear in `output/distcp/test_distcp_dag.py`.
 The converted DAG uses the `BashOperator` in Airflow, which submits the Hadoop DistCp job using the
 `gcloud dataproc jobs submit hadoop` command.
 
-### Current limitations
+### Known limitations
 
 The system test of the example run with Oozie fails due to unknown reasons. The converted DAG run by Airflow
 completes successfully.
@@ -662,7 +662,7 @@ In this example the output will appear in `output/decision/test_decision_dag.py`
 
 The converted DAG uses the `BranchPythonOperator` in Airflow.
 
-### Current limitations
+### Known limitations
 
 Decision example is not yet fully functional as EL functions are not yet fully implemented so condition is
 hard-coded for now. Once EL functions are implemented, the condition in the example will be updated.
@@ -683,7 +683,7 @@ or single EL function. Variable/function chaining is not currently supported.
 ### Output
 In this example the output will appear in `output/el/test_el_dag.py`.
 
-### Current limitations
+### Known limitations
 
 Decision example is not yet fully functional as EL functions are not yet fully implemented so condition is
 hard-coded for now. Once EL functions are implemented, the condition in the example will be updated.
@@ -702,7 +702,7 @@ In this example the output will appear in `/output/hive/hive.py`.
 
 The converted DAG uses the `DataProcHiveOperator` in Airflow.
 
-### Current limitations
+### Known limitations
 
 **1. Only the connection to the local Hive instance is supported.**
 
