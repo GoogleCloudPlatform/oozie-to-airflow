@@ -50,7 +50,6 @@ If you want to contribute to the project, please take a look at [CONTRIBUTING.md
     - [Start](#start)
     - [End](#end)
     - [Kill](#kill)
-  - [Known Limitations](#known-limitations)
   - [EL Functions](#el-functions)
 - [Examples](#examples)
   - [Demo Example](#demo-example)
@@ -309,31 +308,6 @@ A workflow definition may have zero or more kill nodes.
     ...
 </workflow-app>
 ~~~~
-
-## Known Limitations
-
-The goal of this program is to mimic both the actions and control flow
-that is outlined by the Oozie workflow file. Unfortunately there are some
-limitations as of now that have not been worked around regarding the execution
-flow. The situation where the execution path might not execute correctly is when
-there are 4 nodes, A, B, C, D, with the following Oozie specified execution paths:
-```
-A executes ok to C
-B executes error to C
-
-A executes error to D
-B executes ok to D
-```
-In this situation Airflow does not have enough fine grained node execution control.
-The converter should be able to handle this situation in the future, but it is not
-currently guaranteed to work.
-
-This is because if goes from A to C on ok, and B goes to C on error, C's trigger rule
-will have to be set to `DUMMY`, but this means that if A goes to error, and B goes to ok
-C will then execute incorrectly.
-
-This limitation is temporary and will be removed in a future version of Oozie-2-Airflow converter.
-
 
 ## EL Functions
 
