@@ -154,7 +154,7 @@ function prepare_composer {
 usage() {
       echo """
 
-Usage: ${CMDNAME} [FLAGS] [-A|-S]
+Usage: ${CMDNAME} [FLAGS] [-A|-S|-K|-W]
 
 Executes prepare or run phase for integration testing of O2A converter.
 
@@ -195,6 +195,8 @@ Flags:
 
 Optional commands to execute:
 
+-K, --shell-access
+        Open shell access to Airflow cluster.
 
 -S, --ssh-to-cluster-master
         SSH to dataproc's cluster master. Arguments after -- are passed to gcloud ssh command as extra args.
@@ -362,10 +364,22 @@ do
       echo "Region where cluster is located: ${GCP_REGION}"
       echo
       shift 2 ;;
+    -k|--kubernetes)
+      export K8_CLUSTER_NAME="${2}";
+      echo
+      echo "Using ${K8_CLUSTER_NAME} kubernetes cluster"
+      echo
+      shift 2 ;;
     -v|--verbose)
       export VERBOSE="true";
       echo
       echo "Verbosity turned on"
+      echo
+      shift ;;
+    -K|--shell-access)
+      export RUN_ACCESS_SHELL="true"
+      echo
+      echo "Connecting to Airflow cluster"
       echo
       shift ;;
     -S|--ssh-to-cluster-master)
@@ -404,6 +418,19 @@ do
       ;;
   esac
 done
+
+function shell_access {
+    CLUSTER_NAME=$(gcloud beta composer environments describe "${COMPOSER_NAME}" \
+    --location "${COMPOSER_LOCATION}" '--format=value(config.gkeCluster)' | cut -d '/' -f 6)
+    gcloud container clusters get-credentials "${CLUSTER_NAME}" --zone europe-west1-b --project "${K8_CLUSTER_NAME}"
+    WORKER=$(kubectl get pods | grep "airflow-worker" | grep "Running" | head -1 | cut -d " " -f 1)
+    if [[ ${WORKER} == "" ]]; then
+        echo "No running airflow-worker!"
+        exit 1
+    fi
+    echo "Connecting to worker..."
+    kubectl exec -it "${WORKER}" --container airflow-worker -- /bin/bash
+}
 
 function ssh_to_cluster_master {
     echo
@@ -657,6 +684,12 @@ if [[ ${SETUP_AUTOCOMPLETE} == "true" ]]; then
     setup_autocomplete
     exit
 fi
+
+if [[ ${RUN_ACCESS_SHELL} == "true" ]]; then
+    shell_access
+    exit
+fi
+
 
 WITH_COVERAGE=${WITH_COVERAGE:="false"}
 LOCAL_O2A_BIN_SCRIPT="${MY_DIR}/o2a"
