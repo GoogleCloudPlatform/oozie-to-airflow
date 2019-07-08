@@ -33,9 +33,10 @@ class EmailMapper(ActionMapper):
         ActionMapper.__init__(
             self, oozie_node=oozie_node, dag_name=dag_name, name=name, props=props, **kwargs
         )
-        self.to: Optional[str] = None
-        self.cc: Optional[str] = None
-        self.bcc: Optional[str] = None
+        # *_addr suffix to satisfy Pylint's 3-letter variable length minimum; bcc_addr for consistency
+        self.to_addr: Optional[str] = None
+        self.cc_addr: Optional[str] = None
+        self.bcc_addr: Optional[str] = None
         self.subject: Optional[str] = None
         self.body: Optional[str] = None
 
@@ -48,7 +49,12 @@ class EmailMapper(ActionMapper):
             task_id=self.name,
             template_name="email.tpl",
             template_params=dict(
-                props=self.props, to=self.to, cc=self.cc, bcc=self.bcc, subject=self.subject, body=self.body
+                props=self.props,
+                to_addr=self.to_addr,
+                cc_addr=self.cc_addr,
+                bcc_addr=self.bcc_addr,
+                subject=self.subject,
+                body=self.body,
             ),
         )
         tasks = [action_task]
@@ -61,8 +67,8 @@ class EmailMapper(ActionMapper):
     def __extract_email_data(self):
         root = self.oozie_node
         props = self.props
-        self.to = xml_utils.get_tag_el_text(root=root, tag="to", props=props)
-        self.cc = xml_utils.get_tag_el_text(root=root, tag="cc", props=props)
-        self.bcc = xml_utils.get_tag_el_text(root=root, tag="bcc", props=props)
+        self.to_addr = xml_utils.get_tag_el_text(root=root, tag="to", props=props)
+        self.cc_addr = xml_utils.get_tag_el_text(root=root, tag="cc", props=props)
+        self.bcc_addr = xml_utils.get_tag_el_text(root=root, tag="bcc", props=props)
         self.subject = xml_utils.get_tag_el_text(root=root, tag="subject", props=props)
         self.body = xml_utils.get_tag_el_text(root=root, tag="body", props=props)

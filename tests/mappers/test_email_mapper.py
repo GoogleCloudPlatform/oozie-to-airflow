@@ -15,6 +15,7 @@
 """Tests Email mapper"""
 import ast
 import unittest
+from typing import Dict, Any
 from xml.etree import ElementTree as ET
 
 from o2a.converter.task import Task
@@ -37,12 +38,21 @@ class TestEmailMapper(unittest.TestCase):
         """
         self.email_node = ET.fromstring(email_node_str)
 
+    def test_init(self):
+        mapper = self._get_email_mapper(job_properties={}, config={})
+        fields: Dict[str, Any] = mapper.__dict__
+        self.assertIn("to_addr", fields.keys())
+        self.assertIn("cc_addr", fields.keys())
+        self.assertIn("bcc_addr", fields.keys())
+        self.assertIn("subject", fields.keys())
+        self.assertIn("body", fields.keys())
+
     def test_arguments_are_parsed_correctly(self):
         mapper = self._get_email_mapper(job_properties={"userName": "user"}, config={})
         mapper.on_parse_node()
-        self.assertEqual("to_1_test@gmail.com,to_2_test@gmail.com", mapper.to)
-        self.assertEqual("cc_1_test@example.com,cc_2_test@example.com", mapper.cc)
-        self.assertEqual("bcc_1_test@gmail.com,bcc_2_test@gmail.com", mapper.bcc)
+        self.assertEqual("to_1_test@gmail.com,to_2_test@gmail.com", mapper.to_addr)
+        self.assertEqual("cc_1_test@example.com,cc_2_test@example.com", mapper.cc_addr)
+        self.assertEqual("bcc_1_test@gmail.com,bcc_2_test@gmail.com", mapper.bcc_addr)
         self.assertEqual("Email notifications for ${wf:id()}", mapper.subject)
         self.assertEqual("Hi user, the wf ${wf:id()} successfully completed. Bye user", mapper.body)
 
@@ -60,9 +70,9 @@ class TestEmailMapper(unittest.TestCase):
                         "props": PropertySet(
                             config={}, job_properties={"userName": "user"}, action_node_properties={}
                         ),
-                        "to": "to_1_test@gmail.com,to_2_test@gmail.com",
-                        "cc": "cc_1_test@example.com,cc_2_test@example.com",
-                        "bcc": "bcc_1_test@gmail.com,bcc_2_test@gmail.com",
+                        "to_addr": "to_1_test@gmail.com,to_2_test@gmail.com",
+                        "cc_addr": "cc_1_test@example.com,cc_2_test@example.com",
+                        "bcc_addr": "bcc_1_test@gmail.com,bcc_2_test@gmail.com",
                         "subject": "Email notifications for ${wf:id()}",
                         "body": "Hi user, the wf ${wf:id()} successfully completed. Bye user",
                     },

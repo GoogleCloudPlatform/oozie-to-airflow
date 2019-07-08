@@ -16,9 +16,9 @@
 {{ task_id | to_var }} = email_operator.EmailOperator(
     task_id={{ task_id | to_python }},
     trigger_rule={{ trigger_rule | to_python }},
-    to={{ to | to_python }},
-    cc={{ cc | to_python }},
-    bcc={{ bcc | to_python }},
+    to={{ to_addr | to_python }},
+    cc={{ cc_addr | to_python }},
+    bcc={{ bcc_addr | to_python }},
     subject={{ subject | to_python }},
     html_content={{ body | to_python }},
     params={% include "props.tpl" %},
