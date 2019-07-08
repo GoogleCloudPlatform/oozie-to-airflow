@@ -44,6 +44,8 @@
                 </property>
             </configuration>
             <main-class>org.apache.oozie.example.DemoJavaMain</main-class>
+            <java-opt>-Dtest1=val1</java-opt>
+            <java-opt>-Dtest2=val2</java-opt>
             <arg>Hello</arg>
             <arg>Oozie!</arg>
         </java>

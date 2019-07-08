@@ -16,11 +16,8 @@
 {{ task_id | to_var }} = dataproc_operator.DataProcHadoopOperator(
     task_id={{ task_id | to_python }},
     trigger_rule={{ trigger_rule | to_python }},
-    main_class=CONFIG['hadoop_main_class'],
-    arguments=[
-        "{{ '{{' }} params['mapreduce.input.fileinputformat.inputdir'] {{ '}}' }}",
-        "{{ '{{' }} params['mapreduce.output.fileoutputformat.outputdir'] {{ '}}' }}"
-    ],
+    main_class={{ main_class | to_python }},
+    arguments={{ args }},
     {% if hdfs_files %}
         files={{ hdfs_files | to_python }},
     {% endif %}
@@ -28,8 +25,10 @@
         archives={{ hdfs_archives | to_python }},
     {% endif %}
     cluster_name=CONFIG['dataproc_cluster'],
-    dataproc_properties={% include "props.tpl" %},
+    dataproc_hadoop_properties={% include "props.tpl" %},
+    dataproc_hadoop_jars={{ jar_files_in_hdfs | to_python}},
     gcp_conn_id=CONFIG['gcp_conn_id'],
     region=CONFIG['gcp_region'],
     dataproc_job_id={{ task_id | to_python }},
+    params={% include "props.tpl" %},
 )

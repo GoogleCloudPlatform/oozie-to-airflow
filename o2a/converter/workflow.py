@@ -13,16 +13,18 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Workflow"""
+import os
 from collections import OrderedDict
 from typing import Set, Dict, Type
 
+from o2a.converter.constants import HDFS_FOLDER, LIB_FOLDER
 from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.relation import Relation
 from o2a.converter.task_group import TaskGroup
+from o2a.utils.file_utils import get_lib_files
 
 
-# This is a container for data, so it does not contain public methods intentionally.
-class Workflow:  # pylint: disable=too-few-public-methods
+class Workflow:
     """Class for Workflow"""
 
     def __init__(
@@ -55,6 +57,8 @@ class Workflow:  # pylint: disable=too-few-public-methods
             "from airflow.utils.trigger_rule import TriggerRule",
             "from airflow.utils import dates",
         }
+        self.library_folder = os.path.join(self.input_directory_path, HDFS_FOLDER, LIB_FOLDER)
+        self.jar_files = get_lib_files(self.library_folder, extension=".jar")
 
     def get_nodes_by_type(self, mapper_type: Type):
         return [node for node in self.nodes.values() if isinstance(node.mapper, mapper_type)]
