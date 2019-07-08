@@ -112,10 +112,10 @@ function prepare_configuration {
 function prepare_dataproc {
     HDFS_REMOTE_ALL_APPS_DIR=/user/${DATAPROC_USER}/examples/apps
     HDFS_REMOTE_APP_DIR=${HDFS_REMOTE_ALL_APPS_DIR}/${LOCAL_APP_NAME}
-    header "Prepare HDFS ${HDFS_REMOTE_APP_DIR} via master's ${REMOTE_FILESYSTEM_ALL_APPS_DIR} \
+    header "Prepare HDFS ${HDFS_REMOTE_APP_DIR} via master's ${DATAPROC_FILESYSTEM_ALL_APPS_DIR} \
 for example application: ${LOCAL_APP_NAME}"
 
-    run_command_on_dataproc "rm -rf ${REMOTE_FILESYSTEM_APP_DIR}"
+    run_command_on_dataproc "rm -rf ${DATAPROC_FILESYSTEM_APP_DIR}"
     if [[ -d "${LOCAL_APP_DIR}/hdfs" ]]; then
         if [[ ! -f "${LOCAL_APP_DIR}/hdfs/workflow.xml" ]]; then
             echo
@@ -123,8 +123,8 @@ for example application: ${LOCAL_APP_NAME}"
             echo
             exit 1
         fi
-        run_command_on_dataproc "mkdir -p \"${REMOTE_FILESYSTEM_ALL_APPS_DIR}\""
-        scp_folder "${LOCAL_APP_DIR}/hdfs/" "${REMOTE_FILESYSTEM_APP_DIR}"
+        run_command_on_dataproc "mkdir -p \"${DATAPROC_FILESYSTEM_ALL_APPS_DIR}\""
+        scp_folder "${LOCAL_APP_DIR}/hdfs/" "${DATAPROC_FILESYSTEM_APP_DIR}"
     else
         echo
         echo "Missing ${LOCAL_APP_DIR}/hdfs folder. It should contain at least workflow.xml"
@@ -140,13 +140,13 @@ for example application: ${LOCAL_APP_NAME}"
         -e "s/^resourceManager.*$/resourceManager=${DATAPROC_CLUSTER_MASTER}:8032/" \
         -e "s/\${user\.name}/${DATAPROC_USER}/" \
         "${LOCAL_APP_DIR}/job.properties"  > "${LOCAL_APP_PROPERTIES}"
-    scp_file "${LOCAL_APP_PROPERTIES}" "${REMOTE_FILESYSTEM_APP_PROPERTIES}"
+    scp_file "${LOCAL_APP_PROPERTIES}" "${DATAPROC_FILESYSTEM_APP_PROPERTIES}"
 
     submit_pig "fs -rm -r -f ${HDFS_REMOTE_APP_DIR}"
     submit_pig "fs -mkdir -p ${HDFS_REMOTE_ALL_APPS_DIR}"
 
     # Note! The target will be /user/${user.name}/${examplesRoot}/apps/<TEST_APP>
-    submit_pig "fs -copyFromLocal ${REMOTE_FILESYSTEM_APP_DIR} ${HDFS_REMOTE_APP_DIR}"
+    submit_pig "fs -copyFromLocal ${DATAPROC_FILESYSTEM_APP_DIR} ${HDFS_REMOTE_APP_DIR}"
     footer
 }
 
@@ -614,7 +614,7 @@ function test_composer {
 
 function test_oozie {
     header "Triggers example application on Oozie: ${LOCAL_APP_NAME}"
-    JOB_ID_LINE=$(run_command_on_dataproc "sudo oozie job --config ${REMOTE_FILESYSTEM_APP_PROPERTIES} -run" | tee /dev/tty | grep '^job: ')
+    JOB_ID_LINE=$(run_command_on_dataproc "sudo oozie job --config ${DATAPROC_FILESYSTEM_APP_PROPERTIES} -run" | tee /dev/tty | grep '^job: ')
     # Skip prefix
     # "job: " = 5 characters
     JOB_ID="${JOB_ID_LINE:5}"
@@ -658,9 +658,9 @@ function fetch_dataproc_environment_info {
     DATAPROC_CLUSTER_MASTER=$(gcloud dataproc clusters describe "${DATAPROC_CLUSTER_NAME}" --region="${GCP_REGION}" --format='value(config.masterConfig.instanceNames[0])')
     DATAPROC_MASTER_ZONE=$(gcloud dataproc clusters describe "${DATAPROC_CLUSTER_NAME}" --region="${GCP_REGION}" --format='value(config.gceClusterConfig.zoneUri.basename())')
     DATAPROC_USER=$(run_command_on_dataproc "whoami")
-    REMOTE_FILESYSTEM_ALL_APPS_DIR=/home/${DATAPROC_USER}/o2a
-    REMOTE_FILESYSTEM_APP_DIR=${REMOTE_FILESYSTEM_ALL_APPS_DIR}/${LOCAL_APP_NAME}
-    REMOTE_FILESYSTEM_APP_PROPERTIES=${REMOTE_FILESYSTEM_ALL_APPS_DIR}/${LOCAL_APP_NAME}.properties
+    DATAPROC_FILESYSTEM_ALL_APPS_DIR=/home/${DATAPROC_USER}/o2a
+    DATAPROC_FILESYSTEM_APP_DIR=${DATAPROC_FILESYSTEM_ALL_APPS_DIR}/${LOCAL_APP_NAME}
+    DATAPROC_FILESYSTEM_APP_PROPERTIES=${DATAPROC_FILESYSTEM_ALL_APPS_DIR}/${LOCAL_APP_NAME}.properties
     echo
     footer
 }
