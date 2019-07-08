@@ -378,6 +378,19 @@ class TestOozieExamples(unittest.TestCase):
             ),
             (
                 WorkflowExpectedResult(
+                    name="email",
+                    nodes={
+                        "start_node_1234": NodeExpectedResult(downstream_names=["email-node"]),
+                        "email-node": NodeExpectedResult(downstream_names=["end"], error_xml="fail"),
+                        "end": NodeExpectedResult(downstream_names=[]),
+                        "fail": NodeExpectedResult(downstream_names=[]),
+                    },
+                    job_properties={"hostname": "user@BBB", "nameNode": "hdfs://"},
+                    config={},
+                ),
+            ),
+            (
+                WorkflowExpectedResult(
                     name="fs",
                     nodes={
                         "start_node_1234": NodeExpectedResult(downstream_names=["fs-node"]),
