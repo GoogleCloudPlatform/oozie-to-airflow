@@ -17,7 +17,7 @@ _SHORT_OPTIONS="
 h a: p: C: L: b: c: m: r: z: d: v A S W K
 "
 
-_ALLOWED_PHASES=" prepare-configuration convert prepare-dataproc test-composer test-oozie "
+_ALLOWED_PHASES=" prepare-configuration convert prepare-dataproc test-composer test-oozie compare-artifacts "
 # shellcheck disable=SC2011
 _ALLOWED_APPLICATIONS=" advancedflow childwf decision demo distcp el email fs git hive java mapreduce pig shell spark ssh subwf "
 

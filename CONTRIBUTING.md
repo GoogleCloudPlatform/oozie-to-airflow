@@ -265,7 +265,7 @@ Flags:
         One of [childwf decision demo el fs git mapreduce pig shell spark ssh subwf]
 
 -p, --phase <PHASE>
-        Phase of the test to run. One of [prepare-configuration convert prepare-dataproc test-composer test-oozie]. Defaults to convert.
+        Phase of the test to run. One of [prepare-configuration convert prepare-dataproc test-composer test-oozie test-compare-artifacts]. Defaults to convert.
 
 -C, --composer-name <COMPOSER_NAME>
         Composer instance used to run the operations on. Defaults to o2a-integration
@@ -340,6 +340,9 @@ The following phases are defined for the system tests:
 
 * **test-oozie** - runs tests on Oozie in Hadoop cluster. Artifacts are downloaded to the
   ``output-artifacts/<APPLICATION>/oozie`` directory.
+
+* **test-compare-artifacts** - run tests on Oozie and Composer instance and displays a comparison of artifact
+  differences.
 
 ### Test scenarios
 
