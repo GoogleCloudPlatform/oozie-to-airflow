@@ -68,9 +68,13 @@ RENDER_AS_DOT="false"
 
 RUN_SSH_COMMAND="false"
 
+RUN_ACCESS_SHELL="false"
+
 RUN_OOZIE_WEBUI="false"
 
 SETUP_AUTOCOMPLETE="false"
+
+COMPOSER_GKE_CLUSTER_NAME=""
 
 COMPOSER_WEB_UI_URL=""
 
@@ -364,12 +368,6 @@ do
       echo "Region where cluster is located: ${GCP_REGION}"
       echo
       shift 2 ;;
-    -k|--kubernetes)
-      export K8_CLUSTER_NAME="${2}";
-      echo
-      echo "Using ${K8_CLUSTER_NAME} kubernetes cluster"
-      echo
-      shift 2 ;;
     -v|--verbose)
       export VERBOSE="true";
       echo
@@ -420,16 +418,14 @@ do
 done
 
 function shell_access {
-    CLUSTER_NAME=$(gcloud beta composer environments describe "${COMPOSER_NAME}" \
-    --location "${COMPOSER_LOCATION}" '--format=value(config.gkeCluster)' | cut -d '/' -f 6)
-    gcloud container clusters get-credentials "${CLUSTER_NAME}" --zone europe-west1-b --project "${K8_CLUSTER_NAME}"
-    WORKER=$(kubectl get pods | grep "airflow-worker" | grep "Running" | head -1 | cut -d " " -f 1)
-    if [[ ${WORKER} == "" ]]; then
+    gcloud container clusters get-credentials "${COMPOSER_GKE_CLUSTER_NAME}" --zone europe-west1-b
+    WORKER_NAME=$(kubectl get pods | grep "airflow-worker" | grep "Running" | head -1 | cut -d " " -f 1)
+    if [[ ${WORKER_NAME} == "" ]]; then
         echo "No running airflow-worker!"
         exit 1
     fi
     echo "Connecting to worker..."
-    kubectl exec -it "${WORKER}" --container airflow-worker -- /bin/bash
+    kubectl exec -it "${WORKER_NAME}" --container airflow-worker -- /bin/bash
 }
 
 function ssh_to_cluster_master {
@@ -642,6 +638,8 @@ function fetch_composer_environment_info {
         COMPOSER_DAG_BUCKET=${COMPOSER_DAG_BUCKET#gs://}
         echo "DAG Bucket: ${COMPOSER_DAG_BUCKET}"
     fi
+    COMPOSER_GKE_CLUSTER_NAME=$(gcloud beta composer environments describe "${COMPOSER_NAME}" --location "${COMPOSER_LOCATION}" '--format=value(config.gkeCluster)' | cut -d '/' -f 6)
+    echo "GKE CLUSTER NAME: ${COMPOSER_GKE_CLUSTER_NAME}"
     COMPOSER_WEB_UI_URL=$(gcloud beta composer environments describe "${COMPOSER_NAME}" --location "${COMPOSER_LOCATION}" --format='value(config.airflowUri)')
     echo "WEB UI URL: ${COMPOSER_WEB_UI_URL}"
     echo
@@ -686,6 +684,7 @@ if [[ ${SETUP_AUTOCOMPLETE} == "true" ]]; then
 fi
 
 if [[ ${RUN_ACCESS_SHELL} == "true" ]]; then
+    fetch_composer_environment_info
     shell_access
     exit
 fi
