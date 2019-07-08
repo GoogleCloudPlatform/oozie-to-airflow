@@ -245,7 +245,7 @@ with `-A` option - this way you do not have to remember all the options.
 Current options:
 
 ```
-Usage: o2a-run-sys-test [FLAGS] [-A|-S]
+Usage: o2a-run-sys-test [FLAGS] [-A|-S|-K|-W]
 
 Executes prepare or run phase for integration testing of O2A converter.
 
@@ -256,10 +256,10 @@ Flags:
 
 -a, --application <APPLICATION>
         Application (from examples dir) to run the tests on. Must be specified unless -S or -A are specified.
-        One of [ childwf decision demo el fs git mapreduce pig shell spark ssh subwf ]
+        One of [childwf decision demo el fs git mapreduce pig shell spark ssh subwf]
 
 -p, --phase <PHASE>
-        Phase of the test to run. One of [ prepare-configuration convert prepare-dataproc test-composer test-oozie ]. Defaults to convert.
+        Phase of the test to run. One of [prepare-configuration convert prepare-dataproc test-composer test-oozie]. Defaults to convert.
 
 -C, --composer-name <COMPOSER_NAME>
         Composer instance used to run the operations on. Defaults to o2a-integration
@@ -279,19 +279,26 @@ Flags:
 -v, --verbose
         Add even more verbosity when running the script.
 
+-d, --dot
+        Creates files in the DOT representation.
+        If you have the graphviz program in PATH, the files will also be converted to the PNG format.
+        If you have the graphviz program and the imgcat programs in PATH, the files will also be displayed in the console
 
 Optional commands to execute:
 
+-K, --shell-access
+        Open shell access to Airflow cluster.
 
 -S, --ssh-to-cluster-master
         SSH to dataproc's cluster master. Arguments after -- are passed to gcloud ssh command as extra args.
 
--X, --open-oozie-web-ui
+-W, --open-oozie-web-ui
         Creates a SOCKS5 proxy server that redirects traffic through the main Dataproc cluster node and
         opens Google Chrome with a proxy configuration and a tab with the Oozie web interface.
 
 -A, --setup-autocomplete
         Sets up autocomplete for o2a-run-sys-tests
+
 ```
 
 ### Caching latest used parameters by run-sys-test
