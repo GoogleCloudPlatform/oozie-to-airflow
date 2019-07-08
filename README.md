@@ -91,6 +91,10 @@ If you want to contribute to the project, please take a look at [CONTRIBUTING.md
   - [Hive/Hive2 Example](#hivehive2-example)
     - [Output](#output-12)
     - [Known limitations](#known-limitations-12)
+  - [Email Example](#email-example)
+    - [Output](#output-13)
+    - [Prerequisites](#prerequisites)
+    - [Known limitations](#known-limitations-13)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -686,3 +690,77 @@ Connection configuration options are not supported.
 
 For Hive, the following elements are not supported: `job-tracker`, `name-node`.
 For Hive2, the following elements are not supported: `job-tracker`, `name-node`, `jdbc-url`, `password`.
+
+## Email Example
+
+The Email example can be run as:
+
+`o2a -i examples/email -o output/email`
+
+Make sure to first copy `/examples/email/configuration.template.properties`, rename it as
+`configuration.properties` and fill in with configuration data.
+
+### Output
+In this example the output will appear in `/output/email/email.py`.
+
+The converted DAG uses the `EmailOperator` in Airflow.
+
+### Prerequisites
+In Oozie the SMTP server configuration is located in `oozie-site.xml`.
+
+For Airflow it needs to be located in `airflow.cfg`.
+Example Airflow SMTP configuration:
+```
+[email]
+email_backend = airflow.utils.email.send_email_smtp
+
+[smtp]
+smtp_host = example.com
+smtp_starttls = True
+smtp_ssl = False
+smtp_user = airflow_user
+smtp_password = password
+smtp_port = 587
+smtp_mail_from = airflow_user@example.com
+```
+
+For more information on setting Airflow configuration options
+[see here](https://airflow.readthedocs.io/en/stable/howto/set-config.html).
+
+### Known limitations
+
+**1. Attachments are not supported**
+
+Due to the complexity of extracting files from HDFS inside Airflow and providing them
+for the `EmailOperator`, the functionality of sending attachments has not yet been
+implemented.
+
+*Solution:* Implement in O2A a mechanism to extract a file from HDFS inside Airflow.
+
+**2. `<content_type>` tag is not supported**
+
+From Oozie docs:
+> From uri:oozie:email-action:0.2 one can also specify mail content type as
+<content_type>text/html</content_type>. “text/plain” is default.
+
+Unfortunately, currently the `EmailOperator` only accepts the `mime_subtype` parameter.
+However it only works for multipart subtypes, as the operator appends the subtype
+to the `multipart/` prefix. Therefore passing either `html` or `plain` from Oozie makes no sense.
+
+As a result the email will always be sent with the `EmailOperator`'s default Content-Type value,
+which is `multipart/mixed`.
+
+*Solution:* Modify the Airflow's `EmailOperator` to support more
+content types.
+
+**3. `cc` and `bcc` fields are not templated in EmailOperator**
+
+Only the 'to', 'subject' and 'html_content' fields in EmailOperator are templated.
+In practice this covers all fields of an Oozie email action node apart from `cc` and `bcc`.
+
+Therefore if there is an EL function in the action node in either of these two fields
+which will require a Jinja expression in Airflow, it will not work - the expression will
+not be executed, but rather treated as a plain string.
+
+*Solution:* Modify the Airflow's `EmailOperator` to mark more fields as
+`template_fields`.
