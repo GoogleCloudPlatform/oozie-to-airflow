@@ -14,6 +14,55 @@
 # limitations under the License.
 """All WF EL functions"""
 
+from typing import Optional
+
+from jinja2 import contextfunction
+
+from airflow.models import TaskInstance, DagRun
+from airflow.utils.db import provide_session
+from airflow import AirflowException
+
+
+def conf(key: str) -> str:
+    """
+    It returns the value of the workflow job configuration property for the
+    current workflow job, or an empty string if undefined.
+
+    This has the effect that some parameters cannot be templated, and thus
+    this will fail.
+    """
+    return "params[{}]".format(key)
+
+
+@contextfunction
+@provide_session
+def last_error_node(context=None, session=None) -> str:
+    """
+    It returns the name of the last workflow action node that exit with an ERROR
+    exit state, or an empty string if no action has exited with ERROR state in the
+    current workflow job.
+    """
+    drun: Optional[DagRun] = context.get("dag_run", None)
+    if drun is None:
+        raise AirflowException("No dag_run reference in context.")
+
+    dag_id = drun.dag_id
+
+    ti = TaskInstance  # pylint:disable=invalid-name
+    last_failed_task = (
+        session.query(TaskInstance)
+        .filter(ti.dag_id == dag_id)
+        .filter(ti.task_id.endswith("_error"))
+        .order_by(ti.execution_date.asc())
+        .first()
+    )
+
+    if not last_failed_task:
+        return ""
+
+    name: str = last_failed_task.task_id
+    return name
+
 
 def wf_app_path():
     """
@@ -23,15 +72,10 @@ def wf_app_path():
     """
 
 
-def wf_conf(key: str) -> str:
+def wf_conf(key):  # pylint: disable=unused-argument
     """
-    It returns the value of the workflow job configuration property for the
-    current workflow job, or an empty string if undefined.
-
-    This has the effect that some parameters cannot be templated, and thus
-    this will fail.
+    Todo: Remove when new translations will be used
     """
-    return "params[{}]".format(key)
 
 
 def wf_group():
@@ -69,9 +113,7 @@ def wf_transition(node):  # pylint: disable=unused-argument
 
 def wf_last_error_node():
     """
-    It returns the name of the last workflow action node that exit with an ERROR
-    exit state, or an empty string if no action has exited with ERROR state in the
-    current workflow job.
+    Todo: Remove when new translations will be used
     """
 
 

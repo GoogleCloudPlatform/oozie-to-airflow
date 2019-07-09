@@ -16,7 +16,7 @@
 EL functions map module.
 """
 import re
-from o2a.o2a_libs.el_wf_functions import wf_conf
+import o2a.o2a_libs.el_wf_functions as wf
 
 
 def first_not_null(str_one, str_two):
@@ -123,12 +123,12 @@ def trim(src_str: str) -> str:
 FUNCTION_MAP = {
     "wf_id": "run_id",
     "wf_name": "dag.dag_id",
-    "wf_user": "params.props.merged.user.name",
+    "wf_user": "params['userName']",
     "timestamp": 'macros.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")',
     "wf_app_path": "params['nameNode']/user/params['userName']}/params['examplesRoot']}/apps/hive",
     "concat": concat,
     "trim": trim,
-    "wf_conf": wf_conf,
+    "wf_conf": wf.conf,
 }
 
 

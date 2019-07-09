@@ -15,18 +15,15 @@
 """Tests for all EL to Jinja parser"""
 
 import unittest
-from collections import namedtuple
+from unittest.mock import MagicMock
 
 from parameterized import parameterized
-
 from jinja2 import Template
 
+from airflow import AirflowException
+
 from o2a.o2a_libs.el_parser import translate
-
 import o2a.o2a_libs.functions as functions
-
-
-Dag = namedtuple("Dag", ("dag_id"))
 
 
 class TestElParser(unittest.TestCase):
@@ -34,11 +31,11 @@ class TestElParser(unittest.TestCase):
         [
             (
                 "${fs:exists(wf:actionData('hdfs-lookup')['outputPath']/2)}",
-                "{{fs_exists(wf_action_data('hdfs-lookup')['outputPath'] / 2)}}",
+                "{{fs.exists(wf.action_data('hdfs-lookup')['outputPath'] / 2)}}",
             ),
             (
                 "${wf:actionData('shell-node')['my_output'] eq 'Hello Oozie'}",
-                "{{wf_action_data('shell-node')['my_output'] == 'Hello Oozie'}}",
+                "{{wf.action_data('shell-node')['my_output'] == 'Hello Oozie'}}",
             ),
             ("${1 > (4/2)}", "{{1 > (4 / 2)}}"),
             ("${4.0 >= 3}", "{{4.0 >= 3}}"),
@@ -70,10 +67,10 @@ class TestElParser(unittest.TestCase):
             ),
             ('${f(2) ? print("ok") : print("not ok")}', '{{print("ok") if f(2) else print("not ok")}}'),
             ('${!false ? print("ok") : print("not ok")}', '{{print("ok") if !False else print("not ok")}}'),
-            ("some pure text ${coord:user()}", "some pure text {{coord_user()}}"),
+            ("some pure text ${coord:user()}", "some pure text {{coord.user()}}"),
             (
                 "${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/${outputDir}",
-                "{{params['nameNode']}}/user/{{params.props.merged.user.name}}"
+                "{{params['nameNode']}}/user/{{params['userName']}}"
                 "/{{params['examplesRoot']}}/output-data/{{params['outputDir']}}",
             ),
             (
@@ -83,29 +80,29 @@ class TestElParser(unittest.TestCase):
             ("pure text without any.function wf:function()", "pure text without any.function wf:function()"),
             (
                 "${fs:fileSize('/usr/foo/myinputdir') gt 10 * GB}",
-                "{{fs_file_size('/usr/foo/myinputdir') > 10 * 1024 ** 3}}",
+                "{{fs.file_size('/usr/foo/myinputdir') > 10 * 1024 ** 3}}",
             ),
             (
                 '${hadoop:counters("mr-node")["FileSystemCounters"]["FILE_BYTES_READ"]}',
-                '{{hadoop_counters("mr-node")["FileSystemCounters"]["FILE_BYTES_READ"]}}',
+                '{{hadoop.counters("mr-node")["FileSystemCounters"]["FILE_BYTES_READ"]}}',
             ),
-            ('${hadoop:counters("pig-node")["JOB_GRAPH"]}', '{{hadoop_counters("pig-node")["JOB_GRAPH"]}}'),
+            ('${hadoop:counters("pig-node")["JOB_GRAPH"]}', '{{hadoop.counters("pig-node")["JOB_GRAPH"]}}'),
             (
                 "${wf:actionData('shell-node')['my_output'] eq 'Hello Oozie'}",
-                "{{wf_action_data('shell-node')['my_output'] == 'Hello Oozie'}}",
+                "{{wf.action_data('shell-node')['my_output'] == 'Hello Oozie'}}",
             ),
-            ("${coord:dataOut('output')}", "{{coord_data_out('output')}}"),
-            ("${coord:current(0)}", "{{coord_current(0)}}"),
-            ('${coord:offset(-42, "MINUTE")}', '{{coord_offset(-42,"MINUTE")}}'),
+            ("${coord:dataOut('output')}", "{{coord.data_out('output')}}"),
+            ("${coord:current(0)}", "{{coord.current(0)}}"),
+            ('${coord:offset(-42, "MINUTE")}', '{{coord.offset(-42,"MINUTE")}}'),
             (
                 "${(wf:actionData('java1')['datelist'] == EXPECTED_DATE_RANGE)}",
-                "{{(wf_action_data('java1')['datelist'] == params['EXPECTED_DATE_RANGE'])}}",
+                "{{(wf.action_data('java1')['datelist'] == params['EXPECTED_DATE_RANGE'])}}",
             ),
             (
                 "${wf:actionData('getDirInfo')['dir.num-files'] gt 23 || "
                 "wf:actionData('getDirInfo')['dir.age'] gt 6}",
-                "{{wf_action_data('getDirInfo')['dir.num-files'] > 23 or "
-                "wf_action_data('getDirInfo')['dir.age'] > 6}}",
+                "{{wf.action_data('getDirInfo')['dir.num-files'] > 23 or "
+                "wf.action_data('getDirInfo')['dir.age'] > 6}}",
             ),
             ("#{'${'}", "{{'${'}}"),
             ("${'${'}", "{{'${'}}"),
@@ -125,7 +122,7 @@ class TestElParser(unittest.TestCase):
             ("${concat('aaa', 'bbb')}", "{{'aaa' ~ 'bbb'}}"),
             ("${wf:id()}", "{{run_id}}"),
             ("${wf:name()}", "{{dag.dag_id}}"),
-            ("${wf:user()}", "{{params.props.merged.user.name}}"),
+            ("${wf:user()}", "{{params['userName']}}"),
             ("${trim(' aaabbb ')}", "{{' aaabbb '.strip()}}"),
             ("${trim(value)}", "{{params['value'].strip()}}"),
             ("${timestamp()}", '{{macros.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")}}'),
@@ -153,7 +150,13 @@ class TestElParser(unittest.TestCase):
             ("${trim(' aaa ')}", "{{' aaa '.strip()}}", "aaa", {}),
             ("${trim(value)}", "{{params['value'].strip()}}", "aaa", {"params": dict(value="aaa")}),
             ("${wf:id()}", "{{run_id}}", "xxx", {"run_id": "xxx"}),
-            ("${wf:name()}", "{{dag.dag_id}}", "xxx", {"dag": Dag(dag_id="xxx")}),
+            ("${wf:name()}", "{{dag.dag_id}}", "xxx", {"dag": MagicMock(dag_id="xxx")}),
+            (
+                "${wf:lastErrorNode()}",
+                "{{functions.wf.last_error_node()}}",
+                "",
+                {"dag_run": MagicMock(dag_id="test_id"), "functions": functions},
+            ),
             (
                 "${wf:conf('key')}",
                 "{{params['key']}}",
@@ -169,3 +172,20 @@ class TestElParser(unittest.TestCase):
         render = Template(translated).render(**kwargs)
 
         self.assertEqual(render, output_sentence)
+
+    @parameterized.expand(
+        [
+            (
+                "${wf:lastErrorNode()}",
+                "{{functions.wf.last_error_node()}}",
+                {"dag_run": None, "functions": functions},
+            )
+        ]
+    )
+    def test_error_rendering(self, input_sentence, translation, kwargs):
+        translated = translate(input_sentence, functions_module="functions")
+
+        self.assertEqual(translated, translation)
+
+        with self.assertRaises(AirflowException):
+            Template(translated).render(**kwargs)

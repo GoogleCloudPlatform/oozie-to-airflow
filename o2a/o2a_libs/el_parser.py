@@ -244,7 +244,7 @@ def _translate_token(token: Token) -> str:
         token.value = "}} "
 
     if token.type == "INVOCATION_COLON":
-        token.value = "_"
+        token.value = "."
 
     if token.type == "NULL":
         token.value = None
