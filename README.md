@@ -366,8 +366,7 @@ support for all EL functions. So in order for it to run in Airflow you must
 edit the Python output file and change the decision node expression.
 
 ### Output
-In this example the output will appear in `/output/ssh/test_demo_dag.py`.
-Additionally subworkflow is generated in  `/output/ssh/subdag_test.py`.
+In this example the output (including sub-workflow dag) will be created in `./output/ssh/` folder.
 
 ## Childwf Example
 
@@ -379,7 +378,7 @@ Make sure to first copy `examples/subwf/configuration.template.properties`, rena
 `configuration.properties` and fill in with configuration data.
 
 ### Output
-In this example the output will appear in `output/childwf/test_childwf_dag.py`.
+In this example the output will be created in `./output/childwf/` folder.
 
 ### Known limitations
 
@@ -419,7 +418,7 @@ edit connections so you must add one like:
 More information can be found in [Airflow's documentation](https://airflow.apache.org/cli.html#connections).
 
 ### Output
-In this example the output will appear in `/output/ssh/test_ssh_dag.py`.
+In this example the output will be created in `./output/ssh/` folder.
 
 The converted DAG uses the `SSHOperator` in Airflow.
 
@@ -437,7 +436,7 @@ Make sure to first copy `examples/mapreduce/configuration.template.properties`, 
 `configuration.properties` and fill in with configuration data.
 
 ### Output
-In this example the output will appear in `/output/mapreduce/test_mapreduce_dag.py`.
+In this example the output will be created in `.//output/mapreduce/` folder.
 
 The converted DAG uses the `DataProcHadoopOperator` in Airflow.
 
@@ -480,7 +479,7 @@ Make sure to first copy `examples/fs/configuration.template.properties`, rename 
 `configuration.properties` and fill in with configuration data.
 
 ### Output
-In this example the output will appear in `/output/fs/test_fs_dag.py`.
+In this example the output will be created in `./output/fs/` folder.
 
 The converted DAG uses the `BashOperator` in Airflow.
 
@@ -498,7 +497,7 @@ Make sure to first copy `examples/fs/configuration.template.properties`, rename 
 `configuration.properties` and fill in with configuration data.
 
 ### Output
-In this example the output will appear in `/output/java/test_java_dag.py`.
+In this example the output will be created in `./output/java/` folder.
 
 The converted DAG uses the `DataProcHadoopOperator` in Airflow.
 
@@ -517,12 +516,11 @@ Make sure to first copy `examples/pig/configuration.template.properties`, rename
 `configuration.properties` and fill in with configuration data.
 
 ### Output
-In this example the output will appear in `output/pig/test_pig_dag.py`.
+In this example the output will be created in `./output/pig/` folder.
 
 The converted DAG uses the `DataProcPigOperator` in Airflow.
 
 ### Known limitations
-
 **1. Configuration options**
 
 From the [Oozie documentation](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a3.2.3_Pig_Action)
@@ -546,7 +544,7 @@ Make sure to first copy `examples/shell/configuration.template.properties`, rena
 `configuration.properties` and fill in with configuration data.
 
 ### Output
-In this example the output will appear in `output/shell/test_shell_dag.py`.
+In this example the output will be created in `./output/shell/` folder.
 
 The converted DAG uses the `BashOperator` in Airflow, which executes the desired shell
 action with Pig by invoking `gcloud dataproc jobs submit pig --cluster=<cluster> --region=<region>
@@ -582,7 +580,7 @@ Make sure to first copy `/examples/spark/configuration.template.properties`, ren
 `configuration.properties` and fill in with configuration data.
 
 ### Output
-In this example the output will appear in `/output/spark/spark.py`.
+In this example the output will be created in `./output/spark/` folder.
 
 The converted DAG uses the `DataProcSparkOperator` in Airflow.
 
@@ -617,9 +615,7 @@ Make sure to first copy `examples/subwf/configuration.template.properties`, rena
 `configuration.properties` and fill in with configuration data.
 
 ### Output
-In this example the output will appear in `output/subwf/test_subwf_dag.py`.
-Additionally, a `subdag_test.py` (name to be changed soon) file is generated in the same directory,
-which contains the factory method `sub_dag()` returning the actual Airflow subdag.
+In this example the output (together with sub-worfklow dag) will be created in `./output/subwf/` folder.
 
 The converted DAG uses the `SubDagOperator` in Airflow.
 
@@ -638,7 +634,7 @@ Make sure to first copy `examples/distcp/configuration.template.properties`, ren
 `configuration.properties` and fill in with configuration data.
 
 ### Output
-In this example the output will appear in `output/distcp/test_distcp_dag.py`.
+In this example the output will be created in `./output/distcp/` folder.
 
 The converted DAG uses the `BashOperator` in Airflow, which submits the Hadoop DistCp job using the
 `gcloud dataproc jobs submit hadoop` command.
@@ -658,7 +654,7 @@ Make sure to first copy `examples/decision/configuration.template.properties`, r
 `configuration.properties` and fill in with configuration data.
 
 ### Output
-In this example the output will appear in `output/decision/test_decision_dag.py`.
+In this example the output will be created in `./output/decision/` folder.
 
 The converted DAG uses the `BranchPythonOperator` in Airflow.
 
@@ -681,7 +677,7 @@ Please keep in mind that as of the current version only a single EL variable
 or single EL function. Variable/function chaining is not currently supported.
 
 ### Output
-In this example the output will appear in `output/el/test_el_dag.py`.
+In this example the output will be created in `./output/el/` folder.
 
 ### Known limitations
 
@@ -698,7 +694,7 @@ Make sure to first copy `/examples/hive/configuration.template.properties`, rena
 `configuration.properties` and fill in with configuration data.
 
 ### Output
-In this example the output will appear in `/output/hive/hive.py`.
+In this example the output will be created in `./output/hive/` folder.
 
 The converted DAG uses the `DataProcHiveOperator` in Airflow.
 
@@ -723,7 +719,7 @@ Make sure to first copy `/examples/email/configuration.template.properties`, ren
 `configuration.properties` and fill in with configuration data.
 
 ### Output
-In this example the output will appear in `/output/email/email.py`.
+In this example the output will be created in `./output/email/` folder.
 
 The converted DAG uses the `EmailOperator` in Airflow.
 
