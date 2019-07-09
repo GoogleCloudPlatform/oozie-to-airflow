@@ -99,4 +99,4 @@ class GitMapper(ActionMapper):
         return tasks, relations
 
     def required_imports(self) -> Set[str]:
-        return {"from airflow.utils import dates", "from airflow.contrib.operators import dataproc_operator"}
+        return {"from airflow.operators import bash_operator"}
