@@ -22,7 +22,12 @@ from o2a.converter.task import Task
 from o2a.converter.relation import Relation
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.o2a_libs.property_utils import PropertySet
-from o2a.utils import el_utils
+from o2a.utils import el_utils, xml_utils
+
+
+TAG_CMD = "command"
+TAG_ARG = "args"
+TAG_HOST = "host"
 
 
 class SSHMapper(ActionMapper):
@@ -38,9 +43,8 @@ class SSHMapper(ActionMapper):
     ):
         ActionMapper.__init__(self, oozie_node=oozie_node, name=name, props=props, **kwargs)
         self.template = template
-        cmd = self.get_command()
 
-        self.command = el_utils.convert_el_to_jinja(cmd)
+        self.command = self.get_command()
         host_key = self.get_host_key()
 
         # Since Airflow separates user and host, we can't use jinja templating.
@@ -50,13 +54,13 @@ class SSHMapper(ActionMapper):
         self.host = user_host[1]
 
     def get_command(self) -> str:
-        cmd_node = self.oozie_node.find("command")
-        arg_nodes = self.oozie_node.findall("args")
-        if cmd_node is None or not cmd_node.text:
+        cmd_txt = xml_utils.get_tag_el_text(self.oozie_node, TAG_CMD, self.props)
+        args = xml_utils.get_tags_el_array_from_text(self.oozie_node, TAG_ARG, self.props)
+        if not cmd_txt:
             raise Exception("Missing or empty command node in SSH action {}".format(self.oozie_node))
-        cmd = cmd_node.text
-        args = (x.text if x.text else "" for x in arg_nodes)
-        cmd = " ".join(shlex.quote(x) for x in [cmd, *args])
+
+        cmd = " ".join([cmd_txt] + [shlex.quote(x) for x in args])
+        cmd = el_utils.convert_el_to_jinja(cmd)
         return cmd
 
     def get_host_key(self) -> str:

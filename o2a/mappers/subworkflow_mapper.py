@@ -27,7 +27,10 @@ from o2a.definitions import EXAMPLES_PATH
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.o2a_libs.property_utils import PropertySet
 from o2a.transformers.base_transformer import BaseWorkflowTransformer
-from o2a.utils import el_utils
+from o2a.utils import xml_utils
+
+
+TAG_APP = "app-path"
 
 
 # pylint: disable=too-many-instance-attributes
@@ -69,8 +72,7 @@ class SubworkflowMapper(ActionMapper):
         self._parse_oozie_node()
 
     def _parse_oozie_node(self):
-        app_path = self.oozie_node.find("app-path").text
-        app_path = el_utils.replace_el_with_var(app_path, props=self.props, quote=False)
+        app_path = xml_utils.get_tag_el_text(self.oozie_node, TAG_APP, self.props)
         _, _, self.app_name = app_path.rpartition("/")
         # TODO: hacky: we should calculate it deriving from input_directory_path and comparing app-path
         # TODO: but for now we assume app is in "examples"

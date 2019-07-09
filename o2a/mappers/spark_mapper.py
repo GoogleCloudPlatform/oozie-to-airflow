@@ -24,7 +24,7 @@ from o2a.converter.relation import Relation
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.mappers.extensions.prepare_mapper_extension import PrepareMapperExtension
 from o2a.o2a_libs.property_utils import PropertySet
-from o2a.utils import xml_utils, el_utils
+from o2a.utils import xml_utils
 from o2a.utils.file_archive_extractors import FileExtractor, ArchiveExtractor
 
 
@@ -33,7 +33,7 @@ from o2a.utils.xml_utils import get_tag_el_text
 
 SPARK_TAG_VALUE = "value"
 SPARK_TAG_NAME = "name"
-SPARK_TAG_ARGS = "arg"
+SPARK_TAG_ARG = "arg"
 SPARK_TAG_OPTS = "spark-opts"
 SPARK_TAG_JOB_NAME = "name"
 SPARK_TAG_CLASS = "class"
@@ -74,10 +74,9 @@ class SparkMapper(ActionMapper):
         if spark_opts:
             self.spark_opts.update(self._parse_spark_opts(spark_opts[0]))
 
-        app_args = xml_utils.find_nodes_by_tag(self.oozie_node, SPARK_TAG_ARGS)
-        for arg in app_args:
-            if arg.text:
-                self.application_args.append(el_utils.replace_el_with_var(arg.text, self.props, quote=False))
+        self.application_args = xml_utils.get_tags_el_array_from_text(
+            self.oozie_node, props=self.props, tag=SPARK_TAG_ARG
+        )
 
     @staticmethod
     def _parse_spark_opts(spark_opts_node: ET.Element):
