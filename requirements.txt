@@ -5,7 +5,7 @@ flake8==3.7.7
 google-api-python-client==1.7.9
 isort==4.3.21
 j2cli==0.3.10
-Jinja2==2.10.1
+Jinja2==2.10.0 # pyup: ignore
 lark-parser==0.7.1
 mypy==0.711
 parameterized==0.7.0
@@ -17,4 +17,6 @@ pytest-cov==2.7.1
 safety==1.8.5
 sshtunnel==0.1.5
 twine==1.13.0
+tzlocal==1.5.1 # pyup: ignore
+Werkzeug==0.14.1 # pyup: ignore
 yamllint==1.16.0
