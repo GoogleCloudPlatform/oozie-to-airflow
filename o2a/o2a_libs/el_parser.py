@@ -26,6 +26,10 @@ import re
 
 from lark import Lark, Tree, Token
 
+from .functions import evaluate_function
+
+
+EL_CONSTANTS = {"KB": "1024", "MB": "1024 ** 2", "GB": "1024 ** 3", "TB": "1024 ** 4", "PB": "1024 ** 5"}
 
 GRAMMAR = r"""
     start: (lvalue (start)?)* | (rvalue (start)?)* | literal_expression (rvalue (start)?)?
@@ -39,7 +43,6 @@ GRAMMAR = r"""
 
     literal_expression: literal_component (/[\$\#]/)?
 
-    // TODO: extend to full rule ! ! !
     literal_component: (/[^\$\#]/)*
         | (/[^\$\#]/)* (/[\$\#][^\{]/)
         | (/[^\$\#]/)* /\\\\/ (/[\$\#]/)?
@@ -89,14 +92,17 @@ GRAMMAR = r"""
         | non_literal_lvalue_prefix
 
     non_literal_lvalue_prefix: "(" expression ")"
-        | identifier
+        | first_identifier
         | function_invocation
 
-    value_suffix: "." identifier | "[" expression "]"
+    value_suffix: "." PARAM | "[" expression "]"
+
+    first_identifier: FIRST_JAVA
 
     identifier: JAVA
 
-    function_invocation: (identifier INVOCATION_COLON)? identifier "(" ( expression ( "," expression )* )? ")"
+    function_invocation: FUNC INVOCATION_COLON FUNC "(" ( expression ( "," expression )* )? ")"
+        | FUNC "(" ( expression ( "," expression )* )? ")"
 
     literal: BOOL | INT | FLOAT | STRING | NULL
 
@@ -106,7 +112,13 @@ GRAMMAR = r"""
 
     INVOCATION_COLON: ":"
 
+    FUNC: /(?!true|false|null)([a-zA-Z_]+)/
+
+    PARAM: /(?!true|false|null)([a-zA-Z_]+)/
+
     JAVA: /(?!true|false|null)([a-zA-Z_]+)/
+
+    FIRST_JAVA: /(?!true|false|null)([a-zA-Z_]+)/
 
     BOOL: "true" | "false"
 
@@ -182,7 +194,7 @@ def _translate_binary_operator(tree: Tree) -> str:
     return str(operator.value)
 
 
-def _translate_ternary(tree: Tree) -> Optional[str]:
+def _translate_ternary(tree: Tree, functions_module: str) -> Optional[str]:
     """
     Translates ternary expression.
     """
@@ -190,13 +202,16 @@ def _translate_ternary(tree: Tree) -> Optional[str]:
         # Case of `f() ? true : false`
         condition, ternary = tree.children
         _, if_true, _, if_false = ternary.children
-        translation = f"{_translate_el(if_true)} if {_translate_el(condition)} else {_translate_el(if_false)}"
+        translation = (
+            f"{_translate_el(if_true, functions_module)} if "
+            f"{_translate_el(condition, functions_module)} else {_translate_el(if_false, functions_module)}"
+        )
         return translation
 
     if tree.data == "expression1" and "ternary" in [ch.data for ch in tree.children[-1].children]:
         # Case of `x op y ? true : false`
-        first = _translate_el(tree.children[0])
-        operator = _translate_el(tree.children[1])
+        first = _translate_el(tree.children[0], functions_module)
+        operator = _translate_el(tree.children[1], functions_module)
 
         # expression | ternary
         expression, ternary = tree.children[2].children
@@ -207,7 +222,10 @@ def _translate_ternary(tree: Tree) -> Optional[str]:
         second = _translate_el(expression)
 
         condition = f"{first}{operator}{second}"
-        translation = f"{_translate_el(if_true)} if {condition} else {_translate_el(if_false)}"
+        translation = (
+            f"{_translate_el(if_true, functions_module)} if "
+            f"{condition} else {_translate_el(if_false, functions_module)}"
+        )
         return translation
 
     return None
@@ -217,6 +235,8 @@ def _translate_token(token: Token) -> str:
     """
     Translates non-python values to python equivalents.
     """
+    params = "params['{}']"
+
     if token.type == "BEGIN":
         token.value = " {{"
 
@@ -224,10 +244,13 @@ def _translate_token(token: Token) -> str:
         token.value = "}} "
 
     if token.type == "INVOCATION_COLON":
-        token.value = "_"
+        token.value = "."
 
     if token.type == "NULL":
         token.value = None
+
+    if token.type == "FUNC":
+        token.value = _camel_to_snake(token.value)
 
     if token.type == "BOOL":
         if token.value == "true":
@@ -236,14 +259,68 @@ def _translate_token(token: Token) -> str:
             token.value = False
 
     if token.type == "JAVA":
-        token.value = _camel_to_snake(token.value)
+        token.value = params.format(token.value)
+
+    if token.type == "FIRST_JAVA":
+        if token.value in EL_CONSTANTS.keys():
+            return str(EL_CONSTANTS[token.value])
+        token.value = params.format(token.value)
 
     return str(token.value)
 
 
-def _translate_el(tree: Union[Tree, Token]) -> str:
+def _translate_tail(tree: Tree, f_mod: str = "") -> str:
+    return "".join([_translate_el(ch, f_mod) for ch in tree.children])
+
+
+def _unpack_identifier(node: Union[Tree, Token]) -> str:
+    if isinstance(node, Token):
+        return str(node.value)
+
+    return str(node.children[0].value)
+
+
+def _get_args(tree: Tree, fun_mod: str) -> tuple:
+    args = []
+
+    register = False
+    for child in tree.children:
+        if isinstance(child, Token) and child.type == "LPAR":
+            register = True
+            continue
+
+        if isinstance(child, Token) and child.type == "LPAR":
+            break
+
+        if isinstance(child, Token) and child.value in (",", ")"):
+            continue
+
+        if register:
+            args.append(_translate_el(child, fun_mod))
+
+    return tuple(args)
+
+
+def _translate_function(tree: Tree, f_mod: str) -> str:
+    if isinstance(tree.children[1], Token) and tree.children[1].value == ":":
+        identifier1 = _unpack_identifier(tree.children[0])
+        identifier2 = _unpack_identifier(tree.children[2])
+
+        name = _camel_to_snake(identifier1 + "_" + identifier2)
+    else:
+        name = _camel_to_snake(tree.children[0].value)
+
+    args = _get_args(tree, f_mod)
+    output = evaluate_function(name, args)
+    if output:
+        return output
+
+    return f_mod + _translate_tail(tree, f_mod)
+
+
+def _translate_el(tree: Union[Tree, Token], functions_module: str = "") -> str:
     """
-    Translates el expression to jinjia equivalent.
+    Translates el expression to jinja equivalent.
     """
 
     if isinstance(tree, Token):
@@ -252,12 +329,14 @@ def _translate_el(tree: Union[Tree, Token]) -> str:
     if tree.data == "binary_op":
         return _translate_binary_operator(tree)
 
-    ternary = _translate_ternary(tree)
+    if tree.data == "function_invocation":
+        return _translate_function(tree, functions_module)
+
+    ternary = _translate_ternary(tree, functions_module)
     if ternary is not None:
         return ternary
 
-    output = "".join([_translate_el(ch) for ch in tree.children])
-    return output
+    return _translate_tail(tree, functions_module)
 
 
 def _purify(sentence: str) -> str:
@@ -270,7 +349,7 @@ def _purify(sentence: str) -> str:
     return sentence
 
 
-def translate(expression: str) -> str:
+def translate(expression: str, functions_module: str = "") -> str:
     """
     Translate Expression Language sentence to Jinja.
 
@@ -281,10 +360,15 @@ def translate(expression: str) -> str:
 
     :param expression: the expression to be translated
     :type expression: str
+    :param functions_module: module with python equivalents of el functions
+    :type functions_module: str
     :return: translated expression
     :rtype: str
     """
+    if functions_module:
+        functions_module = functions_module + "."
+
     ast_tree = _parser(expression)
-    translation = _translate_el(ast_tree)
+    translation = _translate_el(ast_tree, functions_module)
 
     return _purify(translation)

@@ -86,6 +86,7 @@ class PythonRendererTestCase(unittest.TestCase):
             schedule_interval=None,
             start_days_ago=None,
             template_name="workflow.tpl",
+            task_map={"DAG_NAME_A": ["task_name"]},
         )
 
     @mock.patch("o2a.converter.renderers.black")
@@ -111,6 +112,7 @@ class PythonRendererTestCase(unittest.TestCase):
             schedule_interval=mock.ANY,
             start_days_ago=mock.ANY,
             template_name="subworkflow.tpl",
+            task_map={"DAG_NAME_A": ["task_name"]},
         )
 
     @mock.patch("o2a.converter.renderers.black")

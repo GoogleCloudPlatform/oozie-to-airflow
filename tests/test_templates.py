@@ -606,6 +606,7 @@ class WorkflowTemplateTestCase(TestCase, TemplateTestMixin):
         relations={Relation(from_task_id="TASK_1", to_task_id="TASK_2")},
         schedule_interval=3,
         start_days_ago=3,
+        task_map={"oozie-task": ["airflow-task"]},
     )
 
     def test_green_path(self):
