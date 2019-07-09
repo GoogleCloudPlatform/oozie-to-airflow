@@ -28,8 +28,10 @@
         archives={{ hdfs_archives | to_python }},
     {% endif %}
     cluster_name=CONFIG['dataproc_cluster'],
-    dataproc_properties={% include "props.tpl" %},
+    dataproc_hadoop_properties={% include "props.tpl" %},
+    dataproc_hadoop_jars=CONFIG['hadoop_jars'].split(','),
     gcp_conn_id=CONFIG['gcp_conn_id'],
     region=CONFIG['gcp_region'],
     dataproc_job_id={{ task_id | to_python }},
+    params={% include "props.tpl" %},
 )
