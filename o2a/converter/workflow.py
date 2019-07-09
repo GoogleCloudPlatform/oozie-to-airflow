@@ -24,7 +24,15 @@ from o2a.converter.task_group import TaskGroup
 
 
 class Workflow:
-    """Class for Workflow"""
+    """Class for Workflow
+
+    It contains information about all elements of the conversation process, i.e. :
+
+    * input/output direcotry paths;
+    * TODO
+    * TODO
+    * TODO
+    """
 
     def __init__(
         self,
@@ -56,15 +64,8 @@ class Workflow:
             "from airflow.utils.trigger_rule import TriggerRule",
             "from airflow.utils import dates",
         }
-        self.library_folder = os.path.join(self.input_directory_path, HDFS_FOLDER, LIB_FOLDER)
-        self.jar_files = self.get_lib_files(extension=".jar")
-
-    def get_lib_files(self, extension: str) -> List[str]:
-        if os.path.exists(self.library_folder):
-            if os.path.isdir(self.library_folder):
-                return [file for file in os.listdir(self.library_folder) if file.endswith(extension)]
-            raise Exception(f"The {self.library_folder} exists but it is not a directory!")
-        return []
+        self.library_folder: str = os.path.join(self.input_directory_path, HDFS_FOLDER, LIB_FOLDER)
+        self.jar_files: List[str] = []
 
     def get_nodes_by_type(self, mapper_type: Type):
         return [node for node in self.nodes.values() if isinstance(node.mapper, mapper_type)]

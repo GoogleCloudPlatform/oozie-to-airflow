@@ -22,7 +22,7 @@ import os
 import logging
 
 
-from o2a.converter import workflow_xml_parser
+from o2a.converter import workflow_xml_parser, library_finder
 from o2a.converter.constants import HDFS_FOLDER
 from o2a.converter.parsed_action_node import ParsedActionNode
 from o2a.converter.property_parser import PropertyParser
@@ -38,7 +38,9 @@ from o2a.o2a_libs.property_utils import PropertySet
 # pylint: disable=too-many-instance-attributes
 class OozieConverter:
     """
-    Converts Oozie Workflow app to Airflow's DAG
+    Converts Oozie Workflow app to Airflow's DAG.
+
+    This class manages the whole conversation process..
 
     Each WorkflowXmlParser class corresponds to one workflow, where one can get
     the workflow's required dependencies (imports), operator relations,
@@ -90,6 +92,7 @@ class OozieConverter:
         os.makedirs(self.workflow.output_directory_path, exist_ok=True)
 
     def convert(self, as_subworkflow=False):
+        self.find_jar_libraries()
         self.property_parser.parse_property()
         self.parser.parse_workflow()
 
@@ -129,6 +132,10 @@ class OozieConverter:
                 error_downstream_name=p_node.error_downstream_name,
             )
             del self.workflow.nodes[name]
+
+    def find_jar_libraries(self):
+        logging.info("Looking for jar libraries.")
+        self.workflow.jar_files = library_finder.get_lib_files(self.workflow.library_folder, extension=".jar")
 
     def convert_dependencies(self) -> None:
         logging.info("Converting dependencies.")
