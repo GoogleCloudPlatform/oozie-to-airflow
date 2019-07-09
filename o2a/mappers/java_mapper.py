@@ -53,7 +53,7 @@ class JavaMapper(ActionMapper):
         self.file_extractor = FileExtractor(oozie_node=oozie_node, props=self.props)
         self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, props=self.props)
         self.main_class: Optional[str] = None
-        self.java_opts: Optional[List[str]] = None
+        self.java_opts: List[str] = []
         self.args: Optional[List[str]] = None
         self.hdfs_files: Optional[List[str]] = None
         self.hdfs_archives: Optional[List[str]] = None
@@ -107,7 +107,7 @@ class JavaMapper(ActionMapper):
         self.main_class = xml_utils.get_tag_el_text(root=root, tag=TAG_MAIN_CLASS, props=props)
         java_opts_string = xml_utils.get_tag_el_text(root=root, tag=TAG_JAVA_OPTS, props=props)
         if java_opts_string:
-            self.java_opts = java_opts_string.split(" ")
+            self.java_opts.extend(java_opts_string.split(" "))
         else:
-            self.java_opts = get_tags_el_array_from_text(root=root, tag=TAG_JAVA_OPT, props=props)
+            self.java_opts.extend(get_tags_el_array_from_text(root=root, tag=TAG_JAVA_OPT, props=props))
         self.args = get_tags_el_array_from_text(root=root, tag=TAG_ARG, props=props)

@@ -149,6 +149,80 @@ class TestJavaMapper(unittest.TestCase):
         )
         self.assertEqual(["test.jar", "test2.jar"], mapper.jar_files)
 
+    def test_mapred_ops_append_list_mapred_child(self):
+        mapper = self._get_java_mapper(
+            job_properties={
+                "userName": "user",
+                "oozie.wf.application.path": "hdfs:///user/USER/examples/apps/java",
+                "mapred.child.java.opts": "-Dmapred1=val1 -Dmapred2=val2",
+            },
+            config={},
+            jar_files=["test.jar", "test2.jar"],
+        )
+        mapper.on_parse_node()
+        self.assertEqual("test_id", mapper.name)
+        self.assertEqual("org.apache.oozie.example.DemoJavaMain", mapper.main_class)
+        self.assertEqual(
+            ["-Dmapred1=val1", "-Dmapred2=val2", "-Dtest1=val1", "-Dtest2=val2"], mapper.java_opts
+        )
+        self.assertEqual(
+            PropertySet(
+                config={},
+                job_properties={
+                    "userName": "user",
+                    "oozie.wf.application.path": "hdfs:///user/USER/examples/apps/java",
+                    "mapred.child.java.opts": "-Dmapred1=val1 -Dmapred2=val2",
+                },
+                action_node_properties={"mapred.job.queue.name": "${queueName}"},
+            ),
+            mapper.props,
+        )
+        self.assertEqual(
+            [
+                "hdfs:///user/USER/examples/apps/java/lib/test.jar",
+                "hdfs:///user/USER/examples/apps/java/lib/test2.jar",
+            ],
+            mapper.jar_files_in_hdfs,
+        )
+        self.assertEqual(["test.jar", "test2.jar"], mapper.jar_files)
+
+    def test_mapred_ops_append_list_mapreduce_map(self):
+        mapper = self._get_java_mapper(
+            job_properties={
+                "userName": "user",
+                "oozie.wf.application.path": "hdfs:///user/USER/examples/apps/java",
+                "mapreduce.map.java.opts": "-Dmapreduce1=val1 -Dmapreduce2=val2",
+            },
+            config={},
+            jar_files=["test.jar", "test2.jar"],
+        )
+        mapper.on_parse_node()
+        self.assertEqual("test_id", mapper.name)
+        self.assertEqual("org.apache.oozie.example.DemoJavaMain", mapper.main_class)
+        self.assertEqual(
+            ["-Dmapreduce1=val1", "-Dmapreduce2=val2", "-Dtest1=val1", "-Dtest2=val2"], mapper.java_opts
+        )
+        self.assertEqual(
+            PropertySet(
+                config={},
+                job_properties={
+                    "userName": "user",
+                    "oozie.wf.application.path": "hdfs:///user/USER/examples/apps/java",
+                    "mapreduce.map.java.opts": "-Dmapreduce1=val1 -Dmapreduce2=val2",
+                },
+                action_node_properties={"mapred.job.queue.name": "${queueName}"},
+            ),
+            mapper.props,
+        )
+        self.assertEqual(
+            [
+                "hdfs:///user/USER/examples/apps/java/lib/test.jar",
+                "hdfs:///user/USER/examples/apps/java/lib/test2.jar",
+            ],
+            mapper.jar_files_in_hdfs,
+        )
+        self.assertEqual(["test.jar", "test2.jar"], mapper.jar_files)
+
     def test_to_tasks_and_relations(self):
         mapper = self._get_java_mapper(
             job_properties={
