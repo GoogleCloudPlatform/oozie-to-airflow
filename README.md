@@ -67,34 +67,37 @@ If you want to contribute to the project, please take a look at [CONTRIBUTING.md
   - [FS Example](#fs-example)
     - [Output](#output-4)
     - [Known limitations](#known-limitations-4)
-  - [Pig Example](#pig-example)
+  - [Java Example](#java-example)
     - [Output](#output-5)
     - [Known limitations](#known-limitations-5)
-  - [Shell Example](#shell-example)
+  - [Pig Example](#pig-example)
     - [Output](#output-6)
     - [Known limitations](#known-limitations-6)
-  - [Spark Example](#spark-example)
+  - [Shell Example](#shell-example)
     - [Output](#output-7)
     - [Known limitations](#known-limitations-7)
-  - [Sub-workflow Example](#sub-workflow-example)
+  - [Spark Example](#spark-example)
     - [Output](#output-8)
     - [Known limitations](#known-limitations-8)
-  - [DistCp Example](#distcp-example)
+  - [Sub-workflow Example](#sub-workflow-example)
     - [Output](#output-9)
     - [Known limitations](#known-limitations-9)
-  - [Decision Example](#decision-example)
+  - [DistCp Example](#distcp-example)
     - [Output](#output-10)
     - [Known limitations](#known-limitations-10)
-  - [EL Example](#el-example)
+  - [Decision Example](#decision-example)
     - [Output](#output-11)
     - [Known limitations](#known-limitations-11)
-  - [Hive/Hive2 Example](#hivehive2-example)
+  - [EL Example](#el-example)
     - [Output](#output-12)
     - [Known limitations](#known-limitations-12)
-  - [Email Example](#email-example)
+  - [Hive/Hive2 Example](#hivehive2-example)
     - [Output](#output-13)
-    - [Prerequisites](#prerequisites)
     - [Known limitations](#known-limitations-13)
+  - [Email Example](#email-example)
+    - [Output](#output-14)
+    - [Prerequisites](#prerequisites)
+    - [Known limitations](#known-limitations-14)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -484,6 +487,25 @@ The converted DAG uses the `BashOperator` in Airflow.
 ### Known limitations
 
 Not all FS operations are currently idempotent. This will be fixed.
+
+## Java Example
+
+The Java example can be run as:
+
+`o2a -i examples/java -o output/java`
+
+Make sure to first copy `examples/fs/configuration.template.properties`, rename it as
+`configuration.properties` and fill in with configuration data.
+
+### Output
+In this example the output will appear in `/output/java/test_java_dag.py`.
+
+The converted DAG uses the `DataProcHadoopOperator` in Airflow.
+
+### Known limitations
+
+1. Overriding action's Main class via `oozie.launcher.action.main.class` is not implemented.
+
 
 ## Pig Example
 
