@@ -60,7 +60,7 @@ class JavaMapper(ActionMapper):
         self.prepare_extension: PrepareMapperExtension = PrepareMapperExtension(self)
         self.jar_files: List[str] = jar_files if jar_files else []
         self.jar_files_in_hdfs: List[str] = []
-        self._compute_jar_files_in_hdfs()
+        self._get_jar_files_in_hdfs_full_paths()
 
     def on_parse_node(self):
         super().on_parse_node()
@@ -91,7 +91,7 @@ class JavaMapper(ActionMapper):
     def required_imports(self) -> Set[str]:
         return {"from airflow.utils import dates", "from airflow.contrib.operators import dataproc_operator"}
 
-    def _compute_jar_files_in_hdfs(self):
+    def _get_jar_files_in_hdfs_full_paths(self):
         hdfs_app_prefix = self.props.job_properties["oozie.wf.application.path"]
         for file in self.jar_files:
             self.jar_files_in_hdfs.append(hdfs_app_prefix + "/" + LIB_FOLDER + "/" + file)

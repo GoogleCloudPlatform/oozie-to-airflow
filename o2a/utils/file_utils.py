@@ -19,11 +19,11 @@ from typing import List
 
 
 def get_lib_files(library_folder_path: str, extension: str) -> List[str]:
-    """Returns list of  all lib files from the library folder matching the extension provided.
-    For example is you specify the '.jar' extension it will return names (not paths) of all
+    """Returns list of all lib files from the library folder matching the extension provided.
+    For example if you specify the '.jar' extension it will return names (not paths) of all
     the *.jar files.
 
-    It returns empty list in case there are no files matching the extension and raises Exception
+    It returns an empty list in case there are no files matching the extension and raises Exception
     in case the lib folder does not exist or is not a directory.
      """
     if os.path.exists(library_folder_path):
