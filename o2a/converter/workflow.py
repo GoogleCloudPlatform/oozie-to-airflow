@@ -23,8 +23,7 @@ from o2a.converter.relation import Relation
 from o2a.converter.task_group import TaskGroup
 
 
-# This is a container for data, so it does not contain public methods intentionally.
-class Workflow:  # pylint: disable=too-few-public-methods
+class Workflow:
     """Class for Workflow"""
 
     def __init__(
