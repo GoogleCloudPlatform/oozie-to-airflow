@@ -23,7 +23,7 @@ from o2a.converter.task import Task
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.mappers.extensions.prepare_mapper_extension import PrepareMapperExtension
 from o2a.o2a_libs.property_utils import PropertySet
-from o2a.utils import xml_utils
+from o2a.utils import xml_utils, el_utils
 from o2a.utils.file_archive_extractors import FileExtractor, ArchiveExtractor
 
 
@@ -107,9 +107,9 @@ class JavaMapper(ActionMapper):
             java_opt_node_array = xml_utils.find_nodes_by_tag(root=root, tag="java-opt")
             if java_opt_node_array:
                 for node in java_opt_node_array:
-                    self.java_opts.append(node.text)
+                    self.java_opts.append(el_utils.replace_el_with_var(node.text, props=props, quote=False))
         self.args: List[str] = []
         arg_node_array = xml_utils.find_nodes_by_tag(root=root, tag="arg")
         if arg_node_array:
             for node in arg_node_array:
-                self.args.append(node.text)
+                self.args.append(el_utils.replace_el_with_var(node.text, props=props, quote=False))
