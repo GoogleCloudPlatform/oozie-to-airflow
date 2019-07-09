@@ -24,9 +24,14 @@ from o2a.converter.relation import Relation
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.mappers.extensions.prepare_mapper_extension import PrepareMapperExtension
 from o2a.o2a_libs.property_utils import PropertySet
-from o2a.utils import el_utils
 from o2a.utils.file_archive_extractors import ArchiveExtractor, FileExtractor
 from o2a.utils.param_extractor import extract_param_values_from_action_node
+from o2a.utils.xml_utils import get_tag_el_text
+
+
+TAG_RESOURCE = "resource-manager"
+TAG_NAME = "name-node"
+TAG_SCRIPT = "script"
 
 
 # pylint: disable=too-many-instance-attributes
@@ -44,12 +49,10 @@ class PigMapper(ActionMapper):
         self.prepare_extension: PrepareMapperExtension = PrepareMapperExtension(self)
 
     def _parse_oozie_node(self):
-        res_man_text = self.oozie_node.find("resource-manager").text
-        name_node_text = self.oozie_node.find("name-node").text
-        script = self.oozie_node.find("script").text
-        self.resource_manager = el_utils.replace_el_with_var(res_man_text, props=self.props, quote=False)
-        self.name_node = el_utils.replace_el_with_var(name_node_text, props=self.props, quote=False)
-        self.script_file_name = el_utils.replace_el_with_var(script, props=self.props, quote=False)
+        self.resource_manager = get_tag_el_text(self.oozie_node, TAG_RESOURCE, self.props)
+        self.name_node = get_tag_el_text(self.oozie_node, TAG_NAME, self.props)
+        self.script_file_name = get_tag_el_text(self.oozie_node, TAG_SCRIPT, self.props)
+
         self.params_dict = extract_param_values_from_action_node(self.oozie_node, props=self.props)
         self.files, self.hdfs_files = self.file_extractor.parse_node()
         self.archives, self.hdfs_archives = self.archive_extractor.parse_node()
