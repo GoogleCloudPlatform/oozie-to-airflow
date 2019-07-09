@@ -439,6 +439,19 @@ class TestOozieExamples(unittest.TestCase):
             ),
             (
                 WorkflowExpectedResult(
+                    name="java",
+                    nodes={
+                        "start_node_1234": NodeExpectedResult(downstream_names=["java-node"]),
+                        "end": NodeExpectedResult(downstream_names=[]),
+                        "fail": NodeExpectedResult(downstream_names=[]),
+                        "java-node": NodeExpectedResult(downstream_names=["end"], error_xml="fail"),
+                    },
+                    job_properties={"oozie.wf.application.path": "hdfs://", "nameNode": "hdfs://"},
+                    config={},
+                ),
+            ),
+            (
+                WorkflowExpectedResult(
                     name="shell",
                     nodes={
                         "start_node_1234": NodeExpectedResult(downstream_names=["shell-node"]),
