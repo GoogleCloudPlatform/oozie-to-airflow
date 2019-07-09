@@ -286,14 +286,17 @@ Flags:
 
 Optional commands to execute:
 
--K, --shell-access
-        Open shell access to Airflow cluster.
+-K, --ssh-to-composer-worker
+        Open shell access to Airflow's worker. This allows you to test commands in the context of the Airflow instance.
+        It is worth noting that it is possible to access the database.
+        The kubectl exec command is used internally, so not all SSH features are available.
 
--S, --ssh-to-cluster-master
-        SSH to dataproc's cluster master. Arguments after -- are passed to gcloud ssh command as extra args.
+-S, --ssh-to-dataproc-master
+        SSH to Dataproc's cluster master. All SSH features are available by this options.
+        Arguments after -- are passed to gcloud compute ssh command as extra args.
 
 -W, --open-oozie-web-ui
-        Creates a SOCKS5 proxy server that redirects traffic through the main Dataproc cluster node and
+        Creates a SOCKS5 proxy server that redirects traffic through Dataproc's cluster master and
         opens Google Chrome with a proxy configuration and a tab with the Oozie web interface.
 
 -A, --setup-autocomplete
