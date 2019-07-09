@@ -23,6 +23,20 @@ from airflow.utils.db import provide_session
 from airflow import AirflowException
 
 
+def _reverse_task_map(task_map: dict) -> dict:
+    """
+    Given a map {oozie_node: [airflow_node1, airflow_node2]} it returns
+    reversed map {airflow_node1: oozie_node, airflow_node2: oozie_node}.
+
+    :param task_map: oozie to airflow task map
+    :return: reversed task map
+    """
+    new_map = dict()
+    for oozie_node, airflow_tasks in task_map.items():
+        new_map.update({t: oozie_node for t in airflow_tasks})
+    return new_map
+
+
 def conf(key: str) -> str:
     """
     It returns the value of the workflow job configuration property for the
@@ -60,8 +74,14 @@ def last_error_node(context=None, session=None) -> str:
     if not last_failed_task:
         return ""
 
-    name: str = last_failed_task.task_id
-    return name
+    task_name: str = last_failed_task.task_id
+
+    task_map: Optional[dict] = context.get("task_map", None)
+    if task_map is None:
+        raise AirflowException("No task map!")
+
+    reversed_map: dict = _reverse_task_map(task_map)
+    return reversed_map.get(task_name, "")
 
 
 def wf_app_path():
