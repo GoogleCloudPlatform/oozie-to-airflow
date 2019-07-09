@@ -23,7 +23,7 @@ _ALLOWED_APPLICATIONS=" advancedflow childwf decision demo distcp el email fs gi
 
 _LONG_OPTIONS="
 help application: composer-name: composer-location: phase: bucket: cluster:
-region: verbose dot setup-autocomplete ssh-to-dataproc-master open-oozie-web-ui shell-to-composer-worker
+region: verbose dot setup-autocomplete ssh-to-dataproc-master open-oozie-web-ui ssh-to-composer-worker
 "
 
 # Note on OSX bash has no associative arrays (Bash 3.2) so we have to fake it

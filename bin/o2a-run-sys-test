@@ -75,7 +75,7 @@ RENDER_AS_DOT="false"
 
 RUN_DATAPROC_SSH="false"
 
-RUN_COMPOSER_SHELL="false"
+RUN_COMPOSER_SSH="false"
 
 RUN_OOZIE_WEBUI="false"
 
@@ -202,15 +202,17 @@ Flags:
 
 Optional commands to execute:
 
--K, --shell-to-composer-worker
+-K, --ssh-to-composer-worker
         Open shell access to Airflow's worker. This allows you to test commands in the context of the Airflow instance.
         It is worth noting that it is possible to access the database.
+        The kubectl exec command is used internally, so not all SSH features are available.
 
 -S, --ssh-to-dataproc-master
-        SSH to dataproc's cluster master. Arguments after -- are passed to gcloud ssh command as extra args.
+        SSH to Dataproc's cluster master. All SSH features are available by this options.
+        Arguments after -- are passed to gcloud compute ssh command as extra args.
 
 -W, --open-oozie-web-ui
-        Creates a SOCKS5 proxy server that redirects traffic through the main Dataproc cluster node and
+        Creates a SOCKS5 proxy server that redirects traffic through Dataproc's cluster master and
         opens Google Chrome with a proxy configuration and a tab with the Oozie web interface.
 
 -A, --setup-autocomplete
@@ -378,8 +380,8 @@ do
       echo "Verbosity turned on"
       echo
       shift ;;
-    -K|--shell-to-composer-worker)
-      export RUN_COMPOSER_SHELL="true"
+    -K|--ssh-to-composer-worker)
+      export RUN_COMPOSER_SSH="true"
       echo
       echo "Connecting to Airflow worker"
       echo
@@ -387,7 +389,7 @@ do
     -S|--ssh-to-dataproc-master)
       export RUN_DATAPROC_SSH="true"
       echo
-      echo "Running SSH to Dataproc master"
+      echo "Connecting to Dataproc master"
       echo
       shift ;;
     -W|--open-oozie-webui)
@@ -421,7 +423,7 @@ do
   esac
 done
 
-function shell_to_composer_worker {
+function ssh_to_composer_worker {
     gcloud container clusters get-credentials "${COMPOSER_GKE_CLUSTER_NAME}" --zone europe-west1-b
     WORKER_NAME=$(kubectl get pods | grep "airflow-worker" | grep "Running" | head -1 | cut -d " " -f 1)
     if [[ ${WORKER_NAME} == "" ]]; then
@@ -678,6 +680,12 @@ if [[ ${RUN_DATAPROC_SSH} == "true" ]]; then
     exit
 fi
 
+if [[ ${RUN_COMPOSER_SSH} == "true" ]]; then
+    fetch_composer_environment_info
+    ssh_to_composer_worker
+    exit
+fi
+
 if [[ ${RUN_OOZIE_WEBUI} == "true" ]]; then
     fetch_dataproc_environment_info
     open_oozie_webui
@@ -688,13 +696,6 @@ if [[ ${SETUP_AUTOCOMPLETE} == "true" ]]; then
     setup_autocomplete
     exit
 fi
-
-if [[ ${RUN_COMPOSER_SHELL} == "true" ]]; then
-    fetch_composer_environment_info
-    shell_to_composer_worker
-    exit
-fi
-
 
 WITH_COVERAGE=${WITH_COVERAGE:="false"}
 LOCAL_O2A_BIN_SCRIPT="${MY_DIR}/o2a"
