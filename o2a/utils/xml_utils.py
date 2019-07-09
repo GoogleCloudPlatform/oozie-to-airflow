@@ -102,3 +102,18 @@ def get_tag_el_text(
         # Only check the first one
         return el_utils.replace_el_with_var(var.text, props=props, quote=False)
     return default
+
+
+def get_tags_el_array_from_text(root: ET.Element, tag: str, props: PropertySet) -> List[str]:
+    """
+    If nodes exist in the oozie_node with the tag specified in tag, it
+    will build an array of text values for all matching nodes. While doing it
+    it will attempt to resolve EL expressions in the text values.
+    """
+    tags_array = []
+    node_array = find_nodes_by_tag(root=root, tag=tag)
+    if node_array:
+        for node in node_array:
+            if node.text is not None:
+                tags_array.append(el_utils.replace_el_with_var(node.text, props=props, quote=False))
+    return tags_array

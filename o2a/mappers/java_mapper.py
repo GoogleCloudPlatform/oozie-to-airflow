@@ -23,8 +23,9 @@ from o2a.converter.task import Task
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.mappers.extensions.prepare_mapper_extension import PrepareMapperExtension
 from o2a.o2a_libs.property_utils import PropertySet
-from o2a.utils import xml_utils, el_utils
+from o2a.utils import xml_utils
 from o2a.utils.file_archive_extractors import FileExtractor, ArchiveExtractor
+from o2a.utils.xml_utils import get_tags_el_array_from_text
 
 
 class JavaMapper(ActionMapper):
@@ -94,7 +95,6 @@ class JavaMapper(ActionMapper):
         """Extracts Java node data."""
         root = self.oozie_node
         props = self.props
-        self.java_opts: List[str] = []
         if "mapred.child.java.opts" in props.merged:
             self.java_opts.extend(props.merged["mapred.child.java.opts"].split(" "))
         if "mapreduce.map.java.opts" in props.merged:
@@ -102,14 +102,7 @@ class JavaMapper(ActionMapper):
         self.main_class = xml_utils.get_tag_el_text(root=root, tag="main-class", props=props)
         java_opts_string = xml_utils.get_tag_el_text(root=root, tag="java-opts", props=props)
         if java_opts_string:
-            self.java_opts.extend(java_opts_string.split(" "))
+            self.java_opts = java_opts_string.split(" ")
         else:
-            java_opt_node_array = xml_utils.find_nodes_by_tag(root=root, tag="java-opt")
-            if java_opt_node_array:
-                for node in java_opt_node_array:
-                    self.java_opts.append(el_utils.replace_el_with_var(node.text, props=props, quote=False))
-        self.args: List[str] = []
-        arg_node_array = xml_utils.find_nodes_by_tag(root=root, tag="arg")
-        if arg_node_array:
-            for node in arg_node_array:
-                self.args.append(el_utils.replace_el_with_var(node.text, props=props, quote=False))
+            self.java_opts = get_tags_el_array_from_text(root=root, tag="java-opt", props=props)
+        self.args = get_tags_el_array_from_text(root=root, tag="arg", props=props)
