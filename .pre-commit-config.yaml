@@ -75,6 +75,7 @@ repos:
     hooks:
       - id: mypy
         name: Checks typing annotations consistency with mypy
+        require_serial: true
   - repo: https://github.com/pre-commit/mirrors-pylint
     rev: "v2.3.1"
     hooks:

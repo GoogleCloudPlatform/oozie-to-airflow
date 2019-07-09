@@ -224,6 +224,7 @@ class WorkflowXmlParser:
                 renderer=self.renderer,
                 input_directory_path=self.workflow.input_directory_path,
                 output_directory_path=self.workflow.output_directory_path,
+                jar_files=self.workflow.jar_files,
                 transformers=self.transformers,
             )
 
