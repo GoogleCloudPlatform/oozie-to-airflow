@@ -366,7 +366,7 @@ support for all EL functions. So in order for it to run in Airflow you must
 edit the Python output file and change the decision node expression.
 
 ### Output
-In this example the output (including sub-workflow dag) will be created in `./output/ssh/` folder.
+In this example the output (including sub-workflow dag) will be created in the `./output/ssh/` folder.
 
 ## Childwf Example
 
@@ -378,7 +378,7 @@ Make sure to first copy `examples/subwf/configuration.template.properties`, rena
 `configuration.properties` and fill in with configuration data.
 
 ### Output
-In this example the output will be created in `./output/childwf/` folder.
+In this example the output will be created in the `./output/childwf/` folder.
 
 ### Known limitations
 
@@ -418,7 +418,7 @@ edit connections so you must add one like:
 More information can be found in [Airflow's documentation](https://airflow.apache.org/cli.html#connections).
 
 ### Output
-In this example the output will be created in `./output/ssh/` folder.
+In this example the output will be created in the `./output/ssh/` folder.
 
 The converted DAG uses the `SSHOperator` in Airflow.
 
@@ -436,7 +436,7 @@ Make sure to first copy `examples/mapreduce/configuration.template.properties`, 
 `configuration.properties` and fill in with configuration data.
 
 ### Output
-In this example the output will be created in `.//output/mapreduce/` folder.
+In this example the output will be created in the `./output/mapreduce/` folder.
 
 The converted DAG uses the `DataProcHadoopOperator` in Airflow.
 
@@ -479,7 +479,7 @@ Make sure to first copy `examples/fs/configuration.template.properties`, rename 
 `configuration.properties` and fill in with configuration data.
 
 ### Output
-In this example the output will be created in `./output/fs/` folder.
+In this example the output will be created in the `./output/fs/` folder.
 
 The converted DAG uses the `BashOperator` in Airflow.
 
@@ -497,7 +497,7 @@ Make sure to first copy `examples/fs/configuration.template.properties`, rename 
 `configuration.properties` and fill in with configuration data.
 
 ### Output
-In this example the output will be created in `./output/java/` folder.
+In this example the output will be created in the `./output/java/` folder.
 
 The converted DAG uses the `DataProcHadoopOperator` in Airflow.
 
@@ -516,7 +516,7 @@ Make sure to first copy `examples/pig/configuration.template.properties`, rename
 `configuration.properties` and fill in with configuration data.
 
 ### Output
-In this example the output will be created in `./output/pig/` folder.
+In this example the output will be created in the `./output/pig/` folder.
 
 The converted DAG uses the `DataProcPigOperator` in Airflow.
 
@@ -544,7 +544,7 @@ Make sure to first copy `examples/shell/configuration.template.properties`, rena
 `configuration.properties` and fill in with configuration data.
 
 ### Output
-In this example the output will be created in `./output/shell/` folder.
+In this example the output will be created in the `./output/shell/` folder.
 
 The converted DAG uses the `BashOperator` in Airflow, which executes the desired shell
 action with Pig by invoking `gcloud dataproc jobs submit pig --cluster=<cluster> --region=<region>
@@ -580,7 +580,7 @@ Make sure to first copy `/examples/spark/configuration.template.properties`, ren
 `configuration.properties` and fill in with configuration data.
 
 ### Output
-In this example the output will be created in `./output/spark/` folder.
+In this example the output will be created in the `./output/spark/` folder.
 
 The converted DAG uses the `DataProcSparkOperator` in Airflow.
 
@@ -615,7 +615,7 @@ Make sure to first copy `examples/subwf/configuration.template.properties`, rena
 `configuration.properties` and fill in with configuration data.
 
 ### Output
-In this example the output (together with sub-worfklow dag) will be created in `./output/subwf/` folder.
+In this example the output (together with sub-worfklow dag) will be created in the `./output/subwf/` folder.
 
 The converted DAG uses the `SubDagOperator` in Airflow.
 
@@ -634,7 +634,7 @@ Make sure to first copy `examples/distcp/configuration.template.properties`, ren
 `configuration.properties` and fill in with configuration data.
 
 ### Output
-In this example the output will be created in `./output/distcp/` folder.
+In this example the output will be created in the `./output/distcp/` folder.
 
 The converted DAG uses the `BashOperator` in Airflow, which submits the Hadoop DistCp job using the
 `gcloud dataproc jobs submit hadoop` command.
@@ -654,7 +654,7 @@ Make sure to first copy `examples/decision/configuration.template.properties`, r
 `configuration.properties` and fill in with configuration data.
 
 ### Output
-In this example the output will be created in `./output/decision/` folder.
+In this example the output will be created in the `./output/decision/` folder.
 
 The converted DAG uses the `BranchPythonOperator` in Airflow.
 
@@ -677,7 +677,7 @@ Please keep in mind that as of the current version only a single EL variable
 or single EL function. Variable/function chaining is not currently supported.
 
 ### Output
-In this example the output will be created in `./output/el/` folder.
+In this example the output will be created in the `./output/el/` folder.
 
 ### Known limitations
 
@@ -694,7 +694,7 @@ Make sure to first copy `/examples/hive/configuration.template.properties`, rena
 `configuration.properties` and fill in with configuration data.
 
 ### Output
-In this example the output will be created in `./output/hive/` folder.
+In this example the output will be created in the `./output/hive/` folder.
 
 The converted DAG uses the `DataProcHiveOperator` in Airflow.
 
@@ -719,7 +719,7 @@ Make sure to first copy `/examples/email/configuration.template.properties`, ren
 `configuration.properties` and fill in with configuration data.
 
 ### Output
-In this example the output will be created in `./output/email/` folder.
+In this example the output will be created in the `./output/email/` folder.
 
 The converted DAG uses the `EmailOperator` in Airflow.
 
