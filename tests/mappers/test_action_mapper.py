@@ -30,7 +30,7 @@ TEST_MAPPER_NAME = "mapper_name"
 TEST_DAG_NAME = "dag_name"
 
 
-class AMapper(ActionMapper):
+class ActionMapperTestImpl(ActionMapper):
     def to_tasks_and_relations(self) -> Tuple[List[Task], List[Relation]]:
         tasks: List[Task] = [Task(task_id="TEST_TASK", template_name="dummy.tpl", template_params={})]
         relations: List[Relation] = []
@@ -183,7 +183,7 @@ class TestActionMapper(unittest.TestCase):
     def _get_action_mapper(action_node, props: PropertySet = None):
         if not props:
             props = PropertySet()
-        return AMapper(
+        return ActionMapperTestImpl(
             oozie_node=action_node,
             name="test_id",
             dag_name="DAG_NAME",
