@@ -39,13 +39,18 @@ function read_from_file {
     cat "${RUN_TEST_CACHE_DIR}/.$1" 2>/dev/null || true
 }
 
-
-DATAPROC_CLUSTER_NAME=$(read_from_file DATAPROC_CLUSTER_NAME)
-export DATAPROC_CLUSTER_NAME=${DATAPROC_CLUSTER_NAME:=oozie-51}
-
+# GCP global Variables
 GCP_REGION=$(read_from_file GCP_REGION)
 export GCP_REGION=${GCP_REGION:=europe-west3}
 
+# Dataproc global variables
+DATAPROC_CLUSTER_NAME=$(read_from_file DATAPROC_CLUSTER_NAME)
+export DATAPROC_CLUSTER_NAME=${DATAPROC_CLUSTER_NAME:=oozie-51}
+
+DATAPROC_USER=$(read_from_file DATAPROC_USER)
+export DATAPROC_USER=${DATAPROC_USER:=${USER:=example_user}}
+
+# Composer global variables
 COMPOSER_NAME=$(read_from_file COMPOSER_NAME)
 export COMPOSER_NAME=${COMPOSER_NAME:=o2a-integration}
 
@@ -55,28 +60,26 @@ export COMPOSER_LOCATION=${COMPOSER_LOCATION:=europe-west1}
 COMPOSER_DAG_BUCKET=$(read_from_file COMPOSER_DAG_BUCKET)
 export COMPOSER_DAG_BUCKET=${COMPOSER_DAG_BUCKET:=""}
 
+COMPOSER_GKE_CLUSTER_NAME=""
+
+COMPOSER_WEB_UI_URL=""
+
+# Script global variables
 LOCAL_APP_NAME=$(read_from_file LOCAL_APP_NAME)
 export LOCAL_APP_NAME=${LOCAL_APP_NAME:=}
 
 PHASE=$(read_from_file PHASE)
 export PHASE=${PHASE:=convert}
 
-DATAPROC_USER=$(read_from_file DATAPROC_USER)
-export DATAPROC_USER=${DATAPROC_USER:=${USER:=example_user}}
-
 RENDER_AS_DOT="false"
 
-RUN_SSH_COMMAND="false"
+RUN_DATAPROC_SSH="false"
 
-RUN_ACCESS_SHELL="false"
+RUN_COMPOSER_SSH="false"
 
 RUN_OOZIE_WEBUI="false"
 
 SETUP_AUTOCOMPLETE="false"
-
-COMPOSER_GKE_CLUSTER_NAME=""
-
-COMPOSER_WEB_UI_URL=""
 
 VERBOSE="false"
 
@@ -109,10 +112,10 @@ function prepare_configuration {
 function prepare_dataproc {
     HDFS_REMOTE_ALL_APPS_DIR=/user/${DATAPROC_USER}/examples/apps
     HDFS_REMOTE_APP_DIR=${HDFS_REMOTE_ALL_APPS_DIR}/${LOCAL_APP_NAME}
-    header "Prepare HDFS ${HDFS_REMOTE_APP_DIR} via master's ${REMOTE_FILESYSTEM_ALL_APPS_DIR} \
+    header "Prepare HDFS ${HDFS_REMOTE_APP_DIR} via master's ${DATAPROC_FILESYSTEM_ALL_APPS_DIR} \
 for example application: ${LOCAL_APP_NAME}"
 
-    run_command "rm -rf ${REMOTE_FILESYSTEM_APP_DIR}"
+    run_command_on_dataproc "rm -rf ${DATAPROC_FILESYSTEM_APP_DIR}"
     if [[ -d "${LOCAL_APP_DIR}/hdfs" ]]; then
         if [[ ! -f "${LOCAL_APP_DIR}/hdfs/workflow.xml" ]]; then
             echo
@@ -120,8 +123,8 @@ for example application: ${LOCAL_APP_NAME}"
             echo
             exit 1
         fi
-        run_command "mkdir -p \"${REMOTE_FILESYSTEM_ALL_APPS_DIR}\""
-        scp_folder "${LOCAL_APP_DIR}/hdfs/" "${REMOTE_FILESYSTEM_APP_DIR}"
+        run_command_on_dataproc "mkdir -p \"${DATAPROC_FILESYSTEM_ALL_APPS_DIR}\""
+        scp_folder "${LOCAL_APP_DIR}/hdfs/" "${DATAPROC_FILESYSTEM_APP_DIR}"
     else
         echo
         echo "Missing ${LOCAL_APP_DIR}/hdfs folder. It should contain at least workflow.xml"
@@ -137,13 +140,13 @@ for example application: ${LOCAL_APP_NAME}"
         -e "s/^resourceManager.*$/resourceManager=${DATAPROC_CLUSTER_MASTER}:8032/" \
         -e "s/\${user\.name}/${DATAPROC_USER}/" \
         "${LOCAL_APP_DIR}/job.properties"  > "${LOCAL_APP_PROPERTIES}"
-    scp_file "${LOCAL_APP_PROPERTIES}" "${REMOTE_FILESYSTEM_APP_PROPERTIES}"
+    scp_file "${LOCAL_APP_PROPERTIES}" "${DATAPROC_FILESYSTEM_APP_PROPERTIES}"
 
     submit_pig "fs -rm -r -f ${HDFS_REMOTE_APP_DIR}"
     submit_pig "fs -mkdir -p ${HDFS_REMOTE_ALL_APPS_DIR}"
 
     # Note! The target will be /user/${user.name}/${examplesRoot}/apps/<TEST_APP>
-    submit_pig "fs -copyFromLocal ${REMOTE_FILESYSTEM_APP_DIR} ${HDFS_REMOTE_APP_DIR}"
+    submit_pig "fs -copyFromLocal ${DATAPROC_FILESYSTEM_APP_DIR} ${HDFS_REMOTE_APP_DIR}"
     footer
 }
 
@@ -199,14 +202,17 @@ Flags:
 
 Optional commands to execute:
 
--K, --shell-access
-        Open shell access to Airflow cluster.
+-K, --ssh-to-composer-worker
+        Open shell access to Airflow's worker. This allows you to test commands in the context of the Airflow instance.
+        It is worth noting that it is possible to access the database.
+        The kubectl exec command is used internally, so not all SSH features are available.
 
--S, --ssh-to-cluster-master
-        SSH to dataproc's cluster master. Arguments after -- are passed to gcloud ssh command as extra args.
+-S, --ssh-to-dataproc-master
+        SSH to Dataproc's cluster master. All SSH features are available by this options.
+        Arguments after -- are passed to gcloud compute ssh command as extra args.
 
 -W, --open-oozie-web-ui
-        Creates a SOCKS5 proxy server that redirects traffic through the main Dataproc cluster node and
+        Creates a SOCKS5 proxy server that redirects traffic through Dataproc's cluster master and
         opens Google Chrome with a proxy configuration and a tab with the Oozie web interface.
 
 -A, --setup-autocomplete
@@ -374,16 +380,16 @@ do
       echo "Verbosity turned on"
       echo
       shift ;;
-    -K|--shell-access)
-      export RUN_ACCESS_SHELL="true"
+    -K|--ssh-to-composer-worker)
+      export RUN_COMPOSER_SSH="true"
       echo
-      echo "Connecting to Airflow cluster"
+      echo "Connecting to Airflow worker"
       echo
       shift ;;
-    -S|--ssh-to-cluster-master)
-      export RUN_SSH_COMMAND="true"
+    -S|--ssh-to-dataproc-master)
+      export RUN_DATAPROC_SSH="true"
       echo
-      echo "Running SSH to master"
+      echo "Connecting to Dataproc master"
       echo
       shift ;;
     -W|--open-oozie-webui)
@@ -417,7 +423,7 @@ do
   esac
 done
 
-function shell_access {
+function ssh_to_composer_worker {
     gcloud container clusters get-credentials "${COMPOSER_GKE_CLUSTER_NAME}" --zone europe-west1-b
     WORKER_NAME=$(kubectl get pods | grep "airflow-worker" | grep "Running" | head -1 | cut -d " " -f 1)
     if [[ ${WORKER_NAME} == "" ]]; then
@@ -428,7 +434,7 @@ function shell_access {
     kubectl exec -it "${WORKER_NAME}" --container airflow-worker -- /bin/bash
 }
 
-function ssh_to_cluster_master {
+function ssh_to_dataproc_master {
     echo
     echo "SSH to cluster master ${DATAPROC_CLUSTER_MASTER} in zone ${DATAPROC_MASTER_ZONE}"
     echo
@@ -518,7 +524,7 @@ function footer {
 }
 
 
-function run_command {
+function run_command_on_dataproc {
     gcloud compute ssh "${DATAPROC_CLUSTER_MASTER}" --zone="${DATAPROC_MASTER_ZONE}" --command "${1}"
 }
 
@@ -610,7 +616,7 @@ function test_composer {
 
 function test_oozie {
     header "Triggers example application on Oozie: ${LOCAL_APP_NAME}"
-    JOB_ID_LINE=$(run_command "sudo oozie job --config ${REMOTE_FILESYSTEM_APP_PROPERTIES} -run" | tee /dev/tty | grep '^job: ')
+    JOB_ID_LINE=$(run_command_on_dataproc "sudo oozie job --config ${DATAPROC_FILESYSTEM_APP_PROPERTIES} -run" | tee /dev/tty | grep '^job: ')
     # Skip prefix
     # "job: " = 5 characters
     JOB_ID="${JOB_ID_LINE:5}"
@@ -653,10 +659,10 @@ function fetch_dataproc_environment_info {
     echo
     DATAPROC_CLUSTER_MASTER=$(gcloud dataproc clusters describe "${DATAPROC_CLUSTER_NAME}" --region="${GCP_REGION}" --format='value(config.masterConfig.instanceNames[0])')
     DATAPROC_MASTER_ZONE=$(gcloud dataproc clusters describe "${DATAPROC_CLUSTER_NAME}" --region="${GCP_REGION}" --format='value(config.gceClusterConfig.zoneUri.basename())')
-    DATAPROC_USER=$(run_command "whoami")
-    REMOTE_FILESYSTEM_ALL_APPS_DIR=/home/${DATAPROC_USER}/o2a
-    REMOTE_FILESYSTEM_APP_DIR=${REMOTE_FILESYSTEM_ALL_APPS_DIR}/${LOCAL_APP_NAME}
-    REMOTE_FILESYSTEM_APP_PROPERTIES=${REMOTE_FILESYSTEM_ALL_APPS_DIR}/${LOCAL_APP_NAME}.properties
+    DATAPROC_USER=$(run_command_on_dataproc "whoami")
+    DATAPROC_FILESYSTEM_ALL_APPS_DIR=/home/${DATAPROC_USER}/o2a
+    DATAPROC_FILESYSTEM_APP_DIR=${DATAPROC_FILESYSTEM_ALL_APPS_DIR}/${LOCAL_APP_NAME}
+    DATAPROC_FILESYSTEM_APP_PROPERTIES=${DATAPROC_FILESYSTEM_ALL_APPS_DIR}/${LOCAL_APP_NAME}.properties
     echo
     footer
 }
@@ -667,10 +673,16 @@ if [[ ${VERBOSE} == "true" ]]; then
     set -x
 fi
 
-if [[ ${RUN_SSH_COMMAND} == "true" ]]; then
+if [[ ${RUN_DATAPROC_SSH} == "true" ]]; then
     fetch_dataproc_environment_info
     # shellcheck disable=SC2068
-    ssh_to_cluster_master $@
+    ssh_to_dataproc_master $@
+    exit
+fi
+
+if [[ ${RUN_COMPOSER_SSH} == "true" ]]; then
+    fetch_composer_environment_info
+    ssh_to_composer_worker
     exit
 fi
 
@@ -684,13 +696,6 @@ if [[ ${SETUP_AUTOCOMPLETE} == "true" ]]; then
     setup_autocomplete
     exit
 fi
-
-if [[ ${RUN_ACCESS_SHELL} == "true" ]]; then
-    fetch_composer_environment_info
-    shell_access
-    exit
-fi
-
 
 WITH_COVERAGE=${WITH_COVERAGE:="false"}
 LOCAL_O2A_BIN_SCRIPT="${MY_DIR}/o2a"
