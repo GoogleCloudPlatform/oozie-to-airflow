@@ -118,6 +118,7 @@ We are using a number of checks for quality checks of the code. They are verifie
 also you can install pre-commit hook by running:
 
 `pre-commit install`
+`pre-commit install --type pre-push`
 
 You can run all the checks manually by running:
 
