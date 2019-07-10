@@ -139,3 +139,14 @@ class ActionTaskGroup(TaskGroup):
 class ControlTaskGroup(TaskGroup):
     pass
 
+
+class NotificationTaskGroup(TaskGroup):
+    pass
+
+
+class StatusNotificationTaskGroup(NotificationTaskGroup):
+    pass
+
+
+class TransitionNotificationTaskGroup(NotificationTaskGroup):
+    pass
