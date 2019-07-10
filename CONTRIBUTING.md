@@ -115,12 +115,17 @@ In all the example commands below it is assumed that the [bin](bin) directory is
 ## Static code analysis and pre-commit hooks
 
 We are using a number of checks for quality checks of the code. They are verified during Travis build but
-also you can install pre-commit hook by running:
+also you can install:
+
+Pre-commit hook by running:
 
 `pre-commit install`
-`pre-commit install --type pre-push`
 
-You can run all the checks manually by running:
+Pre-push hook by running:
+
+`pre-commit install --hook-type pre-push`
+
+You can also run all the checks manually by running:
 
 `pre-commit run --all-files`
 
