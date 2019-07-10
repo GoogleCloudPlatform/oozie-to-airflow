@@ -100,6 +100,7 @@ repos:
         entry: ./bin/o2a-run-all-unit-tests
         language: script
         pass_filenames: false
+        stages: ['push']
         always_run: true
       - id: check-bash-syntax
         name: Check Shell scripts syntax corectness
