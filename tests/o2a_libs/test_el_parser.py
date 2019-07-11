@@ -30,12 +30,12 @@ class TestElParser(unittest.TestCase):
     @parameterized.expand(
         [
             (
-                "{{fs.exists(wf.action_data('hdfs-lookup')['outputPath'] / 2)}}",
-                "${fs:exists(wf:actionData('hdfs-lookup')['outputPath']/2)}",
+                    "{{fs.exists(wf.action_data('hdfs-lookup')['outputPath'] / 2)}}",
+                    "${fs:exists(wf:actionData('hdfs-lookup')['outputPath']/2)}",
             ),
             (
-                "{{wf.action_data('shell-node')['my_output'] == 'Hello Oozie'}}",
-                "${wf:actionData('shell-node')['my_output'] eq 'Hello Oozie'}",
+                    "{{wf.action_data('shell-node')['my_output'] == 'Hello Oozie'}}",
+                    "${wf:actionData('shell-node')['my_output'] eq 'Hello Oozie'}",
             ),
             ("{{1 > (4 / 2)}}", "${1 > (4/2)}"),
             ("{{4.0 >= 3}}", "${4.0 >= 3}"),
@@ -53,58 +53,58 @@ class TestElParser(unittest.TestCase):
             ('{{header["host"]}}', '${header["host"]}'),
             ("{{departments[deptName]}}", "${departments[deptName]}"),
             (
-                "{{requestScope['javax.servlet.forward.servlet_path']}}",
-                "${requestScope['javax.servlet.forward.servlet_path']}",
+                    "{{requestScope['javax.servlet.forward.servlet_path']}}",
+                    "${requestScope['javax.servlet.forward.servlet_path']}",
             ),
             ("{{customer.lName}}", "#{customer.lName}"),
             ("{{customer.calcTotal}}", "#{customer.calcTotal}"),
-            ('{{params["jump.to"] == "ssh"}}', '${wf:conf("jump.to") eq "ssh"}'),
-            ('{{params["jump.to"] == "parallel"}}', '${wf:conf("jump.to") eq "parallel"}'),
-            ('{{params["jump.to"] == "single"}}', '${wf:conf("jump.to") eq "single"}'),
+            ('{{wf.conf("jump.to") == "ssh"}}', '${wf:conf("jump.to") eq "ssh"}'),
+            ('{{wf.conf("jump.to") == "parallel"}}', '${wf:conf("jump.to") eq "parallel"}'),
+            ('{{wf.conf("jump.to") == "single"}}', '${wf:conf("jump.to") eq "single"}'),
             (
-                '{{print("ok") if "bool" == "bool" else print("not ok")}}',
-                '${"bool" == "bool" ? print("ok") : print("not ok")}',
+                    '{{print("ok") if "bool" == "bool" else print("not ok")}}',
+                    '${"bool" == "bool" ? print("ok") : print("not ok")}',
             ),
             ('{{print("ok") if f(2) else print("not ok")}}', '${f(2) ? print("ok") : print("not ok")}'),
             ('{{print("ok") if !False else print("not ok")}}', '${!false ? print("ok") : print("not ok")}'),
             ("some pure text {{coord.user()}}", "some pure text ${coord:user()}"),
             (
-                "{{nameNode}}/user/{{wf.user()}}/{{examplesRoot}}/output-data/{{outputDir}}",
-                "${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/${outputDir}",
+                    "{{nameNode}}/user/{{wf.user()}}/{{examplesRoot}}/output-data/{{outputDir}}",
+                    "${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/${outputDir}",
             ),
             ("{{YEAR}}/{{MONTH}}/{{DAY}}/{{HOUR}}", "${YEAR}/${MONTH}/${DAY}/${HOUR}"),
             ("pure text without any.function wf:function()", "pure text without any.function wf:function()"),
             (
-                "{{fs.file_size('/usr/foo/myinputdir') > 10 * 1024 ** 3}}",
-                "${fs:fileSize('/usr/foo/myinputdir') gt 10 * GB}",
+                    "{{fs.file_size('/usr/foo/myinputdir') > 10 * 1024 ** 3}}",
+                    "${fs:fileSize('/usr/foo/myinputdir') gt 10 * GB}",
             ),
             (
-                '{{hadoop.counters("mr-node")["FileSystemCounters"]["FILE_BYTES_READ"]}}',
-                '${hadoop:counters("mr-node")["FileSystemCounters"]["FILE_BYTES_READ"]}',
+                    '{{hadoop.counters("mr-node")["FileSystemCounters"]["FILE_BYTES_READ"]}}',
+                    '${hadoop:counters("mr-node")["FileSystemCounters"]["FILE_BYTES_READ"]}',
             ),
             ('{{hadoop.counters("pig-node")["JOB_GRAPH"]}}', '${hadoop:counters("pig-node")["JOB_GRAPH"]}'),
             (
-                "{{wf.action_data('shell-node')['my_output'] == 'Hello Oozie'}}",
-                "${wf:actionData('shell-node')['my_output'] eq 'Hello Oozie'}",
+                    "{{wf.action_data('shell-node')['my_output'] == 'Hello Oozie'}}",
+                    "${wf:actionData('shell-node')['my_output'] eq 'Hello Oozie'}",
             ),
             ("{{coord.data_out('output')}}", "${coord:dataOut('output')}"),
             ("{{coord.current(0)}}", "${coord:current(0)}"),
             ('{{coord.offset(-42,"MINUTE")}}', '${coord:offset(-42, "MINUTE")}'),
             (
-                "{{(wf.action_data('java1')['datelist'] == EXPECTED_DATE_RANGE)}}",
-                "${(wf:actionData('java1')['datelist'] == EXPECTED_DATE_RANGE)}",
+                    "{{(wf.action_data('java1')['datelist'] == EXPECTED_DATE_RANGE)}}",
+                    "${(wf:actionData('java1')['datelist'] == EXPECTED_DATE_RANGE)}",
             ),
             (
-                "{{wf.action_data('getDirInfo')['dir.num-files'] > 23 or"
-                " wf.action_data('getDirInfo')['dir.age'] > 6}}",
-                "${wf:actionData('getDirInfo')['dir.num-files'] gt 23 || "
-                "wf:actionData('getDirInfo')['dir.age'] gt 6}",
+                    "{{wf.action_data('getDirInfo')['dir.num-files'] > 23 or"
+                    " wf.action_data('getDirInfo')['dir.age'] > 6}}",
+                    "${wf:actionData('getDirInfo')['dir.num-files'] gt 23 || "
+                    "wf:actionData('getDirInfo')['dir.age'] gt 6}",
             ),
             ("{{'${'}}", "#{'${'}"),
             ("{{'${'}}", "${'${'}"),
             (
-                "{{function()}} literal and {{other_function()}}",
-                "${function()} literal and #{OtherFunction()}",
+                    "{{function()}} literal and {{other_function()}}",
+                    "${function()} literal and #{OtherFunction()}",
             ),
             ("{{value ~ 'xxx'}}", "${concat(value, 'xxx')}"),
             ("{{2 != 4}}", "${2 ne 4}"),
@@ -125,6 +125,11 @@ class TestElParser(unittest.TestCase):
             ("{{url_encode('%')}}", "${urlEncode('%')}"),
             ("test_dir/test2.zip#test_zip_dir", "test_dir/test2.zip#test_zip_dir"),
             ("/path/with/two/els/{{var1}}/{{var2}}.tar", "/path/with/two/els/${var1}/${var2}.tar"),
+            ("WordCount$Map", "WordCount$Map"),
+            (
+                    "mple.com/workflow?job-id=$jobId&status=$status&parent-id=$parentId",
+                    "mple.com/workflow?job-id=$jobId&status=$status&parent-id=$parentId",
+            ),
         ]
     )
     def test_translations(self, output_sentence, input_sentence):
@@ -138,10 +143,10 @@ class TestElParser(unittest.TestCase):
             ("${2 + 4}", "{{2 + 4}}", "6", {}),
             ("${name == 'name'}", "{{name == 'name'}}", "True", dict(name="name")),
             (
-                "${firstNotNull('first', 'second')}",
-                "{{functions.first_not_null('first','second')}}",
-                "first",
-                {"functions": functions},
+                    "${firstNotNull('first', 'second')}",
+                    "{{functions.first_not_null('first','second')}}",
+                    "first",
+                    {"functions": functions},
             ),
             ("${concat('aaa', 'bbb')}", "{{'aaa' ~ 'bbb'}}", "aaabbb", {}),
             ("${urlEncode('%')}", "{{functions.url_encode('%')}}", "%25", {"functions": functions}),
@@ -150,17 +155,17 @@ class TestElParser(unittest.TestCase):
             ("${trim(value)}", "{{value.strip()}}", "aaa", dict(value="aaa")),
             ("${wf:id()}", "{{run_id}}", "xxx", {"run_id": "xxx"}),
             (
-                "${wf:user()}",
-                "{{functions.wf.user()}}",
-                "user_name",
-                {"functions": functions, "dag": MagicMock(tasks=[MagicMock(owner="user_name")])},
+                    "${wf:user()}",
+                    "{{functions.wf.user()}}",
+                    "user_name",
+                    {"functions": functions, "dag": MagicMock(tasks=[MagicMock(owner="user_name")])},
             ),
             ("${wf:name()}", "{{dag.dag_id}}", "xxx", {"dag": MagicMock(dag_id="xxx")}),
             (
-                "${wf:conf('key')}",
-                "{{params['key']}}",
-                "value",
-                {"params": {"key": "value"}, "functions": functions},
+                    "${wf:conf('key')}",
+                    "{{functions.wf.conf('key')}}",
+                    "value",
+                    {"key": "value", "functions": functions},
             ),
         ]
     )
@@ -175,18 +180,18 @@ class TestElParser(unittest.TestCase):
     @parameterized.expand(
         [
             (
-                "{{functions.wf.last_error_node()}}",
-                "${wf:lastErrorNode()}",
-                {"dag_run": None, "functions": functions},
+                    "{{functions.wf.last_error_node()}}",
+                    "${wf:lastErrorNode()}",
+                    {"dag_run": None, "functions": functions},
             ),
             ("{{functions.wf.user()}}", "${wf:user()}", {"dag": None, "functions": functions}),
             (
-                "{{functions.wf.user()}}",
-                "${wf:user()}",
-                {
-                    "dag": MagicMock(tasks=[MagicMock(owner="name1"), MagicMock(owner="name2")]),
-                    "functions": functions,
-                },
+                    "{{functions.wf.user()}}",
+                    "${wf:user()}",
+                    {
+                        "dag": MagicMock(tasks=[MagicMock(owner="name1"), MagicMock(owner="name2")]),
+                        "functions": functions,
+                    },
             ),
         ]
     )

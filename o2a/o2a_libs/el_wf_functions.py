@@ -69,6 +69,26 @@ def user(context=None) -> str:
 
 
 @contextfunction
+def user(context=None) -> str:
+    """
+    Return DAG owner or raises error if there is more than one owner.
+    """
+    dag: Optional[DAG] = context.get("dag", None)
+    if dag is None:
+        raise AirflowException("No dag reference in context.")
+
+    owners: Set[str] = {t.owner for t in dag.tasks}
+    if len(owners) > 1:
+        raise AirflowException("DAG owner is ambiguous.")
+
+    if not owners:
+        raise AirflowException("DAG has no owner.")
+
+    owner = owners.pop()
+    return owner
+
+
+@contextfunction
 @provide_session
 def last_error_node(context=None, session=None) -> str:
     """
