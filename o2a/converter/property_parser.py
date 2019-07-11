@@ -42,7 +42,9 @@ class PropertyParser:
 
         :return: None
         """
-        self.props.config = el_utils.parse_els(properties_file=self.config_file, props=self.props)
+        self.props.config = el_utils.extract_evaluate_properties(
+            properties_file=self.config_file, props=self.props
+        )
 
     def read_and_update_job_properties_replace_el(self):
         """
@@ -52,5 +54,5 @@ class PropertyParser:
         :return: None
         """
         self.props.job_properties.update(
-            el_utils.parse_els(properties_file=self.job_properties_file, props=self.props)
+            el_utils.extract_evaluate_properties(properties_file=self.job_properties_file, props=self.props)
         )

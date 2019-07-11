@@ -18,11 +18,14 @@ import logging
 import os
 import re
 from copy import deepcopy
-from typing import List, Optional, Tuple, Union
+from typing import List, Optional, Tuple, Union, Dict
 from urllib.parse import urlparse, ParseResult
 
+from jinja2 import StrictUndefined, Environment
+from jinja2.exceptions import UndefinedError
+
 from o2a.converter.exceptions import ParseException
-from o2a.o2a_libs import el_basic_functions
+from o2a.o2a_libs import el_basic_functions, el_parser
 from o2a.o2a_libs.property_utils import PropertySet
 
 FN_MATCH = re.compile(r"\${\s?(\w+)\(([\w\s,\'\"\-]*)\)\s?\}")
@@ -137,7 +140,7 @@ def convert_el_to_jinja(oozie_el, quote=True):
     return "'" + jinjafied_el + "'" if quote else jinjafied_el
 
 
-def parse_els(properties_file: Optional[str], props: PropertySet):
+def extract_evaluate_properties(properties_file: Optional[str], props: PropertySet):
     """
     Parses the job_properties file into a dictionary, if the value has
     and EL function in it, it gets replaced with the corresponding
@@ -154,30 +157,46 @@ def parse_els(properties_file: Optional[str], props: PropertySet):
     }
     """
     copy_of_props = deepcopy(props)
-    properties_read_from_file = {}
-    if properties_file:
-        if os.path.isfile(properties_file):
-            with open(properties_file) as prop_file:
-                for line in prop_file.readlines():
-                    if line.startswith("#") or line.startswith(" ") or line.startswith("\n"):
-                        continue
-                    else:
-                        key, value = _convert_line(line, props=copy_of_props)
-                        # Set the value of property in the copy of property set for further reference
-                        copy_of_props.action_node_properties[key] = value
-                        properties_read_from_file[key] = value
-        else:
-            logging.warning(f"The job_properties file is missing: {properties_file}")
+    properties_read_from_file: Dict[str, str] = {}
+    if not properties_file:
+        return properties_read_from_file
+
+    if not os.path.isfile(properties_file):
+        logging.warning(f"The job_properties file is missing: {properties_file}")
+        return properties_read_from_file
+
+    with open(properties_file) as prop_file:
+        for line in prop_file.readlines():
+            if line.startswith("#") or line.startswith(" ") or line.startswith("\n"):
+                continue
+
+            key, value = _evaluate_properties_line(
+                line, known_values=properties_read_from_file, props=copy_of_props
+            )
+            # Set the value of property in the copy of property set for further reference
+            copy_of_props.action_node_properties[key] = value
+            properties_read_from_file[key] = value
+
     return properties_read_from_file
 
 
-def _convert_line(line: str, props: PropertySet) -> Tuple[str, str]:
+def _evaluate_properties_line(line: str, known_values: dict, props: PropertySet) -> Tuple[str, str]:
     """
-    Converts a line from the job_properties file and adds it to the job_properties dictionary.
+    Evaluates single line from properties file using already known values from the file and
+    values from passed property set.
     """
     key, value = line.split("=", 1)
-    value = replace_el_with_var(value.strip(), props=props, quote=False)
-    return key.strip(), value
+    translation = el_parser.translate(value)
+
+    tmp = deepcopy(known_values)
+    tmp.update(props.merged)
+    env = Environment(undefined=StrictUndefined)
+    try:
+        translation = env.from_string(translation).render(**tmp)
+    except UndefinedError:
+        translation = value
+
+    return key.strip(), translation.strip()
 
 
 def comma_separated_string_to_list(line: str) -> Union[List[str], str]:

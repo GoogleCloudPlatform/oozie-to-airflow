@@ -43,7 +43,7 @@ GRAMMAR = r"""
 
     literal_expression: literal_component (/[\$\#]/)?
 
-    literal_component: (/[^\$\#]/)*
+    literal_component: ((/[^\$\#]/)* (/[\#\$]/)? (/[^\$\#\{]/)+)+
         | (/[^\$\#]/)* (/[\$\#][^\{]/)
         | (/[^\$\#]/)* /\\\\/ (/[\$\#]/)?
 
@@ -112,13 +112,13 @@ GRAMMAR = r"""
 
     INVOCATION_COLON: ":"
 
-    FUNC: /(?!true|false|null)([a-zA-Z_]+)/
+    FUNC: /(?!true|false|null)([a-zA-Z_\$][a-zA-Z0-9_\$]*)/
 
-    PARAM: /(?!true|false|null)([a-zA-Z_]+)/
+    PARAM: /(?!true|false|null)([a-zA-Z_\$][a-zA-Z0-9_\$]*)/
 
-    JAVA: /(?!true|false|null)([a-zA-Z_]+)/
+    JAVA: /(?!true|false|null)([a-zA-Z_\$][a-zA-Z0-9_\$]*)/
 
-    FIRST_JAVA: /(?!true|false|null)([a-zA-Z_]+)/
+    FIRST_JAVA: /(?!true|false|null)([a-zA-Z_\$][a-zA-Z0-9_\$]*)/
 
     BOOL: "true" | "false"
 
@@ -235,8 +235,6 @@ def _translate_token(token: Token) -> str:
     """
     Translates non-python values to python equivalents.
     """
-    params = "params['{}']"
-
     if token.type == "BEGIN":
         token.value = " {{"
 
@@ -258,13 +256,9 @@ def _translate_token(token: Token) -> str:
         else:
             token.value = False
 
-    if token.type == "JAVA":
-        token.value = params.format(token.value)
-
     if token.type == "FIRST_JAVA":
         if token.value in EL_CONSTANTS.keys():
             return str(EL_CONSTANTS[token.value])
-        token.value = params.format(token.value)
 
     return str(token.value)
 
@@ -345,11 +339,13 @@ def _purify(sentence: str) -> str:
     sentence = sentence.replace("}} / {{", "}}/{{")
     sentence = sentence.replace("}} /", "}}/")
     sentence = sentence.replace("/ {{", "/{{")
+    sentence = sentence.replace("}} .", "}}.")
+    sentence = sentence.replace(", {{", ",{{")
 
     return sentence
 
 
-def translate(expression: str, functions_module: str = "") -> str:
+def translate(expression: str, functions_module: str = "functions", quote: bool = False) -> str:
     """
     Translate Expression Language sentence to Jinja.
 
@@ -370,5 +366,14 @@ def translate(expression: str, functions_module: str = "") -> str:
 
     ast_tree = _parser(expression)
     translation = _translate_el(ast_tree, functions_module)
+    translation = _purify(translation)
 
-    return _purify(translation)
+    # Here we handle missing or necessary spaces before {{
+    if " ${" not in expression and " #{" not in expression:
+        translation = translation.replace(" {{", "{{")
+    elif " {{" not in translation:
+        translation = translation.replace("{{", " {{")
+
+    if quote:
+        return "'" + translation + "'"
+    return translation

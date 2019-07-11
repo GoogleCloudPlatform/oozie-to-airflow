@@ -141,7 +141,7 @@ class TestELUtils(unittest.TestCase):
     def test_parse_els_no_file(self):
         expected_properties = {}
         props = PropertySet(job_properties={"key": "value"}, config={}, action_node_properties={})
-        self.assertEqual(expected_properties, el_utils.parse_els(None, props=props))
+        self.assertEqual(expected_properties, el_utils.extract_evaluate_properties(None, props=props))
 
     def test_parse_els_file(self):
         prop_file = tempfile.NamedTemporaryFile("w", delete=False)
@@ -151,7 +151,7 @@ class TestELUtils(unittest.TestCase):
         job_properties = {"test": "answer"}
         props = PropertySet(job_properties=job_properties, config={}, action_node_properties={})
         expected = {"key": "value"}
-        self.assertEqual(expected, el_utils.parse_els(prop_file.name, props=props))
+        self.assertEqual(expected, el_utils.extract_evaluate_properties(prop_file.name, props=props))
 
     def test_parse_els_file_list(self):
         # Should remain unchanged, as the conversion from a comma-separated string to a List will
@@ -163,7 +163,7 @@ class TestELUtils(unittest.TestCase):
         job_properties = {"test": "answer"}
         props = PropertySet(config={}, job_properties=job_properties, action_node_properties={})
         expected = {"key": "value,value2,answer"}
-        self.assertEqual(expected, el_utils.parse_els(prop_file.name, props=props))
+        self.assertEqual(expected, el_utils.extract_evaluate_properties(prop_file.name, props=props))
 
     def test_parse_els_multiple_line_with_back_references(self):
         # Should remain unchanged, as the conversion from a comma-separated string to a List will
@@ -190,7 +190,7 @@ key5=test
             "key4": "refer${key5}",  # no forward-references
             "key5": "test",
         }
-        self.assertEqual(expected, el_utils.parse_els(prop_file.name, props=props))
+        self.assertEqual(expected, el_utils.extract_evaluate_properties(prop_file.name, props=props))
 
     @parameterized.expand(
         [
