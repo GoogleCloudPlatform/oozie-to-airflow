@@ -163,7 +163,7 @@ class PrepareCommandsTest(unittest.TestCase):
                 "fs -chgrp  hadoop /home/pig/test-fs/test-chgrp-1",
             ),
             (
-                "<chgrp path='${nameNode}0/home/pig/test-fs/DDD-chgrp-1' group='hadoop' />",
+                "<chgrp path='${nameNode}/home/pig/test-fs/DDD-chgrp-1' group='hadoop' />",
                 "fs -chgrp  hadoop /home/pig/test-fs/DDD-chgrp-1",
             ),
         ]
@@ -288,153 +288,171 @@ class FsMapperComplexTestCase(unittest.TestCase):
         tasks, relations = self.mapper.to_tasks_and_relations()
 
         self.assertEqual(
-            tasks,
             [
                 Task(
                     task_id="test_id_fs_0_mkdir",
                     template_name="fs_op.tpl",
+                    trigger_rule="one_success",
                     template_params={
                         "pig_command": "fs -mkdir -p /home/pig/test-delete-1",
-                        "action_node_properties": {"test.property.node": "hdfs://"},
+                        "action_node_properties": {"test.property.node": "{{nameNode}}"},
                     },
                 ),
                 Task(
                     task_id="test_id_fs_1_mkdir",
                     template_name="fs_op.tpl",
+                    trigger_rule="one_success",
                     template_params={
                         "pig_command": "fs -mkdir -p /home/pig/test-delete-2",
-                        "action_node_properties": {"test.property.node": "hdfs://"},
+                        "action_node_properties": {"test.property.node": "{{nameNode}}"},
                     },
                 ),
                 Task(
                     task_id="test_id_fs_2_mkdir",
                     template_name="fs_op.tpl",
+                    trigger_rule="one_success",
                     template_params={
                         "pig_command": "fs -mkdir -p /home/pig/test-delete-1",
-                        "action_node_properties": {"test.property.node": "hdfs://"},
+                        "action_node_properties": {"test.property.node": "{{nameNode}}"},
                     },
                 ),
                 Task(
                     task_id="test_id_fs_3_mkdir",
                     template_name="fs_op.tpl",
+                    trigger_rule="one_success",
                     template_params={
                         "pig_command": "fs -mkdir -p /home/pig/test-delete-2",
-                        "action_node_properties": {"test.property.node": "hdfs://"},
+                        "action_node_properties": {"test.property.node": "{{nameNode}}"},
                     },
                 ),
                 Task(
                     task_id="test_id_fs_4_mkdir",
                     template_name="fs_op.tpl",
+                    trigger_rule="one_success",
                     template_params={
                         "pig_command": "fs -mkdir -p /home/pig/test-delete-3",
-                        "action_node_properties": {"test.property.node": "hdfs://"},
+                        "action_node_properties": {"test.property.node": "{{nameNode}}"},
                     },
                 ),
                 Task(
                     task_id="test_id_fs_5_delete",
                     template_name="fs_op.tpl",
+                    trigger_rule="one_success",
                     template_params={
                         "pig_command": "fs -rm -f -r /home/pig/test-delete-1",
-                        "action_node_properties": {"test.property.node": "hdfs://"},
+                        "action_node_properties": {"test.property.node": "{{nameNode}}"},
                     },
                 ),
                 Task(
                     task_id="test_id_fs_6_mkdir",
                     template_name="fs_op.tpl",
+                    trigger_rule="one_success",
                     template_params={
                         "pig_command": "fs -mkdir -p /home/pig/test-delete-1",
-                        "action_node_properties": {"test.property.node": "hdfs://"},
+                        "action_node_properties": {"test.property.node": "{{nameNode}}"},
                     },
                 ),
                 Task(
                     task_id="test_id_fs_7_move",
                     template_name="fs_op.tpl",
+                    trigger_rule="one_success",
                     template_params={
                         "pig_command": "fs -mv /home/pig/test-chmod-1 /home/pig/test-chmod-2",
-                        "action_node_properties": {"test.property.node": "hdfs://"},
+                        "action_node_properties": {"test.property.node": "{{nameNode}}"},
                     },
                 ),
                 Task(
                     task_id="test_id_fs_8_mkdir",
                     template_name="fs_op.tpl",
+                    trigger_rule="one_success",
                     template_params={
                         "pig_command": "fs -mkdir -p /home/pig/test-chmod-1",
-                        "action_node_properties": {"test.property.node": "hdfs://"},
+                        "action_node_properties": {"test.property.node": "{{nameNode}}"},
                     },
                 ),
                 Task(
                     task_id="test_id_fs_9_mkdir",
                     template_name="fs_op.tpl",
+                    trigger_rule="one_success",
                     template_params={
                         "pig_command": "fs -mkdir -p /home/pig/test-chmod-2",
-                        "action_node_properties": {"test.property.node": "hdfs://"},
+                        "action_node_properties": {"test.property.node": "{{nameNode}}"},
                     },
                 ),
                 Task(
                     task_id="test_id_fs_10_mkdir",
                     template_name="fs_op.tpl",
+                    trigger_rule="one_success",
                     template_params={
                         "pig_command": "fs -mkdir -p /home/pig/test-chmod-3",
-                        "action_node_properties": {"test.property.node": "hdfs://"},
+                        "action_node_properties": {"test.property.node": "{{nameNode}}"},
                     },
                 ),
                 Task(
                     task_id="test_id_fs_11_mkdir",
                     template_name="fs_op.tpl",
+                    trigger_rule="one_success",
                     template_params={
                         "pig_command": "fs -mkdir -p /home/pig/test-chmod-4",
-                        "action_node_properties": {"test.property.node": "hdfs://"},
+                        "action_node_properties": {"test.property.node": "{{nameNode}}"},
                     },
                 ),
                 Task(
                     task_id="test_id_fs_12_chmod",
                     template_name="fs_op.tpl",
+                    trigger_rule="one_success",
                     template_params={
                         "pig_command": "fs -chmod  -rwxrw-rw- /home/pig/test-chmod-1",
-                        "action_node_properties": {"test.property.node": "hdfs://"},
+                        "action_node_properties": {"test.property.node": "{{nameNode}}"},
                     },
                 ),
                 Task(
                     task_id="test_id_fs_13_chmod",
                     template_name="fs_op.tpl",
+                    trigger_rule="one_success",
                     template_params={
                         "pig_command": "fs -chmod  -rwxrw-rw- /home/pig/test-chmod-2",
-                        "action_node_properties": {"test.property.node": "hdfs://"},
+                        "action_node_properties": {"test.property.node": "{{nameNode}}"},
                     },
                 ),
                 Task(
                     task_id="test_id_fs_14_chmod",
                     template_name="fs_op.tpl",
+                    trigger_rule="one_success",
                     template_params={
                         "pig_command": "fs -chmod  -rwxrw-rw- /home/pig/test-chmod-3",
-                        "action_node_properties": {"test.property.node": "hdfs://"},
+                        "action_node_properties": {"test.property.node": "{{nameNode}}"},
                     },
                 ),
                 Task(
                     task_id="test_id_fs_15_chmod",
                     template_name="fs_op.tpl",
+                    trigger_rule="one_success",
                     template_params={
                         "pig_command": "fs -chmod -R -rwxrw-rw- /home/pig/test-chmod-4",
-                        "action_node_properties": {"test.property.node": "hdfs://"},
+                        "action_node_properties": {"test.property.node": "{{nameNode}}"},
                     },
                 ),
                 Task(
                     task_id="test_id_fs_16_touchz",
                     template_name="fs_op.tpl",
+                    trigger_rule="one_success",
                     template_params={
                         "pig_command": "fs -touchz /home/pig/test-touchz-1",
-                        "action_node_properties": {"test.property.node": "hdfs://"},
+                        "action_node_properties": {"test.property.node": "{{nameNode}}"},
                     },
                 ),
                 Task(
                     task_id="test_id_fs_17_chgrp",
                     template_name="fs_op.tpl",
+                    trigger_rule="one_success",
                     template_params={
                         "pig_command": "fs -chgrp  pig /home/pig/test-touchz-1",
-                        "action_node_properties": {"test.property.node": "hdfs://"},
+                        "action_node_properties": {"test.property.node": "{{nameNode}}"},
                     },
                 ),
             ],
+            tasks,
         )
         self.assertEqual(
             relations,

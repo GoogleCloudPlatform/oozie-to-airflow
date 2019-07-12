@@ -69,10 +69,13 @@ class TestPigMapper(unittest.TestCase):
         self.assertEqual("localhost:8032", mapper.resource_manager)
         self.assertEqual("hdfs://", mapper.name_node)
         self.assertEqual("id.pig", mapper.script_file_name)
-        self.assertEqual("${queueName}", mapper.props.action_node_properties["mapred.job.queue.name"])
-        self.assertEqual("/user/${wf:user()}/${examplesRoot}/input-data/text", mapper.params_dict["INPUT"])
+        self.assertEqual("{{queueName}}", mapper.props.action_node_properties["mapred.job.queue.name"])
         self.assertEqual(
-            "/user/${wf:user()}/${examplesRoot}/output-data/demo/pig-node", mapper.params_dict["OUTPUT"]
+            "/user/{{functions.wf.user()}}/{{examplesRoot}}/input-data/text", mapper.params_dict["INPUT"]
+        )
+        self.assertEqual(
+            "/user/{{functions.wf.user()}}/{{examplesRoot}}/output-data/demo/pig-node",
+            mapper.params_dict["OUTPUT"],
         )
 
     def test_create_mapper_jinja(self):
@@ -95,13 +98,16 @@ class TestPigMapper(unittest.TestCase):
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
         self.assertEqual(self.pig_node, mapper.oozie_node)
-        self.assertEqual("localhost:9999", mapper.resource_manager)
-        self.assertEqual("hdfs://", mapper.name_node)
-        self.assertEqual("id_el.pig", mapper.script_file_name)
-        self.assertEqual("myQueue", mapper.props.action_node_properties["mapred.job.queue.name"])
-        self.assertEqual("/user/${wf:user()}/examples/input-data/text", mapper.params_dict["INPUT"])
+        self.assertEqual("{{resourceManager}}", mapper.resource_manager)
+        self.assertEqual("{{nameNode}}", mapper.name_node)
+        self.assertEqual("{{scriptName}}", mapper.script_file_name)
+        self.assertEqual("{{queueName}}", mapper.props.action_node_properties["mapred.job.queue.name"])
         self.assertEqual(
-            "/user/${wf:user()}/examples/output-data/demo/pig-node", mapper.params_dict["OUTPUT"]
+            "/user/{{functions.wf.user()}}/{{examplesRoot}}/input-data/text", mapper.params_dict["INPUT"]
+        )
+        self.assertEqual(
+            "/user/{{functions.wf.user()}}/{{examplesRoot}}/output-data/demo/pig-node",
+            mapper.params_dict["OUTPUT"],
         )
 
     def test_to_tasks_and_relations(self):
@@ -112,11 +118,11 @@ class TestPigMapper(unittest.TestCase):
         tasks, relations = mapper.to_tasks_and_relations()
 
         self.assertEqual(
-            tasks,
             [
                 Task(
                     task_id="test_id_prepare",
                     template_name="prepare.tpl",
+                    trigger_rule="one_success",
                     template_params={
                         "delete": "/examples/output-data/demo/pig-node /examples/output-data/demo/pig-node2",
                         "mkdir": "/examples/input-data/demo/pig-node /examples/input-data/demo/pig-node2",
@@ -125,27 +131,30 @@ class TestPigMapper(unittest.TestCase):
                 Task(
                     task_id="test_id",
                     template_name="pig.tpl",
+                    trigger_rule="one_success",
                     template_params={
                         "props": PropertySet(
                             config={"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"},
                             job_properties={"nameNode": "hdfs://"},
                             action_node_properties={
-                                "mapred.job.queue.name": "${queueName}",
+                                "mapred.job.queue.name": "{{queueName}}",
                                 "mapred.map.output.compress": "false",
                             },
                         ),
                         "params_dict": {
-                            "INPUT": "/user/${wf:user()}/${examplesRoot}/input-data/text",
-                            "OUTPUT": "/user/${wf:user()}/${examplesRoot}/output-data/demo/pig-node",
+                            "INPUT": "/user/{{functions.wf.user()}}/{{examplesRoot}}/input-data/text",
+                            "OUTPUT": "/user/{{functions.wf.user()}}/{{examplesRoot}}/"
+                            "output-data/demo/pig-node",
                         },
                         "script_file_name": "id.pig",
                         "action_node_properties": {
-                            "mapred.job.queue.name": "${queueName}",
+                            "mapred.job.queue.name": "{{queueName}}",
                             "mapred.map.output.compress": "false",
                         },
                     },
                 ),
             ],
+            tasks,
         )
         self.assertEqual([Relation(from_task_id="test_id_prepare", to_task_id="test_id")], relations)
 

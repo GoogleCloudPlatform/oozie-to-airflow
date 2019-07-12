@@ -56,8 +56,8 @@ class HiveMapper(ActionMapper):
     def on_parse_node(self):
         super().on_parse_node()
         self._parse_config()
-        self.query = get_tag_el_text(self.oozie_node, TAG_QUERY, self.props)
-        self.script = get_tag_el_text(self.oozie_node, TAG_SCRIPT, self.props)
+        self.query = get_tag_el_text(self.oozie_node, TAG_QUERY)
+        self.script = get_tag_el_text(self.oozie_node, TAG_SCRIPT)
         if not self.query and not self.script:
             raise ParseException(f"Action Configuration does not include {TAG_SCRIPT} or {TAG_QUERY} element")
 
@@ -67,7 +67,7 @@ class HiveMapper(ActionMapper):
                 f"Only one can be set at the same time."
             )
 
-        self.variables = extract_param_values_from_action_node(self.oozie_node, props=self.props)
+        self.variables = extract_param_values_from_action_node(self.oozie_node)
         _, self.hdfs_files = self.file_extractor.parse_node()
         _, self.hdfs_archives = self.archive_extractor.parse_node()
 

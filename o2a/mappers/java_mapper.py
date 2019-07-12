@@ -104,10 +104,10 @@ class JavaMapper(ActionMapper):
             self.java_opts.extend(props.merged["mapred.child.java.opts"].split(" "))
         if "mapreduce.map.java.opts" in props.merged:
             self.java_opts.extend(props.merged["mapreduce.map.java.opts"].split(" "))
-        self.main_class = xml_utils.get_tag_el_text(root=root, tag=TAG_MAIN_CLASS, props=props)
-        java_opts_string = xml_utils.get_tag_el_text(root=root, tag=TAG_JAVA_OPTS, props=props)
+        self.main_class = xml_utils.get_tag_el_text(root=root, tag=TAG_MAIN_CLASS)
+        java_opts_string = xml_utils.get_tag_el_text(root=root, tag=TAG_JAVA_OPTS)
         if java_opts_string:
             self.java_opts.extend(java_opts_string.split(" "))
         else:
-            self.java_opts.extend(get_tags_el_array_from_text(root=root, tag=TAG_JAVA_OPT, props=props))
-        self.args = get_tags_el_array_from_text(root=root, tag=TAG_ARG, props=props)
+            self.java_opts.extend(get_tags_el_array_from_text(root=root, tag=TAG_JAVA_OPT))
+        self.args = get_tags_el_array_from_text(root=root, tag=TAG_ARG)

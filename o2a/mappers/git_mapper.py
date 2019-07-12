@@ -71,12 +71,12 @@ class GitMapper(ActionMapper):
 
     def on_parse_node(self):
         super().on_parse_node()
-        self.git_uri = get_tag_el_text(self.oozie_node, TAG_GIT_URI, props=self.props)
-        self.git_branch = get_tag_el_text(self.oozie_node, TAG_BRANCH, props=self.props)
-        destination_uri = get_tag_el_text(self.oozie_node, tag=TAG_DESTINATION_URI, props=self.props)
+        self.git_uri = get_tag_el_text(self.oozie_node, TAG_GIT_URI)
+        self.git_branch = get_tag_el_text(self.oozie_node, TAG_BRANCH)
+        destination_uri = get_tag_el_text(self.oozie_node, tag=TAG_DESTINATION_URI)
         if destination_uri:
             self.destination_path = urlparse(destination_uri).path
-        key_path_uri = get_tag_el_text(self.oozie_node, tag=TAG_KEY_PATH, props=self.props)
+        key_path_uri = get_tag_el_text(self.oozie_node, tag=TAG_KEY_PATH)
         self.key_path = urlparse(key_path_uri).path if key_path_uri else None
 
     def to_tasks_and_relations(self):

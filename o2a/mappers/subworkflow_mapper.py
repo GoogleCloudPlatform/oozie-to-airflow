@@ -72,7 +72,7 @@ class SubworkflowMapper(ActionMapper):
         self._parse_oozie_node()
 
     def _parse_oozie_node(self):
-        app_path = xml_utils.get_tag_el_text(self.oozie_node, TAG_APP, self.props)
+        app_path = xml_utils.get_tag_el_text(self.oozie_node, TAG_APP)
         _, _, self.app_name = app_path.rpartition("/")
         # TODO: hacky: we should calculate it deriving from input_directory_path and comparing app-path
         # TODO: but for now we assume app is in "examples"

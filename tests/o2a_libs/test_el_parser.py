@@ -202,4 +202,3 @@ class TestElParser(unittest.TestCase):
 
         with self.assertRaises(AirflowException):
             Template(translated).render(**kwargs)
-

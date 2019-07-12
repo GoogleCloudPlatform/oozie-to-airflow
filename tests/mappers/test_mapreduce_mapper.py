@@ -141,7 +141,7 @@ class TestMapReduceMapper(unittest.TestCase):
         self.assertEqual(self.mapreduce_node, mapper.oozie_node)
 
         self.assertEqual("hdfs://", mapper.name_node)
-        self.assertEqual("myQueue", mapper.props.action_node_properties["mapred.job.queue.name"])
+        self.assertEqual("{{queueName}}", mapper.props.action_node_properties["mapred.job.queue.name"])
         self.assertEqual("WordCount$Map", mapper.props.action_node_properties["mapreduce.job.map.class"])
         self.assertEqual(
             "WordCount$Reduce", mapper.props.action_node_properties["mapreduce.job.reduce.class"]
@@ -154,11 +154,11 @@ class TestMapReduceMapper(unittest.TestCase):
             mapper.props.action_node_properties["mapreduce.job.output.value.class"],
         )
         self.assertEqual(
-            "/user/mapred/examples/mapreduce/input",
+            "/user/mapred/{{examplesRoot}}/mapreduce/input",
             mapper.props.action_node_properties["mapreduce.input.fileinputformat.inputdir"],
         )
         self.assertEqual(
-            "/user/mapred/examples/mapreduce/output",
+            "/user/mapred/{{examplesRoot}}/mapreduce/output",
             mapper.props.action_node_properties["mapreduce.output.fileoutputformat.outputdir"],
         )
 
@@ -187,11 +187,13 @@ class TestMapReduceMapper(unittest.TestCase):
                 Task(
                     task_id="test_id_prepare",
                     template_name="prepare.tpl",
+                    trigger_rule="one_success",
                     template_params={"delete": "/examples/mapreduce/output", "mkdir": None},
                 ),
                 Task(
                     task_id="test_id",
                     template_name="mapreduce.tpl",
+                    trigger_rule="one_success",
                     template_params={
                         "props": PropertySet(
                             config={
@@ -204,15 +206,15 @@ class TestMapReduceMapper(unittest.TestCase):
                             action_node_properties={
                                 "mapred.mapper.new-api": "true",
                                 "mapred.reducer.new-api": "true",
-                                "mapred.job.queue.name": "${queueName}",
+                                "mapred.job.queue.name": "{{queueName}}",
                                 "mapreduce.job.map.class": "WordCount$Map",
                                 "mapreduce.job.reduce.class": "WordCount$Reduce",
                                 "mapreduce.job.output.key.class": "org.apache.hadoop.io.Text",
                                 "mapreduce.job.output.value.class": "org.apache.hadoop.io.IntWritable",
-                                "mapreduce.input.fileinputformat."
-                                "inputdir": "/user/mapred/${examplesRoot}/mapreduce/input",
-                                "mapreduce.output.fileoutputformat."
-                                "outputdir": "/user/mapred/${examplesRoot}/mapreduce/output",
+                                "mapreduce.input.fileinputformat.inputdir": "/user/mapred/{{examplesRoot}}"
+                                "/mapreduce/input",
+                                "mapreduce.output.fileoutputformat.outputdir": "/user/mapred/{{examplesRoot}}"
+                                "/mapreduce/output",
                             },
                         ),
                         "params_dict": {},
@@ -221,15 +223,15 @@ class TestMapReduceMapper(unittest.TestCase):
                         "action_node_properties": {
                             "mapred.mapper.new-api": "true",
                             "mapred.reducer.new-api": "true",
-                            "mapred.job.queue.name": "${queueName}",
+                            "mapred.job.queue.name": "{{queueName}}",
                             "mapreduce.job.map.class": "WordCount$Map",
                             "mapreduce.job.reduce.class": "WordCount$Reduce",
                             "mapreduce.job.output.key.class": "org.apache.hadoop.io.Text",
                             "mapreduce.job.output.value.class": "org.apache.hadoop.io.IntWritable",
-                            "mapreduce.input.fileinputformat.inputdir": "/user/mapred/${examplesRoot}/"
-                            "mapreduce/input",
-                            "mapreduce.output.fileoutputformat.outputdir": "/user/mapred/${examplesRoot}/"
-                            "mapreduce/output",
+                            "mapreduce.input.fileinputformat.inputdir": "/user/mapred/{{examplesRoot}}"
+                            "/mapreduce/input",
+                            "mapreduce.output.fileoutputformat.outputdir": "/user/mapred/{{examplesRoot}}"
+                            "/mapreduce/output",
                         },
                     },
                 ),
@@ -288,6 +290,7 @@ class TestMapReduceMapperNoPrepare(unittest.TestCase):
                 Task(
                     task_id="test_id",
                     template_name="mapreduce.tpl",
+                    trigger_rule="one_success",
                     template_params={
                         "props": PropertySet(
                             config={
@@ -300,15 +303,15 @@ class TestMapReduceMapperNoPrepare(unittest.TestCase):
                             action_node_properties={
                                 "mapred.mapper.new-api": "true",
                                 "mapred.reducer.new-api": "true",
-                                "mapred.job.queue.name": "${queueName}",
+                                "mapred.job.queue.name": "{{queueName}}",
                                 "mapreduce.job.map.class": "WordCount$Map",
                                 "mapreduce.job.reduce.class": "WordCount$Reduce",
                                 "mapreduce.job.output.key.class": "org.apache.hadoop.io.Text",
                                 "mapreduce.job.output.value.class": "org.apache.hadoop.io.IntWritable",
-                                "mapreduce.input.fileinputformat."
-                                "inputdir": "/user/mapred/${examplesRoot}/mapreduce/input",
-                                "mapreduce.output.fileoutputformat."
-                                "outputdir": "/user/mapred/${examplesRoot}/mapreduce/output",
+                                "mapreduce.input.fileinputformat.inputdir": "/user/mapred/{{examplesRoot}}"
+                                "/mapreduce/input",
+                                "mapreduce.output.fileoutputformat.outputdir": "/user/mapred/{{examplesRoot}}"
+                                "/mapreduce/output",
                             },
                         ),
                         "params_dict": {},
@@ -317,15 +320,15 @@ class TestMapReduceMapperNoPrepare(unittest.TestCase):
                         "action_node_properties": {
                             "mapred.mapper.new-api": "true",
                             "mapred.reducer.new-api": "true",
-                            "mapred.job.queue.name": "${queueName}",
+                            "mapred.job.queue.name": "{{queueName}}",
                             "mapreduce.job.map.class": "WordCount$Map",
                             "mapreduce.job.reduce.class": "WordCount$Reduce",
                             "mapreduce.job.output.key.class": "org.apache.hadoop.io.Text",
                             "mapreduce.job.output.value.class": "org.apache.hadoop.io.IntWritable",
-                            "mapreduce.input.fileinputformat.inputdir": "/user/mapred/${examplesRoot}/"
-                            "mapreduce/input",
-                            "mapreduce.output.fileoutputformat.outputdir": "/user/mapred/${examplesRoot}/"
-                            "mapreduce/output",
+                            "mapreduce.input.fileinputformat.inputdir": "/user/mapred/{{examplesRoot}}"
+                            "/mapreduce/input",
+                            "mapreduce.output.fileoutputformat.outputdir": "/user/mapred/{{examplesRoot}}"
+                            "/mapreduce/output",
                         },
                     },
                 )

@@ -343,4 +343,3 @@ def translate(expression: str, functions_module: str = "functions", quote: bool 
     if quote:
         return "'" + translation + "'"
     return translation
-

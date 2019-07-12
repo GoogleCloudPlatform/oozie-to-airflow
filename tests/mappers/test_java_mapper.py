@@ -82,7 +82,7 @@ class TestJavaMapper(unittest.TestCase):
                     "userName": "user",
                     "oozie.wf.application.path": "hdfs:///user/USER/examples/apps/java",
                 },
-                action_node_properties={"mapred.job.queue.name": "${queueName}"},
+                action_node_properties={"mapred.job.queue.name": "{{queueName}}"},
             ),
             mapper.props,
         )
@@ -109,7 +109,7 @@ class TestJavaMapper(unittest.TestCase):
                     "userName": "user",
                     "oozie.wf.application.path": "hdfs:///user/USER/examples/apps/java",
                 },
-                action_node_properties={"mapred.job.queue.name": "${queueName}"},
+                action_node_properties={"mapred.job.queue.name": "{{queueName}}"},
             ),
             mapper.props,
         )
@@ -136,7 +136,7 @@ class TestJavaMapper(unittest.TestCase):
                     "userName": "user",
                     "oozie.wf.application.path": "hdfs:///user/USER/examples/apps/java",
                 },
-                action_node_properties={"mapred.job.queue.name": "${queueName}"},
+                action_node_properties={"mapred.job.queue.name": "{{queueName}}"},
             ),
             mapper.props,
         )
@@ -173,7 +173,7 @@ class TestJavaMapper(unittest.TestCase):
                     "oozie.wf.application.path": "hdfs:///user/USER/examples/apps/java",
                     "mapred.child.java.opts": "-Dmapred1=val1 -Dmapred2=val2",
                 },
-                action_node_properties={"mapred.job.queue.name": "${queueName}"},
+                action_node_properties={"mapred.job.queue.name": "{{queueName}}"},
             ),
             mapper.props,
         )
@@ -210,7 +210,7 @@ class TestJavaMapper(unittest.TestCase):
                     "oozie.wf.application.path": "hdfs:///user/USER/examples/apps/java",
                     "mapreduce.map.java.opts": "-Dmapreduce1=val1 -Dmapreduce2=val2",
                 },
-                action_node_properties={"mapred.job.queue.name": "${queueName}"},
+                action_node_properties={"mapred.job.queue.name": "{{queueName}}"},
             ),
             mapper.props,
         )
@@ -246,7 +246,7 @@ class TestJavaMapper(unittest.TestCase):
                                 "userName": "user",
                                 "oozie.wf.application.path": "hdfs:///user/USER/examples/apps/java",
                             },
-                            action_node_properties={"mapred.job.queue.name": "${queueName}"},
+                            action_node_properties={"mapred.job.queue.name": "{{queueName}}"},
                         ),
                         "hdfs_files": [],
                         "hdfs_archives": [],

@@ -23,7 +23,7 @@ from o2a.mappers.action_mapper import ActionMapper
 from o2a.mappers.extensions.prepare_mapper_extension import PrepareMapperExtension
 from o2a.o2a_libs.property_utils import PropertySet
 from o2a.utils.xml_utils import get_tag_el_text, get_tags_el_array_from_text
-from o2a.utils.el_utils import convert_el_to_jinja
+from o2a.o2a_libs import el_parser
 
 
 TAG_RESOURCE = "resource-manager"
@@ -43,14 +43,14 @@ class ShellMapper(ActionMapper):
         self.prepare_extension: PrepareMapperExtension = PrepareMapperExtension(self)
 
     def _parse_oozie_node(self):
-        self.resource_manager = get_tag_el_text(self.oozie_node, TAG_RESOURCE, self.props)
-        self.name_node = get_tag_el_text(self.oozie_node, TAG_NAME, self.props)
+        self.resource_manager = get_tag_el_text(self.oozie_node, TAG_RESOURCE)
+        self.name_node = get_tag_el_text(self.oozie_node, TAG_NAME)
 
-        cmd_txt = get_tag_el_text(self.oozie_node, TAG_CMD, self.props)
-        args = get_tags_el_array_from_text(self.oozie_node, TAG_ARG, self.props)
+        cmd_txt = get_tag_el_text(self.oozie_node, TAG_CMD)
+        args = get_tags_el_array_from_text(self.oozie_node, TAG_ARG)
         cmd = " ".join([cmd_txt] + [x for x in args])
 
-        self.bash_command = convert_el_to_jinja(cmd, quote=False)
+        self.bash_command = el_parser.translate(cmd, quote=False)
         self.pig_command = f"sh {self.bash_command}"
 
     def to_tasks_and_relations(self):

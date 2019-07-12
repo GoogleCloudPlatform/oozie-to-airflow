@@ -17,21 +17,16 @@ import unittest
 
 from xml.etree import ElementTree as ET
 
-from o2a.o2a_libs.property_utils import PropertySet
 from o2a.utils.param_extractor import extract_param_values_from_action_node
 
 
 class ParamExtractorModuleTestCase(unittest.TestCase):
     def test_extract_param_values_from_action_node_should_return_empty_dict_when_not_found(self):
-        props = PropertySet(
-            config={}, job_properties={"userName": "TEST_USERNAME", "examplesRoot": "TEST_EXAMPLE_ROOT"}
-        )
         node = ET.fromstring("<dummy></dummy>")
-        result = extract_param_values_from_action_node(node, props=props)
+        result = extract_param_values_from_action_node(node)
         self.assertEqual({}, result)
 
     def test_extract_param_values_from_action_node_should_parse_single_value(self):
-        props = PropertySet(config={}, job_properties={})
         # language=XML
         xml_content = """
         <fragment>
@@ -39,11 +34,10 @@ class ParamExtractorModuleTestCase(unittest.TestCase):
         </fragment>
         """
         node = ET.fromstring(xml_content)
-        result = extract_param_values_from_action_node(node, props=props)
+        result = extract_param_values_from_action_node(node)
         self.assertEqual({"INPUT": "VALUE"}, result)
 
     def test_extract_param_values_from_action_node_should_parse_multiple_value(self):
-        props = PropertySet(config={}, job_properties={})
         # language=XML
         xml_content = """
         <fragment>
@@ -52,13 +46,10 @@ class ParamExtractorModuleTestCase(unittest.TestCase):
         </fragment>
         """
         node = ET.fromstring(xml_content)
-        result = extract_param_values_from_action_node(node, props=props)
+        result = extract_param_values_from_action_node(node)
         self.assertEqual({"INPUT1": "VALUE1", "INPUT2": "VALUE2"}, result)
 
     def test_extract_param_values_from_action_node_should_support_el_value(self):
-        props = PropertySet(
-            config={}, job_properties={"userName": "TEST_USERNAME", "examplesRoot": "TEST_EXAMPLE_ROOT"}
-        )
         # language=XML
         xml_content = """
         <fragment>
@@ -67,11 +58,11 @@ class ParamExtractorModuleTestCase(unittest.TestCase):
         </fragment>
         """
         node = ET.fromstring(xml_content)
-        result = extract_param_values_from_action_node(node, props=props)
+        result = extract_param_values_from_action_node(node)
         self.assertEqual(
             {
-                "INPUT": "/user/TEST_USERNAME/TEST_EXAMPLE_ROOT/apps/hive/input/",
-                "OUTPUT": "/user/TEST_USERNAME/TEST_EXAMPLE_ROOT/apps/hive/output/",
+                "INPUT": "/user/{{userName}}/{{examplesRoot}}/apps/hive/input/",
+                "OUTPUT": "/user/{{userName}}/{{examplesRoot}}/apps/hive/output/",
             },
             result,
         )

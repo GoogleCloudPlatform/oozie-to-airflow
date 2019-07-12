@@ -23,7 +23,7 @@ from o2a.converter.task import Task
 from o2a.converter.relation import Relation
 from o2a.mappers.base_mapper import BaseMapper
 from o2a.o2a_libs.property_utils import PropertySet
-from o2a.utils.el_utils import convert_el_to_jinja
+from o2a.o2a_libs import el_parser
 
 
 # noinspection PyAbstractClass
@@ -71,7 +71,7 @@ class DecisionMapper(BaseMapper):
         self.case_dict: Dict[str, str] = collections.OrderedDict()
         for case in switch_node:
             if "case" in case.tag:
-                case_text = convert_el_to_jinja(case.text.strip(), quote=True)
+                case_text = el_parser.translate(case.text.strip(), quote=True)
                 self.case_dict[case_text] = case.attrib["to"]
             else:  # Default return value
                 self.case_dict["default"] = case.attrib["to"]

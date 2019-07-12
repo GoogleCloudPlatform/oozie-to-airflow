@@ -63,7 +63,7 @@ FRAGMENT_QUERY = """
 DROP TABLE IF EXISTS test_query;
 CREATE EXTERNAL TABLE test_query (a INT) STORED AS TEXTFILE
 LOCATION '/user/${userName}/${examplesRoot}/input/';
-INSERT OVERWRITE DIRECTORY '/user/${username}/${examplesRoot}/output/' SELECT * FROM test_query;
+INSERT OVERWRITE DIRECTORY '/user/${userName}/${examplesRoot}/output/' SELECT * FROM test_query;
 </query>
 """
 
@@ -71,7 +71,7 @@ INSERT OVERWRITE DIRECTORY '/user/${username}/${examplesRoot}/output/' SELECT * 
 FRAGMENT_FILE = """
 <fragment>
     <file>test_dir/test.txt#test_link.txt</file>
-    <file>/user/${username}/${examplesRoot}/apps/pig/test_dir/test2.zip#test_link.zip</file>
+    <file>/user/${userName}/${examplesRoot}/apps/pig/test_dir/test2.zip#test_link.zip</file>
 </fragment>
 """
 
@@ -110,12 +110,12 @@ class TestHiveMapper(unittest.TestCase):
                 Task(
                     task_id="test_id",
                     template_name="hive.tpl",
+                    trigger_rule="one_success",
                     template_params={
-                        "query": "\nDROP TABLE IF EXISTS test_query;\n"
-                        "CREATE EXTERNAL TABLE test_query (a INT) STORED AS TEXTFILE\n"
-                        "LOCATION '/user/TEST_USERNAME/TEST_EXAMPLE_ROOT/input/';\n"
-                        "INSERT OVERWRITE DIRECTORY '/user/${username}/TEST_EXAMPLE_ROOT/output/' "
-                        "SELECT * FROM test_query;\n",
+                        "query": "DROP TABLE IF EXISTS test_query;\nCREATE EXTERNAL TABLE test_query (a INT) "
+                        "STORED AS TEXTFILE\nLOCATION '/user/{{userName}}/{{examplesRoot}}/input/';"
+                        "\nINSERT OVERWRITE DIRECTORY '/user/{{userName}}/{{examplesRoot}}/output/' "
+                        "SELECT * FROM test_query;",
                         "script": None,
                         "props": PropertySet(
                             config={},
@@ -152,6 +152,7 @@ class TestHiveMapper(unittest.TestCase):
                 Task(
                     task_id="test_id",
                     template_name="hive.tpl",
+                    trigger_rule="one_success",
                     template_params={
                         "query": None,
                         "script": "script.q",
@@ -168,8 +169,8 @@ class TestHiveMapper(unittest.TestCase):
                         "archives": [],
                         "files": [],
                         "variables": {
-                            "INPUT": "/user/TEST_USERNAME/TEST_EXAMPLE_ROOT/apps/hive/input/",
-                            "OUTPUT": "/user/TEST_USERNAME/TEST_EXAMPLE_ROOT/apps/hive/output/",
+                            "INPUT": "/user/{{userName}}/{{examplesRoot}}/apps/hive/input/",
+                            "OUTPUT": "/user/{{userName}}/{{examplesRoot}}/apps/hive/output/",
                         },
                     },
                 )
@@ -193,9 +194,10 @@ class TestHiveMapper(unittest.TestCase):
             Task(
                 task_id="test_id_prepare",
                 template_name="prepare.tpl",
+                trigger_rule="one_success",
                 template_params={
-                    "delete": "/user/TEST_USERNAME/TEST_EXAMPLE_ROOT/apps/pig/output",
-                    "mkdir": "/user/TEST_USERNAME/TEST_EXAMPLE_ROOT/apps/pig/created-folder",
+                    "delete": "/user/{{userName}}/{{examplesRoot}}/apps/pig/output",
+                    "mkdir": "/user/{{userName}}/{{examplesRoot}}/apps/pig/created-folder",
                 },
             ),
             tasks[0],
@@ -219,12 +221,13 @@ class TestHiveMapper(unittest.TestCase):
                 Task(
                     task_id="test_id",
                     template_name="hive.tpl",
+                    trigger_rule="one_success",
                     template_params={
-                        "query": "\nDROP TABLE IF EXISTS test_query;\n"
-                        "CREATE EXTERNAL TABLE test_query (a INT) STORED AS TEXTFILE\n"
-                        "LOCATION '/user/TEST_USERNAME/TEST_EXAMPLE_ROOT/input/';\n"
-                        "INSERT OVERWRITE DIRECTORY '/user/${username}/TEST_EXAMPLE_ROOT/output/' "
-                        "SELECT * FROM test_query;\n",
+                        "query": "DROP TABLE IF EXISTS test_query;"
+                        "\nCREATE EXTERNAL TABLE test_query (a INT) STORED "
+                        "AS TEXTFILE\nLOCATION '/user/{{userName}}/{{examplesRoot}}/input/';\nINSERT "
+                        "OVERWRITE DIRECTORY '/user/{{userName}}/{{examplesRoot}}/output/' "
+                        "SELECT * FROM test_query;",
                         "script": None,
                         "props": PropertySet(
                             config={},
@@ -239,8 +242,8 @@ class TestHiveMapper(unittest.TestCase):
                         "archives": [],
                         "files": [
                             "hdfs:///user/TEST_USERNAME/apps/hive/test_dir/test.txt#test_link.txt",
-                            "hdfs:///user/${username}/TEST_EXAMPLE_ROOT/apps/pig/test_dir/test2.zip"
-                            "#test_link.zip",
+                            "hdfs:///user/{{userName}}/{{examplesRoot}}/apps/pig/test_dir/"
+                            "test2.zip#test_link.zip",
                         ],
                         "variables": {},
                     },
@@ -267,12 +270,12 @@ class TestHiveMapper(unittest.TestCase):
                 Task(
                     task_id="test_id",
                     template_name="hive.tpl",
+                    trigger_rule="one_success",
                     template_params={
-                        "query": "\nDROP TABLE IF EXISTS test_query;\n"
-                        "CREATE EXTERNAL TABLE test_query (a INT) STORED AS TEXTFILE\n"
-                        "LOCATION '/user/TEST_USERNAME/TEST_EXAMPLE_ROOT/input/';\n"
-                        "INSERT OVERWRITE DIRECTORY '/user/${username}/TEST_EXAMPLE_ROOT/output/' "
-                        "SELECT * FROM test_query;\n",
+                        "query": "DROP TABLE IF EXISTS test_query;\nCREATE EXTERNAL TABLE test_query (a INT) "
+                        "STORED AS TEXTFILE\nLOCATION '/user/{{userName}}/{{examplesRoot}}/input/';"
+                        "\nINSERT OVERWRITE DIRECTORY '/user/{{userName}}/{{examplesRoot}}/output/' "
+                        "SELECT * FROM test_query;",
                         "script": None,
                         "props": PropertySet(
                             config={},

@@ -22,6 +22,7 @@ from o2a.converter.task import Task
 from o2a.converter.relation import Relation
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.o2a_libs.property_utils import PropertySet
+from o2a.o2a_libs import el_parser
 from o2a.utils import el_utils, xml_utils
 
 
@@ -54,13 +55,13 @@ class SSHMapper(ActionMapper):
         self.host = user_host[1]
 
     def get_command(self) -> str:
-        cmd_txt = xml_utils.get_tag_el_text(self.oozie_node, TAG_CMD, self.props)
-        args = xml_utils.get_tags_el_array_from_text(self.oozie_node, TAG_ARG, self.props)
+        cmd_txt = xml_utils.get_tag_el_text(self.oozie_node, TAG_CMD)
+        args = xml_utils.get_tags_el_array_from_text(self.oozie_node, TAG_ARG)
         if not cmd_txt:
             raise Exception(f"Missing or empty command node in SSH action {self.oozie_node}")
 
         cmd = " ".join([cmd_txt] + [shlex.quote(x) for x in args])
-        cmd = el_utils.convert_el_to_jinja(cmd)
+        cmd = el_parser.translate(cmd, quote=True)
         return cmd
 
     def get_host_key(self) -> str:

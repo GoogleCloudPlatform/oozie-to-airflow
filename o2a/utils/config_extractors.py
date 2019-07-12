@@ -20,8 +20,7 @@ import xml.etree.ElementTree as ET
 
 from o2a.converter.constants import HDFS_FOLDER
 from o2a.converter.exceptions import ParseException
-from o2a.o2a_libs.property_utils import PropertySet
-from o2a.utils import el_utils
+from o2a.o2a_libs import el_parser
 
 TAG_CONFIGURATION = "configuration"
 TAG_PROPERTY = "property"
@@ -30,7 +29,7 @@ TAG_VALUE = "value"
 TAG_JOB_XML = "job-xml"
 
 
-def extract_properties_from_configuration_node(config_node: ET.Element, props: PropertySet) -> Dict[str, str]:
+def extract_properties_from_configuration_node(config_node: ET.Element) -> Dict[str, str]:
     """Extracts configuration properties from ``configuration`` node"""
     properties_dict: Dict[str, str] = dict()
     for property_node in config_node.findall(TAG_PROPERTY):
@@ -58,14 +57,12 @@ def extract_properties_from_configuration_node(config_node: ET.Element, props: P
                 "the correct content."
             )
 
-        properties_dict[name] = el_utils.replace_el_with_var(value, props=props, quote=False)
+        properties_dict[name] = el_parser.translate(value)
 
     return properties_dict
 
 
-def extract_properties_from_job_xml_nodes(
-    job_xml_nodes: List[ET.Element], input_directory_path: str, props: PropertySet
-):
+def extract_properties_from_job_xml_nodes(job_xml_nodes: List[ET.Element], input_directory_path: str):
     """Extracts configuration properties from ``job_xml`` nodes"""
     properties_dict: Dict[str, str] = dict()
 
@@ -84,7 +81,7 @@ def extract_properties_from_job_xml_nodes(
                 "A job-xml configuration node is specified in the workflow XML, however its value is empty."
                 "Make sure the path to a configuration file is valid."
             )
-        new_properties = extract_properties_from_configuration_node(config_node, props=props)
+        new_properties = extract_properties_from_configuration_node(config_node)
         properties_dict.update(new_properties)
 
     return properties_dict

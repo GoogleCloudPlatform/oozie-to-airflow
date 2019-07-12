@@ -101,13 +101,11 @@ class TestActionMapper(unittest.TestCase):
         mapper.on_parse_node()
 
         config_node = find_node_by_tag(action_node, TAG_CONFIGURATION)
-        extract_properties_from_configuration_node_mock.assert_called_once_with(
-            config_node=config_node, props=mapper.props
-        )
+        extract_properties_from_configuration_node_mock.assert_called_once_with(config_node=config_node)
 
         job_xml_nodes = find_nodes_by_tag(action_node, TAG_JOB_XML)
         extract_properties_from_job_xml_nodes_mock.assert_called_once_with(
-            input_directory_path="/tmp/input_directory_path", job_xml_nodes=job_xml_nodes, props=mapper.props
+            input_directory_path="/tmp/input_directory_path", job_xml_nodes=job_xml_nodes
         )
 
         self.assertEqual({"KEY1": "VALUE1", "KEY2": "VALUE2"}, mapper.props.action_node_properties)
@@ -139,13 +137,11 @@ class TestActionMapper(unittest.TestCase):
         mapper.on_parse_node()
 
         config_node = find_node_by_tag(action_node, TAG_CONFIGURATION)
-        extract_properties_from_configuration_node_mock.assert_called_once_with(
-            config_node=config_node, props=mapper.props
-        )
+        extract_properties_from_configuration_node_mock.assert_called_once_with(config_node=config_node)
 
         job_xml_nodes = find_nodes_by_tag(action_node, TAG_JOB_XML)
         extract_properties_from_job_xml_nodes_mock.assert_called_once_with(
-            input_directory_path="/tmp/input_directory_path", job_xml_nodes=job_xml_nodes, props=mapper.props
+            input_directory_path="/tmp/input_directory_path", job_xml_nodes=job_xml_nodes
         )
 
         self.assertEqual({"KEY": "VALUE2"}, mapper.props.action_node_properties)

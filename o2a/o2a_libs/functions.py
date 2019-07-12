@@ -16,7 +16,11 @@
 EL functions map module.
 """
 import re
-import o2a.o2a_libs.el_wf_functions as wf
+import o2a.o2a_libs.el_wf_functions as wf_functions
+
+
+# Used for functions.wf.f_name pattern sin templates
+wf = wf_functions  # pylint:disable=invalid-name
 
 
 def first_not_null(str_one, str_two):
@@ -128,10 +132,9 @@ FUNCTION_MAP = {
     "wf_id": "run_id",
     "wf_name": "dag.dag_id",
     "timestamp": 'macros.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")',
-    "wf_app_path": "params['nameNode']/user/params['userName']}/params['examplesRoot']}/apps/hive",
+    "wf_app_path": "{{nameNode}}/user/{{userName'}}/{{examplesRoot}}/apps/hive",
     "concat": concat,
     "trim": trim,
-    "wf_conf": wf.conf,
 }
 
 

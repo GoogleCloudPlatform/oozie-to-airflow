@@ -16,7 +16,7 @@
 from typing import List
 from xml.etree.ElementTree import Element
 
-from o2a.utils.el_utils import replace_el_with_var
+from o2a.o2a_libs import el_parser
 from o2a.o2a_libs.property_utils import PropertySet
 
 
@@ -68,7 +68,7 @@ class FileExtractor:
         file_nodes: List[Element] = self.oozie_node.findall("file")
 
         for file_node in file_nodes:
-            file_path = replace_el_with_var(file_node.text, props=self.props, quote=False)
+            file_path = el_parser.translate(file_node.text)
             self.add_file(file_path)
 
         return self.files, self.hdfs_files
@@ -102,7 +102,7 @@ class ArchiveExtractor:
         archive_nodes: List[Element] = self.oozie_node.findall("archive")
         if archive_nodes:
             for archive_node in archive_nodes:
-                archive_path = replace_el_with_var(archive_node.text, props=self.props, quote=False)
+                archive_path = el_parser.translate(archive_node.text)
                 self.add_archive(archive_path)
         return self.archives, self.hdfs_archives
 

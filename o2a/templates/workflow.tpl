@@ -18,7 +18,6 @@
 {{ dependency }}
 {% endfor %}
 
-from o2a.o2a_libs import functions
 
 CONFIG={{ config | to_python }}
 
@@ -26,11 +25,13 @@ JOB_PROPS={{ job_properties | to_python }}
 
 TASK_MAP={{ task_map | to_python }}
 
+TEMPLATE_ENV = {**CONFIG, **JOB_PROPS, "functions": functions, "task_map": TASK_MAP }
+
 with models.DAG(
     {{ dag_name | to_python }},
     schedule_interval={% if schedule_interval %}datetime.timedelta(days={{ schedule_interval }}){% else %}None{% endif %},  # Change to suit your needs
     start_date=dates.days_ago({{ start_days_ago }}),  # Change to suit your needs
-    user_defined_macros={"functions": functions, "task_map": TASK_MAP}
+    user_defined_macros=TEMPLATE_ENV
 ) as dag:
 
 {% filter indent(4, True) %}

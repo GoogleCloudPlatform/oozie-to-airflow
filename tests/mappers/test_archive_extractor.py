@@ -126,9 +126,9 @@ class TestArchiveExtractor(unittest.TestCase):
         # Then
         self.assertEqual(
             [
-                "hdfs:///path/with/el/value1.tar",
-                "hdfs:///path/with/el/value2.tar",
-                "hdfs:///path/with/two/els/value1/value2.tar",
+                "hdfs:///path/with/el/{{var1}}.tar",
+                "hdfs:///path/with/el/{{var2}}.tar",
+                "hdfs:///path/with/two/els/{{var1}}/{{var2}}.tar",
             ],
             archive_extractor.hdfs_archives,
         )

@@ -111,9 +111,9 @@ class TestFileExtractor(unittest.TestCase):
         # Then
         self.assertEqual(
             [
-                "hdfs:///path/with/el/value1",
-                "hdfs:///path/with/el/value2",
-                "hdfs:///path/with/two/els/value1/value2",
+                "hdfs:///path/with/el/{{var1}}",
+                "hdfs:///path/with/el/{{var2}}",
+                "hdfs:///path/with/two/els/{{var1}}/{{var2}}",
             ],
             file_extractor.hdfs_files,
         )
