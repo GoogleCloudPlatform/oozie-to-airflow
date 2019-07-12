@@ -43,7 +43,7 @@ class RemoveKillTransformerTest(unittest.TestCase):
         workflow.nodes[first_mapper.name] = first_node
         workflow.nodes[second_mapper.name] = second_node
 
-        transformer.process_workflow(workflow)
+        transformer.process_workflow_after_parse_workflow_xml(workflow)
 
         self.assertEqual({first_mapper.name}, set(workflow.nodes.keys()))
 
@@ -65,7 +65,7 @@ class RemoveKillTransformerTest(unittest.TestCase):
         workflow.nodes[first_mapper.name] = first_node
         workflow.nodes[third_mapper.name] = third_node
 
-        transformer.process_workflow(workflow)
+        transformer.process_workflow_after_parse_workflow_xml(workflow)
 
         self.assertEqual({first_mapper.name, third_mapper.name}, set(workflow.nodes.keys()))
         self.assertEqual([third_node.name], first_node.downstream_names)

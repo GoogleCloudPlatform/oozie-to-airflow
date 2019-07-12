@@ -27,7 +27,7 @@ class RemoveJoinTransformer(BaseWorkflowTransformer):
     Remove join nodes when there are no downstream nodes
     """
 
-    def process_workflow(self, workflow: Workflow):
+    def process_workflow_after_parse_workflow_xml(self, workflow: Workflow):
         join_nodes = workflow.get_nodes_by_type(JoinMapper)
         for join_node in join_nodes:
             if not join_node.downstream_names:

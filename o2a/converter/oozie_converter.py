@@ -95,16 +95,17 @@ class OozieConverter:
         os.makedirs(self.workflow.output_directory_path, exist_ok=True)
 
     def convert(self, as_subworkflow=False):
+        """
+        Starts the process of converting the workflow.
+        """
         self.retrieve_lib_jar_libraries()
         self.property_parser.parse_property()
         self.parser.parse_workflow()
-
-        self.apply_transformers()
+        self.apply_preconvert_transformers()
         self.convert_nodes()
-
+        self.apply_postconvert_transformers()
         self.add_state_handlers()
         self.convert_relations()
-
         self.convert_dependencies()
 
         if as_subworkflow:
@@ -169,13 +170,18 @@ class OozieConverter:
         Copies additional assets needed to execute a workflow, eg. Pig scripts.
         """
         for node in nodes.values():
-            logging.info(f"Copies additional assets for the node: {node.mapper.name}")
+            logging.info(f"Copies additional assets for the node: {node.name}")
             node.mapper.copy_extra_assets(
                 input_directory_path=os.path.join(self.workflow.input_directory_path, HDFS_FOLDER),
                 output_directory_path=self.workflow.output_directory_path,
             )
 
-    def apply_transformers(self):
-        logging.info(f"Applying transformers")
+    def apply_preconvert_transformers(self):
+        logging.info(f"Applying pre-convert transformers")
         for transformer in self.transformers:
-            transformer.process_workflow(self.workflow)
+            transformer.process_workflow_after_parse_workflow_xml(self.workflow)
+
+    def apply_postconvert_transformers(self):
+        logging.info(f"Applying post-convert transformers")
+        for transformer in self.transformers:
+            transformer.process_workflow_after_convert_nodes(self.workflow, props=self.props)

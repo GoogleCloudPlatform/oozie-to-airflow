@@ -13,17 +13,20 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Base transformer classes"""
-from abc import ABC, abstractmethod
 
 from o2a.converter.workflow import Workflow
 
 
-# pylint: disable=too-few-public-methods
-class BaseWorkflowTransformer(ABC):
+from o2a.o2a_libs.property_utils import PropertySet
+
+
+class BaseWorkflowTransformer:
     """
     Base class for all transformers
     """
 
-    @abstractmethod
-    def process_workflow(self, workflow: Workflow):
+    def process_workflow_after_parse_workflow_xml(self, workflow: Workflow):
+        pass
+
+    def process_workflow_after_convert_nodes(self, workflow: Workflow, props: PropertySet):
         pass

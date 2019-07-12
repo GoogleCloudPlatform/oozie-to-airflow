@@ -59,7 +59,7 @@ class RemoveForkTransformerTest(unittest.TestCase):
         workflow.nodes[third_mapper.name] = third_node
         workflow.nodes[join_mapper.name] = join_node
 
-        transformer.process_workflow(workflow)
+        transformer.process_workflow_after_parse_workflow_xml(workflow)
 
         self.assertEqual(
             {first_mapper.name, second_mapper.name, third_mapper.name, join_mapper.name},
@@ -109,7 +109,7 @@ class RemoveForkTransformerTest(unittest.TestCase):
         workflow.nodes[join_mapper.name] = join_node
         workflow.nodes[zero_node.name] = zero_node
 
-        transformer.process_workflow(workflow)
+        transformer.process_workflow_after_parse_workflow_xml(workflow)
 
         self.assertEqual(
             {
@@ -151,6 +151,6 @@ class RemoveForkTransformerTest(unittest.TestCase):
         workflow.nodes[fork_a_mapper.name] = fork_a_node
         workflow.nodes[fork_b_mapper.name] = fork_b_node
 
-        transformer.process_workflow(workflow)
+        transformer.process_workflow_after_parse_workflow_xml(workflow)
 
         self.assertEqual(set(), set(workflow.nodes.keys()))

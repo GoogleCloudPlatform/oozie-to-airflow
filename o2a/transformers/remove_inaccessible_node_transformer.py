@@ -30,7 +30,7 @@ class RemoveInaccessibleNodeTransformer(BaseWorkflowTransformer):
     to Start node are executed.
     """
 
-    def process_workflow(self, workflow: Workflow):
+    def process_workflow_after_parse_workflow_xml(self, workflow: Workflow):
         accessible_nodes = self._find_accessible_nodes(workflow)
 
         for node in workflow.nodes.copy().values():
