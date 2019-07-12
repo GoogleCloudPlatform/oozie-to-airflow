@@ -27,7 +27,7 @@ class RemoveForkTransformer(BaseWorkflowTransformer):
     Remove fork nodes when there are no upstream nodes
     """
 
-    def process_workflow(self, workflow: Workflow):
+    def process_workflow_after_parse_workflow_xml(self, workflow: Workflow):
         fork_nodes = workflow.get_nodes_by_type(ForkMapper)
         for fork_node in fork_nodes:
             upstream_nodes = workflow.find_upstream_nodes(fork_node)

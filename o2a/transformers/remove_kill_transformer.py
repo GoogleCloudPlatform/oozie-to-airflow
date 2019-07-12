@@ -26,7 +26,7 @@ class RemoveKillTransformer(BaseWorkflowTransformer):
     Remove Kill nodes with all relations when it's used in error flow.
     """
 
-    def process_workflow(self, workflow: Workflow):
+    def process_workflow_after_parse_workflow_xml(self, workflow: Workflow):
         kill_nodes = workflow.get_nodes_by_type(KillMapper)
         for kill_node in kill_nodes:
             upstream_nodes = workflow.find_upstream_nodes(kill_node)
