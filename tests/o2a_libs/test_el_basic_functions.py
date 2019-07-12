@@ -18,7 +18,6 @@ import unittest
 from parameterized import parameterized
 
 from o2a.o2a_libs.el_basic_functions import first_not_null, concat, replace_all, append_all, trim, url_encode
-from o2a.o2a_libs.el_wf_functions import _reverse_task_map
 
 
 class TestElBasicFunctions(unittest.TestCase):
@@ -80,15 +79,3 @@ class TestElBasicFunctions(unittest.TestCase):
     @parameterized.expand([(" ", "%20"), ("?", "%3F"), ("", ""), (None, "")])
     def test_urlencode(self, src_str, expected):
         self.assertEqual(expected, url_encode(src_str))
-
-    def test_reverse_map(self):
-        props = {"key1": ["value1", "value2"], "key2": ["value3"]}
-        keys = sum(props.values(), [])
-        values = props.keys()
-
-        rev = _reverse_task_map(props)
-        for key in keys:
-            self.assertIn(key, rev.keys())
-
-        for val in values:
-            self.assertIn(val, rev.values())
