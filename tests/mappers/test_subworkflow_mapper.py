@@ -59,7 +59,7 @@ class TestSubworkflowMapper(TestCase):
         </property>
     </configuration>
 </sub-workflow>"""
-        super(TestSubworkflowMapper, cls).setUpClass()
+        super().setUpClass()
         cls.subworkflow_node = ET.fromstring(subworkflow_node_str)
 
     def tearDown(self) -> None:
