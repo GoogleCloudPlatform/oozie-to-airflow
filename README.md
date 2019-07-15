@@ -361,7 +361,7 @@ This will parse and write to an output file in the `output/demo` directory.
 ### Known limitations
 
 The decision node is not fully functional as there is not currently
-support for all EL functions. So in order for it to run in Airflow you must
+ support for all EL functions. So in order for it to run in Airflow you may need to
 edit the Python output file and change the decision node expression.
 
 Issue in GitHub: [Implement decision node](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/42)
