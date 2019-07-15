@@ -165,11 +165,11 @@ class TestDistCpMapperNoPrepare(unittest.TestCase):
 
 
 def _get_distcp_mapper(distcp_node: Element, job_properties: Dict[str, str], config: Dict[str, str]):
-    _name = "distcp"
+    name = "distcp"
     mapper = DistCpMapper(
         oozie_node=distcp_node,
-        dag_name=_name,
-        name=_name,
+        dag_name=name,
+        name=name,
         props=PropertySet(job_properties=job_properties, config=config),
         input_directory_path="/tmp/input-directory-path/",
     )

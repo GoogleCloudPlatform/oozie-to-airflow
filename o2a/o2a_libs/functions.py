@@ -132,13 +132,17 @@ FUNCTION_MAP = {
     "wf_id": "run_id",
     "wf_name": "dag.dag_id",
     "timestamp": 'macros.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")',
-    "wf_app_path": "{{nameNode}}/user/{{userName'}}/{{examplesRoot}}/apps/hive",
+    "wf_app_path": "{{nameNode}}/user/{{functions.wf.user()}}/{{examplesRoot}}/apps/hive",
     "concat": concat,
     "trim": trim,
 }
 
 
 def evaluate_function(name: str, args: tuple) -> str:
+    """
+    This function handles cases of el-function that can be seen as
+    string to string transformation.
+    """
     func = FUNCTION_MAP.get(name, None)
     if func:
         if isinstance(func, str):

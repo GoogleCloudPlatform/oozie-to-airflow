@@ -91,10 +91,10 @@ def last_error_node(context=None, session=None) -> str:
     ti = TaskInstance  # pylint:disable=invalid-name
     last_failed_task = (
         session.query(TaskInstance)
-            .filter(ti.dag_id == dag_id)
-            .filter(ti.task_id.endswith("_error"))
-            .order_by(ti.execution_date.asc())
-            .first()
+        .filter(ti.dag_id == dag_id)
+        .filter(ti.task_id.endswith("_error"))
+        .order_by(ti.execution_date.asc())
+        .first()
     )
 
     if not last_failed_task:

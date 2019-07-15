@@ -37,10 +37,10 @@
         <switch>
             <!-- Until workflow EL functions (wf:xyz()) are implemented we use a dummy replacement -->
             <case to="first">
-                ${firstNotNull("", "")}
+                ${firstNotNull("first", "second") == "second"}
             </case>
             <case to="end">
-                ${firstNotNull("test", "")}
+                ${firstNotNull("first", "second") == "first"}
             </case>
             <default to="kill"/>
         </switch>
