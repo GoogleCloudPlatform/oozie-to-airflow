@@ -14,13 +14,13 @@
 ---
 repos:
   - repo: https://github.com/ambv/black
-    rev: "19.3b0"
+    rev: 19.3b0
     hooks:
       - id: black
         name: Formats python files using black
         language_version: python3.6
   - repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: "v1.1.6"
+    rev: v1.1.6
     hooks:
       - id: insert-license
         name: Add licence for all XML, md files
@@ -53,7 +53,7 @@ repos:
         language: python
         types: [file, yaml]
   - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: "v2.1.0"
+    rev: v2.2.3
     hooks:
       - id: flake8
       - id: check-executables-have-shebangs
@@ -71,18 +71,18 @@ repos:
       - id: check-hooks-apply
       - id: check-useless-excludes
   - repo: git://github.com/luismayta/pre-commit-mypy
-    rev: "0.1.1"
+    rev: 0.1.1
     hooks:
       - id: mypy
         name: Checks typing annotations consistency with mypy
         require_serial: true
   - repo: https://github.com/pre-commit/mirrors-pylint
-    rev: "v2.3.1"
+    rev: v2.3.1
     hooks:
       - id: pylint
         name: Checks for common programming errors with pylint
   - repo: https://github.com/thlorenz/doctoc.git
-    rev: "v1.4.0"
+    rev: v1.4.0
     hooks:
       - id: doctoc
         files: ^README\.md|CONTRIBUTING\.md$

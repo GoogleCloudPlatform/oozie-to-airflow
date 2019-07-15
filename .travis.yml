@@ -16,7 +16,7 @@ language: python
 env:
   - SLUGIFY_USES_TEXT_UNIDECODE=yes WITH_COVERAGE=true
 python:
-  - "3.6"
+  - "3.6.7"
 cache: pip
 addons:
   apt:
