@@ -12,8 +12,7 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
- -->
-
+-->
 # Oozie to Airflow
 
 [![Build Status](https://travis-ci.org/GoogleCloudPlatform/oozie-to-airflow.svg?branch=master)](https://travis-ci.org/GoogleCloudPlatform/oozie-to-airflow)
@@ -365,6 +364,8 @@ The decision node is not fully functional as there is not currently
 support for all EL functions. So in order for it to run in Airflow you must
 edit the Python output file and change the decision node expression.
 
+Issue in GitHub: [Implement decision node](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/42)
+
 ### Output
 In this example the output (including sub-workflow dag) will be created in the `./output/ssh/` folder.
 
@@ -451,6 +452,8 @@ actions configurations.
 
 Currently we use the `DataProcHadoopOperator` which does not store the job exit status in an XCOM for other tasks to use.
 
+Issue in Github: [Implement exit status and counters in MapReduce Action](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/337)
+
 **2. Configuration options**
 
 From the [Oozie documentation](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a3.2.2_Map-Reduce_Action)
@@ -465,9 +468,15 @@ From the [Oozie documentation](https://oozie.apache.org/docs/5.1.0/WorkflowFunct
 Currently the only supported way of configuring the map-reduce action is with the
 inline action configuration, i.e. using the `<configuration>` tag in the workflow's XML file definition.
 
+Issues in Github:
+* [Add support for config-default.xml](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/137)
+* [Add support for parameters section of the workflow.xml](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/138)
+* [Handle global configuration properties](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/134)
+
 **3. Streaming and pipes**
 
 Streaming and pipes are currently not supported.
+Issue in github [Implement streaming support](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/336)
 
 ## FS Example
 
@@ -485,7 +494,11 @@ The converted DAG uses the `BashOperator` in Airflow.
 
 ### Known limitations
 
-Not all FS operations are currently idempotent. This will be fixed.
+Not all FS operations are currently idempotent. It's not a problem if prepare action is used in other tasks
+but might be a problem in certain situations. Fixing the operators to be idempotent requires more complex
+logic and support for Pig actions is missing currently.
+
+Issue in Github: [FS Mapper and idempotence](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/175)
 
 ## Java Example
 
@@ -504,7 +517,7 @@ The converted DAG uses the `DataProcHadoopOperator` in Airflow.
 ### Known limitations
 
 1. Overriding action's Main class via `oozie.launcher.action.main.class` is not implemented.
-
+Issue in Github: [Override Java main class with property](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/338)
 
 ## Pig Example
 
@@ -534,6 +547,12 @@ From the [Oozie documentation](https://oozie.apache.org/docs/5.1.0/WorkflowFunct
 Currently the only supported way of configuring the pig action is with the
 inline action configuration, i.e. using the `<configuration>` tag in the workflow's XML file definition.
 
+Issues in Github:
+* [Add support for config-default.xml](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/137)
+* [Add support for parameters section of the workflow.xml](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/138)
+* [Handle global configuration properties](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/134)
+
+
 ## Shell Example
 
 The Shell example can be run as:
@@ -562,6 +581,8 @@ Currently we use the `BashOperator` which can store only the last line of the jo
 In this case the line is not helpful as it relates to the Dataproc job submission status and
 not the Shell action's result.
 
+Issue in Github: [Finalize shell mapper](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/50)
+
 **2. No Shell launcher configuration**
 
 From the [Oozie documentation](https://oozie.apache.org/docs/5.1.0/DG_ShellActionExtension.html):
@@ -569,6 +590,8 @@ From the [Oozie documentation](https://oozie.apache.org/docs/5.1.0/DG_ShellActio
 using the configuration elements.
 
 Currently there is no way specify the shell launcher configuration (it is ignored).
+
+Issue in Github: [Shell Launcher Configuration](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/340)
 
 ## Spark Example
 
@@ -621,8 +644,7 @@ The converted DAG uses the `SubDagOperator` in Airflow.
 
 ### Known limitations
 
-Currently generated name of the sub-workflow is fixed which means that only one subworkflow is supported
-per DAG folder. This will be fixed soon.
+No known limitations.
 
 ## DistCp Example
 
@@ -663,6 +685,9 @@ The converted DAG uses the `BranchPythonOperator` in Airflow.
 Decision example is not yet fully functional as EL functions are not yet fully implemented so condition is
 hard-coded for now. Once EL functions are implemented, the condition in the example will be updated.
 
+Github issue: [Implement decision node](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/42)
+
+
 ## EL Example
 
 The Oozie Expression Language (EL) example can be run as:
@@ -684,6 +709,8 @@ In this example the output will be created in the `./output/el/` folder.
 Decision example is not yet fully functional as EL functions are not yet fully implemented so condition is
 hard-coded for now. Once EL functions are implemented, the condition in the example will be updated.
 
+Github issue: [Implement decision node](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/42)
+
 ## Hive/Hive2 Example
 
 The Hive example can be run as:
@@ -704,10 +731,13 @@ The converted DAG uses the `DataProcHiveOperator` in Airflow.
 
 Connection configuration options are not supported.
 
+
 **2. Not all elements are supported**
 
 For Hive, the following elements are not supported: `job-tracker`, `name-node`.
 For Hive2, the following elements are not supported: `job-tracker`, `name-node`, `jdbc-url`, `password`.
+
+The Github issue for both problems: [Hive connection configuration and other elements](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/342)
 
 ## Email Example
 
@@ -717,6 +747,7 @@ The Email example can be run as:
 
 Make sure to first copy `/examples/email/configuration.template.properties`, rename it as
 `configuration.properties` and fill in with configuration data.
+
 
 ### Output
 In this example the output will be created in the `./output/email/` folder.
@@ -755,6 +786,8 @@ implemented.
 
 *Solution:* Implement in O2A a mechanism to extract a file from HDFS inside Airflow.
 
+Github Issue: [Add support for attachment in Email mapper](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/335)
+
 **2. `<content_type>` tag is not supported**
 
 From Oozie docs:
@@ -771,6 +804,8 @@ which is `multipart/mixed`.
 *Solution:* Modify the Airflow's `EmailOperator` to support more
 content types.
 
+Github Issue: [Content type support in Email mapper](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/343)
+
 **3. `cc` and `bcc` fields are not templated in EmailOperator**
 
 Only the 'to', 'subject' and 'html_content' fields in EmailOperator are templated.
@@ -782,3 +817,5 @@ not be executed, but rather treated as a plain string.
 
 *Solution:* Modify the Airflow's `EmailOperator` to mark more fields as
 `template_fields`.
+
+Github Issue: [The CC: and BCC: fields are not templated in EmailOperator](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/344)
