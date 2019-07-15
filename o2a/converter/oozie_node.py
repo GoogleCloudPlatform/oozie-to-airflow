@@ -21,7 +21,7 @@ from o2a.converter.relation import Relation
 from o2a.mappers.base_mapper import BaseMapper
 
 
-class ParsedActionNode:
+class OozieNode:
     """Class for parsed Oozie workflow node"""
 
     def __init__(self, mapper: BaseMapper, tasks=None, relations=None):
@@ -52,3 +52,23 @@ class ParsedActionNode:
         if isinstance(other, self.__class__):
             return self.__dict__ == other.__dict__
         return False
+
+
+class OozieActionNode(OozieNode):
+    def __repr__(self) -> str:
+        return (
+            f"OozieActionNode(mapper={self.mapper}, "
+            f"downstream_names={self.downstream_names}, "
+            f"error_downstream_name={self.error_downstream_name}, "
+            f"tasks={self.tasks}, relations={self.relations})"
+        )
+
+
+class OozieControlNode(OozieNode):
+    def __repr__(self) -> str:
+        return (
+            f"OozieControlNode(mapper={self.mapper}, "
+            f"downstream_names={self.downstream_names}, "
+            f"error_downstream_name={self.error_downstream_name}, "
+            f"tasks={self.tasks}, relations={self.relations})"
+        )

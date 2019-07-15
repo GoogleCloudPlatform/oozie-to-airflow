@@ -15,8 +15,7 @@
 """Tests action mapper"""
 import unittest
 from unittest import mock
-from typing import Tuple, List, cast
-
+from typing import List, Tuple, cast
 from xml.etree import ElementTree as ET
 
 from o2a.converter.relation import Relation
@@ -96,7 +95,7 @@ class TestActionMapper(unittest.TestCase):
     </configuration>
 </action>
 """
-        action_node = cast(ET.Element, ET.fromstring(action_node_str))
+        action_node: ET.Element = cast(ET.Element, ET.fromstring(action_node_str))
         mapper = self._get_action_mapper(action_node)
 
         mapper.on_parse_node()
@@ -180,7 +179,7 @@ class TestActionMapper(unittest.TestCase):
         self.assertEqual({"KEY1": "VALUE1"}, mapper.props.action_node_properties)
 
     @staticmethod
-    def _get_action_mapper(action_node, props: PropertySet = None):
+    def _get_action_mapper(action_node: ET.Element, props: PropertySet = None):
         if not props:
             props = PropertySet()
         return ActionMapperTestImpl(

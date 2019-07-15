@@ -14,22 +14,19 @@
 # limitations under the License.
 """Tests Oozie Converter"""
 from os import path
-from unittest import mock, TestCase
+from unittest import TestCase, mock
 from xml.etree.ElementTree import Element
 
-
 from o2a import o2a
+from o2a.converter.mappers import ACTION_MAP
 from o2a.converter.oozie_converter import OozieConverter
-from o2a.converter.parsed_action_node import ParsedActionNode
-
+from o2a.converter.oozie_node import OozieActionNode
+from o2a.converter.relation import Relation
 from o2a.converter.task import Task
 from o2a.converter.task_group import TaskGroup
 from o2a.converter.workflow import Workflow
 from o2a.definitions import EXAMPLES_PATH
 from o2a.mappers.dummy_mapper import DummyMapper
-
-from o2a.converter.mappers import ACTION_MAP
-from o2a.converter.relation import Relation
 from o2a.transformers.remove_end_transformer import RemoveEndTransformer
 from o2a.transformers.remove_fork_transformer import RemoveForkTransformer
 from o2a.transformers.remove_inaccessible_node_transformer import RemoveInaccessibleNodeTransformer
@@ -101,8 +98,8 @@ class TestOozieConverter(TestCase):
         mapper_1 = mock.MagicMock(**{"to_tasks_and_relations.return_value": (tasks_1, relations_1)})
         mapper_2 = mock.MagicMock(**{"to_tasks_and_relations.return_value": (tasks_2, relations_2)})
 
-        node_1 = ParsedActionNode(mapper=mapper_1)
-        node_2 = ParsedActionNode(mapper=mapper_2)
+        node_1 = OozieActionNode(mapper=mapper_1)
+        node_2 = OozieActionNode(mapper=mapper_2)
         nodes = dict(TASK_1=node_1, TASK_2=node_2)
         converter.workflow.nodes = nodes
 
@@ -252,7 +249,7 @@ class TestOozieConverter(TestCase):
             output_directory_path="out_dir",
             task_group_relations={Relation(from_task_id="DAG_NAME_A", to_task_id="DAG_NAME_B")},
             nodes=dict(
-                AAA=ParsedActionNode(DummyMapper(Element("dummy"), name="DAG_NAME_A", dag_name="DAG_NAME_B"))
+                AAA=OozieActionNode(DummyMapper(Element("dummy"), name="DAG_NAME_A", dag_name="DAG_NAME_B"))
             )
             if not nodes
             else nodes,

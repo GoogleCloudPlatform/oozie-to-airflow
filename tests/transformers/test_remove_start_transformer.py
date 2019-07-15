@@ -18,7 +18,7 @@ Remove Start Transformer tests
 import unittest
 from unittest import mock
 
-from o2a.converter.parsed_action_node import ParsedActionNode
+from o2a.converter.oozie_node import OozieNode
 from o2a.converter.task import Task
 from o2a.converter.workflow import Workflow
 from o2a.mappers.base_mapper import BaseMapper
@@ -37,10 +37,10 @@ class RemoveEndTransformerTest(unittest.TestCase):
         start_mapper = mock.Mock(spec=StartMapper)
         start_mapper.name = "start_task"
 
-        workflow.nodes[other_mapper.name] = ParsedActionNode(
+        workflow.nodes[other_mapper.name] = OozieNode(
             mapper=other_mapper, tasks=[self._get_dummy_task(other_mapper.name)]
         )
-        workflow.nodes[start_mapper.name] = ParsedActionNode(
+        workflow.nodes[start_mapper.name] = OozieNode(
             mapper=start_mapper, tasks=[self._get_dummy_task(start_mapper.name)]
         )
 

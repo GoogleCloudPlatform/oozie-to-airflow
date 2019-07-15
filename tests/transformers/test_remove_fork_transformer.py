@@ -18,7 +18,7 @@ Remove Fork Node transformer tests
 import unittest
 from unittest import mock
 
-from o2a.converter.parsed_action_node import ParsedActionNode
+from o2a.converter.oozie_node import OozieNode
 from o2a.converter.workflow import Workflow
 from o2a.mappers.dummy_mapper import DummyMapper
 from o2a.mappers.fork_mapper import ForkMapper
@@ -34,19 +34,19 @@ class RemoveForkTransformerTest(unittest.TestCase):
 
         fork_mapper = mock.Mock(spec=ForkMapper)
         fork_mapper.name = "fork_task"
-        fork_node = ParsedActionNode(fork_mapper)
+        fork_node = OozieNode(fork_mapper)
         first_mapper = mock.Mock(spec=DummyMapper)
         first_mapper.name = "first_task"
-        first_node = ParsedActionNode(first_mapper)
+        first_node = OozieNode(first_mapper)
         second_mapper = mock.Mock(spec=DummyMapper)
         second_mapper.name = "second_task"
-        second_node = ParsedActionNode(second_mapper)
+        second_node = OozieNode(second_mapper)
         third_mapper = mock.Mock(spec=DummyMapper)
         third_mapper.name = "third_task"
-        third_node = ParsedActionNode(third_mapper)
+        third_node = OozieNode(third_mapper)
         join_mapper = mock.Mock(spec=JoinMapper)
         join_mapper.name = "join_task"
-        join_node = ParsedActionNode(join_mapper)
+        join_node = OozieNode(join_mapper)
 
         fork_node.downstream_names = [first_mapper.name, second_mapper.name, third_mapper.name]
         first_node.downstream_names = [join_mapper.name]
@@ -78,22 +78,22 @@ class RemoveForkTransformerTest(unittest.TestCase):
 
         zero_mapper = mock.Mock(spec=DummyMapper)
         zero_mapper.name = "zero_task"
-        zero_node = ParsedActionNode(zero_mapper)
+        zero_node = OozieNode(zero_mapper)
         fork_mapper = mock.Mock(spec=ForkMapper)
         fork_mapper.name = "fork_task"
-        fork_node = ParsedActionNode(fork_mapper)
+        fork_node = OozieNode(fork_mapper)
         first_mapper = mock.Mock(spec=DummyMapper)
         first_mapper.name = "first_task"
-        first_node = ParsedActionNode(first_mapper)
+        first_node = OozieNode(first_mapper)
         second_mapper = mock.Mock(spec=DummyMapper)
         second_mapper.name = "second_task"
-        second_node = ParsedActionNode(second_mapper)
+        second_node = OozieNode(second_mapper)
         third_mapper = mock.Mock(spec=DummyMapper)
         third_mapper.name = "third_task"
-        third_node = ParsedActionNode(third_mapper)
+        third_node = OozieNode(third_mapper)
         join_mapper = mock.Mock(spec=JoinMapper)
         join_mapper.name = "join_task"
-        join_node = ParsedActionNode(join_mapper)
+        join_node = OozieNode(join_mapper)
 
         zero_node.downstream_names = [fork_node.name]
         fork_node.downstream_names = [first_mapper.name, second_mapper.name, third_mapper.name]
@@ -140,12 +140,12 @@ class RemoveForkTransformerTest(unittest.TestCase):
 
         fork_a_mapper = mock.Mock(spec=ForkMapper)
         fork_a_mapper.name = "join_A"
-        fork_a_node = ParsedActionNode(fork_a_mapper)
+        fork_a_node = OozieNode(fork_a_mapper)
         workflow.nodes[fork_a_mapper.name] = fork_a_node
 
         fork_b_mapper = mock.Mock(spec=ForkMapper)
         fork_b_mapper.name = "join_B"
-        fork_b_node = ParsedActionNode(fork_b_mapper)
+        fork_b_node = OozieNode(fork_b_mapper)
         workflow.nodes[fork_b_mapper.name] = fork_b_node
 
         workflow.nodes[fork_a_mapper.name] = fork_a_node

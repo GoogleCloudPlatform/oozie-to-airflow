@@ -20,9 +20,9 @@ from unittest import mock
 from pathlib import Path
 from xml.etree.ElementTree import Element
 
-from o2a.converter.parsed_action_node import ParsedActionNode
+from o2a.converter.oozie_node import OozieActionNode
 from o2a.converter.relation import Relation
-from o2a.converter.renderers import PythonRenderer, AutoflakeArgs, DotRenderer
+from o2a.converter.renderers import AutoflakeArgs, DotRenderer, PythonRenderer
 from o2a.converter.task import Task
 from o2a.converter.task_group import TaskGroup
 from o2a.converter.workflow import Workflow
@@ -161,7 +161,7 @@ class PythonRendererTestCase(unittest.TestCase):
             output_directory_path="/tmp/output",
             task_group_relations={Relation(from_task_id="DAG_NAME_A", to_task_id="DAG_NAME_B")},
             nodes=dict(
-                AAA=ParsedActionNode(DummyMapper(Element("dummy"), name="DAG_NAME_A", dag_name="DAG_NAME_B"))
+                AAA=OozieActionNode(DummyMapper(Element("dummy"), name="DAG_NAME_A", dag_name="DAG_NAME_B"))
             ),
             dependencies={"import IMPORT"},
         )
