@@ -67,7 +67,7 @@ class AddWorkflowNotificationTransformerTest(unittest.TestCase):
                     task_id=START_TASK_GROUP_NAME,
                     template_name="http.tpl",
                     trigger_rule="one_success",
-                    template_params={"url": "http://example.com/workflow"},
+                    template_params={"url": "http://example.com/workflow", "error_code": 0},
                 )
             ],
             workflow.task_groups[START_TASK_GROUP_NAME].tasks,
@@ -95,7 +95,7 @@ class AddWorkflowNotificationTransformerTest(unittest.TestCase):
                     task_id=END_SUCCESS_TASK_GROUP_NAME,
                     template_name="http.tpl",
                     trigger_rule="one_success",
-                    template_params={"url": "http://example.com/workflow"},
+                    template_params={"url": "http://example.com/workflow", "error_code": 0},
                 )
             ],
             workflow.task_groups[END_SUCCESS_TASK_GROUP_NAME].tasks,
@@ -123,7 +123,7 @@ class AddWorkflowNotificationTransformerTest(unittest.TestCase):
                     task_id=END_FAIL_TASK_GROUP_NAME,
                     template_name="http.tpl",
                     trigger_rule="one_success",
-                    template_params={"url": "http://example.com/workflow"},
+                    template_params={"url": "http://example.com/workflow", "error_code": 1},
                 )
             ],
             workflow.task_groups[END_FAIL_TASK_GROUP_NAME].tasks,
