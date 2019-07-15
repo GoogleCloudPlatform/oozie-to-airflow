@@ -22,7 +22,7 @@
             <cc>cc_1_test@example.com,cc_2_test@example.com</cc>
             <bcc>bcc_1_test@gmail.com,bcc_2_test@gmail.com</bcc>
             <subject>Email notifications for ${wf:id()}</subject>
-            <body>Hi ${userName}, the wf ${wf:id()} successfully completed (${examplesRoot}). Bye ${userName}</body>
+            <body>Hi ${wf:user()}, the wf ${wf:id()} successfully completed (${examplesRoot}). Bye ${wf:user()}</body>
             <content_type>text/plain</content_type>
         </email>
         <ok to="end"/>

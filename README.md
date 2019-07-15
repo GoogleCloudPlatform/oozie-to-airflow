@@ -289,12 +289,21 @@ A workflow definition may have zero or more kill nodes.
 ## EL Functions
 
 As of now, a very minimal set of [Oozie EL](https://oozie.apache.org/docs/4.0.1/WorkflowFunctionalSpec.html#a4.2_Expression_Language_Functions)
-functions are supported. The way they work is that there exists a
-dictionary mapping from each Oozie EL function string to the
-corresponding Python function. This is in `utils/el_utils.py`.
+functions are supported. The way they work is that an EL expression is being translated to
+jinja template. The translation is performed with usage of [Lark](https://lark-parser.readthedocs.io/en/latest/).
+All required variables should be passed in `job.properties`. Equivalents of EL functions could be found in
+`o2a_libs/functions.py`.
+
+For example the following EL expresssion
+```${wf:user() == firstNotNull(arg1, arg2)}```
+is translated to the following jinja equivalent:
+```{{functions.wf:user() == functions.firstNotNull(arg1, arg2)}}```
+and it is required that `job.properties` includes values for `arg1` and `arg2`.
+
+
 This design allows for custom EL function mapping if one so chooses. By
-default everything gets mapped to the module `o2a_libs`. This means in
-order to use EL function mapping, the folder `o2a_libs` should
+default everything gets mapped to the module `o2a_libs.functions`. This means in
+order to use EL function mapping, the folder `o2a_libs.functions` should
 be copied over to the Airflow DAG folder. This should then be picked up and
 parsed by the Airflow workers and then available to all DAGs.
 

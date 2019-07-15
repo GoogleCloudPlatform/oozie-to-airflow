@@ -16,9 +16,7 @@
 import shlex
 from typing import List, Optional, Set
 
-from urllib.parse import urlparse
 from xml.etree.ElementTree import Element
-
 
 from o2a.converter.relation import Relation
 from o2a.converter.task import Task
@@ -28,6 +26,7 @@ from o2a.mappers.extensions.prepare_mapper_extension import PrepareMapperExtensi
 from o2a.o2a_libs.property_utils import PropertySet
 
 from o2a.utils.xml_utils import get_tag_el_text
+from o2a.utils.el_utils import normalize_path
 
 TAG_GIT_URI = "git-uri"
 TAG_BRANCH = "branch"
@@ -75,9 +74,11 @@ class GitMapper(ActionMapper):
         self.git_branch = get_tag_el_text(self.oozie_node, TAG_BRANCH)
         destination_uri = get_tag_el_text(self.oozie_node, tag=TAG_DESTINATION_URI)
         if destination_uri:
-            self.destination_path = urlparse(destination_uri).path
+            self.destination_path = normalize_path(destination_uri, props=self.props, translated=True)
         key_path_uri = get_tag_el_text(self.oozie_node, tag=TAG_KEY_PATH)
-        self.key_path = urlparse(key_path_uri).path if key_path_uri else None
+        self.key_path = (
+            normalize_path(key_path_uri, props=self.props, translated=True) if key_path_uri else None
+        )
 
     def to_tasks_and_relations(self):
         action_task = Task(

@@ -26,7 +26,7 @@
     </fork>
     <action name="mkdir">
         <fs>
-            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/test-mkdir-1'/>
+            <mkdir path='${nameNode}/user/${wf:user()}/${examplesRoot}/apps/fs/test-mkdir-1'/>
         </fs>
         <ok to="join"/>
         <error to="fail"/>
@@ -39,30 +39,30 @@
                     <value>${nameNode}</value>
                 </property>
             </configuration>
-            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/test-delete-1'/>
-            <delete path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/test-delete-1'/>
+            <mkdir path='${nameNode}/user/${wf:user()}/${examplesRoot}/apps/fs/test-delete-1'/>
+            <delete path='${nameNode}/user/${wf:user()}/${examplesRoot}/apps/fs/test-delete-1'/>
         </fs>
         <ok to="join"/>
         <error to="fail"/>
     </action>
     <action name="move">
         <fs>
-            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/test-move-1'/>
-            <move source='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/test-move-1' target='/user/${userName}/${examplesRoot}/apps/fs/test-move-2' />
+            <mkdir path='${nameNode}/user/${wf:user()}/${examplesRoot}/apps/fs/test-move-1'/>
+            <move source='${nameNode}/user/${wf:user()}/${examplesRoot}/apps/fs/test-move-1' target='/user/${wf:user()}/${examplesRoot}/apps/fs/test-move-2' />
         </fs>
         <ok to="join"/>
         <error to="fail"/>
     </action>
     <action name="chmod">
         <fs>
-            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/test-chmod-1'/>
-            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/test-chmod-2'/>
-            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/test-chmod-3'/>
-            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/test-chmod-4'/>
-            <chmod path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/test-chmod-1' permissions='777' dir-files='false' />
-            <chmod path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/test-chmod-2' permissions='777' dir-files='true' />
-            <chmod path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/test-chmod-3' permissions='777' />
-            <chmod path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/test-chmod-4' permissions='777' dir-files='false' >
+            <mkdir path='${nameNode}/user/${wf:user()}/${examplesRoot}/apps/fs/test-chmod-1'/>
+            <mkdir path='${nameNode}/user/${wf:user()}/${examplesRoot}/apps/fs/test-chmod-2'/>
+            <mkdir path='${nameNode}/user/${wf:user()}/${examplesRoot}/apps/fs/test-chmod-3'/>
+            <mkdir path='${nameNode}/user/${wf:user()}/${examplesRoot}/apps/fs/test-chmod-4'/>
+            <chmod path='${nameNode}/user/${wf:user()}/${examplesRoot}/apps/fs/test-chmod-1' permissions='777' dir-files='false' />
+            <chmod path='${nameNode}/user/${wf:user()}/${examplesRoot}/apps/fs/test-chmod-2' permissions='777' dir-files='true' />
+            <chmod path='${nameNode}/user/${wf:user()}/${examplesRoot}/apps/fs/test-chmod-3' permissions='777' />
+            <chmod path='${nameNode}/user/${wf:user()}/${examplesRoot}/apps/fs/test-chmod-4' permissions='777' dir-files='false' >
                 <recursive/>
             </chmod>
         </fs>
@@ -71,15 +71,15 @@
     </action>
     <action name="touchz">
         <fs>
-            <touchz path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/test-touchz-1' />
+            <touchz path='${nameNode}/user/${wf:user()}/${examplesRoot}/apps/fs/test-touchz-1' />
         </fs>
         <ok to="join"/>
         <error to="fail"/>
     </action>
     <action name="chgrp">
         <fs>
-            <mkdir path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/test-chgrp-1'/>
-            <chgrp path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/test-chgrp-1' group='root' />
+            <mkdir path='${nameNode}/user/${wf:user()}/${examplesRoot}/apps/fs/test-chgrp-1'/>
+            <chgrp path='${nameNode}/user/${wf:user()}/${examplesRoot}/apps/fs/test-chgrp-1' group='root' />
         </fs>
         <ok to="join"/>
         <error to="fail"/>

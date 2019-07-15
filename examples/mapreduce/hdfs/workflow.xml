@@ -40,7 +40,7 @@
         <map-reduce>
             <name-node>${nameNode}</name-node>
             <prepare>
-                <delete path="${nameNode}/user/${userName}/${examplesRoot}/apps/mapreduce/${outputDir}"/>
+                <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/apps/mapreduce/${outputDir}"/>
             </prepare>
             <job-xml>./job-queue-conf.xml</job-xml>
             <configuration>
@@ -70,14 +70,14 @@
                 </property>
                 <property>
                     <name>mapreduce.input.fileinputformat.inputdir</name>
-                    <value>/user/${userName}/${examplesRoot}/apps/mapreduce/input</value>
+                    <value>/user/${wf:user()}/${examplesRoot}/apps/mapreduce/input</value>
                 </property>
                 <property>
                     <name>mapreduce.output.fileoutputformat.outputdir</name>
-                    <value>/user/${userName}/${examplesRoot}/apps/mapreduce/${outputDir}</value>
+                    <value>/user/${wf:user()}/${examplesRoot}/apps/mapreduce/${outputDir}</value>
                 </property>
             </configuration>
-            <file>/user/${userName}/${examplesRoot}/apps/mapreduce/lib/wordcount.jar</file>
+            <file>/user/${wf:user()}/${examplesRoot}/apps/mapreduce/lib/wordcount.jar</file>
         </map-reduce>
         <ok to="end"/>
         <error to="fail"/>

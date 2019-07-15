@@ -38,7 +38,7 @@
             <resource-manager>${resourceManager}</resource-manager>
             <name-node>${nameNode}</name-node>
             <prepare>
-                <delete path="${nameNode}/user/${userName}/${examplesRoot}/apps/distcp/output-data"/>
+                <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/apps/distcp/output-data"/>
             </prepare>
             <configuration>
                 <property>
@@ -48,8 +48,8 @@
             </configuration>
             <arg>-update</arg>
             <arg>-skipcrccheck</arg>
-            <arg>${nameNode1}/user/${userName}/${examplesRoot}/apps/distcp/input-data/test-data.txt</arg>
-            <arg>${nameNode2}/user/${userName}/${examplesRoot}/apps/distcp/output-data/test-data.txt</arg>
+            <arg>${nameNode1}/user/${wf:user()}/${examplesRoot}/apps/distcp/input-data/test-data.txt</arg>
+            <arg>${nameNode2}/user/${wf:user()}/${examplesRoot}/apps/distcp/output-data/test-data.txt</arg>
             </distcp>
         <ok to="end"/>
         <error to="fail"/>
