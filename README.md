@@ -518,6 +518,7 @@ The converted DAG uses the `DataProcHadoopOperator` in Airflow.
 ### Known limitations
 
 1. Overriding action's Main class via `oozie.launcher.action.main.class` is not implemented.
+
 Issue in Github: [Override Java main class with property](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/338)
 
 ## Pig Example
