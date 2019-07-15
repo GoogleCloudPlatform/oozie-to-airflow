@@ -18,7 +18,7 @@ from collections import OrderedDict
 from typing import Set, Dict, Type, List
 
 from o2a.converter.constants import HDFS_FOLDER, LIB_FOLDER
-from o2a.converter.parsed_action_node import ParsedActionNode
+from o2a.converter.oozie_node import OozieNode
 from o2a.converter.relation import Relation
 from o2a.converter.task_group import TaskGroup
 from o2a.utils.file_utils import get_lib_files
@@ -33,7 +33,7 @@ class Workflow:
         output_directory_path: str,
         dag_name: str,
         task_group_relations: Set[Relation] = None,
-        nodes: Dict[str, ParsedActionNode] = None,
+        nodes: Dict[str, OozieNode] = None,
         task_groups: Dict[str, TaskGroup] = None,
         dependencies: Set[str] = None,
     ) -> None:
@@ -103,7 +103,7 @@ class Workflow:
                 task_groups.append(task_group)
         return task_groups
 
-    def remove_node(self, node_to_delete: ParsedActionNode):
+    def remove_node(self, node_to_delete: OozieNode):
         del self.nodes[node_to_delete.name]
 
         for node in self.nodes.values():
