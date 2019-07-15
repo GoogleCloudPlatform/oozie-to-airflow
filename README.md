@@ -476,6 +476,7 @@ Issues in Github:
 **3. Streaming and pipes**
 
 Streaming and pipes are currently not supported.
+
 Issue in github [Implement streaming support](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/336)
 
 ## FS Example
