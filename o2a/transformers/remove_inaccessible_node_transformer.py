@@ -16,7 +16,7 @@
 
 from typing import Dict
 
-from o2a.converter.parsed_action_node import ParsedActionNode
+from o2a.converter.oozie_node import OozieNode
 from o2a.converter.workflow import Workflow
 from o2a.mappers.start_mapper import StartMapper
 from o2a.transformers.base_transformer import BaseWorkflowTransformer
@@ -43,9 +43,9 @@ class RemoveInaccessibleNodeTransformer(BaseWorkflowTransformer):
         Finds nodes that are reachable from any Start node.
         """
         start_nodes = workflow.get_nodes_by_type(StartMapper)
-        visited_node: Dict[str, ParsedActionNode] = dict()
+        visited_node: Dict[str, OozieNode] = dict()
 
-        def visit_node(node: ParsedActionNode):
+        def visit_node(node: OozieNode):
             if node.name in visited_node:
                 return
             visited_node[node.name] = node

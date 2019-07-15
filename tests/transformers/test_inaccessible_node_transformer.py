@@ -18,7 +18,7 @@ Remove inaccessible nodes transformer tests
 import unittest
 from unittest import mock
 
-from o2a.converter.parsed_action_node import ParsedActionNode
+from o2a.converter.oozie_node import OozieNode
 from o2a.converter.task import Task
 from o2a.converter.workflow import Workflow
 from o2a.mappers.base_mapper import BaseMapper
@@ -65,9 +65,9 @@ class RemoveInaccessibleNodeTransformerTest(unittest.TestCase):
         start_mapper = mock.Mock(spec=StartMapper)
         start_mapper.name = "start_task"
 
-        first_node = ParsedActionNode(mapper=first_mapper, tasks=[self._get_dummy_task(first_mapper.name)])
-        second_node = ParsedActionNode(mapper=second_mapper, tasks=[self._get_dummy_task(second_mapper.name)])
-        start_node = ParsedActionNode(mapper=start_mapper, tasks=[self._get_dummy_task(start_mapper.name)])
+        first_node = OozieNode(mapper=first_mapper, tasks=[self._get_dummy_task(first_mapper.name)])
+        second_node = OozieNode(mapper=second_mapper, tasks=[self._get_dummy_task(second_mapper.name)])
+        start_node = OozieNode(mapper=start_mapper, tasks=[self._get_dummy_task(start_mapper.name)])
 
         start_node.downstream_names = [first_mapper.name]
         first_node.downstream_names = [second_node.name]
@@ -117,8 +117,8 @@ class RemoveInaccessibleNodeTransformerTest(unittest.TestCase):
         start_mapper = mock.Mock(spec=StartMapper)
         start_mapper.name = "start_task"
 
-        first_node = ParsedActionNode(mapper=first_mapper, tasks=[self._get_dummy_task(first_mapper.name)])
-        start_node = ParsedActionNode(mapper=start_mapper, tasks=[self._get_dummy_task(start_mapper.name)])
+        first_node = OozieNode(mapper=first_mapper, tasks=[self._get_dummy_task(first_mapper.name)])
+        start_node = OozieNode(mapper=start_mapper, tasks=[self._get_dummy_task(start_mapper.name)])
 
         start_node.error_downstream_name = first_node.name
 
@@ -170,9 +170,9 @@ class RemoveInaccessibleNodeTransformerTest(unittest.TestCase):
         start_mapper = mock.Mock(spec=StartMapper)
         start_mapper.name = "start_task"
 
-        first_node = ParsedActionNode(mapper=first_mapper, tasks=[self._get_dummy_task(first_mapper.name)])
-        second_node = ParsedActionNode(mapper=second_mapper, tasks=[self._get_dummy_task(second_mapper.name)])
-        start_node = ParsedActionNode(mapper=start_mapper, tasks=[self._get_dummy_task(start_mapper.name)])
+        first_node = OozieNode(mapper=first_mapper, tasks=[self._get_dummy_task(first_mapper.name)])
+        second_node = OozieNode(mapper=second_mapper, tasks=[self._get_dummy_task(second_mapper.name)])
+        start_node = OozieNode(mapper=start_mapper, tasks=[self._get_dummy_task(start_mapper.name)])
 
         first_node.downstream_names = []
         second_node.downstream_names = [first_mapper.name]
@@ -223,9 +223,9 @@ class RemoveInaccessibleNodeTransformerTest(unittest.TestCase):
         start_mapper = mock.Mock(spec=StartMapper)
         start_mapper.name = "start_task"
 
-        first_node = ParsedActionNode(mapper=first_mapper, tasks=[self._get_dummy_task(first_mapper.name)])
-        second_node = ParsedActionNode(mapper=second_mapper, tasks=[self._get_dummy_task(second_mapper.name)])
-        start_node = ParsedActionNode(mapper=start_mapper, tasks=[self._get_dummy_task(start_mapper.name)])
+        first_node = OozieNode(mapper=first_mapper, tasks=[self._get_dummy_task(first_mapper.name)])
+        second_node = OozieNode(mapper=second_mapper, tasks=[self._get_dummy_task(second_mapper.name)])
+        start_node = OozieNode(mapper=start_mapper, tasks=[self._get_dummy_task(start_mapper.name)])
 
         first_mapper.downstream_names = [second_mapper.name]
         second_mapper.downstream_names = [start_mapper.name]

@@ -24,7 +24,7 @@ import logging
 
 from o2a.converter import workflow_xml_parser
 from o2a.converter.constants import HDFS_FOLDER
-from o2a.converter.parsed_action_node import ParsedActionNode
+from o2a.converter.oozie_node import OozieNode
 from o2a.converter.property_parser import PropertyParser
 from o2a.converter.relation import Relation
 from o2a.converter.renderers import BaseRenderer
@@ -165,7 +165,7 @@ class OozieConverter:
         for node in self.workflow.task_groups.values():
             node.add_state_handler_if_needed()
 
-    def copy_extra_assets(self, nodes: Dict[str, ParsedActionNode]):
+    def copy_extra_assets(self, nodes: Dict[str, OozieNode]):
         """
         Copies additional assets needed to execute a workflow, eg. Pig scripts.
         """

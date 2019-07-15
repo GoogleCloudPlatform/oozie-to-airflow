@@ -13,20 +13,23 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Parsing module """
-import os
 import logging
+import os
+import uuid
 
 # noinspection PyPep8Naming
 import xml.etree.ElementTree as ET
 
-import uuid
-
 # noinspection PyPackageRequirements
-from typing import Dict, Type, List
+from typing import Dict, List, Type
 
 from airflow.utils.trigger_rule import TriggerRule
 
+from o2a.converter.constants import HDFS_FOLDER
+from o2a.converter.oozie_node import OozieActionNode, OozieControlNode
 from o2a.converter.renderers import BaseRenderer
+from o2a.converter.workflow import Workflow
+from o2a.mappers.action_mapper import ActionMapper
 from o2a.mappers.base_mapper import BaseMapper
 from o2a.mappers.decision_mapper import DecisionMapper
 from o2a.mappers.dummy_mapper import DummyMapper
@@ -36,12 +39,8 @@ from o2a.mappers.join_mapper import JoinMapper
 from o2a.mappers.kill_mapper import KillMapper
 from o2a.mappers.start_mapper import StartMapper
 from o2a.o2a_libs.property_utils import PropertySet
-from o2a.utils import xml_utils
-from o2a.converter.constants import HDFS_FOLDER
-from o2a.converter.parsed_action_node import ParsedActionNode
-from o2a.converter.workflow import Workflow
-from o2a.mappers.action_mapper import ActionMapper
 from o2a.transformers.base_transformer import BaseWorkflowTransformer
+from o2a.utils import xml_utils
 
 
 # noinspection PyDefaultArgument
@@ -75,12 +74,12 @@ class WorkflowXmlParser:
             trigger_rule=TriggerRule.ONE_FAILED,
             props=self.props,
         )
-        p_node = ParsedActionNode(mapper)
+        oozie_control_node = OozieControlNode(mapper)
 
         mapper.on_parse_node()
 
         logging.info(f"Parsed {mapper.name} as Kill Node.")
-        self.workflow.nodes[kill_node.attrib["name"]] = p_node
+        self.workflow.nodes[kill_node.attrib["name"]] = oozie_control_node
 
     def parse_end_node(self, end_node):
         """
@@ -88,12 +87,12 @@ class WorkflowXmlParser:
         Thus it gets mapped to a dummy node that always completes.
         """
         mapper = EndMapper(oozie_node=end_node, name=end_node.attrib["name"], dag_name=self.workflow.dag_name)
-        p_node = ParsedActionNode(mapper)
+        oozie_control_node = OozieControlNode(mapper)
 
         mapper.on_parse_node()
 
         logging.info(f"Parsed {mapper.name} as End Node.")
-        self.workflow.nodes[end_node.attrib["name"]] = p_node
+        self.workflow.nodes[end_node.attrib["name"]] = oozie_control_node
 
     def parse_fork_node(self, root, fork_node):
         """
@@ -108,7 +107,7 @@ class WorkflowXmlParser:
         """
         fork_name = fork_node.attrib["name"]
         mapper = ForkMapper(oozie_node=fork_node, name=fork_name, dag_name=self.workflow.dag_name)
-        p_node = ParsedActionNode(mapper)
+        oozie_control_node = OozieControlNode(mapper)
 
         mapper.on_parse_node()
 
@@ -120,10 +119,10 @@ class WorkflowXmlParser:
                 curr_name = node.attrib["start"]
                 paths.append(xml_utils.find_node_by_name(root, curr_name))
 
-        self.workflow.nodes[fork_name] = p_node
+        self.workflow.nodes[fork_name] = oozie_control_node
 
         for path in paths:
-            p_node.downstream_names.append(path.attrib["name"])
+            oozie_control_node.downstream_names.append(path.attrib["name"])
             logging.info(f"Added {mapper.name}'s downstream: {path.attrib['name']}")
 
             # Theoretically these will all be action nodes, however I don't
@@ -143,13 +142,13 @@ class WorkflowXmlParser:
             oozie_node=join_node, name=join_node.attrib["name"], dag_name=self.workflow.dag_name
         )
 
-        p_node = ParsedActionNode(mapper)
-        p_node.downstream_names.append(join_node.attrib["to"])
+        oozie_control_node = OozieControlNode(mapper)
+        oozie_control_node.downstream_names.append(join_node.attrib["to"])
 
         mapper.on_parse_node()
 
         logging.info(f"Parsed {mapper.name} as Join Node.")
-        self.workflow.nodes[join_node.attrib["name"]] = p_node
+        self.workflow.nodes[join_node.attrib["name"]] = oozie_control_node
 
     def parse_decision_node(self, decision_node):
         """
@@ -182,14 +181,14 @@ class WorkflowXmlParser:
             props=self.props,
         )
 
-        p_node = ParsedActionNode(mapper)
+        oozie_control_node = OozieControlNode(mapper)
         for cases in decision_node[0]:
-            p_node.downstream_names.append(cases.attrib["to"])
+            oozie_control_node.downstream_names.append(cases.attrib["to"])
 
         mapper.on_parse_node()
 
         logging.info(f"Parsed {mapper.name} as Decision Node.")
-        self.workflow.nodes[decision_node.attrib["name"]] = p_node
+        self.workflow.nodes[decision_node.attrib["name"]] = oozie_control_node
 
     def parse_action_node(self, action_node: ET.Element):
         """
@@ -228,21 +227,21 @@ class WorkflowXmlParser:
                 transformers=self.transformers,
             )
 
-        p_node = ParsedActionNode(mapper)
+        oozie_action_node = OozieActionNode(mapper)
         ok_node = action_node.find("ok")
         if ok_node is None:
             raise Exception("Missing ok node in {}".format(action_node))
-        p_node.downstream_names.append(ok_node.attrib["to"])
+        oozie_action_node.downstream_names.append(ok_node.attrib["to"])
         error_node = action_node.find("error")
         if error_node is None:
             raise Exception("Missing error node in {}".format(action_node))
-        p_node.error_downstream_name = error_node.attrib["to"]
+        oozie_action_node.error_downstream_name = error_node.attrib["to"]
 
         mapper.on_parse_node()
 
         logging.info(f"Parsed {mapper.name} as Action Node of type {action_name}.")
 
-        self.workflow.nodes[mapper.name] = p_node
+        self.workflow.nodes[mapper.name] = oozie_action_node
 
     def parse_start_node(self, start_node):
         """
@@ -264,13 +263,13 @@ class WorkflowXmlParser:
             trigger_rule=TriggerRule.DUMMY,
         )
 
-        p_node = ParsedActionNode(mapper)
-        p_node.downstream_names.append(start_node.attrib["to"])
+        oozie_control_node = OozieControlNode(mapper)
+        oozie_control_node.downstream_names.append(start_node.attrib["to"])
 
         mapper.on_parse_node()
 
         logging.info(f"Parsed {mapper.name} as Start Node.")
-        self.workflow.nodes[start_name] = p_node
+        self.workflow.nodes[start_name] = oozie_control_node
 
     def parse_node(self, root, node):
         """
