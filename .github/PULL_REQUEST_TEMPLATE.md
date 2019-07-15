@@ -1,6 +1,6 @@
 Make sure you have checked _all_ steps below and that above description is correct.
 
-### JIRA
+### Github issue
 - [ ] My PR addresses the following [Issue](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/XXX)
 issue and references it in commit message.
 
