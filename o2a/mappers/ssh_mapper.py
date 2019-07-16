@@ -57,7 +57,7 @@ class SSHMapper(ActionMapper):
         cmd_txt = xml_utils.get_tag_el_text(self.oozie_node, TAG_CMD, self.props)
         args = xml_utils.get_tags_el_array_from_text(self.oozie_node, TAG_ARG, self.props)
         if not cmd_txt:
-            raise Exception("Missing or empty command node in SSH action {}".format(self.oozie_node))
+            raise Exception(f"Missing or empty command node in SSH action {self.oozie_node}")
 
         cmd = " ".join([cmd_txt] + [shlex.quote(x) for x in args])
         cmd = el_utils.convert_el_to_jinja(cmd)
@@ -66,7 +66,7 @@ class SSHMapper(ActionMapper):
     def get_host_key(self) -> str:
         host = self.oozie_node.find("host")
         if host is None or not host.text:
-            raise Exception("Missing host node in SSH action: {}".format(self.oozie_node))
+            raise Exception(f"Missing host node in SSH action: {self.oozie_node}")
         host_key = el_utils.strip_el(host.text)
         # the <user> node is formatted like [USER]@[HOST]
         if host_key in self.props.merged:

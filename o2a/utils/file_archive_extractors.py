@@ -32,7 +32,7 @@ class HdfsPathProcessor:
         :return: None
         """
         if "," in path:
-            raise Exception("There should not be ',' in the path {}".format(path))
+            raise Exception(f"There should not be ',' in the path {path}")
 
     def preprocess_path_to_hdfs(self, path: str):
         if path.startswith("/"):
@@ -49,7 +49,7 @@ def split_by_hash_sign(path: str) -> List[str]:
     if "#" in path:
         split_path = path.split("#")
         if len(split_path) > 2:
-            raise Exception("There should be maximum one '#' in the path {}".format(path))
+            raise Exception(f"There should be maximum one '#' in the path {path}")
         return split_path
     return [path]
 

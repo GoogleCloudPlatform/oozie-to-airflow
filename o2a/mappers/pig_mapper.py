@@ -100,9 +100,9 @@ class PigMapper(ActionMapper):
     @staticmethod
     def _validate_paths(input_directory_path, output_directory_path):
         if not input_directory_path:
-            raise Exception("The input_directory_path should be set and is {}".format(input_directory_path))
+            raise Exception(f"The input_directory_path should be set and is {input_directory_path}")
         if not output_directory_path:
-            raise Exception("The output_directory_path should be set and is {}".format(output_directory_path))
+            raise Exception(f"The output_directory_path should be set and is {output_directory_path}")
 
     def required_imports(self) -> Set[str]:
         return {"from airflow.utils import dates", "from airflow.contrib.operators import dataproc_operator"}
