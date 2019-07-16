@@ -537,7 +537,7 @@ logic and support for Pig actions is missing currently.
 
 Issue in Github: [FS Mapper and idempotence](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/175)
 
-The dirFiles are not supported in FSMapper:
+The dirFiles are not supported in FSMapper.
 
 Issue in Github: [Add support for dirFiles in FsMapper](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/80)
 
