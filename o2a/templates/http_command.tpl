@@ -13,7 +13,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 #}
-"curl %s"
+"curl %s; exit {{ error_code }}"
 % (
-shlex.quote({{ url | to_python }})
+shlex.quote({{ url | to_python }}),
 )
