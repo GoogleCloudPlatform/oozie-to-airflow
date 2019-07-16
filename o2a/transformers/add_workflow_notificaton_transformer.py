@@ -48,7 +48,7 @@ class AddWorkflowNotificationTransformer(BaseWorkflowTransformer):
     @classmethod
     def _add_start_task_group(cls, notification_url, workflow):
         start_workflow_task_group = cls._create_notification_task_group(
-            notification_url, START_TASK_GROUP_NAME, "RUNNING"
+            url_template=notification_url, start_task_name=START_TASK_GROUP_NAME, status="RUNNING"
         )
         start_workflow_task_group.downstream_names = [
             task_group.name
@@ -60,7 +60,7 @@ class AddWorkflowNotificationTransformer(BaseWorkflowTransformer):
     @classmethod
     def _add_end_success_task_group(cls, notification_url, workflow):
         end_success_workflow_task_group = cls._create_notification_task_group(
-            notification_url, END_SUCCESS_TASK_GROUP_NAME, "SUCCEEDED"
+            url_template=notification_url, start_task_name=END_SUCCESS_TASK_GROUP_NAME, status="SUCCEEDED"
         )
         for task_group in workflow.get_task_group_without_ok_downstream():
             if task_group.name in NOTIFICATION_TASK_GROUP_NAMES:
@@ -71,7 +71,10 @@ class AddWorkflowNotificationTransformer(BaseWorkflowTransformer):
     @classmethod
     def _add_end_fail_task_group(cls, notification_url, workflow):
         end_fail_workflow_task_group = cls._create_notification_task_group(
-            notification_url, END_FAIL_TASK_GROUP_NAME, "FAILED"
+            url_template=notification_url,
+            start_task_name=END_FAIL_TASK_GROUP_NAME,
+            status="FAILED",
+            error_code=1,
         )
         for task_group in workflow.get_task_group_without_error_downstream():
             if task_group.name in NOTIFICATION_TASK_GROUP_NAMES:
@@ -80,12 +83,18 @@ class AddWorkflowNotificationTransformer(BaseWorkflowTransformer):
         workflow.task_groups[end_fail_workflow_task_group.name] = end_fail_workflow_task_group
 
     @staticmethod
-    def _create_notification_task_group(url_template, start_task_name, status):
+    def _create_notification_task_group(url_template, start_task_name, status, error_code=0):
         url = (
             url_template.replace("$parentId", "").replace("$jobId", "{{ run_id }}").replace("$status", status)
         )
         start_workflow_node = TaskGroup(
             name=start_task_name,
-            tasks=[Task(task_id=start_task_name, template_name="http.tpl", template_params=dict(url=url))],
+            tasks=[
+                Task(
+                    task_id=start_task_name,
+                    template_name="http.tpl",
+                    template_params=dict(url=url, error_code=error_code),
+                )
+            ],
         )
         return start_workflow_node
