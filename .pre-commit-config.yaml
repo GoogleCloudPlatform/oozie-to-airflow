@@ -86,6 +86,9 @@ repos:
     hooks:
       - id: doctoc
         files: ^README\.md|CONTRIBUTING\.md$
+        args:
+          - "--maxlevel"
+          - "2"
   - repo: local
     hooks:
       - id: autoflake
