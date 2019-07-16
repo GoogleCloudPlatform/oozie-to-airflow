@@ -230,11 +230,11 @@ class WorkflowXmlParser:
         oozie_action_node = OozieActionNode(mapper)
         ok_node = action_node.find("ok")
         if ok_node is None:
-            raise Exception("Missing ok node in {}".format(action_node))
+            raise Exception(f"Missing ok node in {action_node}")
         oozie_action_node.downstream_names.append(ok_node.attrib["to"])
         error_node = action_node.find("error")
         if error_node is None:
-            raise Exception("Missing error node in {}".format(action_node))
+            raise Exception(f"Missing error node in {action_node}")
         oozie_action_node.error_downstream_name = error_node.attrib["to"]
 
         mapper.on_parse_node()

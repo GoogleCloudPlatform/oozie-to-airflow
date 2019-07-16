@@ -107,7 +107,7 @@ def concat(str1: str, str2: str) -> str:
     if not str2:
         str2 = ""
 
-    return "{} ~ {}".format(str1, str2)
+    return f"{str1} ~ {str2}"
 
 
 def trim(src_str: str) -> str:

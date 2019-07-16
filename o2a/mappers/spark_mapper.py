@@ -89,7 +89,7 @@ class SparkMapper(ActionMapper):
         if spark_opts_node.text:
             spark_opts = spark_opts_node.text.split("--")[1:]
         else:
-            raise ParseException("Spark opts node has no text: {}".format(spark_opts_node))
+            raise ParseException(f"Spark opts node has no text: {spark_opts_node}")
         clean_opts = [opt.strip() for opt in spark_opts]
         clean_opts_split = [opt.split(maxsplit=1) for opt in clean_opts]
 

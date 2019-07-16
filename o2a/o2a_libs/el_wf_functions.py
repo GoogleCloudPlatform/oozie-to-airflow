@@ -45,7 +45,7 @@ def conf(key: str) -> str:
     This has the effect that some parameters cannot be templated, and thus
     this will fail.
     """
-    return "params[{}]".format(key)
+    return f"params[{key}]"
 
 
 @contextfunction

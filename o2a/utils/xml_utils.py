@@ -41,9 +41,9 @@ def find_node_by_name(root, name) -> ET.Element:
     node = find_nodes_by_attribute(root, "name", name)
 
     if not node:
-        raise NoNodeFoundException("Node with name {} not found.".format(name))
+        raise NoNodeFoundException(f"Node with name {name} not found.")
     if len(node) > 1:
-        raise MultipleNodeFoundException("More than one node with name {} found".format(name))
+        raise MultipleNodeFoundException(f"More than one node with name {name} found")
     return node[0]
 
 
