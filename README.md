@@ -533,7 +533,7 @@ The converted DAG uses the `BashOperator` in Airflow.
 
 Not all FS operations are currently idempotent. It's not a problem if prepare action is used in other tasks
 but might be a problem in certain situations. Fixing the operators to be idempotent requires more complex
-logic and support for Pig actions is missing currently
+logic and support for Pig actions is missing currently.
 
 Issue in Github: [FS Mapper and idempotence](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/175)
 
