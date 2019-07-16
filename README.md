@@ -44,6 +44,14 @@ If you want to contribute to the project, please take a look at [CONTRIBUTING.md
 - [Supported Oozie features](#supported-oozie-features)
   - [Control nodes](#control-nodes)
   - [EL Functions](#el-functions)
+- [Common Known Limitations](#common-known-limitations)
+  - [File/Archive functionality](#filearchive-functionality)
+  - [Not all global configuration methods are supported](#not-all-global-configuration-methods-are-supported)
+  - [Support for uber.jar feature](#support-for-uberjar-feature)
+  - [Support for .so and .jar lib files](#support-for-so-and-jar-lib-files)
+  - [Custom messages missing for Kill Node](#custom-messages-missing-for-kill-node)
+  - [Capturing output is not supported](#capturing-output-is-not-supported)
+  - [Subworkflow DAGs must be placed in examples](#subworkflow-dags-must-be-placed-in-examples)
 - [Examples](#examples)
   - [Demo Example](#demo-example)
   - [Childwf Example](#childwf-example)
@@ -290,6 +298,71 @@ order to use EL function mapping, the folder `o2a_libs` should
 be copied over to the Airflow DAG folder. This should then be picked up and
 parsed by the Airflow workers and then available to all DAGs.
 
+# Common Known Limitations
+
+There are few limitations in the implementation of the Oozie-To-Airflow converter. It's not possible to
+write a converter that handles all cases of complex workflows from Ooozie because some of
+functionalities available are not possible to map easily to existing Airflow Operators or
+cannot be tested because of the current Dataproc + Composer limitations. Some of those limitations
+might be removed in the future. Below is a list of common known limitations that we are aware of for now.
+
+Many of those limitations are not blockers - the workflows will still be converted to Python DAGs
+and it should be possible to manually (or automatically) post-process the DAGs to add custom
+functionality. So even with those limitations in place you can still save a ton of work when
+converting many Oozie workflows.
+
+In the following, "Examples" section more specific per-action limitations are listed as well.
+
+## File/Archive functionality
+
+At the time of this writing we were not able to determine if file/archive
+functionality works as intended. While we map appropriate file/archive methods it seems that Oozie
+treats file/archive somewhat erraticaly. This is not a blocker to run most of the operations, however
+some particular complex workflows might be problematic. Further testing with real, production Oozie
+workflows is needed to verify our implementation.
+
+* [File/Archive in Pig doesn't work](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/243)
+
+## Not all global configuration methods are supported
+
+Oozie implements a number of ways how configuration parameters are passed to actions. Out of the existing
+configuration options the following ones are not supported (but can be easily added as needed):
+
+* [The config-default.xml file](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/137)
+* [Parameters section of workflow.xml](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/138)
+* [Handle Global configuration properties](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/134)
+
+## Support for uber.jar feature
+
+The uber.jar feature is not supported.
+
+* [Support uber.jar feature](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/140)
+
+## Support for .so and .jar lib files
+
+Oozie adds .so and .jar files from the lib folder to Local Cache for all the jobs run to
+LD_LIBRARY_PATH/CLASSPATH. Currently only Java Mapper supports it.
+
+* [Support for Oozie lib .so files](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/302)
+* [Support for Oozie lib .jar files](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/301)
+
+## Custom messages missing for Kill Node
+
+The Kill Node might have custom log message specified. This is not implemented:
+[Add handling of custom Kill Node message](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/97)
+
+## Capturing output is not supported
+
+In several actions you can capture output from tasks. This is not yet implemented.
+
+* [Add support for capture-ouput](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/155)
+
+## Subworkflow DAGs must be placed in examples
+
+Currently all subworkflow DAGs must be in examples folder
+
+* [Subworkflow conversion expects to be run in examples](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/213)
+
 # Examples
 
 All examples can be found in the [examples](examples) directory.
@@ -463,6 +536,10 @@ but might be a problem in certain situations. Fixing the operators to be idempot
 logic and support for Pig actions is missing currently.
 
 Issue in Github: [FS Mapper and idempotence](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/175)
+
+The dirFiles are not supported in FSMapper.
+
+Issue in Github: [Add support for dirFiles in FsMapper](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/80)
 
 ## Java Example
 
