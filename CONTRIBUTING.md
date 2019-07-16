@@ -34,16 +34,7 @@ Table of Contents
   - [Dependency graphs](#dependency-graphs)
 - [Cloud test environment with Dataproc and Composer](#cloud-test-environment-with-dataproc-and-composer)
   - [Cloud environment setup](#cloud-environment-setup)
-    - [Cloud Composer](#cloud-composer)
-    - [Cloud Dataproc Cluster with Oozie](#cloud-dataproc-cluster-with-oozie)
-    - [Creating Dataproc cluster](#creating-dataproc-cluster)
   - [Running system tests](#running-system-tests)
-    - [System tests](#system-tests)
-    - [Caching latest used parameters by run-sys-test](#caching-latest-used-parameters-by-run-sys-test)
-    - [Test phases](#test-phases)
-    - [Test scenarios](#test-scenarios)
-    - [Running system tests with sub-workflows](#running-system-tests-with-sub-workflows)
-    - [Packaging the application and uploading to PyPi](#packaging-the-application-and-uploading-to-pypi)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
