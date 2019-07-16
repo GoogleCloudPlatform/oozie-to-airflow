@@ -304,7 +304,7 @@ There are few limitations in the implementation of the Oozie-To-Airflow converte
 write a converter that handles all cases of complex workflows from Ooozie because some of
 functionalities available are not possible to map easily to existing Airflow Operators or
 cannot be tested because of the current Dataproc + Composer limitations. Some of those limitations
-might be removed in the future. Here is a list of common known limitations that we are aware of for now:
+might be removed in the future. Below is a list of common known limitations that we are aware of for now.
 
 Many of those limitations are not blockers - the workflows will still be converted to Python DAGs
 and it should be possible to manually (or automatically) post-process the DAGs to add custom
