@@ -22,115 +22,113 @@ from jinja2 import Template
 
 from airflow import AirflowException
 
-from o2a.o2a_libs.el_parser import translate
 import o2a.o2a_libs.functions as functions
+from o2a.o2a_libs.el_parser import translate
 
 
 class TestElParser(unittest.TestCase):
     @parameterized.expand(
         [
             (
-                "${fs:exists(wf:actionData('hdfs-lookup')['outputPath']/2)}",
                 "{{fs.exists(wf.action_data('hdfs-lookup')['outputPath'] / 2)}}",
+                "${fs:exists(wf:actionData('hdfs-lookup')['outputPath']/2)}",
             ),
             (
-                "${wf:actionData('shell-node')['my_output'] eq 'Hello Oozie'}",
                 "{{wf.action_data('shell-node')['my_output'] == 'Hello Oozie'}}",
+                "${wf:actionData('shell-node')['my_output'] eq 'Hello Oozie'}",
             ),
-            ("${1 > (4/2)}", "{{1 > (4 / 2)}}"),
-            ("${4.0 >= 3}", "{{4.0 >= 3}}"),
-            ("${100.0 == 100}", "{{100.0 == 100}}"),
-            ("${(10*10) ne 100}", "{{(10 * 10) != 100}}"),
-            ("${'a' < 'b'}", "{{'a' < 'b'}}"),
-            ("${'hip' gt 'hit'}", "{{'hip' > 'hit'}}"),
-            ("${4 > 3}", "{{4 > 3}}"),
-            ("${1.2E4 + 1.4}", "{{1.2E4 + 1.4}}"),
-            ("${10 mod 4}", "{{10 % 4}}"),
-            ("${3 div 4}", "{{3 / 4}}"),
-            ("${pageContext.request.contextPath}", "{{params['pageContext'].request.contextPath}}"),
-            ("${sessionScope.cart.numberOfItems}", "{{params['sessionScope'].cart.numberOfItems}}"),
-            ("${param['mycom.productId']}", "{{params['param']['mycom.productId']}}"),
-            ('${header["host"]}', """{{params['header']["host"]}}"""),
-            ("${departments[deptName]}", "{{params['departments'][params['deptName']]}}"),
+            ("{{1 > (4 / 2)}}", "${1 > (4/2)}"),
+            ("{{4.0 >= 3}}", "${4.0 >= 3}"),
+            ("{{100.0 == 100}}", "${100.0 == 100}"),
+            ("{{(10 * 10) != 100}}", "${(10*10) ne 100}"),
+            ("{{'a' < 'b'}}", "${'a' < 'b'}"),
+            ("{{'hip' > 'hit'}}", "${'hip' gt 'hit'}"),
+            ("{{4 > 3}}", "${4 > 3}"),
+            ("{{1.2E4 + 1.4}}", "${1.2E4 + 1.4}"),
+            ("{{10 % 4}}", "${10 mod 4}"),
+            ("{{3 / 4}}", "${3 div 4}"),
+            ("{{pageContext.request.contextPath}}", "${pageContext.request.contextPath}"),
+            ("{{sessionScope.cart.numberOfItems}}", "${sessionScope.cart.numberOfItems}"),
+            ("{{param['mycom.productId']}}", "${param['mycom.productId']}"),
+            ('{{header["host"]}}', '${header["host"]}'),
+            ("{{departments[deptName]}}", "${departments[deptName]}"),
             (
+                "{{requestScope['javax.servlet.forward.servlet_path']}}",
                 "${requestScope['javax.servlet.forward.servlet_path']}",
-                "{{params['requestScope']['javax.servlet.forward.servlet_path']}}",
             ),
-            ("#{customer.lName}", "{{params['customer'].lName}}"),
-            ("#{customer.calcTotal}", "{{params['customer'].calcTotal}}"),
-            ('${wf:conf("jump.to") eq "ssh"}', '{{params["jump.to"] == "ssh"}}'),
-            ('${wf:conf("jump.to") eq "parallel"}', '{{params["jump.to"] == "parallel"}}'),
-            ('${wf:conf("jump.to") eq "single"}', '{{params["jump.to"] == "single"}}'),
+            ("{{customer.lName}}", "#{customer.lName}"),
+            ("{{customer.calcTotal}}", "#{customer.calcTotal}"),
+            ('{{params["jump.to"] == "ssh"}}', '${wf:conf("jump.to") eq "ssh"}'),
+            ('{{params["jump.to"] == "parallel"}}', '${wf:conf("jump.to") eq "parallel"}'),
+            ('{{params["jump.to"] == "single"}}', '${wf:conf("jump.to") eq "single"}'),
             (
-                '${"bool" == "bool" ? print("ok") : print("not ok")}',
                 '{{print("ok") if "bool" == "bool" else print("not ok")}}',
+                '${"bool" == "bool" ? print("ok") : print("not ok")}',
             ),
-            ('${f(2) ? print("ok") : print("not ok")}', '{{print("ok") if f(2) else print("not ok")}}'),
-            ('${!false ? print("ok") : print("not ok")}', '{{print("ok") if !False else print("not ok")}}'),
-            ("some pure text ${coord:user()}", "some pure text {{coord.user()}}"),
+            ('{{print("ok") if f(2) else print("not ok")}}', '${f(2) ? print("ok") : print("not ok")}'),
+            ('{{print("ok") if !False else print("not ok")}}', '${!false ? print("ok") : print("not ok")}'),
+            ("some pure text {{coord.user()}}", "some pure text ${coord:user()}"),
             (
+                "{{nameNode}}/user/{{wf.user()}}/{{examplesRoot}}/output-data/{{outputDir}}",
                 "${nameNode}/user/${wf:user()}/${examplesRoot}/output-data/${outputDir}",
-                "{{params['nameNode']}}/user/{{params['userName']}}"
-                "/{{params['examplesRoot']}}/output-data/{{params['outputDir']}}",
             ),
-            (
-                "${YEAR}/${MONTH}/${DAY}/${HOUR}",
-                "{{params['YEAR']}}/{{params['MONTH']}}/{{params['DAY']}}/{{params['HOUR']}}",
-            ),
+            ("{{YEAR}}/{{MONTH}}/{{DAY}}/{{HOUR}}", "${YEAR}/${MONTH}/${DAY}/${HOUR}"),
             ("pure text without any.function wf:function()", "pure text without any.function wf:function()"),
             (
-                "${fs:fileSize('/usr/foo/myinputdir') gt 10 * GB}",
                 "{{fs.file_size('/usr/foo/myinputdir') > 10 * 1024 ** 3}}",
+                "${fs:fileSize('/usr/foo/myinputdir') gt 10 * GB}",
             ),
             (
-                '${hadoop:counters("mr-node")["FileSystemCounters"]["FILE_BYTES_READ"]}',
                 '{{hadoop.counters("mr-node")["FileSystemCounters"]["FILE_BYTES_READ"]}}',
+                '${hadoop:counters("mr-node")["FileSystemCounters"]["FILE_BYTES_READ"]}',
             ),
-            ('${hadoop:counters("pig-node")["JOB_GRAPH"]}', '{{hadoop.counters("pig-node")["JOB_GRAPH"]}}'),
+            ('{{hadoop.counters("pig-node")["JOB_GRAPH"]}}', '${hadoop:counters("pig-node")["JOB_GRAPH"]}'),
             (
-                "${wf:actionData('shell-node')['my_output'] eq 'Hello Oozie'}",
                 "{{wf.action_data('shell-node')['my_output'] == 'Hello Oozie'}}",
+                "${wf:actionData('shell-node')['my_output'] eq 'Hello Oozie'}",
             ),
-            ("${coord:dataOut('output')}", "{{coord.data_out('output')}}"),
-            ("${coord:current(0)}", "{{coord.current(0)}}"),
-            ('${coord:offset(-42, "MINUTE")}', '{{coord.offset(-42,"MINUTE")}}'),
+            ("{{coord.data_out('output')}}", "${coord:dataOut('output')}"),
+            ("{{coord.current(0)}}", "${coord:current(0)}"),
+            ('{{coord.offset(-42,"MINUTE")}}', '${coord:offset(-42, "MINUTE")}'),
             (
+                "{{(wf.action_data('java1')['datelist'] == EXPECTED_DATE_RANGE)}}",
                 "${(wf:actionData('java1')['datelist'] == EXPECTED_DATE_RANGE)}",
-                "{{(wf.action_data('java1')['datelist'] == params['EXPECTED_DATE_RANGE'])}}",
             ),
             (
+                "{{wf.action_data('getDirInfo')['dir.num-files'] > 23 or"
+                " wf.action_data('getDirInfo')['dir.age'] > 6}}",
                 "${wf:actionData('getDirInfo')['dir.num-files'] gt 23 || "
                 "wf:actionData('getDirInfo')['dir.age'] gt 6}",
-                "{{wf.action_data('getDirInfo')['dir.num-files'] > 23 or "
-                "wf.action_data('getDirInfo')['dir.age'] > 6}}",
             ),
-            ("#{'${'}", "{{'${'}}"),
-            ("${'${'}", "{{'${'}}"),
+            ("{{'${'}}", "#{'${'}"),
+            ("{{'${'}}", "${'${'}"),
             (
-                "${function()} literal and #{OtherFunction()}",
                 "{{function()}} literal and {{other_function()}}",
+                "${function()} literal and #{OtherFunction()}",
             ),
-            ("${concat(value, 'xxx')}", "{{params['value'] ~ 'xxx'}}"),
-            ("${2 ne 4}", "{{2 != 4}}"),
-            ("${2 lt 4}", "{{2 < 4}}"),
-            ("${2 le 4}", "{{2 <= 4}}"),
-            ("${2 ge 4}", "{{2 >= 4}}"),
-            ("${2 && 4}", "{{2 and 4}}"),
-            ("${f('x') == true}", "{{f('x') == True}}"),
-            ("${f('x') == false}", "{{f('x') == False}}"),
-            ("${f('x') == null}", "{{f('x') == None}}"),
-            ("${concat('aaa', 'bbb')}", "{{'aaa' ~ 'bbb'}}"),
-            ("${wf:id()}", "{{run_id}}"),
-            ("${wf:name()}", "{{dag.dag_id}}"),
-            ("${wf:user()}", "{{params['userName']}}"),
-            ("${trim(' aaabbb ')}", "{{' aaabbb '.strip()}}"),
-            ("${trim(value)}", "{{params['value'].strip()}}"),
-            ("${timestamp()}", '{{macros.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")}}'),
-            ("${urlEncode('%')}", "{{url_encode('%')}}"),
+            ("{{value ~ 'xxx'}}", "${concat(value, 'xxx')}"),
+            ("{{2 != 4}}", "${2 ne 4}"),
+            ("{{2 < 4}}", "${2 lt 4}"),
+            ("{{2 <= 4}}", "${2 le 4}"),
+            ("{{2 >= 4}}", "${2 ge 4}"),
+            ("{{2 and 4}}", "${2 && 4}"),
+            ("{{f('x') == True}}", "${f('x') == true}"),
+            ("{{f('x') == False}}", "${f('x') == false}"),
+            ("{{f('x') == None}}", "${f('x') == null}"),
+            ("{{'aaa' ~ 'bbb'}}", "${concat('aaa', 'bbb')}"),
+            ("{{run_id}}", "${wf:id()}"),
+            ("{{dag.dag_id}}", "${wf:name()}"),
+            ("{{wf.user()}}", "${wf:user()}"),
+            ("{{' aaabbb '.strip()}}", "${trim(' aaabbb ')}"),
+            ("{{value.strip()}}", "${trim(value)}"),
+            ('{{macros.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")}}', "${timestamp()}"),
+            ("{{url_encode('%')}}", "${urlEncode('%')}"),
+            ("test_dir/test2.zip#test_zip_dir", "test_dir/test2.zip#test_zip_dir"),
+            ("/path/with/two/els/{{var1}}/{{var2}}.tar", "/path/with/two/els/${var1}/${var2}.tar"),
         ]
     )
-    def test_translations(self, input_sentence, output_sentence):
-        translation = translate(input_sentence)
+    def test_translations(self, output_sentence, input_sentence):
+        translation = translate(input_sentence, functions_module="")
         output_sentence = output_sentence
         self.assertEqual(translation, output_sentence)
 
@@ -138,7 +136,7 @@ class TestElParser(unittest.TestCase):
         [
             ("Job name is ${'test_job'}", "Job name is {{'test_job'}}", "Job name is test_job", {}),
             ("${2 + 4}", "{{2 + 4}}", "6", {}),
-            ("${name == 'name'}", "{{params['name'] == 'name'}}", "True", {"params": dict(name="name")}),
+            ("${name == 'name'}", "{{name == 'name'}}", "True", dict(name="name")),
             (
                 "${firstNotNull('first', 'second')}",
                 "{{functions.first_not_null('first','second')}}",
@@ -148,41 +146,51 @@ class TestElParser(unittest.TestCase):
             ("${concat('aaa', 'bbb')}", "{{'aaa' ~ 'bbb'}}", "aaabbb", {}),
             ("${urlEncode('%')}", "{{functions.url_encode('%')}}", "%25", {"functions": functions}),
             ("${trim(' aaa ')}", "{{' aaa '.strip()}}", "aaa", {}),
-            ("${trim(value)}", "{{params['value'].strip()}}", "aaa", {"params": dict(value="aaa")}),
+            ("${trim(value)}", "{{value.strip()}}", "aaa", dict(value="aaa")),
+            ("${trim(value)}", "{{value.strip()}}", "aaa", dict(value="aaa")),
             ("${wf:id()}", "{{run_id}}", "xxx", {"run_id": "xxx"}),
-            ("${wf:name()}", "{{dag.dag_id}}", "xxx", {"dag": MagicMock(dag_id="xxx")}),
             (
-                "${wf:lastErrorNode()}",
-                "{{functions.wf.last_error_node()}}",
-                "",
-                {"dag_run": MagicMock(dag_id="test_id"), "functions": functions},
+                "${wf:user()}",
+                "{{functions.wf.user()}}",
+                "user_name",
+                {"functions": functions, "dag": MagicMock(tasks=[MagicMock(owner="user_name")])},
             ),
+            ("${wf:name()}", "{{dag.dag_id}}", "xxx", {"dag": MagicMock(dag_id="xxx")}),
             (
                 "${wf:conf('key')}",
                 "{{params['key']}}",
                 "value",
-                {"params": dict(key="value"), "functions": functions},
+                {"params": {"key": "value"}, "functions": functions},
             ),
         ]
     )
     def test_rendering(self, input_sentence, translation, output_sentence, kwargs):
         translated = translate(input_sentence, functions_module="functions")
 
-        self.assertEqual(translated, translation)
+        self.assertEqual(translation, translated)
         render = Template(translated).render(**kwargs)
 
-        self.assertEqual(render, output_sentence)
+        self.assertEqual(output_sentence, render)
 
     @parameterized.expand(
         [
             (
-                "${wf:lastErrorNode()}",
                 "{{functions.wf.last_error_node()}}",
+                "${wf:lastErrorNode()}",
                 {"dag_run": None, "functions": functions},
-            )
+            ),
+            ("{{functions.wf.user()}}", "${wf:user()}", {"dag": None, "functions": functions}),
+            (
+                "{{functions.wf.user()}}",
+                "${wf:user()}",
+                {
+                    "dag": MagicMock(tasks=[MagicMock(owner="name1"), MagicMock(owner="name2")]),
+                    "functions": functions,
+                },
+            ),
         ]
     )
-    def test_error_rendering(self, input_sentence, translation, kwargs):
+    def test_error_rendering(self, translation, input_sentence, kwargs):
         translated = translate(input_sentence, functions_module="functions")
 
         self.assertEqual(translated, translation)

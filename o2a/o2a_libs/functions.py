@@ -102,12 +102,16 @@ def concat(str1: str, str2: str) -> str:
     Returns the concatenation of 2 strings. A string
     with null value is considered as an empty string.
     """
-    if not str1:
-        str1 = ""
-    if not str2:
-        str2 = ""
+    if str1 and str2:
+        return "{} ~ {}".format(str1, str2)
 
-    return f"{str1} ~ {str2}"
+    if not str1 and str2:
+        return str2
+
+    if str1 and not str2:
+        return str1
+
+    return ""
 
 
 def trim(src_str: str) -> str:
@@ -123,7 +127,6 @@ def trim(src_str: str) -> str:
 FUNCTION_MAP = {
     "wf_id": "run_id",
     "wf_name": "dag.dag_id",
-    "wf_user": "params['userName']",
     "timestamp": 'macros.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")',
     "wf_app_path": "params['nameNode']/user/params['userName']}/params['examplesRoot']}/apps/hive",
     "concat": concat,

@@ -14,11 +14,11 @@
 # limitations under the License.
 """All WF EL functions"""
 
-from typing import Optional
+from typing import Optional, Set
 
 from jinja2 import contextfunction
 
-from airflow.models import TaskInstance, DagRun
+from airflow.models import TaskInstance, DagRun, DAG
 from airflow.utils.db import provide_session
 from airflow import AirflowException
 
@@ -49,6 +49,26 @@ def conf(key: str) -> str:
 
 
 @contextfunction
+def user(context=None) -> str:
+    """
+    Return DAG owner or raises error if there is more than one owner.
+    """
+    dag: Optional[DAG] = context.get("dag", None)
+    if dag is None:
+        raise AirflowException("No dag reference in context.")
+
+    owners: Set[str] = {t.owner for t in dag.tasks}
+    if len(owners) > 1:
+        raise AirflowException("DAG owner is ambiguous.")
+
+    if not owners:
+        raise AirflowException("DAG has no owner.")
+
+    owner = owners.pop()
+    return owner
+
+
+@contextfunction
 @provide_session
 def last_error_node(context=None, session=None) -> str:
     """
@@ -61,7 +81,6 @@ def last_error_node(context=None, session=None) -> str:
         raise AirflowException("No dag_run reference in context.")
 
     dag_id = drun.dag_id
-
     ti = TaskInstance  # pylint:disable=invalid-name
     last_failed_task = (
         session.query(TaskInstance)
