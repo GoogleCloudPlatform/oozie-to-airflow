@@ -66,7 +66,7 @@ class TestSubworkflowMapper(TestCase):
         with suppress(OSError):
             os.remove(self.SUBDAG_TEST_FILEPATH)
 
-    @mock.patch("o2a.utils.el_utils.parse_els")
+    @mock.patch("o2a.utils.el_utils.extract_evaluate_properties")
     def test_create_mapper_jinja(self, parse_els):
         # Given
         parse_els.side_effect = [self.subworkflow_properties, self.config]
@@ -82,7 +82,7 @@ class TestSubworkflowMapper(TestCase):
         self.assertEqual("localhost:8032", mapper.props.merged["resourceManager"])
         self.assertIsNotNone(mapper.props.merged["user.name"])
 
-    @mock.patch("o2a.utils.el_utils.parse_els")
+    @mock.patch("o2a.utils.el_utils.extract_evaluate_properties")
     def test_create_mapper_jinja_no_propagate(self, parse_els):
         # Given
         parse_els.side_effect = [self.subworkflow_properties, self.config]
@@ -101,7 +101,7 @@ class TestSubworkflowMapper(TestCase):
         # Propagate config node is missing, should NOT forward config job_properties
         self.assertEqual(PropertySet(config={}, job_properties={}), mapper.get_child_props())
 
-    @mock.patch("o2a.utils.el_utils.parse_els")
+    @mock.patch("o2a.utils.el_utils.extract_evaluate_properties")
     def test_to_tasks_and_relations(self, parse_els):
         # Given
         parse_els.side_effect = [self.subworkflow_properties, self.config]
