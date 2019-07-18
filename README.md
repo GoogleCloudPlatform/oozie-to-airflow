@@ -37,8 +37,8 @@ If you want to contribute to the project, please take a look at [CONTRIBUTING.md
 
 - [Background](#background)
 - [Running the Program](#running-the-program)
-- [Installing from PyPi](#installing-from-pypi)
-  - [Installing from the sources](#installing-from-the-sources)
+  - [Installing from PyPi](#installing-from-pypi)
+  - [Installing from sources](#installing-from-sources)
   - [Running the conversion](#running-the-conversion)
   - [Structure of the application folder](#structure-of-the-application-folder)
 - [Supported Oozie features](#supported-oozie-features)
@@ -96,38 +96,46 @@ There are a few differences noted below:
 
 Note that you need Python >= 3.6 to run the converter.
 
-# Installing from PyPi
+## Installing from PyPi
 
 You can install `o2a` from PyPi via `pip install o2a`. After installation, the
 [o2a](bin/o2a) and [o2a-validate-workflows](bin/o2a-validate-workflows) should be available on your path.
 
-## Installing from the sources
+## Installing from sources
 
-In case you use sources of `o2a`, the environment can be set up via the virtualenv setup
+1. (Optional) Install virtualenv:
+
+    In case you use sources of `o2a`, the environment can be set up via the virtualenv setup
 (you can create one using [virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/)
-for example.
+for example).
 
-While in your virtualenv, you can install all the requirements via `pip install -r requirements.txt`.
+2. Install Oozie-to-Airflow - you have 2 options to do so:
 
-You can add the [bin](bin) subdirectory to your
-PATH, then all the scripts below can be run without adding the `./bin` prefix.
-This can be done for example by adding a line similar to the one below to your `.bash_profile`
-or `bin/postactivate` from your virtual environment:
+    1. automatically: install `o2a` from local folder using `pip install -e .`
 
-```bash
-export PATH=${PATH}:<INSERT_PATH_TO_YOUR_OOZIE_PROJECT>/bin
-```
+        This will take care about, among others, adding the [bin](bin) subdirectory to the PATH.
 
-Otherwise you need to run all the scripts from the bin subdirectory, for example:
+    2. more manually:
 
-```bash
-./bin/o2a --help
-```
+        1. While in your virtualenv, you can install all the requirements via `pip install -r requirements.txt`.
+
+        2. You can add the [bin](bin) subdirectory to your
+        PATH, then all the scripts below can be run without adding the `./bin` prefix.
+        This can be done for example by adding a line similar to the one below to your `.bash_profile`
+        or `bin/postactivate` from your virtual environment:
+
+        ```bash
+        export PATH=${PATH}:<INSERT_PATH_TO_YOUR_OOZIE_PROJECT>/bin
+        ```
+
+        Otherwise you need to run all the scripts from the bin subdirectory, for example:
+
+        ```bash
+        ./bin/o2a --help
+        ```
 
 In all the example commands below, it is assumed that the [bin](bin) directory is in your PATH -
 either installed from PyPi or from the sources.
-
-You can also install `o2a` from local folder using `pip install -e .`
 
 ## Running the conversion
 
