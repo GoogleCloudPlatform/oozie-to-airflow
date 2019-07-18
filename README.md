@@ -360,6 +360,8 @@ treats file/archive somewhat erraticaly. This is not a blocker to run most of th
 some particular complex workflows might be problematic. Further testing with real, production Oozie
 workflows is needed to verify our implementation.
 
+[Example Oozie docs](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a3.2.2.1_Adding_Files_and_Archives_for_the_Job)
+
 * [File/Archive in Pig doesn't work](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/243)
 
 ## Not all global configuration methods are supported
@@ -373,7 +375,7 @@ configuration options the following ones are not supported (but can be easily ad
 
 ## Support for uber.jar feature
 
-The uber.jar feature is not supported.
+The uber.jar feature is not supported. [Oozie docs](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#AppDeployment)
 
 * [Support uber.jar feature](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/140)
 
@@ -387,12 +389,15 @@ LD_LIBRARY_PATH/CLASSPATH. Currently only Java Mapper supports it.
 
 ## Custom messages missing for Kill Node
 
-The Kill Node might have custom log message specified. This is not implemented:
-[Add handling of custom Kill Node message](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/97)
+The Kill Node might have custom log message specified. This is not implemented.
+[Oozie docs](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a3.1.3_Kill_Control_Node)
+
+* [Add handling of custom Kill Node message](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/97)
 
 ## Capturing output is not supported
 
 In several actions you can capture output from tasks. This is not yet implemented.
+[Example Oozie docs](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a3.2.6_Java_Action)
 
 * [Add support for capture-ouput](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/155)
 
