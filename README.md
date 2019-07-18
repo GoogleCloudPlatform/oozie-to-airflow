@@ -451,12 +451,16 @@ In this example the output (including sub-workflow dag) will be created in the `
 
 ## Childwf Example
 
-The childwf example is sub-workflow for the `demo` example. It can be run as:
-
-`o2a -i examples/childwf -o output/childwf`
+### Prerequisites
 
 Make sure to first copy `examples/subwf/configuration.template.properties`, rename it as
 `configuration.properties` and fill in with configuration data.
+
+### Running
+
+The childwf example is sub-workflow for the `demo` example. It can be run as:
+
+`o2a -i examples/childwf -o output/childwf`
 
 ### Output
 In this example the output will be created in the `./output/childwf/` folder.
@@ -466,6 +470,8 @@ In this example the output will be created in the `./output/childwf/` folder.
 No known limitations.
 
 ## SSH Example
+
+### Running
 
 The ssh example can be run as:
 
@@ -509,12 +515,16 @@ No known limitations.
 
 ## MapReduce Example
 
-The MapReduce example can be run as:
-
-`o2a -i examples/mapreduce -o output/mapreduce`
+### Prerequisites
 
 Make sure to first copy `examples/mapreduce/configuration.template.properties`, rename it as
 `configuration.properties` and fill in with configuration data.
+
+### Running
+
+The MapReduce example can be run as:
+
+`o2a -i examples/mapreduce -o output/mapreduce`
 
 ### Output
 In this example the output will be created in the `./output/mapreduce/` folder.
@@ -561,12 +571,16 @@ Issue in github [Implement streaming support](https://github.com/GoogleCloudPlat
 
 ## FS Example
 
-The FS example can be run as:
-
-`o2a -i examples/fs -o output/fs`
+### Prerequisites
 
 Make sure to first copy `examples/fs/configuration.template.properties`, rename it as
 `configuration.properties` and fill in with configuration data.
+
+### Running
+
+The FS example can be run as:
+
+`o2a -i examples/fs -o output/fs`
 
 ### Output
 In this example the output will be created in the `./output/fs/` folder.
@@ -587,12 +601,16 @@ Issue in Github: [Add support for dirFiles in FsMapper](https://github.com/Googl
 
 ## Java Example
 
-The Java example can be run as:
-
-`o2a -i examples/java -o output/java`
+### Prerequisites
 
 Make sure to first copy `examples/fs/configuration.template.properties`, rename it as
 `configuration.properties` and fill in with configuration data.
+
+### Running
+
+The Java example can be run as:
+
+`o2a -i examples/java -o output/java`
 
 ### Output
 In this example the output will be created in the `./output/java/` folder.
@@ -607,12 +625,16 @@ Issue in Github: [Override Java main class with property](https://github.com/Goo
 
 ## Pig Example
 
-The Pig example can be run as:
-
-`o2a -i examples/pig -o output/pig`
+### Prerequisites
 
 Make sure to first copy `examples/pig/configuration.template.properties`, rename it as
 `configuration.properties` and fill in with configuration data.
+
+### Running
+
+The Pig example can be run as:
+
+`o2a -i examples/pig -o output/pig`
 
 ### Output
 In this example the output will be created in the `./output/pig/` folder.
@@ -641,12 +663,16 @@ Issues in Github:
 
 ## Shell Example
 
-The Shell example can be run as:
-
-`o2a -i examples/shell -o output/shell`
+### Prerequisites
 
 Make sure to first copy `examples/shell/configuration.template.properties`, rename it as
 `configuration.properties` and fill in with configuration data.
+
+### Running
+
+The Shell example can be run as:
+
+`o2a -i examples/shell -o output/shell`
 
 ### Output
 In this example the output will be created in the `./output/shell/` folder.
@@ -681,12 +707,16 @@ Issue in Github: [Shell Launcher Configuration](https://github.com/GoogleCloudPl
 
 ## Spark Example
 
-The Spark example can be run as:
-
-`o2a -i examples/spark -o output/spark`
+### Prerequisites
 
 Make sure to first copy `/examples/spark/configuration.template.properties`, rename it as
 `configuration.properties` and fill in with configuration data.
+
+### Running
+
+The Spark example can be run as:
+
+`o2a -i examples/spark -o output/spark`
 
 ### Output
 In this example the output will be created in the `./output/spark/` folder.
@@ -716,12 +746,16 @@ The following elements are not supported: `job-tracker`, `name-node`, `master`, 
 
 ## Sub-workflow Example
 
-The Sub-workflow example can be run as:
-
-`o2a -i examples/subwf -o output/subwf`
+### Prerequisites
 
 Make sure to first copy `examples/subwf/configuration.template.properties`, rename it as
 `configuration.properties` and fill in with configuration data.
+
+### Running
+
+The Sub-workflow example can be run as:
+
+`o2a -i examples/subwf -o output/subwf`
 
 ### Output
 In this example the output (together with sub-worfklow dag) will be created in the `./output/subwf/` folder.
@@ -734,12 +768,16 @@ No known limitations.
 
 ## DistCp Example
 
-The DistCp example can be run as:
-
-`o2a -i examples/distcp -o output/distcp`
+### Prerequisites
 
 Make sure to first copy `examples/distcp/configuration.template.properties`, rename it as
 `configuration.properties` and fill in with configuration data.
+
+### Running
+
+The DistCp example can be run as:
+
+`o2a -i examples/distcp -o output/distcp`
 
 ### Output
 In this example the output will be created in the `./output/distcp/` folder.
@@ -754,12 +792,16 @@ completes successfully.
 
 ## Decision Example
 
-The decision example can be run as:
-
-`o2a -i examples/decision -o output/decision`
+### Prerequisites
 
 Make sure to first copy `examples/decision/configuration.template.properties`, rename it as
 `configuration.properties` and fill in with configuration data.
+
+### Running
+
+The decision example can be run as:
+
+`o2a -i examples/decision -o output/decision`
 
 ### Output
 In this example the output will be created in the `./output/decision/` folder.
@@ -775,6 +817,8 @@ Github issue: [Implement decision node](https://github.com/GoogleCloudPlatform/o
 
 
 ## EL Example
+
+### Running
 
 The Oozie Expression Language (EL) example can be run as:
 `o2a -i examples/el -o output/el`
@@ -799,12 +843,16 @@ Github issue: [Implement decision node](https://github.com/GoogleCloudPlatform/o
 
 ## Hive/Hive2 Example
 
-The Hive example can be run as:
-
-`o2a -i examples/hive -o output/hive`
+### Prerequisites
 
 Make sure to first copy `/examples/hive/configuration.template.properties`, rename it as
 `configuration.properties` and fill in with configuration data.
+
+### Running
+
+The Hive example can be run as:
+
+`o2a -i examples/hive -o output/hive`
 
 ### Output
 In this example the output will be created in the `./output/hive/` folder.
@@ -827,13 +875,16 @@ The Github issue for both problems: [Hive connection configuration and other ele
 
 ## Email Example
 
-The Email example can be run as:
-
-`o2a -i examples/email -o output/email`
+### Prerequisites
 
 Make sure to first copy `/examples/email/configuration.template.properties`, rename it as
 `configuration.properties` and fill in with configuration data.
 
+### Running
+
+The Email example can be run as:
+
+`o2a -i examples/email -o output/email`
 
 ### Output
 In this example the output will be created in the `./output/email/` folder.
