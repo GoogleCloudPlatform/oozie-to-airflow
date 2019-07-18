@@ -44,6 +44,9 @@ If you want to contribute to the project, please take a look at [CONTRIBUTING.md
 - [Supported Oozie features](#supported-oozie-features)
   - [Control nodes](#control-nodes)
   - [EL Functions](#el-functions)
+- [Airflow-specific optimisations](#airflow-specific-optimisations)
+  - [Removing unnecessary control nodes](#removing-unnecessary-control-nodes)
+  - [Removing inaccessible nodes](#removing-inaccessible-nodes)
 - [Common Known Limitations](#common-known-limitations)
   - [File/Archive functionality](#filearchive-functionality)
   - [Not all global configuration methods are supported](#not-all-global-configuration-methods-are-supported)
@@ -303,6 +306,36 @@ default everything gets mapped to the module `o2a_libs`. This means in
 order to use EL function mapping, the folder `o2a_libs` should
 be copied over to the Airflow DAG folder. This should then be picked up and
 parsed by the Airflow workers and then available to all DAGs.
+
+# Airflow-specific optimisations
+
+Due to the fact that Oozie and Airflow differ with regards to some aspects of running workflows,
+there may be some differences in the output Airflow DAG with regards to the Oozie XML.
+
+## Removing unnecessary control nodes
+
+In Airflow you don't need as many explicit control nodes as in Oozie. For example you don't ever need a Start
+node and in most cases End is also not needed.
+
+We introduced the concept of `Transformers` in O2A, which modify the workflow. Below are the ones that
+remove unnecessary control nodes:
+
+- `RemoveEndTransformer` - removes End nodes with all relations when it's not connected to a Decision node,
+- `RemoveKillTransformer` - removes Kill nodes with all relations when it's not connected to a Decision node,
+- `RemoveStartTransformer` - removes Start nodes with all relations,
+- `RemoveForkTransformer` - removes Fork nodes when there are no upstream nodes,
+- `RemoveJoinTransformer` - removes Join nodes when there are no downstream nodes.
+
+## Removing inaccessible nodes
+
+In Oozie for a node to be executed it has to be able to be traced back to the Start node.
+If a node is "loose" and is not connected to Start in any way (directly or indirectly via its "parents") it
+will be skipped.
+
+However in Airflow all tasks will be executed. Therefore in order to replicate the "skipping" of loose nodes
+behaviour of Oozie we need to remove nodes unconnected to Start during the conversion phase.
+
+This is achieved thanks to the `RemoveInaccessibleNodeTransformer`.
 
 # Common Known Limitations
 
