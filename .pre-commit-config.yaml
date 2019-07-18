@@ -27,21 +27,30 @@ repos:
         files: \.xml$|\.md$
         exclude: ^\.github/.*$
         args:
+          - --license-filepath
+          - utils/LICENSE.txt
           - --comment-style
           - <!--| | -->
       - id: insert-license
         name: Add licence for all .pig files
         files: \.pig$
         args:
+          - --license-filepath
+          - utils/LICENSE.txt
           - --comment-style
           - "-- "
       - id: insert-license
         name: Add licence for all python/yaml/property files
         files: \.py$|\.properties$|\.yaml$|\.yml$
+        args:
+          - --license-filepath
+          - utils/LICENSE.txt
       - id: insert-license
         name: Add licence for all Jinja templates
         files: \.tpl$
         args:
+          - --license-filepath
+          - utils/LICENSE.txt
           - --comment-style
           - "{# | | #}"
       - id: forbid-tabs
