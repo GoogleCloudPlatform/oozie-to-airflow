@@ -300,10 +300,10 @@ A workflow definition may have zero or more kill nodes.
 As of now, a very minimal set of [Oozie EL](https://oozie.apache.org/docs/4.0.1/WorkflowFunctionalSpec.html#a4.2_Expression_Language_Functions)
 functions are supported. The way they work is that there exists a
 dictionary mapping from each Oozie EL function string to the
-corresponding Python function. This is in `utils/el_utils.py`.
+corresponding Python function. This is in `o2a/utils/el_utils.py`.
 This design allows for custom EL function mapping if one so chooses. By
-default everything gets mapped to the module `o2a_libs`. This means in
-order to use EL function mapping, the folder `o2a_libs` should
+default everything gets mapped to the module `o2a/o2a_libs`. This means in
+order to use EL function mapping, the folder `o2a/o2a_libs` should
 be copied over to the Airflow DAG folder. This should then be picked up and
 parsed by the Airflow workers and then available to all DAGs.
 
