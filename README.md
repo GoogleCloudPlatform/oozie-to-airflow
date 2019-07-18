@@ -180,12 +180,10 @@ The input application directory has to follow the structure defined as follows:
 # Supported Oozie features
 
 ## Control nodes
-### Fork
+### Fork and Join
 
 A [fork node](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a3.1.5_Fork_and_Join_Control_Nodes)
 splits the path of execution into multiple concurrent paths of execution.
-
-### Join
 
 A [join node](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a3.1.5_Fork_and_Join_Control_Nodes)
 waits until every concurrent execution of the previous fork node arrives to it. The fork and join nodes must be used in pairs. The join node
