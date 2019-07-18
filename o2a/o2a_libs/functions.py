@@ -16,11 +16,15 @@
 EL functions map module.
 """
 import re
+import json
+
 import o2a.o2a_libs.el_wf_functions as wf_functions
+import o2a.o2a_libs.el_fs_functions as fs_functions
 
 
-# Used for functions.wf.f_name pattern sin templates
+# Used for functions.wf.f_name pattern in templates
 wf = wf_functions  # pylint:disable=invalid-name
+fs = fs_functions  # pylint:disable=invalid-name
 
 
 def first_not_null(str_one, str_two):
@@ -95,10 +99,25 @@ def timestamp():
     return datetime.datetime.now(pytz.utc).isoformat()
 
 
-def to_json_str(py_map):
-    import json
-
+def to_json_str(py_map: dict):
+    """
+    Originally it returns an XML encoded JSON representation of a Map.
+    """
     return json.dumps(py_map)
+
+
+def to_properties_str(py_map: dict):
+    """
+    Originally it returns an XML encoded Properties representation of a Map.
+    """
+    return py_map
+
+
+def to_configuration_str(py_map: dict):
+    """
+    Originally it returns an XML encoded Configuration representation of a Map.
+    """
+    return py_map
 
 
 def concat(str1: str, str2: str) -> str:

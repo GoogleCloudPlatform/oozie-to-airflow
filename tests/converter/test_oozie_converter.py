@@ -320,7 +320,6 @@ class TestOozieConvertByExamples(TestCase):
                 "from airflow.utils import dates",
                 "from airflow.utils.trigger_rule import TriggerRule",
                 "from o2a.o2a_libs import functions",
-                "from o2a.o2a_libs.el_basic_functions import first_not_null",
                 "from o2a.o2a_libs.property_utils import PropertySet",
                 "import datetime",
                 "import shlex",

@@ -290,11 +290,11 @@ A workflow definition may have zero or more kill nodes.
 
 As of now, a very minimal set of [Oozie EL](https://oozie.apache.org/docs/4.0.1/WorkflowFunctionalSpec.html#a4.2_Expression_Language_Functions)
 functions are supported. The way they work is that an EL expression is being translated to
-jinja template. The translation is performed with usage of [Lark](https://lark-parser.readthedocs.io/en/latest/).
-All required variables should be passed in `job.properties`. Equivalents of EL functions could be found in
+a jinja template. The translation is performed using [Lark](https://lark-parser.readthedocs.io/en/latest/).
+All required variables should be passed in `job.properties`. Equivalents of EL functions can be found in
 `o2a_libs/functions.py`.
 
-For example the following EL expresssion
+For example the following EL expression
 ```${wf:user() == firstNotNull(arg1, arg2)}```
 is translated to the following jinja equivalent:
 ```{{functions.wf:user() == functions.firstNotNull(arg1, arg2)}}```

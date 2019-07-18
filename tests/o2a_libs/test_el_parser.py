@@ -193,6 +193,7 @@ class TestElParser(unittest.TestCase):
                     "functions": functions,
                 },
             ),
+            ("{{functions.wf.conf('key')}}", "${wf:conf('key')}", {"functions": functions}),
         ]
     )
     def test_error_rendering(self, translation, input_sentence, kwargs):

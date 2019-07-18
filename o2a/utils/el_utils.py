@@ -118,10 +118,10 @@ def _resolve_name_node(translation: str, props: PropertySet) -> Tuple[Optional[s
 
 def normalize_path(url: str, props: PropertySet, allow_no_schema=False, translated=False) -> str:
     """
-    Transforms url by replacing el-expression with equivalent jinja templates
-    and the returns only the path part of the url. If schema validation is
+    Transforms url by replacing EL-expression with equivalent jinja templates
+    and returns only the path part of the url. If schema validation is
     required then props should include proper name-node. If translated is set to True
-    then passed url is supposed to be valid jinja expression.
+    then passed url is supposed to be a valid jinja expression.
     For example:
         input: '{$nameNode}/users/{$userName}/dir
         url_with_var: `{{nameNode}}/users/{{userName}}/dir
@@ -149,7 +149,7 @@ def normalize_path(url: str, props: PropertySet, allow_no_schema=False, translat
 
 def replace_url_el(url: str, props: PropertySet, allow_no_schema=False) -> str:
     """
-    Transforms url by replacing el-expression with equivalent jinja templates.
+    Transforms url by replacing EL-expression with equivalent jinja templates.
     If schema validation is required then props should include proper name-node.
     For example:
         input: '{$nameNode}/users/{$userName}/dir

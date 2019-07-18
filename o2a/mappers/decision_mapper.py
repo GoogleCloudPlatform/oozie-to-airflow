@@ -89,8 +89,4 @@ class DecisionMapper(BaseMapper):
         return tasks, relations
 
     def required_imports(self) -> Set[str]:
-        return {
-            "from airflow.operators import python_operator",
-            "from airflow.utils import dates",
-            "from o2a.o2a_libs.el_basic_functions import first_not_null",
-        }
+        return {"from airflow.operators import python_operator", "from airflow.utils import dates"}
