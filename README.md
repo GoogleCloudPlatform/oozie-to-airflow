@@ -411,14 +411,21 @@ Currently all subworkflow DAGs must be in examples folder
 
 All examples can be found in the [examples](examples) directory.
 
-* [Demo](#demo-example)
+* [EL](#el-example)
 * [SSH](#ssh-example)
+* [Email](#email-example)
 * [MapReduce](#mapreduce-example)
+* [FS](#fs-example)
+* [Java](#java-example)
 * [Pig](#pig-example)
 * [Shell](#shell-example)
+* [Spark](#spark-example)
 * [Sub-workflow](#sub-workflow-example)
+* [DistCp](#distcp-example)
 * [Decision](#decision-example)
-* [EL](#el-example)
+* [Hive/Hive2](#hivehive2-example)
+* [Demo](#demo-example)
+* [Child workflow](#childwf-example)
 
 ## EL Example
 
