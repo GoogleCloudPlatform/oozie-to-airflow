@@ -56,9 +56,9 @@ If you want to contribute to the project, please take a look at [CONTRIBUTING.md
   - [Capturing output is not supported](#capturing-output-is-not-supported)
   - [Subworkflow DAGs must be placed in examples](#subworkflow-dags-must-be-placed-in-examples)
 - [Examples](#examples)
-  - [Demo Example](#demo-example)
-  - [Childwf Example](#childwf-example)
+  - [EL Example](#el-example)
   - [SSH Example](#ssh-example)
+  - [Email Example](#email-example)
   - [MapReduce Example](#mapreduce-example)
   - [FS Example](#fs-example)
   - [Java Example](#java-example)
@@ -68,9 +68,9 @@ If you want to contribute to the project, please take a look at [CONTRIBUTING.md
   - [Sub-workflow Example](#sub-workflow-example)
   - [DistCp Example](#distcp-example)
   - [Decision Example](#decision-example)
-  - [EL Example](#el-example)
   - [Hive/Hive2 Example](#hivehive2-example)
-  - [Email Example](#email-example)
+  - [Demo Example](#demo-example)
+  - [Childwf Example](#childwf-example)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -420,61 +420,31 @@ All examples can be found in the [examples](examples) directory.
 * [Decision](#decision-example)
 * [EL](#el-example)
 
-## Demo Example
-
-The demo example contains several action and control nodes. The control
-nodes are `fork`, `join`, `decision`, `start`, `end`, and `kill`. As far as action
-nodes go, there are `fs`, `map-reduce`, and `pig`.
-
-Most of these are already supported, but when the program encounters a node it does
-not know how to parse, it will perform a sort of "skeleton transformation" -
-it will convert all the unknown nodes to dummy nodes. This will
-allow users to manually parse the nodes if they so wish as the control flow
-is there.
-
-### Prerequisites
-
-Make sure to first copy `examples/demo/configuration.template.properties`, rename it as
-`configuration.properties` and fill in with configuration data.
+## EL Example
 
 ### Running
 
-The demo can be run as:
+The Oozie Expression Language (EL) example can be run as:
+`o2a -i examples/el -o output/el`
 
-`o2a -i examples/demo -o output/demo`
+This will showcase the ability to use the `o2a_libs` directory to map EL functions
+to Python methods. This example assumes that the user has a valid Apache Airflow
+SSH connection set up and the `o2a_libs` directory has been copied to the dags
+folder.
 
-This will parse and write to an output file in the `output/demo` directory.
+Please keep in mind that as of the current version only a single EL variable
+or single EL function. Variable/function chaining is not currently supported.
+
+### Output
+In this example the output will be created in the `./output/el/` folder.
 
 ### Known limitations
 
-The decision node is not fully functional as there is not currently
- support for all EL functions. So in order for it to run in Airflow you may need to
-edit the Python output file and change the decision node expression.
+Decision example is not yet fully functional as EL functions are not yet fully implemented so condition is
+hard-coded for now. Once EL functions are implemented, the condition in the example will be updated.
 
-Issue in GitHub: [Implement decision node](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/42)
+Github issue: [Implement decision node](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/42)
 
-### Output
-In this example the output (including sub-workflow dag) will be created in the `./output/demo/` folder.
-
-## Childwf Example
-
-### Prerequisites
-
-Make sure to first copy `examples/subwf/configuration.template.properties`, rename it as
-`configuration.properties` and fill in with configuration data.
-
-### Running
-
-The childwf example is sub-workflow for the `demo` example. It can be run as:
-
-`o2a -i examples/childwf -o output/childwf`
-
-### Output
-In this example the output will be created in the `./output/childwf/` folder.
-
-### Known limitations
-
-No known limitations.
 
 ## SSH Example
 
@@ -524,6 +494,92 @@ The converted DAG uses the `SSHOperator` in Airflow.
 ### Known limitations
 
 No known limitations.
+
+
+## Email Example
+
+### Prerequisites
+
+Make sure to first copy `/examples/email/configuration.template.properties`, rename it as
+`configuration.properties` and fill in with configuration data.
+
+### Running
+
+The Email example can be run as:
+
+`o2a -i examples/email -o output/email`
+
+### Output
+In this example the output will be created in the `./output/email/` folder.
+
+The converted DAG uses the `EmailOperator` in Airflow.
+
+### Prerequisites
+In Oozie the SMTP server configuration is located in `oozie-site.xml`.
+
+For Airflow it needs to be located in `airflow.cfg`.
+Example Airflow SMTP configuration:
+```
+[email]
+email_backend = airflow.utils.email.send_email_smtp
+
+[smtp]
+smtp_host = example.com
+smtp_starttls = True
+smtp_ssl = False
+smtp_user = airflow_user
+smtp_password = password
+smtp_port = 587
+smtp_mail_from = airflow_user@example.com
+```
+
+For more information on setting Airflow configuration options
+[see here](https://airflow.readthedocs.io/en/stable/howto/set-config.html).
+
+### Known limitations
+
+**1. Attachments are not supported**
+
+Due to the complexity of extracting files from HDFS inside Airflow and providing them
+for the `EmailOperator`, the functionality of sending attachments has not yet been
+implemented.
+
+*Solution:* Implement in O2A a mechanism to extract a file from HDFS inside Airflow.
+
+Github Issue: [Add support for attachment in Email mapper](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/335)
+
+**2. `<content_type>` tag is not supported**
+
+From Oozie docs:
+> From uri:oozie:email-action:0.2 one can also specify mail content type as
+<content_type>text/html</content_type>. “text/plain” is default.
+
+Unfortunately, currently the `EmailOperator` only accepts the `mime_subtype` parameter.
+However it only works for multipart subtypes, as the operator appends the subtype
+to the `multipart/` prefix. Therefore passing either `html` or `plain` from Oozie makes no sense.
+
+As a result the email will always be sent with the `EmailOperator`'s default Content-Type value,
+which is `multipart/mixed`.
+
+*Solution:* Modify the Airflow's `EmailOperator` to support more
+content types.
+
+Github Issue: [Content type support in Email mapper](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/343)
+
+**3. `cc` and `bcc` fields are not templated in EmailOperator**
+
+Only the 'to', 'subject' and 'html_content' fields in EmailOperator are templated.
+In practice this covers all fields of an Oozie email action node apart from `cc` and `bcc`.
+
+Therefore if there is an EL function in the action node in either of these two fields
+which will require a Jinja expression in Airflow, it will not work - the expression will
+not be executed, but rather treated as a plain string.
+
+*Solution:* Modify the Airflow's `EmailOperator` to mark more fields as
+`template_fields`.
+
+Github Issue: [The CC: and BCC: fields are not templated in EmailOperator](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/344)
+
 
 ## MapReduce Example
 
@@ -828,31 +884,6 @@ hard-coded for now. Once EL functions are implemented, the condition in the exam
 Github issue: [Implement decision node](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/42)
 
 
-## EL Example
-
-### Running
-
-The Oozie Expression Language (EL) example can be run as:
-`o2a -i examples/el -o output/el`
-
-This will showcase the ability to use the `o2a_libs` directory to map EL functions
-to Python methods. This example assumes that the user has a valid Apache Airflow
-SSH connection set up and the `o2a_libs` directory has been copied to the dags
-folder.
-
-Please keep in mind that as of the current version only a single EL variable
-or single EL function. Variable/function chaining is not currently supported.
-
-### Output
-In this example the output will be created in the `./output/el/` folder.
-
-### Known limitations
-
-Decision example is not yet fully functional as EL functions are not yet fully implemented so condition is
-hard-coded for now. Once EL functions are implemented, the condition in the example will be updated.
-
-Github issue: [Implement decision node](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/42)
-
 ## Hive/Hive2 Example
 
 ### Prerequisites
@@ -885,86 +916,59 @@ For Hive2, the following elements are not supported: `job-tracker`, `name-node`,
 
 The Github issue for both problems: [Hive connection configuration and other elements](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/342)
 
-## Email Example
+
+## Demo Example
+
+The demo example contains several action and control nodes. The control
+nodes are `fork`, `join`, `decision`, `start`, `end`, and `kill`. As far as action
+nodes go, there are `fs`, `map-reduce`, and `pig`.
+
+Most of these are already supported, but when the program encounters a node it does
+not know how to parse, it will perform a sort of "skeleton transformation" -
+it will convert all the unknown nodes to dummy nodes. This will
+allow users to manually parse the nodes if they so wish as the control flow
+is there.
 
 ### Prerequisites
 
-Make sure to first copy `/examples/email/configuration.template.properties`, rename it as
+Make sure to first copy `examples/demo/configuration.template.properties`, rename it as
 `configuration.properties` and fill in with configuration data.
 
 ### Running
 
-The Email example can be run as:
+The demo can be run as:
 
-`o2a -i examples/email -o output/email`
+`o2a -i examples/demo -o output/demo`
 
-### Output
-In this example the output will be created in the `./output/email/` folder.
-
-The converted DAG uses the `EmailOperator` in Airflow.
-
-### Prerequisites
-In Oozie the SMTP server configuration is located in `oozie-site.xml`.
-
-For Airflow it needs to be located in `airflow.cfg`.
-Example Airflow SMTP configuration:
-```
-[email]
-email_backend = airflow.utils.email.send_email_smtp
-
-[smtp]
-smtp_host = example.com
-smtp_starttls = True
-smtp_ssl = False
-smtp_user = airflow_user
-smtp_password = password
-smtp_port = 587
-smtp_mail_from = airflow_user@example.com
-```
-
-For more information on setting Airflow configuration options
-[see here](https://airflow.readthedocs.io/en/stable/howto/set-config.html).
+This will parse and write to an output file in the `output/demo` directory.
 
 ### Known limitations
 
-**1. Attachments are not supported**
+The decision node is not fully functional as there is not currently
+ support for all EL functions. So in order for it to run in Airflow you may need to
+edit the Python output file and change the decision node expression.
 
-Due to the complexity of extracting files from HDFS inside Airflow and providing them
-for the `EmailOperator`, the functionality of sending attachments has not yet been
-implemented.
+Issue in GitHub: [Implement decision node](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/42)
 
-*Solution:* Implement in O2A a mechanism to extract a file from HDFS inside Airflow.
+### Output
+In this example the output (including sub-workflow dag) will be created in the `./output/demo/` folder.
 
-Github Issue: [Add support for attachment in Email mapper](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/335)
+## Childwf Example
 
-**2. `<content_type>` tag is not supported**
+### Prerequisites
 
-From Oozie docs:
-> From uri:oozie:email-action:0.2 one can also specify mail content type as
-<content_type>text/html</content_type>. “text/plain” is default.
+Make sure to first copy `examples/subwf/configuration.template.properties`, rename it as
+`configuration.properties` and fill in with configuration data.
 
-Unfortunately, currently the `EmailOperator` only accepts the `mime_subtype` parameter.
-However it only works for multipart subtypes, as the operator appends the subtype
-to the `multipart/` prefix. Therefore passing either `html` or `plain` from Oozie makes no sense.
+### Running
 
-As a result the email will always be sent with the `EmailOperator`'s default Content-Type value,
-which is `multipart/mixed`.
+The childwf example is sub-workflow for the `demo` example. It can be run as:
 
-*Solution:* Modify the Airflow's `EmailOperator` to support more
-content types.
+`o2a -i examples/childwf -o output/childwf`
 
-Github Issue: [Content type support in Email mapper](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/343)
+### Output
+In this example the output will be created in the `./output/childwf/` folder.
 
-**3. `cc` and `bcc` fields are not templated in EmailOperator**
+### Known limitations
 
-Only the 'to', 'subject' and 'html_content' fields in EmailOperator are templated.
-In practice this covers all fields of an Oozie email action node apart from `cc` and `bcc`.
-
-Therefore if there is an EL function in the action node in either of these two fields
-which will require a Jinja expression in Airflow, it will not work - the expression will
-not be executed, but rather treated as a plain string.
-
-*Solution:* Modify the Airflow's `EmailOperator` to mark more fields as
-`template_fields`.
-
-Github Issue: [The CC: and BCC: fields are not templated in EmailOperator](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/344)
+No known limitations.
