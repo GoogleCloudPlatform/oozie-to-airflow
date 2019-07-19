@@ -478,6 +478,11 @@ No known limitations.
 
 ## SSH Example
 
+### Prerequisites
+
+In order to change the `user` or `host` in the example, please edit the
+`examples/ssh/hdfs/workflow.xml`.
+
 ### Running
 
 The ssh example can be run as:
@@ -485,7 +490,7 @@ The ssh example can be run as:
 `o2a -i examples/ssh -o output/ssh`
 
 This will convert the specified Oozie XML and write the output into the
-specified output directory, in this case `output/ssh/test_ssh_dag.py`.
+specified output directory, in this case `output/ssh/ssh.py`.
 
 There are some differences between Apache Oozie and Apache Airflow as far as the SSH specification goes.
 In Airflow you will have to add/edit an SSH-specific connection that contains
