@@ -432,6 +432,13 @@ it will convert all the unknown nodes to dummy nodes. This will
 allow users to manually parse the nodes if they so wish as the control flow
 is there.
 
+### Prerequisites
+
+Make sure to first copy `examples/demo/configuration.template.properties`, rename it as
+`configuration.properties` and fill in with configuration data.
+
+### Running
+
 The demo can be run as:
 
 `o2a -i examples/demo -o output/demo`
@@ -447,7 +454,7 @@ edit the Python output file and change the decision node expression.
 Issue in GitHub: [Implement decision node](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/42)
 
 ### Output
-In this example the output (including sub-workflow dag) will be created in the `./output/ssh/` folder.
+In this example the output (including sub-workflow dag) will be created in the `./output/demo/` folder.
 
 ## Childwf Example
 
