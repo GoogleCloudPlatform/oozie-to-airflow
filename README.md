@@ -56,8 +56,10 @@ If you want to contribute to the project, please take a look at [CONTRIBUTING.md
   - [Custom messages missing for Kill Node](#custom-messages-missing-for-kill-node)
   - [Capturing output is not supported](#capturing-output-is-not-supported)
   - [Subworkflow DAGs must be placed in examples](#subworkflow-dags-must-be-placed-in-examples)
+  - [EL functions support](#el-functions-support)
 - [Cloud execution environment for Oozie to Airflow conversion](#cloud-execution-environment-for-oozie-to-airflow-conversion)
   - [Cloud environment setup](#cloud-environment-setup)
+  
 - [Examples](#examples)
   - [EL Example](#el-example)
   - [SSH Example](#ssh-example)
@@ -428,6 +430,22 @@ Currently all subworkflow DAGs must be in examples folder
 
 * [Subworkflow conversion expects to be run in examples](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/213)
 
+## EL functions support
+
+Currently there are a few `wf:functions` which are not implemented:
+
+* [`wf:actionTrackerUri`](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/372)
+* [`wf:actionExternalId`](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/371)
+* [`wf:actionData`](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/370)
+* [`wf:run`](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/369)
+* [`wf:errorMessage`](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/368)
+* [`wf:errorCode`](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/367)
+* [`wf:transition`](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/366)
+* [`wf:callback`](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/365)
+* [`wf:group`](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/364)
+* [`wf:appPath`](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/363)
+
+Additionally some already implemented functions may not preserve full logic of the original el-expression.
 
 # Cloud execution environment for Oozie to Airflow conversion
 
@@ -498,6 +516,7 @@ List of jobs with their statuses can be also shown by issuing `oozie jobs` comma
 
 More about testing the Oozie to Airflow conversion process can be found in
 [CONTRIBUTING.md](CONTRIBUTING.md#running-system-tests)
+
 
 # Examples
 
