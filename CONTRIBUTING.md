@@ -169,7 +169,7 @@ The latest dependencies generated:
 ![dependency graph](images/o2a-dependencies.png)
 
 You can also see dependency cycles in case there are some cycles in
-[o2a-dependency-cycles.png](images/o2a-dependecy-cycles.png)
+[o2a-dependency-cycles.png](images/o2a-dependency-cycles.png)
 
 # Continuous integration environment
 

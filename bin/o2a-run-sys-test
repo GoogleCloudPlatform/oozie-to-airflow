@@ -620,7 +620,7 @@ function test_composer {
     echo "You can check the progress at the address: ${COMPOSER_WEB_UI_URL}"
     echo
     DAG_STATUS="running"
-    while [ "${DAG_STATUS}" == "running" ] ; do
+    while [[ "${DAG_STATUS}" == "running" ]] ; do
         echo "Waiting for a change in the job status"
         sleep 1
         DAG_STATUS="$(run_command_on_composer airflow dag_state "${OUTPUT_DAG_NAME}" "${TEST_EXECUTION_DATE}" 2> /dev/null \
@@ -657,7 +657,7 @@ function test_oozie {
     echo
     set -x
     JOB_STATUS='RUNNING'
-    while [ "${JOB_STATUS}" == "RUNNING" ] ; do
+    while [[ "${JOB_STATUS}" == "RUNNING" ]] ; do
        echo "Waiting for a change in the job status"
        sleep 1
        JOB_STATUS=$(run_command_on_dataproc "oozie job -info ${JOB_ID}" 2> /dev/null \
