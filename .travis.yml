@@ -30,7 +30,7 @@ install:
   - sudo apt-get install
 script:
   - ./bin/o2a-run-all-configurations
-  - pre-commit run --all-files
+  - pre-commit run --all-files --hook-stage=push
   - ./bin/o2a-generate-dependency-graph
   - ./bin/o2a-generate-index images
   - '[[ ! -z "${GCP_SERVICE_ACCOUNT}" ]] && [[ ! -z "${GCP_BUCKET_NAME}" ]] &&
