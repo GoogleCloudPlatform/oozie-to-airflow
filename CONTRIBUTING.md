@@ -32,6 +32,7 @@ Table of Contents
   - [Running Unit Tests](#running-unit-tests)
   - [Running all example conversions](#running-all-example-conversions)
   - [Dependency graphs](#dependency-graphs)
+- [Continuous integration environment](#continuous-integration-environment)
 - [Cloud test environment with Dataproc and Composer](#cloud-test-environment-with-dataproc-and-composer)
   - [Cloud environment setup](#cloud-environment-setup)
   - [Running system tests](#running-system-tests)
@@ -120,7 +121,7 @@ You can also run all the checks manually by running:
 
 `pre-commit run --all-files`
 
-You might need to install xmllint and docker if you do not have it locally. The first can be done with
+You might need to install `xmllint` and `docker` if you do not have it locally. The first can be done with
 `apt install libxml2-utils` on Linux or `brew install xmlstarlet` on MacOS. The second can be done
 according to [the instructions](https://docs.docker.com/install/).
 
@@ -152,6 +153,61 @@ The latest dependencies generated:
 
 You can also see dependency cycles in case there are some cycles in
 [o2a-dependency-cycles.png](images/o2a-dependecy-cycles.png)
+
+# Continuous integration environment
+
+The project integrates with Travis CI. To enable saving of the build process artifacts, you must configure the authorization mechanisms for Google Cloud Storage. For this purpose, it is necessary to set two environment variables: `GCP_SERVICE_ACCOUNT`, `GCP_BUCKET_NAME`.
+
+To do this, follow these steps:
+1. To simplify the instructions, set the environment variable:
+```bash
+export PROJECT_ID="$(gcloud config get-value project)"
+export ACCOUNT_NAME=o2a-build-artifacts-travis-ci
+export ACCOUNT_EMAIL="${ACCOUNT_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+export BUCKET_NAME=o2a-build-artifacts
+```
+
+2. Create the service account that will be used by Travis
+```bash
+gcloud iam service-accounts create "${ACCOUNT_NAME}"
+```
+
+3. Create a new private key for the service account, and save a copy of it in the `o2a-build-artifacts-sa.json` file.
+```bash
+gcloud iam service-accounts keys create --iam-account "${ACCOUNT_EMAIL}" o2a-build-artifacts-sa.json
+```
+
+4. Create the bucket
+```bash
+gsutil mb "gs://${BUCKET_NAME}"
+```
+
+5. Enables the Bucket Policy Only feature on Cloud Storage bucket
+```bash
+gsutil bucketpolicyonly set on "gs://${BUCKET_NAME}"
+```
+
+6. Grant permission to make a bucket's objects publicly readable:
+```bash
+gsutil iam ch allUsers:objectViewer "gs://${BUCKET_NAME}"
+```
+
+7. Grant permission to create and overwrite a bucket's objects by service account:
+```bash
+gsutil iam ch "serviceAccount:${ACCOUNT_EMAIL}:objectAdmin" "gs://${BUCKET_NAME}"
+```
+
+8. Set environement variable on Travis CI
+```bash
+travis env set GCP_SERVICE_ACCOUNT "$(cat o2a-build-artifacts-sa.json)" --private
+travis env set GCP_BUCKET_NAME "${BUCKET_NAME}" --public
+```
+
+9. Remove a service account from local disk
+```bash
+rm o2a-build-artifacts-sa.json
+```
+
 
 # Cloud test environment with Dataproc and Composer
 
@@ -185,7 +241,7 @@ Those are the steps you should follow to set it up:
    with at least Airflow version 1.10 to test the Apache Airflow workflows.
    Since Airflow 1.10 is in  Beta for Cloud Composer, you must
    [enable beta features in Cloud Console](https://cloud.google.com/composer/docs/concepts/beta-support#enable-beta))
-1. Set up all required [Airflow Connections](https://airflow.apache.org/howto/manage-connections.html)
+1. Set up all required [Airflow Connections](https://airflow.apache.org/howto/connection/index.html)
    in Composer. This is required for things like `SSHOperator`.
 
 ### Creating Dataproc cluster
@@ -201,7 +257,7 @@ to handle oozie.
 ```bash
 gcloud dataproc clusters create <CLUSTER_NAME> --region europe-west1 --subnet default --zone "" \
      --single-node --master-machine-type custom-4-20480 --master-boot-disk-size 500 \
-     --image-version 1.3-deb9 --project polidea-airflow --initialization-actions 'gs://<BUCKET>/<FOLDER>/oozie-5.1.sh' \
+     --image-version 1.3-deb9 --project <PROJECT_NAME> --initialization-actions 'gs://<BUCKET>/<FOLDER>/oozie-5.1.sh' \
      --initialization-action-timeout=30m
 ```
 
