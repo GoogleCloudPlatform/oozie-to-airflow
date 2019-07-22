@@ -41,6 +41,7 @@ If you want to contribute to the project, please take a look at [CONTRIBUTING.md
   - [Installing from sources](#installing-from-sources)
   - [Running the conversion](#running-the-conversion)
   - [Structure of the application folder](#structure-of-the-application-folder)
+  - [The o2a libraries](#the-o2a-libraries)
 - [Supported Oozie features](#supported-oozie-features)
   - [Control nodes](#control-nodes)
   - [EL Functions](#el-functions)
@@ -186,6 +187,16 @@ The input application directory has to follow the structure defined as follows:
              |- configuration.template.properties - template of configuration values used during conversion
              |- configuration.properties          - generated properties for configuration values
 ```
+
+## The o2a libraries
+
+Converted Airflow DAGs use common libraries. Those libraries should be available on PYTHONPATH for all
+Airflow components - scheduler, webserver and workers - so that they can be imported when DAGs are parsed.
+
+Those libraries are in [o2a/o2a_libs](o2a/o2a_libs) folder and the easiest way to make them available to
+all the DAGs is to copy them (preserving o2a parent directory) to the "dags" folder of Airflow. This
+is done automatically during the [automated system tests](CONTRIBUTING.md#running-system-tests)
+executed in composer environment where the libs are copied to Composer's DAG folder in Google Cloud Storage.
 
 
 # Supported Oozie features
@@ -442,10 +453,10 @@ All examples can be found in the [examples](examples) directory.
 The Oozie Expression Language (EL) example can be run as:
 `o2a -i examples/el -o output/el`
 
-This will showcase the ability to use the `o2a_libs` directory to map EL functions
+This will showcase the ability to use the [o2a/o2a_libs](o2a/o2a_libs) folder to map EL functions
 to Python methods. This example assumes that the user has a valid Apache Airflow
-SSH connection set up and the `o2a_libs` directory has been copied to the dags
-folder.
+SSH connection set up and the [o2a/o2a_libs](o2a/o2a_libs) folder has been copied to the dags
+folder (preserving o2a parent directory).
 
 Please keep in mind that as of the current version only a single EL variable
 or single EL function. Variable/function chaining is not currently supported.
