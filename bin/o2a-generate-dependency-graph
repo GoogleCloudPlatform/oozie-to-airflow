@@ -20,6 +20,6 @@ pushd "${O2A_DIR}"
 EXCLUDED_MODULES=(black airflow jinja2 pytz _json parameterized o2a.tests o2a.script-tests)
 
 pydeps --noshow --max-bacon=0 --noise-level=5 o2a -T png -o "${MY_DIR}/../images/o2a-dependencies.png" -x "${EXCLUDED_MODULES[@]}"
-pydeps --noshow --max-bacon=0 --noise-level=5 --show-cycles o2a -T png -o "${MY_DIR}/../images/o2a-dependecy-cycles.png" -x "${EXCLUDED_MODULES[@]}"
+pydeps --noshow --max-bacon=0 --noise-level=5 --show-cycles o2a -T png -o "${MY_DIR}/../images/o2a-dependency-cycles.png" -x "${EXCLUDED_MODULES[@]}"
 
 popd
