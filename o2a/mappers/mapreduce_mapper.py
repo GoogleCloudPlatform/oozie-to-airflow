@@ -49,8 +49,8 @@ class MapReduceMapper(ActionMapper):
 
     def on_parse_node(self):
         super().on_parse_node()
-        self.name_node = get_tag_el_text(self.oozie_node, "name-node", props=self.props)
-        self.params_dict = extract_param_values_from_action_node(self.oozie_node, props=self.props)
+        self.name_node = get_tag_el_text(self.oozie_node, "name-node")
+        self.params_dict = extract_param_values_from_action_node(self.oozie_node)
         _, self.hdfs_files = self.file_extractor.parse_node()
         _, self.hdfs_archives = self.archive_extractor.parse_node()
 

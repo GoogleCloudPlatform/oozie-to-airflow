@@ -137,24 +137,25 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
                 Task(
                     task_id="test_id",
                     template_name="spark.tpl",
+                    trigger_rule="one_success",
                     template_params={
                         "main_jar": None,
                         "main_class": "org.apache.spark.examples.mllib.JavaALS",
                         "arguments": [
                             "inputpath=hdfs:///input/file.txt",
                             "value=2",
-                            "/user/test_user/examples/apps/spark/lib/oozie-examples-4.3.0.jar",
+                            "/user/{{userName}}/{{examplesRoot}}/apps/spark/lib/oozie-examples-4.3.0.jar",
                         ],
                         "hdfs_archives": [],
                         "hdfs_files": [],
                         "job_name": "Spark Examples",
+                        "dataproc_spark_jars": [
+                            "/user/{{userName}}/{{examplesRoot}}/apps/spark/lib/oozie-examples-4.3.0.jar"
+                        ],
                         "spark_opts": {
                             "spark.executor.extraJavaOptions": "-XX:+HeapDumpOnOutOfMemoryError "
                             "-XX:HeapDumpPath=/tmp"
                         },
-                        "dataproc_spark_jars": [
-                            "/user/test_user/examples/apps/spark/lib/oozie-examples-4.3.0.jar"
-                        ],
                     },
                 )
             ],

@@ -37,17 +37,17 @@
         <switch>
             <!-- Until workflow EL functions (wf:xyz()) are implemented we use a dummy replacement -->
             <case to="first">
-                ${firstNotNull("", "")}
+                ${firstNotNull("first", "second") == "second"}
             </case>
             <case to="end">
-                ${firstNotNull("test", "")}
+                ${firstNotNull("first", "second") == "first"}
             </case>
             <default to="kill"/>
         </switch>
     </decision>
     <action name="first">
         <fs>
-            <delete path='${nameNode}/user/${userName}/${examplesRoot}/apps/fs/test-delete-1'/>
+            <delete path='${nameNode}/user/${wf:user()}/${examplesRoot}/apps/fs/test-delete-1'/>
         </fs>
         <ok to="end"/>
         <error to="end"/>

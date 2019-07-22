@@ -66,9 +66,8 @@ class EmailMapper(ActionMapper):
 
     def __extract_email_data(self):
         root = self.oozie_node
-        props = self.props
-        self.to_addr = xml_utils.get_tag_el_text(root=root, tag="to", props=props)
-        self.cc_addr = xml_utils.get_tag_el_text(root=root, tag="cc", props=props)
-        self.bcc_addr = xml_utils.get_tag_el_text(root=root, tag="bcc", props=props)
-        self.subject = xml_utils.get_tag_el_text(root=root, tag="subject", props=props)
-        self.body = xml_utils.get_tag_el_text(root=root, tag="body", props=props)
+        self.to_addr = xml_utils.get_tag_el_text(root=root, tag="to")
+        self.cc_addr = xml_utils.get_tag_el_text(root=root, tag="cc")
+        self.bcc_addr = xml_utils.get_tag_el_text(root=root, tag="bcc")
+        self.subject = xml_utils.get_tag_el_text(root=root, tag="subject")
+        self.body = xml_utils.get_tag_el_text(root=root, tag="body")

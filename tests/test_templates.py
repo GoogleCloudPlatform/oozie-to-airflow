@@ -177,7 +177,11 @@ class DecisionTemplateTestCase(TestCase, TemplateTestMixin):
     DEFAULT_TEMPLATE_PARAMS = dict(
         task_id="DAG_NAME_A",
         trigger_rule=TriggerRule.DUMMY,
-        case_dict={"first_not_null('', '')": "task1", "'True'": "task2", "default": "task3"},
+        case_dict={
+            '{{functions.first_not_null("first","second") == "second"}}': "first",
+            '{{functions.first_not_null("first","second") == "first"}}': "end",
+        },
+        default_case="kill",
     )
 
     def test_minimal_green_path(self):

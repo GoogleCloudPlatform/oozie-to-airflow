@@ -110,6 +110,7 @@ class PythonRenderer(BaseRenderer):
             task_group.name: [task.task_id for task in task_group.tasks]
             for task_group in workflow.task_groups.values()
         }
+
         content = render_template(
             template_name=template_name,
             dag_name=workflow.dag_name,

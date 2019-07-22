@@ -19,47 +19,14 @@ import os
 import re
 from copy import deepcopy
 from typing import List, Optional, Tuple, Union, Dict
-from urllib.parse import urlparse, ParseResult
+from urllib.parse import urlparse
 
 from jinja2 import StrictUndefined, Environment
 from jinja2.exceptions import UndefinedError
 
 from o2a.converter.exceptions import ParseException
-from o2a.o2a_libs import el_basic_functions, el_parser
+from o2a.o2a_libs import el_parser
 from o2a.o2a_libs.property_utils import PropertySet
-
-FN_MATCH = re.compile(r"\${\s?(\w+)\(([\w\s,\'\"\-]*)\)\s?\}")
-VAR_MATCH = re.compile(r"\${([\w.]+)}")
-
-EL_CONSTANTS = {"KB": 1024 ** 1, "MB": 1024 ** 2, "GB": 1024 ** 3, "TB": 1024 ** 4, "PB": 1024 ** 5}
-
-EL_FUNCTIONS = {
-    "firstNotNull": el_basic_functions.first_not_null,
-    "concat": el_basic_functions.concat,
-    "replaceAll": el_basic_functions.replace_all,
-    "appendAll": el_basic_functions.append_all,
-    "trim": el_basic_functions.trim,
-    "urlEncode": el_basic_functions.url_encode,
-    "timestamp": el_basic_functions.timestamp,
-    "toJsonStr": el_basic_functions.to_json_str,
-    "toPropertiesStr": None,
-    "toConfigurationStr": None,
-}
-
-WF_EL_FUNCTIONS = {
-    "wf:id": None,
-    "wf:name": None,
-    "wf:appPath": None,
-    "wf:conf": None,
-    "wf:user": None,
-    "wf:group": None,
-    "wf:callback": None,
-    "wf:transition": None,
-    "wf:lastErrorNode": None,
-    "wf:errorCode": None,
-    "wf:errorMessage": None,
-    "wf:run": None,
-}
 
 
 def strip_el(el_function: str) -> str:
@@ -67,77 +34,7 @@ def strip_el(el_function: str) -> str:
     Given an el function or variable like ${ variable },
     strips out everything except for the variable.
     """
-
     return re.sub("[${}]", "", el_function).strip()
-
-
-def replace_el_with_var(el_function: str, props: PropertySet, quote=True) -> str:
-    """
-    Only supports a single variable for now.
-    """
-    # Matches oozie EL variables e.g. ${hostname}
-    var_match = VAR_MATCH.findall(el_function)
-
-    jinjafied_el = el_function
-    if var_match:
-        for var in var_match:
-            try:
-                value = props.merged[var]
-                jinjafied_el = jinjafied_el.replace("${" + var + "}", value)
-            except KeyError:
-                logging.info(f"The EL variable {var} was missing in the properties")
-
-    return "'" + jinjafied_el + "'" if quote else jinjafied_el
-
-
-def parse_el_func(el_function, el_func_map=None):
-    # Finds things like ${ function(arg1, arg2 } and returns
-    # a list like ['function', 'arg1, arg2']
-    if el_func_map is None:
-        el_func_map = EL_FUNCTIONS
-    fn_match = FN_MATCH.findall(el_function)
-
-    if not fn_match:
-        return None
-
-    # fn_match is of the form [('concat', "'ls', '-l'")]
-    # for an el function like ${concat('ls', '-l')}
-    if fn_match[0][0] not in el_func_map:
-        raise KeyError("{} EL function not supported.".format(fn_match[0][0]))
-
-    mapped_func = el_func_map[fn_match[0][0]]
-
-    func_name = mapped_func.__name__
-    return "{}({})".format(func_name, fn_match[0][1])
-
-
-def convert_el_to_jinja(oozie_el, quote=True):
-    """
-    Converts an EL with either a function or a variable to the form:
-    Variable:
-        ${variable} -> {{ job_properties.variable }}
-        ${func()} -> mapped_func()
-
-    Only supports a single variable or a single EL function.
-
-    If quote is true, returns the string surround in single quotes, unless it
-    is a function, then no quotes are added.
-    """
-    # Matches oozie EL functions e.g. ${concat()}
-    fn_match = FN_MATCH.findall(oozie_el)
-    # Matches oozie EL variables e.g. ${hostname}
-    var_match = VAR_MATCH.findall(oozie_el)
-
-    jinjafied_el = oozie_el
-
-    if fn_match:
-        jinjafied_el = parse_el_func(oozie_el)
-        return jinjafied_el
-    if var_match:
-        for var in var_match:
-            jinjafied_el = jinjafied_el.replace("${" + var + "}", "{{ params.props.merged['" + var + "'] }}")
-
-    return "'" + jinjafied_el + "'" if quote else jinjafied_el
 
 
 def extract_evaluate_properties(properties_file: Optional[str], props: PropertySet):
@@ -145,11 +42,9 @@ def extract_evaluate_properties(properties_file: Optional[str], props: PropertyS
     Parses the job_properties file into a dictionary, if the value has
     and EL function in it, it gets replaced with the corresponding
     value that has already been parsed. For example, a file like:
-
     job.job_properties
         host=user@google.com
         command=ssh ${host}
-
     The job_properties would be parsed like:
         PROPERTIES = {
         host: 'user@google.com',
@@ -208,38 +103,75 @@ def comma_separated_string_to_list(line: str) -> Union[List[str], str]:
     return values[0] if len(values) <= 1 else values
 
 
-def normalize_path(url: str, props: PropertySet, allow_no_schema=False) -> str:
+def _resolve_name_node(translation: str, props: PropertySet) -> Tuple[Optional[str], int]:
     """
-    Replaces all EL variables in the url, validates schema and returns only the 'path' part of a url.
-    Example: hdfs://localhost:8082/user/root --> user/root
+    Check if props include nameNode, nameNode1 or nameNode2 value.
     """
-    url_with_var = replace_el_with_var(url, props=props, quote=False)
-    url_parts: ParseResult = urlparse(url_with_var)
-    if not is_allowed_schema(allow_no_schema, url_with_var):
+    merged = props.merged
+    for key in ["nameNode", "nameNode1", "nameNode2"]:
+        start_str = "{{" + key + "}}"
+        name_node = merged.get(key)
+        if translation.startswith(start_str) and name_node:
+            return name_node, len(start_str)
+    return None, 0
+
+
+def normalize_path(url: str, props: PropertySet, allow_no_schema=False, translated=False) -> str:
+    """
+    Transforms url by replacing EL-expression with equivalent jinja templates
+    and returns only the path part of the url. If schema validation is
+    required then props should include proper name-node. If translated is set to True
+    then passed url is supposed to be a valid jinja expression.
+    For example:
+        input: '{$nameNode}/users/{$userName}/dir
+        url_with_var: `{{nameNode}}/users/{{userName}}/dir
+    In this case to validate url schema props should contain `nameNode` value.
+    """
+    url_with_var = url if translated else el_parser.translate(url)
+
+    name_node, shift = _resolve_name_node(url_with_var, props)
+    if name_node:
+        url_parts = urlparse(name_node)
+        output = url_with_var[shift:]
+    else:
+        url_parts = urlparse(url_with_var)
+        output = url_parts.path
+
+    allowed_schemas = {"hdfs", ""} if allow_no_schema else {"hdfs"}
+    if url_parts.scheme not in allowed_schemas:
         raise ParseException(
             f"Unknown path format. The URL should be provided in the following format: "
             f"hdfs://localhost:9200/path. Current value: {url_with_var}"
         )
-    return url_parts.path
+
+    return output
 
 
 def replace_url_el(url: str, props: PropertySet, allow_no_schema=False) -> str:
     """
-    Replaces all EL variables in the url, validates schema and returns the url.
+    Transforms url by replacing EL-expression with equivalent jinja templates.
+    If schema validation is required then props should include proper name-node.
+    For example:
+        input: '{$nameNode}/users/{$userName}/dir
+        url_with_var: `{{nameNode}}/users/{{userName}}/dir
+    In this case to validate url schema props should contain `nameNode` value.
     """
-    url_with_var = replace_el_with_var(url, props=props, quote=False)
-    if not is_allowed_schema(allow_no_schema, url_with_var):
+    url_with_var = el_parser.translate(url)
+
+    name_node, _ = _resolve_name_node(url_with_var, props)
+    if name_node:
+        url_parts = urlparse(name_node)
+    else:
+        url_parts = urlparse(url_with_var)
+
+    allowed_schemas = {"hdfs", ""} if allow_no_schema else {"hdfs"}
+    if url_parts.scheme not in allowed_schemas:
         raise ParseException(
             f"Unknown path format. The URL should be provided in the following format: "
             f"hdfs://localhost:9200/path. Current value: {url_with_var}"
         )
+
     return url_with_var
-
-
-def is_allowed_schema(allow_no_schema: bool, url_with_var: str) -> bool:
-    url_parts: ParseResult = urlparse(url_with_var)
-    allowed_schema = {"hdfs", ""} if allow_no_schema else {"hdfs"}
-    return url_parts.scheme in allowed_schema
 
 
 def escape_string_with_python_escapes(string_to_escape: Optional[str]) -> Optional[str]:

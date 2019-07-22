@@ -16,7 +16,15 @@
 EL functions map module.
 """
 import re
-import o2a.o2a_libs.el_wf_functions as wf
+import json
+
+import o2a.o2a_libs.el_wf_functions as wf_functions
+import o2a.o2a_libs.el_fs_functions as fs_functions
+
+
+# Used for functions.wf.f_name pattern in templates
+wf = wf_functions  # pylint:disable=invalid-name
+fs = fs_functions  # pylint:disable=invalid-name
 
 
 def first_not_null(str_one, str_two):
@@ -91,10 +99,25 @@ def timestamp():
     return datetime.datetime.now(pytz.utc).isoformat()
 
 
-def to_json_str(py_map):
-    import json
-
+def to_json_str(py_map: dict):
+    """
+    Originally it returns an XML encoded JSON representation of a Map.
+    """
     return json.dumps(py_map)
+
+
+def to_properties_str(py_map: dict):
+    """
+    Originally it returns an XML encoded Properties representation of a Map.
+    """
+    return py_map
+
+
+def to_configuration_str(py_map: dict):
+    """
+    Originally it returns an XML encoded Configuration representation of a Map.
+    """
+    return py_map
 
 
 def concat(str1: str, str2: str) -> str:
@@ -128,14 +151,17 @@ FUNCTION_MAP = {
     "wf_id": "run_id",
     "wf_name": "dag.dag_id",
     "timestamp": 'macros.datetime.now().strftime("%Y-%m-%dT%H:%M:%S.%fZ")',
-    "wf_app_path": "params['nameNode']/user/params['userName']}/params['examplesRoot']}/apps/hive",
+    "wf_app_path": "{{nameNode}}/user/{{functions.wf.user()}}/{{examplesRoot}}/apps/hive",
     "concat": concat,
     "trim": trim,
-    "wf_conf": wf.conf,
 }
 
 
 def evaluate_function(name: str, args: tuple) -> str:
+    """
+    This function handles cases of el-function that can be seen as
+    string to string transformation.
+    """
     func = FUNCTION_MAP.get(name, None)
     if func:
         if isinstance(func, str):

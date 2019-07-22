@@ -46,8 +46,8 @@
                 </property>
             </configuration>
             <script>script.q</script>
-            <param>INPUT=/user/${userName}/${examplesRoot}/apps/hive/input-data/</param>
-            <param>OUTPUT=/user/${userName}/${examplesRoot}/apps/hive/output-data/</param>
+            <param>INPUT=/user/${wf:user()}/${examplesRoot}/apps/hive/input-data/</param>
+            <param>OUTPUT=/user/${wf:user()}/${examplesRoot}/apps/hive/output-data/</param>
         </hive>
         <ok to="hive-query"/>
         <error to="fail"/>
@@ -64,8 +64,8 @@
             </configuration>
             <query>
                 DROP TABLE IF EXISTS test_query;
-                CREATE EXTERNAL TABLE test_query (a INT) STORED AS TEXTFILE LOCATION '/user/${userName}/${examplesRoot}/apps/hive/input-data/';
-                INSERT OVERWRITE DIRECTORY '/user/${userName}/${examplesRoot}/apps/hive/output-data/' SELECT * FROM test_query;
+                CREATE EXTERNAL TABLE test_query (a INT) STORED AS TEXTFILE LOCATION '/user/${wf:user()}/${examplesRoot}/apps/hive/input-data/';
+                INSERT OVERWRITE DIRECTORY '/user/${wf:user()}/${examplesRoot}/apps/hive/output-data/' SELECT * FROM test_query;
             </query>
         </hive>
         <ok to="hive2-script"/>
@@ -83,8 +83,8 @@
             </configuration>
             <jdbc-url>jdbc:hive2://localhost:10000/default</jdbc-url>
             <script>script.q</script>
-            <param>INPUT=/user/${userName}/${examplesRoot}/apps/hive/input-data/</param>
-            <param>OUTPUT=/user/${userName}/${examplesRoot}/apps/hive/output-data/</param>
+            <param>INPUT=/user/${wf:user()}/${examplesRoot}/apps/hive/input-data/</param>
+            <param>OUTPUT=/user/${wf:user()}/${examplesRoot}/apps/hive/output-data/</param>
         </hive2>
         <ok to="hive2-query"/>
         <error to="fail"/>
@@ -102,8 +102,8 @@
             <jdbc-url>jdbc:hive2://localhost:10000/default</jdbc-url>
             <query>
                 DROP TABLE IF EXISTS test_query;
-                CREATE EXTERNAL TABLE test_query (a INT) STORED AS TEXTFILE LOCATION '/user/${userName}/${examplesRoot}/apps/hive/input-data/';
-                INSERT OVERWRITE DIRECTORY '/user/${userName}/${examplesRoot}/apps/hive/output-data/' SELECT * FROM test_query;
+                CREATE EXTERNAL TABLE test_query (a INT) STORED AS TEXTFILE LOCATION '/user/${wf:user()}/${examplesRoot}/apps/hive/input-data/';
+                INSERT OVERWRITE DIRECTORY '/user/${wf:user()}/${examplesRoot}/apps/hive/output-data/' SELECT * FROM test_query;
             </query>
         </hive2>
         <ok to="end"/>

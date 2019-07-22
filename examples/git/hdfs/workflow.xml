@@ -39,11 +39,11 @@
             <resource-manager>${resourceManager}</resource-manager>
             <name-node>${nameNode}</name-node>
             <prepare>
-                <delete path="${nameNode}/user/${userName}/${examplesRoot}/apps/git/repo"/>
+                <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/apps/git/repo"/>
             </prepare>
             <git-uri>https://github.com/GoogleCloudPlatform/oozie-to-airflow.git</git-uri>
             <branch>master</branch>
-            <destination-uri>${nameNode}/user/${userName}/${examplesRoot}/apps/git/repo</destination-uri>
+            <destination-uri>${nameNode}/user/${wf:user()}/${examplesRoot}/apps/git/repo</destination-uri>
             <configuration>
                 <property>
                     <name>test.property.node</name>

@@ -61,7 +61,7 @@ class TestShellMapper(unittest.TestCase):
         self.assertEqual(self.shell_node, mapper.oozie_node)
         self.assertEqual("localhost:8032", mapper.resource_manager)
         self.assertEqual("hdfs://localhost:8020", mapper.name_node)
-        self.assertEqual("${queueName}", mapper.props.action_node_properties["mapred.job.queue.name"])
+        self.assertEqual("{{queueName}}", mapper.props.action_node_properties["mapred.job.queue.name"])
         self.assertEqual("echo arg1 arg2", mapper.bash_command)
 
     def test_create_mapper_jinja(self):
@@ -82,9 +82,9 @@ class TestShellMapper(unittest.TestCase):
         # make sure everything is getting initialized correctly
         self.assertEqual("test_id", mapper.name)
         self.assertEqual(self.shell_node, mapper.oozie_node)
-        self.assertEqual("localhost:9999", mapper.resource_manager)
-        self.assertEqual("hdfs://localhost:8021", mapper.name_node)
-        self.assertEqual("myQueue", mapper.props.action_node_properties["mapred.job.queue.name"])
+        self.assertEqual("{{resourceManager}}", mapper.resource_manager)
+        self.assertEqual("{{nameNode}}", mapper.name_node)
+        self.assertEqual("{{queueName}}", mapper.props.action_node_properties["mapred.job.queue.name"])
         self.assertEqual("echo arg1 arg2", mapper.bash_command)
 
     def test_to_tasks_and_relations(self):
@@ -99,20 +99,20 @@ class TestShellMapper(unittest.TestCase):
                 Task(
                     task_id="test_id_prepare",
                     template_name="prepare.tpl",
+                    trigger_rule="one_success",
                     template_params={
-                        "delete": "//examples/output-data/demo/pig-node "
-                        "//examples/output-data/demo/pig-node2",
-                        "mkdir": "//examples/input-data/demo/pig-node "
-                        "//examples/input-data/demo/pig-node2",
+                        "delete": "/examples/output-data/demo/pig-node /examples/output-data/demo/pig-node2",
+                        "mkdir": "/examples/input-data/demo/pig-node /examples/input-data/demo/pig-node2",
                     },
                 ),
                 Task(
                     task_id="test_id",
                     template_name="shell.tpl",
+                    trigger_rule="one_success",
                     template_params={
                         "pig_command": "sh echo arg1 arg2",
                         "action_node_properties": {
-                            "mapred.job.queue.name": "default",
+                            "mapred.job.queue.name": "{{queueName}}",
                             "mapred.map.output.compress": "false",
                         },
                     },

@@ -49,11 +49,11 @@ class PigMapper(ActionMapper):
         self.prepare_extension: PrepareMapperExtension = PrepareMapperExtension(self)
 
     def _parse_oozie_node(self):
-        self.resource_manager = get_tag_el_text(self.oozie_node, TAG_RESOURCE, self.props)
-        self.name_node = get_tag_el_text(self.oozie_node, TAG_NAME, self.props)
-        self.script_file_name = get_tag_el_text(self.oozie_node, TAG_SCRIPT, self.props)
+        self.resource_manager = get_tag_el_text(self.oozie_node, TAG_RESOURCE)
+        self.name_node = get_tag_el_text(self.oozie_node, TAG_NAME)
+        self.script_file_name = get_tag_el_text(self.oozie_node, TAG_SCRIPT)
 
-        self.params_dict = extract_param_values_from_action_node(self.oozie_node, props=self.props)
+        self.params_dict = extract_param_values_from_action_node(self.oozie_node)
         self.files, self.hdfs_files = self.file_extractor.parse_node()
         self.archives, self.hdfs_archives = self.archive_extractor.parse_node()
 

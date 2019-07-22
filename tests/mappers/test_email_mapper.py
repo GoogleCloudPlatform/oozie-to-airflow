@@ -53,8 +53,10 @@ class TestEmailMapper(unittest.TestCase):
         self.assertEqual("to_1_test@gmail.com,to_2_test@gmail.com", mapper.to_addr)
         self.assertEqual("cc_1_test@example.com,cc_2_test@example.com", mapper.cc_addr)
         self.assertEqual("bcc_1_test@gmail.com,bcc_2_test@gmail.com", mapper.bcc_addr)
-        self.assertEqual("Email notifications for ${wf:id()}", mapper.subject)
-        self.assertEqual("Hi user, the wf ${wf:id()} successfully completed. Bye user", mapper.body)
+        self.assertEqual("Email notifications for {{run_id}}", mapper.subject)
+        self.assertEqual(
+            "Hi {{userName}} , the wf {{run_id}} successfully completed. Bye {{userName}}", mapper.body
+        )
 
     def test_to_tasks_and_relations(self):
         mapper = self._get_email_mapper(job_properties={"userName": "user"}, config={})
@@ -73,8 +75,9 @@ class TestEmailMapper(unittest.TestCase):
                         "to_addr": "to_1_test@gmail.com,to_2_test@gmail.com",
                         "cc_addr": "cc_1_test@example.com,cc_2_test@example.com",
                         "bcc_addr": "bcc_1_test@gmail.com,bcc_2_test@gmail.com",
-                        "subject": "Email notifications for ${wf:id()}",
-                        "body": "Hi user, the wf ${wf:id()} successfully completed. Bye user",
+                        "subject": "Email notifications for {{run_id}}",
+                        "body": "Hi {{userName}} , the wf {{run_id}} successfully "
+                        "completed. Bye {{userName}}",
                     },
                 )
             ],
