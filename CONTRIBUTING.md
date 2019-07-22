@@ -121,7 +121,7 @@ You can also run all the checks manually by running:
 
 `pre-commit run --all-files`
 
-You might need to install xmllint and docker if you do not have it locally. The first can be done with
+You might need to install `xmllint` and `docker` if you do not have it locally. The first can be done with
 `apt install libxml2-utils` on Linux or `brew install xmlstarlet` on MacOS. The second can be done
 according to [the instructions](https://docs.docker.com/install/).
 
@@ -241,7 +241,7 @@ Those are the steps you should follow to set it up:
    with at least Airflow version 1.10 to test the Apache Airflow workflows.
    Since Airflow 1.10 is in  Beta for Cloud Composer, you must
    [enable beta features in Cloud Console](https://cloud.google.com/composer/docs/concepts/beta-support#enable-beta))
-1. Set up all required [Airflow Connections](https://airflow.apache.org/howto/manage-connections.html)
+1. Set up all required [Airflow Connections](https://airflow.apache.org/howto/connection/index.html)
    in Composer. This is required for things like `SSHOperator`.
 
 ### Creating Dataproc cluster
@@ -257,7 +257,7 @@ to handle oozie.
 ```bash
 gcloud dataproc clusters create <CLUSTER_NAME> --region europe-west1 --subnet default --zone "" \
      --single-node --master-machine-type custom-4-20480 --master-boot-disk-size 500 \
-     --image-version 1.3-deb9 --project polidea-airflow --initialization-actions 'gs://<BUCKET>/<FOLDER>/oozie-5.1.sh' \
+     --image-version 1.3-deb9 --project <PROJECT_NAME> --initialization-actions 'gs://<BUCKET>/<FOLDER>/oozie-5.1.sh' \
      --initialization-action-timeout=30m
 ```
 
