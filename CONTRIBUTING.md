@@ -81,14 +81,31 @@ running Apache Airflow instance.
 
 ## Local environment setup
 
-The environment can be setup via the virtualenv setup
-(you can create one using [virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/)
-for example.
+The environment can be setup via the virtualenv setup. You can easily create such virtualenv
+using [virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/).
 
-While in your virtualenv, you can install all the requirements via `pip install -r requirements.txt`.
+An example of such local environment setup (with virtualenvwrapper):
 
-You can add the [bin](bin) subdirectory to your
-PATH, then all the scripts below can be run without adding `./bin` prefix.
+```bash
+mkvirtualenv -p python3.6 oozie-to-airflow
+pip install -e .
+```
+
+Then later you can switch to such virtualenv by running:
+
+```bash
+workon oozie-to-airflow
+```
+
+After installing o2a with `pip install -e .` you will have o2a converter added to your path and your
+local sources will be installed via symbolic links. You simply install a project in editable mode
+(i.e. setuptools "develop mode") from a local project path.
+
+While in your virtualenv, you can re-install all the requirements via `pip install -r requirements.txt`
+or `pip install -e .` to repeat "develop mode" installation.
+
+You can also separately add the [bin](bin) subdirectory to your
+PATH, then all the scripts described later in the documentation can be run without adding `./bin` prefix.
 This can be done for example by adding similar line to your `.bash_profile`
 or `bin/postactivate` from your virtual environment:
 
