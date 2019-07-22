@@ -14,7 +14,6 @@
 # limitations under the License.
 """
 This module contains tools for translating Expression Language to Jinja.
-
 The BNF for the grammar is based on official grammar of EL:
 https://download.oracle.com/otn-pub/jcp/jsp-2.1-fr-spec-oth-JSpec/jsp-2_1-fr-spec-el.pdf
 """
@@ -33,27 +32,18 @@ EL_CONSTANTS = {"KB": "1024", "MB": "1024 ** 2", "GB": "1024 ** 3", "TB": "1024 
 
 GRAMMAR = r"""
     start: (lvalue (start)?)* | (rvalue (start)?)* | literal_expression (rvalue (start)?)?
-
     lvalue: BEGIN lvalue_inner END
-
     rvalue: (BEGIN expression END)+
-
     lvalue_inner: identifier
         | non_literal_lvalue_prefix (value_suffix)*
-
     literal_expression: literal_component (/[\$\#]/)?
-
     literal_component: ((/[^\$\#]/)* (/[\#\$]/)? (/[^\$\#\{]/)+)+
         | (/[^\$\#]/)* (/[\$\#][^\{]/)
         | (/[^\$\#]/)* /\\\\/ (/[\$\#]/)?
-
     expression: expression1 ternary?
-
     ternary: "?" expression ":" expression
-
     expression1: expression binary_op expression
         | unary_expression
-
     binary_op: "and"
         | "&&"
         | "or"
@@ -77,63 +67,39 @@ GRAMMAR = r"""
         | "eq"
         | "!="
         | "ne"
-
     unary_expression: unary_op unary_expression
         | value
-
     unary_op: "-"
         | "!"
         | "not"
         | "empty"
-
     value: value_prefix (value_suffix)*
-
     value_prefix: literal
         | non_literal_lvalue_prefix
-
     non_literal_lvalue_prefix: "(" expression ")"
         | first_identifier
         | function_invocation
-
     value_suffix: "." PARAM | "[" expression "]"
-
     first_identifier: FIRST_JAVA
-
     identifier: JAVA
-
     function_invocation: FUNC INVOCATION_COLON FUNC "(" ( expression ( "," expression )* )? ")"
         | FUNC "(" ( expression ( "," expression )* )? ")"
-
     literal: BOOL | INT | FLOAT | STRING | NULL
-
     BEGIN: "${" | "#{"
-
     END: "}"
-
     INVOCATION_COLON: ":"
-
-    FUNC: /(?!true|false|null)([a-zA-Z_\$][a-zA-Z0-9_\$]*)/
-
-    PARAM: /(?!true|false|null)([a-zA-Z_\$][a-zA-Z0-9_\$]*)/
-
+    FUNC: /(?!true|false|null)([a-zA-Z_]+)/
+    PARAM: /(?!true|false|null)([a-zA-Z_]+)/
     JAVA: /(?!true|false|null)([a-zA-Z_\$][a-zA-Z0-9_\$]*)/
-
     FIRST_JAVA: /(?!true|false|null)([a-zA-Z_\$][a-zA-Z0-9_\$]*)/
-
     BOOL: "true" | "false"
-
     STRING: /\'[^\']*\'/ | /\"[^\"]*\"/
-
     INT: /0|[1-9]\d*/i
-
     FLOAT: (/[0-9]/)+ "." (/[0-9]/)* EXP?
         | "." (/[0-9]/)+ EXP?
         | (/[0-9]/)+ EXP?
-
     EXP: /[eE]/ (/[\+\-]/)? (/[0-9]/)+
-
     NULL: "null"
-
     %ignore " "
 """
 
@@ -348,16 +314,16 @@ def _purify(sentence: str) -> str:
 def translate(expression: str, functions_module: str = "functions", quote: bool = False) -> str:
     """
     Translate Expression Language sentence to Jinja.
-
     During translation the following transformations are applied:
     - ${, #{   ->  {{
     - name:function   ->  name_function
     - CamelCase -> camel_case
-
     :param expression: the expression to be translated
     :type expression: str
     :param functions_module: module with python equivalents of el functions
     :type functions_module: str
+    :param quote: if True then translated expression is quoted
+    :type quote: bool
     :return: translated expression
     :rtype: str
     """

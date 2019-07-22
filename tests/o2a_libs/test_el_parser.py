@@ -58,9 +58,9 @@ class TestElParser(unittest.TestCase):
             ),
             ("{{customer.lName}}", "#{customer.lName}"),
             ("{{customer.calcTotal}}", "#{customer.calcTotal}"),
-            ('{{params["jump.to"] == "ssh"}}', '${wf:conf("jump.to") eq "ssh"}'),
-            ('{{params["jump.to"] == "parallel"}}', '${wf:conf("jump.to") eq "parallel"}'),
-            ('{{params["jump.to"] == "single"}}', '${wf:conf("jump.to") eq "single"}'),
+            ('{{wf.conf("jump.to") == "ssh"}}', '${wf:conf("jump.to") eq "ssh"}'),
+            ('{{wf.conf("jump.to") == "parallel"}}', '${wf:conf("jump.to") eq "parallel"}'),
+            ('{{wf.conf("jump.to") == "single"}}', '${wf:conf("jump.to") eq "single"}'),
             (
                 '{{print("ok") if "bool" == "bool" else print("not ok")}}',
                 '${"bool" == "bool" ? print("ok") : print("not ok")}',
@@ -125,6 +125,11 @@ class TestElParser(unittest.TestCase):
             ("{{url_encode('%')}}", "${urlEncode('%')}"),
             ("test_dir/test2.zip#test_zip_dir", "test_dir/test2.zip#test_zip_dir"),
             ("/path/with/two/els/{{var1}}/{{var2}}.tar", "/path/with/two/els/${var1}/${var2}.tar"),
+            ("WordCount$Map", "WordCount$Map"),
+            (
+                "mple.com/workflow?job-id=$jobId&status=$status&parent-id=$parentId",
+                "mple.com/workflow?job-id=$jobId&status=$status&parent-id=$parentId",
+            ),
         ]
     )
     def test_translations(self, output_sentence, input_sentence):
@@ -158,9 +163,9 @@ class TestElParser(unittest.TestCase):
             ("${wf:name()}", "{{dag.dag_id}}", "xxx", {"dag": MagicMock(dag_id="xxx")}),
             (
                 "${wf:conf('key')}",
-                "{{params['key']}}",
+                "{{functions.wf.conf('key')}}",
                 "value",
-                {"params": {"key": "value"}, "functions": functions},
+                {"key": "value", "functions": functions},
             ),
         ]
     )
@@ -188,6 +193,7 @@ class TestElParser(unittest.TestCase):
                     "functions": functions,
                 },
             ),
+            ("{{functions.wf.conf('key')}}", "${wf:conf('key')}", {"functions": functions}),
         ]
     )
     def test_error_rendering(self, translation, input_sentence, kwargs):

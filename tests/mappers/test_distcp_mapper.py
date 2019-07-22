@@ -63,7 +63,7 @@ class TestDistCpMapper(unittest.TestCase):
 
     def test_task_and_relations(self):
         # Given
-        mapper, name = _get_distcp_mapper(
+        mapper = _get_distcp_mapper(
             self.distcp_node, job_properties=EXAMPLE_JOB_PROPERTIES, config=EXAMPLE_CONFIG_PROPERTIES
         )
 
@@ -80,13 +80,15 @@ class TestDistCpMapper(unittest.TestCase):
         self.assertEqual(
             [
                 Task(
-                    task_id=f"{name}_prepare",
+                    task_id="distcp_prepare",
                     template_name="prepare.tpl",
+                    trigger_rule="one_success",
                     template_params={"delete": "/tmp/d_path", "mkdir": None},
                 ),
                 Task(
-                    task_id=name,
-                    template_name=f"{name}.tpl",
+                    task_id="distcp",
+                    template_name="distcp.tpl",
+                    trigger_rule="one_success",
                     template_params={
                         "props": PropertySet(
                             config={"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"},
@@ -95,19 +97,18 @@ class TestDistCpMapper(unittest.TestCase):
                                 "nameNode2": "hdfs://localhost:8082",
                             },
                             action_node_properties={
-                                "oozie.launcher.mapreduce.job.hdfs-servers": "hdfs://localhost:8081,"
-                                "hdfs://localhost:8082"
+                                "oozie.launcher.mapreduce.job.hdfs-servers": "{{nameNode1}} ,{{nameNode2}}"
                             },
                         ),
                         "distcp_command": "--class=org.apache.hadoop.tools.DistCp -- -update -skipcrccheck "
-                        "-strategy dynamic 'hdfs://localhost:8081/path/to/input file.txt' "
-                        "hdfs://localhost:8082/path/to/output-file.txt",
+                        "-strategy dynamic '{{nameNode1}}/path/to/input file.txt' "
+                        "'{{nameNode2}}/path/to/output-file.txt'",
                     },
                 ),
             ],
             tasks,
         )
-        self.assertEqual([Relation(from_task_id=f"{name}_prepare", to_task_id=name)], relations)
+        self.assertEqual([Relation(from_task_id=f"{mapper.name}_prepare", to_task_id=mapper.name)], relations)
 
 
 class TestDistCpMapperNoPrepare(unittest.TestCase):
@@ -122,7 +123,7 @@ class TestDistCpMapperNoPrepare(unittest.TestCase):
 
     def test_task_and_relations_no_prepare(self):
         # Given
-        mapper, name = _get_distcp_mapper(
+        mapper = _get_distcp_mapper(
             self.distcp_node, job_properties=EXAMPLE_JOB_PROPERTIES, config=EXAMPLE_CONFIG_PROPERTIES
         )
 
@@ -139,8 +140,9 @@ class TestDistCpMapperNoPrepare(unittest.TestCase):
         self.assertEqual(
             [
                 Task(
-                    task_id=name,
-                    template_name=f"{name}.tpl",
+                    task_id="distcp",
+                    template_name="distcp.tpl",
+                    trigger_rule="one_success",
                     template_params={
                         "props": PropertySet(
                             config={"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"},
@@ -149,13 +151,12 @@ class TestDistCpMapperNoPrepare(unittest.TestCase):
                                 "nameNode2": "hdfs://localhost:8082",
                             },
                             action_node_properties={
-                                "oozie.launcher.mapreduce.job.hdfs-servers": "hdfs://localhost:8081,"
-                                "hdfs://localhost:8082"
+                                "oozie.launcher.mapreduce.job.hdfs-servers": "{{nameNode1}} ,{{nameNode2}}"
                             },
                         ),
                         "distcp_command": "--class=org.apache.hadoop.tools.DistCp -- -update -skipcrccheck "
-                        "-strategy dynamic 'hdfs://localhost:8081/path/to/input file.txt' "
-                        "hdfs://localhost:8082/path/to/output-file.txt",
+                        "-strategy dynamic '{{nameNode1}}/path/to/input file.txt' "
+                        "'{{nameNode2}}/path/to/output-file.txt'",
                     },
                 )
             ],
@@ -172,4 +173,4 @@ def _get_distcp_mapper(distcp_node: Element, job_properties: Dict[str, str], con
         props=PropertySet(job_properties=job_properties, config=config),
         input_directory_path="/tmp/input-directory-path/",
     )
-    return mapper, name
+    return mapper

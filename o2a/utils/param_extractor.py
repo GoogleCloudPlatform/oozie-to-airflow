@@ -15,20 +15,20 @@
 """Extract params from oozie's action node"""
 from _elementtree import Element
 
-from o2a.o2a_libs.property_utils import PropertySet
-from o2a.utils import xml_utils, el_utils
+from o2a.o2a_libs import el_parser
+from o2a.utils import xml_utils
 
 TAG_PARAM = "param"
 
 
-def extract_param_values_from_action_node(oozie_node: Element, props: PropertySet):
+def extract_param_values_from_action_node(oozie_node: Element):
     param_nodes = xml_utils.find_nodes_by_tag(oozie_node, TAG_PARAM)
 
     new_params = {}
     for node in param_nodes:
         if not node.text:
             continue
-        param = el_utils.replace_el_with_var(node.text, props=props, quote=False)
+        param = el_parser.translate(node.text)
         key, _, value = param.partition("=")
         new_params[key] = value
     return new_params

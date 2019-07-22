@@ -39,7 +39,7 @@
             <resource-manager>${resourceManager}</resource-manager>
             <name-node>${nameNode}</name-node>
             <prepare>
-                <delete path="${nameNode}/user/${userName}/${examplesRoot}/apps/spark/lib/oozie-examples-4.3.0-copy.jar"/>
+                <delete path="${nameNode}/user/${wf:user()}/${examplesRoot}/apps/spark/lib/oozie-examples-4.3.0-copy.jar"/>
             </prepare>
             <configuration>
                 <property>
@@ -50,9 +50,9 @@
             <master>${master}</master>
             <name>Spark-FileCopy</name>
             <class>org.apache.oozie.example.SparkFileCopy</class>
-            <jar>${nameNode}/user/${userName}/${examplesRoot}/apps/spark/lib/oozie-examples-4.3.0.jar</jar>
-            <arg>/user/${userName}/${examplesRoot}/apps/spark/lib/oozie-examples-4.3.0.jar</arg>
-            <arg>/user/${userName}/${examplesRoot}/apps/spark/lib/oozie-examples-4.3.0-copy.jar</arg>
+            <jar>${nameNode}/user/${wf:user()}/${examplesRoot}/apps/spark/lib/oozie-examples-4.3.0.jar</jar>
+            <arg>/user/${wf:user()}/${examplesRoot}/apps/spark/lib/oozie-examples-4.3.0.jar</arg>
+            <arg>/user/${wf:user()}/${examplesRoot}/apps/spark/lib/oozie-examples-4.3.0-copy.jar</arg>
         </spark>
         <ok to="end" />
         <error to="fail" />

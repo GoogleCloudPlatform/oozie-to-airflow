@@ -20,7 +20,6 @@ from unittest.mock import call
 from xml.etree import ElementTree as ET
 
 from o2a.converter.exceptions import ParseException
-from o2a.o2a_libs.property_utils import PropertySet
 from o2a.utils.config_extractors import (
     extract_properties_from_configuration_node,
     TAG_JOB_XML,
@@ -46,7 +45,7 @@ class ConfigExtractorsModuleTestCase(unittest.TestCase):
     </configuration>
 """
         config_node = ET.fromstring(config_node_str)
-        properties = extract_properties_from_configuration_node(config_node, props=PropertySet())
+        properties = extract_properties_from_configuration_node(config_node)
         self.assertEqual(properties, {"mapred.mapper.new-api": "true", "mapred.reducer.new-api": "true"})
 
     def test_extract_properties_from_configuration_node_when_empty(self):
@@ -56,7 +55,7 @@ class ConfigExtractorsModuleTestCase(unittest.TestCase):
     </configuration>
 """
         config_node = ET.fromstring(config_node_str)
-        properties = extract_properties_from_configuration_node(config_node, props=PropertySet())
+        properties = extract_properties_from_configuration_node(config_node)
         self.assertEqual(properties, {})
 
     def test_extract_properties_from_configuration_node_should_el_replace(self):
@@ -70,10 +69,10 @@ class ConfigExtractorsModuleTestCase(unittest.TestCase):
     </configuration>
 """
         config_node = ET.fromstring(config_node_str)
-        properties = extract_properties_from_configuration_node(
-            config_node, props=PropertySet(job_properties={"examplesRoot": "AAA"})
+        properties = extract_properties_from_configuration_node(config_node)
+        self.assertEqual(
+            {"mapred.reducer.new-api": "/user/mapred/{{examplesRoot}}/config/output"}, properties
         )
-        self.assertEqual(properties, {"mapred.reducer.new-api": "/user/mapred/AAA/config/output"})
 
     def test_extract_properties_from_configuration_node_should_raise_exception_when_name_element_is_missing(
         self
@@ -92,7 +91,7 @@ class ConfigExtractorsModuleTestCase(unittest.TestCase):
             'Element "property" should have direct children elements: name, value. One of them does not '
             "exist. Make sure the configuration element is valid.",
         ):
-            extract_properties_from_configuration_node(config_node, props=PropertySet())
+            extract_properties_from_configuration_node(config_node)
 
     def test_extract_properties_from_configuration_node_should_raise_exception_when_value_element_is_missing(
         self
@@ -111,7 +110,7 @@ class ConfigExtractorsModuleTestCase(unittest.TestCase):
             'Element "property" should have direct children elements: name, value. One of them does '
             "not exist. Make sure the configuration element is valid.",
         ):
-            extract_properties_from_configuration_node(config_node, props=PropertySet())
+            extract_properties_from_configuration_node(config_node)
 
     def test_extract_properties_from_configuration_node_should_raise_exception_when_name_element_is_empty(
         self
@@ -131,7 +130,7 @@ class ConfigExtractorsModuleTestCase(unittest.TestCase):
             'Element "name" should have content, however its value is empty. Make sure the element has the '
             "correct content.",
         ):
-            extract_properties_from_configuration_node(config_node, props=PropertySet())
+            extract_properties_from_configuration_node(config_node)
 
     def test_extract_properties_from_configuration_node_should_raise_exception_when_value_element_is_empty(
         self
@@ -151,7 +150,7 @@ class ConfigExtractorsModuleTestCase(unittest.TestCase):
             'Element "value" should have content, however its value is empty. Make sure the element has the '
             "correct content.",
         ):
-            extract_properties_from_configuration_node(config_node, props=PropertySet())
+            extract_properties_from_configuration_node(config_node)
 
     @mock.patch("o2a.utils.config_extractors.ET.parse")
     def test_extract_properties_from_job_xml_nodes_minimal_green_path(self, parse_mock):
@@ -184,7 +183,7 @@ class ConfigExtractorsModuleTestCase(unittest.TestCase):
         )
         job_xml_nodes = find_nodes_by_tag(action, TAG_JOB_XML)
         result = extract_properties_from_job_xml_nodes(
-            job_xml_nodes, input_directory_path="/tmp/no-error-path", props=PropertySet()
+            job_xml_nodes, input_directory_path="/tmp/no-error-path"
         )
 
         parse_mock.assert_called_once_with("/tmp/no-error-path/hdfs/aaa.xml")
@@ -232,7 +231,7 @@ class ConfigExtractorsModuleTestCase(unittest.TestCase):
         ]
         job_xml_nodes = find_nodes_by_tag(action, TAG_JOB_XML)
         result = extract_properties_from_job_xml_nodes(
-            job_xml_nodes, input_directory_path="/tmp/no-error-path", props=PropertySet()
+            job_xml_nodes, input_directory_path="/tmp/no-error-path"
         )
 
         parse_mock.assert_has_calls(

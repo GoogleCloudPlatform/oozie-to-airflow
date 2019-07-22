@@ -63,20 +63,18 @@ class SparkMapper(ActionMapper):
         _, self.hdfs_files = self.file_extractor.parse_node()
         _, self.hdfs_archives = self.archive_extractor.parse_node()
 
-        self.java_jar = get_tag_el_text(self.oozie_node, props=self.props, tag=SPARK_TAG_JAR)
-        self.java_class = get_tag_el_text(self.oozie_node, props=self.props, tag=SPARK_TAG_CLASS)
+        self.java_jar = get_tag_el_text(self.oozie_node, tag=SPARK_TAG_JAR)
+        self.java_class = get_tag_el_text(self.oozie_node, tag=SPARK_TAG_CLASS)
         if self.java_class and self.java_jar:
             self.dataproc_jars = [self.java_jar]
             self.java_jar = None
-        self.job_name = get_tag_el_text(self.oozie_node, props=self.props, tag=SPARK_TAG_JOB_NAME)
+        self.job_name = get_tag_el_text(self.oozie_node, tag=SPARK_TAG_JOB_NAME)
 
         spark_opts = xml_utils.find_nodes_by_tag(self.oozie_node, SPARK_TAG_OPTS)
         if spark_opts:
             self.spark_opts.update(self._parse_spark_opts(spark_opts[0]))
 
-        self.application_args = xml_utils.get_tags_el_array_from_text(
-            self.oozie_node, props=self.props, tag=SPARK_TAG_ARG
-        )
+        self.application_args = xml_utils.get_tags_el_array_from_text(self.oozie_node, tag=SPARK_TAG_ARG)
 
     @staticmethod
     def _parse_spark_opts(spark_opts_node: ET.Element):

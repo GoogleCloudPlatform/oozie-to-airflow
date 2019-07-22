@@ -23,7 +23,7 @@ from o2a.converter.task import Task
 from o2a.converter.relation import Relation
 from o2a.mappers.base_mapper import BaseMapper
 from o2a.o2a_libs.property_utils import PropertySet
-from o2a.utils.el_utils import convert_el_to_jinja
+from o2a.o2a_libs import el_parser
 
 
 # noinspection PyAbstractClass
@@ -69,27 +69,24 @@ class DecisionMapper(BaseMapper):
     def _get_cases(self):
         switch_node = self.oozie_node[0]
         self.case_dict: Dict[str, str] = collections.OrderedDict()
+        self.default_case = None
         for case in switch_node:
             if "case" in case.tag:
-                case_text = convert_el_to_jinja(case.text.strip(), quote=True)
+                case_text = el_parser.translate(case.text.strip(), quote=False)
                 self.case_dict[case_text] = case.attrib["to"]
             else:  # Default return value
-                self.case_dict["default"] = case.attrib["to"]
+                self.default_case = case.attrib["to"]
 
     def to_tasks_and_relations(self):
         tasks = [
             Task(
                 task_id=self.name,
                 template_name="decision.tpl",
-                template_params=dict(case_dict=self.case_dict),
+                template_params=dict(case_dict=self.case_dict, default_case=self.default_case),
             )
         ]
         relations: List[Relation] = []
         return tasks, relations
 
     def required_imports(self) -> Set[str]:
-        return {
-            "from airflow.operators import python_operator",
-            "from airflow.utils import dates",
-            "from o2a.o2a_libs.el_basic_functions import first_not_null",
-        }
+        return {"from airflow.operators import python_operator", "from airflow.utils import dates"}

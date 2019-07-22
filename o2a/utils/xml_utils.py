@@ -15,8 +15,7 @@
 """XML parsing utilities"""
 from typing import List, Optional, cast
 from xml.etree import ElementTree as ET
-from o2a.utils import el_utils
-from o2a.o2a_libs.property_utils import PropertySet
+from o2a.o2a_libs import el_parser
 
 
 class NoNodeFoundException(Exception):
@@ -87,9 +86,7 @@ def find_nodes_by_attribute(root, attr, val, tag=None) -> List[ET.Element]:
     return matching_nodes
 
 
-def get_tag_el_text(
-    root: ET.Element, tag: str, props: PropertySet, default: Optional[str] = None
-) -> Optional[str]:
+def get_tag_el_text(root: ET.Element, tag: str, default: str = None) -> Optional[str]:
     """
     If a node exists in the oozie_node with the tag specified in tag, it
     will attempt to replace the EL (if it exists) with the corresponding
@@ -100,11 +97,11 @@ def get_tag_el_text(
     var = find_node_by_tag(root, tag)
     if var is not None and var.text is not None:
         # Only check the first one
-        return el_utils.replace_el_with_var(var.text, props=props, quote=False)
+        return el_parser.translate(var.text)
     return default
 
 
-def get_tags_el_array_from_text(root: ET.Element, tag: str, props: PropertySet) -> List[str]:
+def get_tags_el_array_from_text(root: ET.Element, tag: str) -> List[str]:
     """
     If nodes exist in the oozie_node with the tag specified in tag, it
     will build an array of text values for all matching nodes. While doing it
@@ -115,5 +112,5 @@ def get_tags_el_array_from_text(root: ET.Element, tag: str, props: PropertySet) 
     if node_array:
         for node in node_array:
             if node.text is not None:
-                tags_array.append(el_utils.replace_el_with_var(node.text, props=props, quote=False))
+                tags_array.append(el_parser.translate(node.text))
     return tags_array
