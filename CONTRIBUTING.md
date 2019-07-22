@@ -33,9 +33,7 @@ Table of Contents
   - [Running all example conversions](#running-all-example-conversions)
   - [Dependency graphs](#dependency-graphs)
 - [Continuous integration environment](#continuous-integration-environment)
-- [Cloud test environment with Dataproc and Composer](#cloud-test-environment-with-dataproc-and-composer)
-  - [Cloud environment setup](#cloud-environment-setup)
-  - [Running system tests](#running-system-tests)
+- [Running system tests](#running-system-tests)
 
 <!-- END doctoc generated TOC please keep comment here to allow auto update -->
 
@@ -225,78 +223,13 @@ travis env set GCP_BUCKET_NAME "${BUCKET_NAME}" --public
 rm o2a-build-artifacts-sa.json
 ```
 
-
-# Cloud test environment with Dataproc and Composer
-
-## Cloud environment setup
-
-An easy way of testing changes to the oozie-to-airflow converter is by using  Cloud Composer and Dataproc.
-These services allow testing without much need for an on-premise setup. Here are some details about the
-environment:
-
-### Cloud Composer
-
-* composer-1.5.0-airflow-1.10.1
-* python version 3 (3.6.6)
-* machine n1-standard-1
-* node count: 3
-* Additional PyPi packages:
-    * sshtunnel==0.1.4
-
-### Cloud Dataproc Cluster with Oozie
-
-* n1-standard-2, 4 vCPU, 20 GB memory (! Minimum 16 GB RAM needed)
-* primary disk size, 50 GB
-* Image 1.3.29-debian9
-* Hadoop version
-* Init action: [oozie-5.1.sh](dataproc/oozie-5.1.sh)
-
-Those are the steps you should follow to set it up:
-
-1. Create a Dataproc cluster see [Creating Dataproc Cluster](#creating-dataproc-cluster) below
-1. Create a [Cloud Composer Environment](https://cloud.google.com/composer/docs/how-to/managing/creating#creating_a_new_environment)
-   with at least Airflow version 1.10 to test the Apache Airflow workflows.
-   Since Airflow 1.10 is in  Beta for Cloud Composer, you must
-   [enable beta features in Cloud Console](https://cloud.google.com/composer/docs/concepts/beta-support#enable-beta))
-1. Set up all required [Airflow Connections](https://airflow.apache.org/howto/connection/index.html)
-   in Composer. This is required for things like `SSHOperator`.
-
-### Creating Dataproc cluster
-
-We prepared Dataproc [initialization action](https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/init-actions)
-that allows to run Oozie 5.1.0 on Dataproc.
-
-Please upload [oozie-5.1.sh](dataproc/oozie-5.1.sh) to your GCS bucket and create cluster using following command:
-
-Note that you need at least 20GB RAM to run Oozie jobs on the cluster. The custom machine type below has enough RAM
-to handle oozie.
-
-```bash
-gcloud dataproc clusters create <CLUSTER_NAME> --region europe-west1 --subnet default --zone "" \
-     --single-node --master-machine-type custom-4-20480 --master-boot-disk-size 500 \
-     --image-version 1.3-deb9 --project <PROJECT_NAME> --initialization-actions 'gs://<BUCKET>/<FOLDER>/oozie-5.1.sh' \
-     --initialization-action-timeout=30m
-```
-
-**Note 1:** it might take ~20 minutes to create the cluster
-**Note 2:** the init-action works only with [single-node cluster](https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/single-node-clusters)
-  and Dataproc 1.3
-
-Once cluster is created, steps from [example map reduce job](dataproc/example-map-reduce-job.sh) can be
-run on master node to execute Oozie's example Map-Reduce job.
-
-Oozie is serving web UI on port 11000. To enable access to it please follow
-[official instructions](https://cloud.google.com/dataproc/docs/concepts/accessing/cluster-web-interfaces)
-on how to connect to the cluster web interfaces.
-
-List of jobs with their statuses can be also shown by issuing `oozie jobs` command on master node.
-
-## Running system tests
+# Running system tests
 
 ### System tests
 
 Oozie to Airflow has a set of system tests that test end-2-end functionality of conversion and execution
-of workflows using Cloud environment with Cloud Dataproc and Cloud Composer.
+of workflows using Cloud environment with Cloud Dataproc and Cloud Composer as described in the
+[README.md](README.md#cloud-environment-setup)
 
 We can run examples defined in the [examples](examples) folder as system tests. The system tests
 use an existing Composer, Dataproc cluster and Oozie run in the Dataproc cluster to prepare HDFS
