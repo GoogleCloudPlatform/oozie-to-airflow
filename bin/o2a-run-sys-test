@@ -678,7 +678,7 @@ function test_oozie {
 function download_test_artifacts {
     ENVIRONMENT=${1}
 
-    header "Copying test artifacts for $(tr '[:lower:]' '[:upper:]' <<< ${ENVIRONMENT:0:1})${ENVIRONMENT:1}"
+    header "Copying test artifacts for $(tr '[:lower:]' '[:upper:]' <<< "${ENVIRONMENT:0:1}")${ENVIRONMENT:1}"
 
     CURRENT_ARTIFACTS_OUTPUT="${LOCAL_ARTIFACTS_DIR}/${ENVIRONMENT}"
     TMP_LOCAL_PATH="/tmp/o2a-artifacts-$(date | md5sum | head -c 7)"
