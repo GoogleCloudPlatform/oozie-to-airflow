@@ -24,11 +24,11 @@ import logging
 
 from o2a.converter import workflow_xml_parser
 from o2a.converter.constants import HDFS_FOLDER
-from o2a.converter.oozie_node import OozieNode
+from o2a.converter.oozie_node import OozieNode, OozieControlNode, OozieActionNode
 from o2a.converter.property_parser import PropertyParser
 from o2a.converter.relation import Relation
 from o2a.converter.renderers import BaseRenderer
-from o2a.converter.task_group import TaskGroup
+from o2a.converter.task_group import TaskGroup, ControlTaskGroup, ActionTaskGroup
 from o2a.converter.workflow import Workflow
 from o2a.utils.file_utils import get_lib_files
 from o2a.mappers.action_mapper import ActionMapper
@@ -122,20 +122,28 @@ class OozieConverter:
         and ParsedActionNode.relations
         """
         logging.info("Converting nodes to tasks and inner relations")
-        for name, p_node in self.workflow.nodes.copy().items():
-            tasks, relations = p_node.mapper.to_tasks_and_relations()
-            dependencies = p_node.mapper.required_imports()
-            p_node.tasks = tasks
-            p_node.relations = relations
-            self.workflow.task_groups[name] = TaskGroup(
+        for name, oozie_node in self.workflow.nodes.copy().items():
+            tasks, relations = oozie_node.mapper.to_tasks_and_relations()
+            dependencies = oozie_node.mapper.required_imports()
+            oozie_node.tasks = tasks
+            oozie_node.relations = relations
+            self.workflow.task_groups[name] = self._get_task_group_type(oozie_node)(
                 name=name,
                 tasks=tasks,
                 relations=relations,
                 dependencies=dependencies,
-                downstream_names=p_node.downstream_names,
-                error_downstream_name=p_node.error_downstream_name,
+                downstream_names=oozie_node.downstream_names,
+                error_downstream_name=oozie_node.error_downstream_name,
             )
             del self.workflow.nodes[name]
+
+    @staticmethod
+    def _get_task_group_type(oozie_node: OozieNode) -> Type[TaskGroup]:
+        if isinstance(oozie_node, OozieControlNode):
+            return ControlTaskGroup
+        if isinstance(oozie_node, OozieActionNode):
+            return ActionTaskGroup
+        return TaskGroup
 
     def convert_dependencies(self) -> None:
         logging.info("Converting dependencies.")

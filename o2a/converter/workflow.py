@@ -80,7 +80,7 @@ class Workflow:
                 result.append(task_group)
         return result
 
-    def get_task_group_without_upstream(self):
+    def get_task_group_without_upstream(self) -> List[TaskGroup]:
         task_groups = []
         for task_group in self.task_groups.values():
             upstream_task_group = self.find_upstream_task_group(task_group)

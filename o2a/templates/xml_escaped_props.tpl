@@ -12,13 +12,14 @@
   WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
   See the License for the specific language governing permissions and
   limitations under the License.
- #}
-
-{% import "macros/props.tpl" as props_macro %}
-{{ task_id | to_var }} = bash_operator.BashOperator(
-    task_id={{ task_id | tojson }},
-    trigger_rule={{ trigger_rule | tojson }},
-    bash_command={% include "hadoop_command.tpl" %} % (CONFIG['dataproc_cluster'], CONFIG['gcp_region'],
-        {{ distcp_command | to_python }}),
-    params={{ props_macro.props(action_node_properties=action_node_properties) }},
-)
+#}
+{% if (action_node_properties is defined) and (action_node_properties | length != 0) -%}
+    PropertySet(
+        config=CONFIG,
+        job_properties=JOB_PROPS,
+        action_node_properties={{ action_node_properties | to_python }}).xml_escaped.merged
+{% else -%}
+    PropertySet(
+        config=CONFIG,
+        job_properties=JOB_PROPS).xml_escaped.merged
+{% endif %}

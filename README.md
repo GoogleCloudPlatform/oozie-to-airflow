@@ -45,6 +45,7 @@ If you want to contribute to the project, please take a look at [CONTRIBUTING.md
 - [Supported Oozie features](#supported-oozie-features)
   - [Control nodes](#control-nodes)
   - [EL Functions](#el-functions)
+  - [Workflow and node notifications](#workflow-and-node-notifications)
 - [Airflow-specific optimisations](#airflow-specific-optimisations)
   - [Removing unnecessary control nodes](#removing-unnecessary-control-nodes)
   - [Removing inaccessible nodes](#removing-inaccessible-nodes)
@@ -57,6 +58,7 @@ If you want to contribute to the project, please take a look at [CONTRIBUTING.md
   - [Capturing output is not supported](#capturing-output-is-not-supported)
   - [Subworkflow DAGs must be placed in examples](#subworkflow-dags-must-be-placed-in-examples)
   - [EL functions support](#el-functions-support)
+  - [Notification proxy is not supported](#notification-proxy-is-not-supported)
 - [Cloud execution environment for Oozie to Airflow conversion](#cloud-execution-environment-for-oozie-to-airflow-conversion)
   - [Cloud environment setup](#cloud-environment-setup)
 - [Examples](#examples)
@@ -329,6 +331,32 @@ order to use EL function mapping, the folder `o2a_libs.functions` should
 be copied over to the Airflow DAG folder. This should then be picked up and
 parsed by the Airflow workers and then available to all DAGs.
 
+## Workflow and node notifications
+
+Workflow jobs can be configured to make an HTTP GET notification upon start and end of a workflow action node
+and upon the start and completion of a workflow job. More information in [Oozie docs](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a5_Workflow_Notifications).
+
+Oozie-to-Airflow supports this feature.
+The `job.properties` file has contain URLs for workflow and action node notifications - example below:
+
+```
+oozie.wf.workflow.notification.url=http://example.com/workflow?job-id=$jobId&status=$status
+oozie.wf.action.notification.url=http://example.com/action?job-id=$jobId&node-name=$nodeName&status=$status
+```
+
+If they are present, Oozie-to-Airflow will insert additional `BashOperator` to the generated DAG
+for each notification to be sent, right before or after the appropriate node (for node notifications) or at the beginning or end
+of the workflow (for workflow notifications).
+Inside the `BashOperator` will use `curl` to send an HTTP GET request to the appropriate URL endpoint.
+
+Example DAG without notifications:
+
+![dag without notifications](images/childwf_without_notifications.png)
+
+The same DAG with notifications:
+
+![dag with notifications](images/childwf_with_notifications.png)
+
 # Airflow-specific optimisations
 
 Due to the fact that Oozie and Airflow differ with regards to some aspects of running workflows,
@@ -450,6 +478,13 @@ all possible cases, it's much easier to eave the implementation of those functio
 It's perfectly possible to provide your own implementation of each of those functions if you need
 to customise it and in many cases it will be easier if it's specific implementation rather than generic one.
 
+## Notification proxy is not supported
+
+In Oozie, the `oozie.wf.workflow.notification.proxy` property can be used to configure proxy,
+through which notifications will be sent.
+
+This is not supported. Currently notifications will be sent directly, without proxy.
+
 # Cloud execution environment for Oozie to Airflow conversion
 
 ## Cloud environment setup
@@ -519,7 +554,6 @@ List of jobs with their statuses can be also shown by issuing `oozie jobs` comma
 
 More about testing the Oozie to Airflow conversion process can be found in
 [CONTRIBUTING.md](CONTRIBUTING.md#running-system-tests)
-
 
 # Examples
 

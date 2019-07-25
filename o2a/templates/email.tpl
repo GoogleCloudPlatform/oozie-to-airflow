@@ -13,6 +13,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 #}
+{% import "macros/props.tpl" as props_macro %}
 {{ task_id | to_var }} = email_operator.EmailOperator(
     task_id={{ task_id | to_python }},
     trigger_rule={{ trigger_rule | to_python }},
@@ -21,5 +22,5 @@
     bcc={{ bcc_addr | to_python }},
     subject={{ subject | to_python }},
     html_content={{ body | to_python }},
-    params={% include "props.tpl" %},
+    params={{ props_macro.props(action_node_properties=action_node_properties) }},
 )
