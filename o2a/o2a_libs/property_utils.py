@@ -14,8 +14,10 @@
 # limitations under the License.
 
 """Stores property set for use in particular actions"""
-from typing import Dict
+import copy
 import json
+from typing import Dict
+from xml.sax.saxutils import escape
 
 
 # pylint: disable=too-few-public-methods
@@ -38,6 +40,15 @@ class PropertySet:
         self.job_properties: Dict[str, str] = job_properties or {}
         self.config: Dict[str, str] = config or {}
         self.action_node_properties: Dict[str, str] = action_node_properties or {}
+
+    @property
+    def xml_escaped(self):
+        escaped_ps: PropertySet = copy.deepcopy(self)
+        escaped_ps.job_properties = {k: escape(v) for k, v in escaped_ps.job_properties.items()}
+        escaped_ps.action_node_properties = {
+            k: escape(v) for k, v in escaped_ps.action_node_properties.items()
+        }
+        return escaped_ps
 
     @property
     def merged(self) -> Dict[str, str]:

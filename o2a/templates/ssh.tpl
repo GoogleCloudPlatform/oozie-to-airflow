@@ -19,10 +19,11 @@
     remote_host={{ host | to_python }},
 )
 
+{% import "macros/props.tpl" as props_macro %}
 {{ task_id | to_var }} = ssh_operator.SSHOperator(
     task_id={{ task_id | to_python }},
     trigger_rule={{ trigger_rule | to_python }},
     ssh_hook={{ task_id | to_var }}_hook,
     command={{ command | to_python }},
-    params={% include "props.tpl" %},
+    params={{ props_macro.props(action_node_properties=action_node_properties) }},
 )
