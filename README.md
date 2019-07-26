@@ -473,6 +473,7 @@ for full information about current state. The following `wf:functions` are not i
 * [`wf:callback`](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/365)
 * [`wf:group`](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/364)
 * [`wf:appPath`](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/363)
+* [Hadoop Counters](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/392)
 
 All implemented function could be found in [o2a_libs](https://github.com/GoogleCloudPlatform/oozie-to-airflow/tree/master/o2a/o2a_libs)
 module. Camel case names of Oozie functions were substituted with snake case equivalents (ex. lastErrorNode becomes
