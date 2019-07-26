@@ -459,7 +459,9 @@ Currently all subworkflow DAGs must be in examples folder
 
 ## EL functions support
 
-Currently there are a few `wf:functions` that are not implemented:
+Currently many EL-functions are implemented (basic functions, fs functions and subset od wf functions).
+Check this [document](https://docs.google.com/spreadsheets/d/1lQJ101GDEkXyzKmB8l9nESao6CF9G_1qCURdcqmQ0uA/edit?usp=sharing)
+for full information about current state. The following `wf:functions` are not implemented:
 
 * [`wf:actionTrackerUri`](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/372)
 * [`wf:actionExternalId`](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/371)
@@ -471,6 +473,10 @@ Currently there are a few `wf:functions` that are not implemented:
 * [`wf:callback`](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/365)
 * [`wf:group`](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/364)
 * [`wf:appPath`](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/363)
+
+All implemented function could be found in [o2a_libs](https://github.com/GoogleCloudPlatform/oozie-to-airflow/tree/master/o2a/o2a_libs)
+module. Camel case names of Oozie functions were substituted with snake case equivalents (ex. lastErrorNode becomes
+last_error_node).
 
 Additionally some already implemented functions may not preserve the full logic of the original EL-expression
 due to differences between Oozie and Airflow. It's difficult to implement it in generic-enough way to cover
