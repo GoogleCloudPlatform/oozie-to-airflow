@@ -34,4 +34,6 @@ if sys.version_info.major < 3 or (sys.version_info.major == 3 and sys.version_in
 import o2a.o2a  # noqa: E402
 
 if __name__ == "__main__":
+    print("")
     o2a.o2a.main()
+    print("")
