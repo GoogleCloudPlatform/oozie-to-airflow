@@ -13,6 +13,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Classes responsible for generating files based on Workflow"""
+
+# flake8: noqa E402
+
 import logging
 import os
 import sys
@@ -23,7 +26,14 @@ from typing import Union, Dict, List
 
 from isort import SortImports
 
+# pylint: disable=wrong-import-position
+# Hack to get rid of INFO level messages printed by blib2to3 when loading grammar
+logging.getLogger("blib2to3.pgen2.driver").setLevel(logging.CRITICAL)
+# pylint: enable=wrong-import-position
+
+
 import black
+
 from autoflake import fix_file
 
 from o2a.converter.workflow import Workflow
