@@ -25,7 +25,7 @@ with open("requirements.txt") as f:
 
 setup(
     name=NAME,
-    version="1.0.0",
+    version="1.0.1",
     author="Jarek Potiuk, Szymon Przedwojski, Kamil Breguła, Feng Lu, Cameron Moberg",
     author_email="jarek.potiuk@polidea.com, szymon.przedwojski@polidea.com, "
     "kamil.bregula@polidea.com, fenglu@google.com, cjmoberg@google.com",
