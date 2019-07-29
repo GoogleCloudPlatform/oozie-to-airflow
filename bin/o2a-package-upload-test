@@ -18,12 +18,14 @@ O2A_DIR="$( cd "${MY_DIR}/.." && pwd )"
 
 pushd "${O2A_DIR}"
 echo
-"${MY_DIR}/o2a-confirm" "Preparing package"
+"${MY_DIR}/o2a-confirm" "Preparing test package"
 echo
 rm -rvf dist/*
+rm -rvf o2a.egg-info
+rm -rvf .eggs
 python3 setup.py sdist bdist_wheel
 echo
-"${MY_DIR}/o2a-confirm" "Uploading to production PyPi"
+"${MY_DIR}/o2a-confirm" "Uploading to test PyPi"
 echo
 python3 -m twine upload --repository-url https://test.pypi.org/legacy/ dist/*
 popd

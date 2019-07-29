@@ -18,9 +18,11 @@ O2A_DIR="$( cd "${MY_DIR}/.." && pwd )"
 
 pushd "${O2A_DIR}"
 echo
-"${MY_DIR}/o2a-confirm" "Preparing package"
+"${MY_DIR}/o2a-confirm" "Preparing production package"
 echo
 rm -rvf dist/*
+rm -rvf o2a.egg-info
+rm -rvf .eggs
 python3 setup.py sdist bdist_wheel
 echo
 "${MY_DIR}/o2a-confirm" "Uploading to production PyPi"

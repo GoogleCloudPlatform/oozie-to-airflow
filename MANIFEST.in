@@ -2,4 +2,4 @@ include bin/o2a
 include bin/o2a-validate-workflows
 include o2a/schema/*.xsd
 include o2a/scripts/*.sh
-include o2a/templates/*.tpl
+recursive-include o2a *.py *.tpl
