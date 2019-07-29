@@ -13,7 +13,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """ DistCp Mapper module """
-
 import shlex
 from typing import Dict, List, Set
 from xml.etree.ElementTree import Element
