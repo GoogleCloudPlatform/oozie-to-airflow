@@ -123,55 +123,60 @@ def set_value_by_path(target: Any, path: List[Union[str, int]], value: Any) -> N
         raise Exception(f"Invalid path: {path}")
 
 
-class TemplateTestMixin:
-    # noinspection PyPep8Naming
-    # pylint: disable=invalid-name
-    def assertValidPython(self, code):
-        self.assertTrue(ast.parse(code))
+# Wrap in another class so that it is not picked up by pytest
+class BaseTestCases:  # pylint: disable=R0903
+    class BaseTemplateTestCase(TestCase):
+        TEMPLATE_NAME = ""
+        DEFAULT_TEMPLATE_PARAMS: Dict[str, Any] = {}
 
-    def test_all_template_parameters_must_be_correlated_with_output(self):
-        """
-        This test performs mutations of each value and checks if this caused a change
-        in result of the template rendering. The new value is selected randomly. The operation is
-        performed recursively.
+        # noinspection PyPep8Naming
+        # pylint: disable=invalid-name
+        def assertValidPython(self, code):
+            self.assertTrue(ast.parse(code))
 
-        This test allows you to check if all the parameters specified in the `DEFAULT_TEMPLATE_PARAMS` field
-        are used in the template specified by the `TEMPLATE_NAME` field.
-        """
-        original_view = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
+        def test_all_template_parameters_must_be_correlated_with_output(self):
+            """
+            This test performs mutations of each value and checks if this caused a change
+            in result of the template rendering. The new value is selected randomly. The operation is
+            performed recursively.
 
-        def walk_recursively_and_mutate(path: List[Union[str, int]]):
-            current_value = get_value_by_path(self.DEFAULT_TEMPLATE_PARAMS, path)
-            if isinstance(current_value, str):
-                template_params = deepcopy(self.DEFAULT_TEMPLATE_PARAMS)
-                set_value_by_path(template_params, path, f"no_error_value_{randint(0, 100)}")
-                mutated_view = render_template(self.TEMPLATE_NAME, **template_params)
-                self.assertNotEqual(
-                    original_view,
-                    mutated_view,
-                    f"Uncorrelated template job_properties: {path}, Mutated view: {mutated_view}",
-                )
-            elif isinstance(current_value, int):
-                template_params = deepcopy(self.DEFAULT_TEMPLATE_PARAMS)
-                set_value_by_path(template_params, path, randint(0, 100))
-                mutated_view = render_template(self.TEMPLATE_NAME, **template_params)
-                self.assertNotEqual(
-                    original_view,
-                    mutated_view,
-                    f"Uncorrelated template job_properties: {path}, Mutated view: {mutated_view}",
-                )
+            This test allows you to check if all the parameters specified in the `DEFAULT_TEMPLATE_PARAMS`
+            field are used in the template specified by the `TEMPLATE_NAME` field.
+            """
+            original_view = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
 
-            elif isinstance(current_value, dict):
-                for key, _ in current_value.items():
-                    walk_recursively_and_mutate([*path, key])
-            elif isinstance(current_value, list):
-                for i in range(len(current_value)):
-                    walk_recursively_and_mutate([*path, i])
+            def walk_recursively_and_mutate(path: List[Union[str, int]]):
+                current_value = get_value_by_path(self.DEFAULT_TEMPLATE_PARAMS, path)
+                if isinstance(current_value, str):
+                    template_params = deepcopy(self.DEFAULT_TEMPLATE_PARAMS)
+                    set_value_by_path(template_params, path, f"no_error_value_{randint(0, 100)}")
+                    mutated_view = render_template(self.TEMPLATE_NAME, **template_params)
+                    self.assertNotEqual(
+                        original_view,
+                        mutated_view,
+                        f"Uncorrelated template job_properties: {path}, Mutated view: {mutated_view}",
+                    )
+                elif isinstance(current_value, int):
+                    template_params = deepcopy(self.DEFAULT_TEMPLATE_PARAMS)
+                    set_value_by_path(template_params, path, randint(0, 100))
+                    mutated_view = render_template(self.TEMPLATE_NAME, **template_params)
+                    self.assertNotEqual(
+                        original_view,
+                        mutated_view,
+                        f"Uncorrelated template job_properties: {path}, Mutated view: {mutated_view}",
+                    )
 
-        walk_recursively_and_mutate([])
+                elif isinstance(current_value, dict):
+                    for key, _ in current_value.items():
+                        walk_recursively_and_mutate([*path, key])
+                elif isinstance(current_value, list):
+                    for i in range(len(current_value)):
+                        walk_recursively_and_mutate([*path, i])
+
+            walk_recursively_and_mutate([])
 
 
-class DecisionTemplateTestCase(TestCase, TemplateTestMixin):
+class DecisionTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
     TEMPLATE_NAME = "decision.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = dict(
@@ -197,7 +202,7 @@ class DecisionTemplateTestCase(TestCase, TemplateTestMixin):
         self.assertValidPython(res)
 
 
-class DummyTemplateTestCase(TestCase, TemplateTestMixin):
+class DummyTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
     TEMPLATE_NAME = "dummy.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = dict(task_id="DAG_NAME_A", trigger_rule=TriggerRule.DUMMY)
@@ -213,7 +218,7 @@ class DummyTemplateTestCase(TestCase, TemplateTestMixin):
         self.assertValidPython(res)
 
 
-class FsOpTempalteTestCase(TestCase, TemplateTestMixin):
+class FsOpTempalteTestCase(BaseTestCases.BaseTemplateTestCase):
     TEMPLATE_NAME = "fs_op.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = {
@@ -241,7 +246,7 @@ class FsOpTempalteTestCase(TestCase, TemplateTestMixin):
         self.assertValidPython(res)
 
 
-class GitTemplateTestCase(TestCase, TemplateTestMixin):
+class GitTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
     TEMPLATE_NAME = "git.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = {
@@ -279,7 +284,7 @@ class GitTemplateTestCase(TestCase, TemplateTestMixin):
         self.assertValidPython(res)
 
 
-class HiveTemplateTestCase(TestCase, TemplateTestMixin):
+class HiveTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
     TEMPLATE_NAME = "hive.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = {
@@ -322,7 +327,7 @@ class HiveTemplateTestCase(TestCase, TemplateTestMixin):
         self.assertValidPython(res)
 
 
-class KillTemplateTestCase(TestCase, TemplateTestMixin):
+class KillTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
     TEMPLATE_NAME = "kill.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = dict(task_id="DAG_NAME_A", trigger_rule=TriggerRule.DUMMY)
@@ -338,7 +343,7 @@ class KillTemplateTestCase(TestCase, TemplateTestMixin):
         self.assertValidPython(res)
 
 
-class MapReduceTemplateTestCase(TestCase, TemplateTestMixin):
+class MapReduceTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
     TEMPLATE_NAME = "mapreduce.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = {
@@ -384,7 +389,7 @@ class MapReduceTemplateTestCase(TestCase, TemplateTestMixin):
         self.assertValidPython(res)
 
 
-class PigTemplateTestCase(TestCase, TemplateTestMixin):
+class PigTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
     TEMPLATE_NAME = "pig.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = {
@@ -425,7 +430,7 @@ class PigTemplateTestCase(TestCase, TemplateTestMixin):
         self.assertValidPython(res)
 
 
-class PrepareTemplateTestCase(TestCase, TemplateTestMixin):
+class PrepareTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
     TEMPLATE_NAME = "prepare.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = {
@@ -449,7 +454,7 @@ class PrepareTemplateTestCase(TestCase, TemplateTestMixin):
         self.assertValidPython(res)
 
 
-class ShellTemplateTestCase(TestCase, TemplateTestMixin):
+class ShellTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
     TEMPLATE_NAME = "shell.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = {
@@ -477,7 +482,7 @@ class ShellTemplateTestCase(TestCase, TemplateTestMixin):
         self.assertValidPython(res)
 
 
-class SparkTemplateTestCase(TestCase, TemplateTestMixin):
+class SparkTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
     TEMPLATE_NAME = "spark.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = {
@@ -532,7 +537,7 @@ class SparkTemplateTestCase(TestCase, TemplateTestMixin):
         self.assertValidPython(res)
 
 
-class SshTemplateTestCase(TestCase, TemplateTestMixin):
+class SshTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
     TEMPLATE_NAME = "ssh.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = {
@@ -572,7 +577,7 @@ class SshTemplateTestCase(TestCase, TemplateTestMixin):
         self.assertValidPython(res)
 
 
-class SubwfTemplateTestCase(TestCase, TemplateTestMixin):
+class SubwfTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
     TEMPLATE_NAME = "subwf.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = {"task_id": "test_id", "trigger_rule": "dummy", "app_name": "DAG_NAME_A"}
@@ -590,7 +595,7 @@ class SubwfTemplateTestCase(TestCase, TemplateTestMixin):
         self.assertValidPython(res)
 
 
-class WorkflowTemplateTestCase(TestCase, TemplateTestMixin):
+class WorkflowTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
     TEMPLATE_NAME = "workflow.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = dict(
@@ -618,7 +623,7 @@ class WorkflowTemplateTestCase(TestCase, TemplateTestMixin):
         self.assertValidPython(res)
 
 
-class SubWorkflowTemplateTestCase(TestCase, TemplateTestMixin):
+class SubWorkflowTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
     TEMPLATE_NAME = "subworkflow.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = dict(
