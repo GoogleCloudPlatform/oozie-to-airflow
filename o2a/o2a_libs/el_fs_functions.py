@@ -48,10 +48,12 @@ def _pig_job_executor(cmd: str):
 
     if retcode:
         print("Error when executing '{}'".format(" ".join(cmd)))
-        print("Stdout: {}".format(output))
-        print("Stderr: {}".format(err))
+        print("Stdout: {}".format(output.decode("utf-8")))
+        print("Stderr: {}".format(err.decode("utf-8")))
         raise AirflowException(
-            "Retcode {} on {} with stdout: {}, stderr: {}".format(retcode, " ".join(cmd), output, err)
+            "Retcode {} on {} with stdout: {}, stderr: {}".format(
+                retcode, " ".join(cmd), output.decode("utf-8"), err.decode("utf-8")
+            )
         )
 
     _, out, _ = err.decode("utf-8").split(delimiter, 3)
