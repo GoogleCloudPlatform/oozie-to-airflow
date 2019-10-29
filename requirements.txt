@@ -10,7 +10,7 @@ lark-parser==0.7.7
 mypy==0.740
 parameterized==0.7.0
 paramiko==2.6.0
-pre-commit==1.19.0
+pre-commit==1.20.0
 pydeps==1.8.2
 pylint==2.4.3
 pytest==5.2.2
