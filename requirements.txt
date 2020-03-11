@@ -15,7 +15,7 @@ pydeps==1.9.0
 pylint==2.4.4
 pytest==5.3.5
 pytest-cov==2.8.1
-safety==1.8.5
+safety==1.8.7
 sshtunnel==0.1.5
 twine==3.1.1
 tzlocal==2.0.0 # pyup: ignore
