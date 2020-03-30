@@ -6,7 +6,7 @@ google-api-python-client==1.8.0
 isort==4.3.21
 j2cli==0.3.10
 Jinja2==2.11.1 # pyup: ignore
-lark-parser==0.8.2
+lark-parser==0.8.5
 mypy==0.770
 parameterized==0.7.1
 paramiko==2.7.1
