@@ -462,7 +462,7 @@ function open_oozie_webui {
     gcloud compute ssh  "${DATAPROC_CLUSTER_MASTER}" --zone "${DATAPROC_MASTER_ZONE}" -- -D "${PROXY_PORT}" -N &
     # Open the browser
     "${CHROME_BIN}" --proxy-server="socks5://localhost:${PROXY_PORT}" \
-    --user-data-dir="${CHROME_PROFILE_TMP}" --no-default-browser-check \
+    --user-data-dir="${CHROME_PROFILE_TMP}" --no-default-browser-check --no-first-run \
     "http://${DATAPROC_CLUSTER_MASTER}:11000"  &> /dev/null
     # Delete temporary browser profile
     rm -rf "${CHROME_PROFILE_TMP}"
