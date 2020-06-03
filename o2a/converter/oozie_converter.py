@@ -12,7 +12,8 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Converts Oozie application workflow into Airflow's DAG
+"""
+Converts Oozie application workflow into Airflow's DAG
 """
 import shutil
 from typing import Dict, Type, List
@@ -185,11 +186,11 @@ class OozieConverter:
             )
 
     def apply_preconvert_transformers(self):
-        logging.info(f"Applying pre-convert transformers")
+        logging.info("Applying pre-convert transformers")
         for transformer in self.transformers:
             transformer.process_workflow_after_parse_workflow_xml(self.workflow)
 
     def apply_postconvert_transformers(self):
-        logging.info(f"Applying post-convert transformers")
+        logging.info("Applying post-convert transformers")
         for transformer in self.transformers:
             transformer.process_workflow_after_convert_nodes(self.workflow, props=self.props)
