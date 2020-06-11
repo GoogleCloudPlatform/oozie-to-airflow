@@ -14,7 +14,7 @@ pre-commit==2.5.1
 pydeps==1.9.3
 pylint==2.5.3
 pytest==5.4.2
-pytest-cov==2.8.1
+pytest-cov==2.9.0
 safety==1.9.0
 sshtunnel==0.1.5
 twine==3.1.1
