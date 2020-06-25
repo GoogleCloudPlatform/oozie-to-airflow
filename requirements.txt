@@ -17,7 +17,7 @@ pytest==5.4.2
 pytest-cov==2.10.0
 safety==1.9.0
 sshtunnel==0.1.5
-twine==3.1.1
+twine==3.2.0
 tzlocal==2.0.0 # pyup: ignore
 Werkzeug==1.0.1 # pyup: ignore
 yamllint==1.23.0
