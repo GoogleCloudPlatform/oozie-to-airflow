@@ -24,7 +24,7 @@ from collections import namedtuple
 from pathlib import Path
 from typing import Union, Dict, List
 
-from isort import SortImports
+from isort.api import sort_file
 
 # pylint: disable=wrong-import-position
 # Hack to get rid of INFO level messages printed by blib2to3 when loading grammar
@@ -163,7 +163,7 @@ class PythonRenderer(BaseRenderer):
 
     @staticmethod
     def _sort_imports(output_file_name):
-        SortImports(output_file_name)
+        sort_file(filename=output_file_name, ask_to_apply=False)
 
 
 class DotRenderer(BaseRenderer):
