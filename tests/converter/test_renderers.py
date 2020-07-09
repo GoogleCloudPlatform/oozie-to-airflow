@@ -48,11 +48,11 @@ def _create_workflow():
 class PythonRendererTestCase(unittest.TestCase):
     @mock.patch("o2a.converter.renderers.black")
     @mock.patch("o2a.converter.renderers.fix_file")
-    @mock.patch("o2a.converter.renderers.SortImports")
+    @mock.patch("o2a.converter.renderers.sort_file")
     @mock.patch("o2a.converter.renderers.render_template", return_value="DAG_CONTENT")
     @mock.patch("builtins.open")
     def test_create_workflow_file_should_create_file(
-        self, open_mock, render_template_mock, sort_imports_mock, fix_file_mock, black_mock
+        self, open_mock, render_template_mock, sort_file_moc, fix_file_mock, black_mock
     ):
         renderer = self._create_renderer()
         workflow = _create_workflow()
@@ -64,11 +64,11 @@ class PythonRendererTestCase(unittest.TestCase):
 
     @mock.patch("o2a.converter.renderers.black")
     @mock.patch("o2a.converter.renderers.fix_file")
-    @mock.patch("o2a.converter.renderers.SortImports")
+    @mock.patch("o2a.converter.renderers.sort_file")
     @mock.patch("o2a.converter.renderers.render_template", return_value="DAG_CONTENT")
     @mock.patch("builtins.open")
     def test_create_workflow_file_should_render_template(
-        self, open_mock, render_template_mock, sort_imports_mock, fix_file_mock, black_mock
+        self, open_mock, render_template_mock, sort_file_moc, fix_file_mock, black_mock
     ):
         renderer = self._create_renderer()
         workflow = _create_workflow()
@@ -91,11 +91,11 @@ class PythonRendererTestCase(unittest.TestCase):
 
     @mock.patch("o2a.converter.renderers.black")
     @mock.patch("o2a.converter.renderers.fix_file")
-    @mock.patch("o2a.converter.renderers.SortImports")
+    @mock.patch("o2a.converter.renderers.sort_file")
     @mock.patch("o2a.converter.renderers.render_template", return_value="DAG_CONTENT")
     @mock.patch("builtins.open")
     def test_create_subworkflow_file_should_be_render_template_with_different_template(
-        self, open_mock, render_template_mock, sort_imports_mock, fix_file_mock, black_mock
+        self, open_mock, render_template_mock, sort_file_moc, fix_file_mock, black_mock
     ):
         renderer = self._create_renderer()
         workflow = _create_workflow()
@@ -117,11 +117,11 @@ class PythonRendererTestCase(unittest.TestCase):
 
     @mock.patch("o2a.converter.renderers.black")
     @mock.patch("o2a.converter.renderers.fix_file")
-    @mock.patch("o2a.converter.renderers.SortImports")
+    @mock.patch("o2a.converter.renderers.sort_file")
     @mock.patch("o2a.converter.renderers.render_template", return_value="DAG_CONTENT")
     @mock.patch("builtins.open")
     def test_create_workflow_file_should_format_file(
-        self, open_mock, render_template_mock, sort_imports_mock, autoflake_fix_file_mock, black_mock
+        self, open_mock, render_template_mock, sort_file_mock, autoflake_fix_file_mock, black_mock
     ):
         renderer = self._create_renderer()
         workflow = _create_workflow()
@@ -145,7 +145,7 @@ class PythonRendererTestCase(unittest.TestCase):
             ),
             standard_out=sys.stdout,
         )
-        sort_imports_mock.assert_called_once_with("/tmp/output/DAG_NAME.py")
+        sort_file_mock.assert_called_once_with(filename="/tmp/output/DAG_NAME.py", ask_to_apply=False)
 
     @staticmethod
     def _create_renderer():
