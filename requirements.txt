@@ -20,4 +20,4 @@ sshtunnel==0.1.5
 twine==3.2.0
 tzlocal==2.1 # pyup: ignore
 Werkzeug==1.0.1 # pyup: ignore
-yamllint==1.24.1
+yamllint==1.24.2
