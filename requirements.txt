@@ -11,7 +11,7 @@ mypy==0.782
 parameterized==0.7.4
 paramiko==2.7.1
 pre-commit==2.6.0
-pydeps==1.9.6
+pydeps==1.9.7
 pylint==2.5.3
 pytest==6.0.1
 pytest-cov==2.10.0
