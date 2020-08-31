@@ -9,7 +9,7 @@ Jinja2==2.11.2 # pyup: ignore
 lark-parser==0.9.0
 mypy==0.782
 parameterized==0.7.4
-paramiko==2.7.1
+paramiko==2.7.2
 pre-commit==2.7.1
 pydeps==1.9.8
 pylint==2.6.0
