@@ -8,7 +8,7 @@ j2cli==0.3.10
 Jinja2==2.11.2 # pyup: ignore
 lark-parser==0.11.1
 mypy==0.790
-parameterized==0.7.5
+parameterized==0.8.1
 paramiko==2.7.2
 pre-commit==2.9.3
 pydeps==1.9.13
