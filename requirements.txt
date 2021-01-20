@@ -16,7 +16,7 @@ pylint==2.6.0
 pytest==6.2.1
 pytest-cov==2.11.0
 safety==1.10.3
-sshtunnel==0.3.1
+sshtunnel==0.4.0
 twine==3.3.0
 tzlocal==2.1 # pyup: ignore
 Werkzeug==1.0.1 # pyup: ignore
