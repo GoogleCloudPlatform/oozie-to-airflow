@@ -5,7 +5,7 @@ flake8==3.8.4
 google-api-python-client==1.12.8
 isort==5.7.0
 j2cli==0.3.10
-Jinja2==2.11.2 # pyup: ignore
+Jinja2==2.11.3 # pyup: ignore
 lark-parser==0.11.1
 mypy==0.790
 parameterized==0.7.5
