@@ -7,7 +7,7 @@ isort==5.7.0
 j2cli==0.3.10
 Jinja2==2.11.2 # pyup: ignore
 lark-parser==0.11.1
-mypy==0.790
+mypy==0.812
 parameterized==0.7.5
 paramiko==2.7.2
 pre-commit==2.10.1
