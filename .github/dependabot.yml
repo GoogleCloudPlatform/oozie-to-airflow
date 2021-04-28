@@ -1,0 +1,46 @@
+version: 2
+updates:
+- package-ecosystem: pip
+  directory: "/"
+  schedule:
+    interval: daily
+  open-pull-requests-limit: 10
+  ignore:
+  - dependency-name: jinja2
+    versions:
+    - "> 2.10.0, < 2.11"
+  - dependency-name: werkzeug
+    versions:
+    - "> 0.15.4, < 1"
+  - dependency-name: pylint
+    versions:
+    - 2.6.2
+    - 2.7.0
+    - 2.7.1
+    - 2.7.2
+    - 2.7.3
+    - 2.7.4
+    - 2.8.1
+  - dependency-name: pre-commit
+    versions:
+    - 2.10.0
+    - 2.11.0
+    - 2.11.1
+    - 2.12.0
+  - dependency-name: google-api-python-client
+    versions:
+    - 2.0.2
+    - 2.1.0
+  - dependency-name: apache-airflow
+    versions:
+    - 2.0.0
+    - 2.0.1
+  - dependency-name: mypy
+    versions:
+    - "0.800"
+  - dependency-name: yamllint
+    versions:
+    - 1.26.0
+  - dependency-name: pytest
+    versions:
+    - 6.2.2
