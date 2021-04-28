@@ -12,7 +12,7 @@ parameterized==0.7.5
 paramiko==2.7.2
 pre-commit==2.10.1
 pydeps==1.9.13
-pylint==2.6.0
+pylint==2.8.2
 pytest==6.2.1
 pytest-cov==2.11.1
 safety==1.10.3
