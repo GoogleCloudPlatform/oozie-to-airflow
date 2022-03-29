@@ -13,6 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Maps Oozie pig node to Airflow's DAG"""
+import logging
 import os
 import shutil
 from typing import Dict, Set, Optional, List
@@ -74,14 +75,13 @@ class HiveMapper(ActionMapper):
     def to_tasks_and_relations(self):
         action_task = Task(
             task_id=self.name,
-            template_name="hive.tpl",
+            template_name="hive/hive.tpl",
             template_params=dict(
-                query=self.query,
-                script=self.script,
-                props=self.props,
-                archives=self.hdfs_archives,
-                files=self.hdfs_files,
-                variables=self.variables,
+                hql=self.query or self.script,
+                mapred_queue=self.props.merged["queueName"],
+                hive_cli_conn_id=self.props.config["hive_cli_conn_id"]
+                if "hive_cli_conn_id" in self.props.config
+                else "hive_cli_default",
             ),
         )
         tasks = [action_task]
@@ -100,5 +100,7 @@ class HiveMapper(ActionMapper):
         os.makedirs(os.path.dirname(destination_script_file_path), exist_ok=True)
         shutil.copy(source_script_file_path, destination_script_file_path)
 
+        logging.info(f"Copied {self.script} to {destination_script_file_path}")
+
     def required_imports(self) -> Set[str]:
-        return {"from airflow.utils import dates", "from airflow.contrib.operators import dataproc_operator"}
+        return {"from airflow.utils import dates", "from airflow.operators import hive_operator"}

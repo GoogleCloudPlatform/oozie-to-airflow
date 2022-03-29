@@ -97,7 +97,7 @@ def get_value_by_path(target: Any, path: List[Union[str, int]]) -> Any:
 
 
 def set_value_by_path(target: Any, path: List[Union[str, int]], value: Any) -> None:
-    """"
+    """ "
     Sets the value at path of dict or list.
 
     :Example::

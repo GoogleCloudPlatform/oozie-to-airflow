@@ -113,6 +113,7 @@ class OozieConverter:
             self.renderer.create_subworkflow_file(workflow=self.workflow, props=self.props)
         else:
             self.renderer.create_workflow_file(workflow=self.workflow, props=self.props)
+
         self.copy_extra_assets(self.workflow.nodes)
 
     def convert_nodes(self):
@@ -136,7 +137,7 @@ class OozieConverter:
                 downstream_names=oozie_node.downstream_names,
                 error_downstream_name=oozie_node.error_downstream_name,
             )
-            del self.workflow.nodes[name]
+            # del self.workflow.nodes[name]
 
     @staticmethod
     def _get_task_group_type(oozie_node: OozieNode) -> Type[TaskGroup]:
@@ -184,6 +185,7 @@ class OozieConverter:
                 input_directory_path=os.path.join(self.workflow.input_directory_path, HDFS_FOLDER),
                 output_directory_path=self.workflow.output_directory_path,
             )
+        logging.info("Extra assets copied.")
 
     def apply_preconvert_transformers(self):
         logging.info("Applying pre-convert transformers")

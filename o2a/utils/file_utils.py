@@ -25,7 +25,7 @@ def get_lib_files(library_folder_path: str, extension: str) -> List[str]:
 
     It returns an empty list in case there are no files matching the extension and raises Exception
     in case the lib folder does not exist or is not a directory.
-     """
+    """
     if os.path.exists(library_folder_path):
         if os.path.isdir(library_folder_path):
             return [file for file in os.listdir(library_folder_path) if file.endswith(extension)]

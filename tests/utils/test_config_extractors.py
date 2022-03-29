@@ -75,7 +75,7 @@ class ConfigExtractorsModuleTestCase(unittest.TestCase):
         )
 
     def test_extract_properties_from_configuration_node_should_raise_exception_when_name_element_is_missing(
-        self
+        self,
     ):
         # language=XML
         config_node_str = """
@@ -94,7 +94,7 @@ class ConfigExtractorsModuleTestCase(unittest.TestCase):
             extract_properties_from_configuration_node(config_node)
 
     def test_extract_properties_from_configuration_node_should_raise_exception_when_value_element_is_missing(
-        self
+        self,
     ):
         # language=XML
         config_node_str = """
@@ -113,7 +113,7 @@ class ConfigExtractorsModuleTestCase(unittest.TestCase):
             extract_properties_from_configuration_node(config_node)
 
     def test_extract_properties_from_configuration_node_should_raise_exception_when_name_element_is_empty(
-        self
+        self,
     ):
         # language=XML
         config_node_str = """
@@ -133,7 +133,7 @@ class ConfigExtractorsModuleTestCase(unittest.TestCase):
             extract_properties_from_configuration_node(config_node)
 
     def test_extract_properties_from_configuration_node_should_raise_exception_when_value_element_is_empty(
-        self
+        self,
     ):
         # language=XML
         config_node_str = """

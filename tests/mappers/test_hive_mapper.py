@@ -87,6 +87,7 @@ FRAGMENT_ARCHIVE = """
 class TestHiveMapper(unittest.TestCase):
     job_properties: Dict[str, str] = {
         "nameNode": "hdfs://",
+        "queueName": "default",
         "oozie.wf.application.path": "hdfs:///user/TEST_USERNAME/apps/hive",
         "userName": "TEST_USERNAME",
         "examplesRoot": "TEST_EXAMPLE_ROOT",
@@ -109,33 +110,21 @@ class TestHiveMapper(unittest.TestCase):
             [
                 Task(
                     task_id="test_id",
-                    template_name="hive.tpl",
+                    template_name="hive/hive.tpl",
                     trigger_rule="one_success",
                     template_params={
-                        "query": "DROP TABLE IF EXISTS test_query;\nCREATE EXTERNAL TABLE test_query (a INT) "
+                        "hql": "DROP TABLE IF EXISTS test_query;\nCREATE EXTERNAL TABLE test_query (a INT) "
                         "STORED AS TEXTFILE\nLOCATION '/user/{{userName}}/{{examplesRoot}}/input/';"
                         "\nINSERT OVERWRITE DIRECTORY '/user/{{userName}}/{{examplesRoot}}/output/' "
                         "SELECT * FROM test_query;",
-                        "script": None,
-                        "props": PropertySet(
-                            config={},
-                            job_properties={
-                                "nameNode": "hdfs://",
-                                "oozie.wf.application.path": "hdfs:///user/TEST_USERNAME/apps/hive",
-                                "userName": "TEST_USERNAME",
-                                "examplesRoot": "TEST_EXAMPLE_ROOT",
-                            },
-                            action_node_properties={},
-                        ),
-                        "archives": [],
-                        "files": [],
-                        "variables": {},
+                        "mapred_queue": "default",
+                        "hive_cli_conn_id": "hive_cli_default",
                     },
                 )
             ],
             tasks,
         )
-
+    
         self.assertEqual([], relations)
 
     def test_to_tasks_and_relations_should_parse_script_element(self):
@@ -151,27 +140,12 @@ class TestHiveMapper(unittest.TestCase):
             [
                 Task(
                     task_id="test_id",
-                    template_name="hive.tpl",
+                    template_name="hive/hive.tpl",
                     trigger_rule="one_success",
                     template_params={
-                        "query": None,
-                        "script": "script.q",
-                        "props": PropertySet(
-                            config={},
-                            job_properties={
-                                "nameNode": "hdfs://",
-                                "oozie.wf.application.path": "hdfs:///user/TEST_USERNAME/apps/hive",
-                                "userName": "TEST_USERNAME",
-                                "examplesRoot": "TEST_EXAMPLE_ROOT",
-                            },
-                            action_node_properties={},
-                        ),
-                        "archives": [],
-                        "files": [],
-                        "variables": {
-                            "INPUT": "/user/{{userName}}/{{examplesRoot}}/apps/hive/input/",
-                            "OUTPUT": "/user/{{userName}}/{{examplesRoot}}/apps/hive/output/",
-                        },
+                        "hql": "script.q",
+                        "mapred_queue": "default",
+                        "hive_cli_conn_id": "hive_cli_default",
                     },
                 )
             ],
@@ -220,32 +194,15 @@ class TestHiveMapper(unittest.TestCase):
             [
                 Task(
                     task_id="test_id",
-                    template_name="hive.tpl",
+                    template_name="hive/hive.tpl",
                     trigger_rule="one_success",
                     template_params={
-                        "query": "DROP TABLE IF EXISTS test_query;"
-                        "\nCREATE EXTERNAL TABLE test_query (a INT) STORED "
-                        "AS TEXTFILE\nLOCATION '/user/{{userName}}/{{examplesRoot}}/input/';\nINSERT "
-                        "OVERWRITE DIRECTORY '/user/{{userName}}/{{examplesRoot}}/output/' "
+                        "hql": "DROP TABLE IF EXISTS test_query;\nCREATE EXTERNAL TABLE test_query (a INT) "
+                        "STORED AS TEXTFILE\nLOCATION '/user/{{userName}}/{{examplesRoot}}/input/';"
+                        "\nINSERT OVERWRITE DIRECTORY '/user/{{userName}}/{{examplesRoot}}/output/' "
                         "SELECT * FROM test_query;",
-                        "script": None,
-                        "props": PropertySet(
-                            config={},
-                            job_properties={
-                                "nameNode": "hdfs://",
-                                "oozie.wf.application.path": "hdfs:///user/TEST_USERNAME/apps/hive",
-                                "userName": "TEST_USERNAME",
-                                "examplesRoot": "TEST_EXAMPLE_ROOT",
-                            },
-                            action_node_properties={},
-                        ),
-                        "archives": [],
-                        "files": [
-                            "hdfs:///user/TEST_USERNAME/apps/hive/test_dir/test.txt#test_link.txt",
-                            "hdfs:///user/{{userName}}/{{examplesRoot}}/apps/pig/test_dir/"
-                            "test2.zip#test_link.zip",
-                        ],
-                        "variables": {},
+                        "mapred_queue": "default",
+                        "hive_cli_conn_id": "hive_cli_default",
                     },
                 )
             ],
@@ -269,30 +226,15 @@ class TestHiveMapper(unittest.TestCase):
             [
                 Task(
                     task_id="test_id",
-                    template_name="hive.tpl",
+                    template_name="hive/hive.tpl",
                     trigger_rule="one_success",
                     template_params={
-                        "query": "DROP TABLE IF EXISTS test_query;\nCREATE EXTERNAL TABLE test_query (a INT) "
+                        "hql": "DROP TABLE IF EXISTS test_query;\nCREATE EXTERNAL TABLE test_query (a INT) "
                         "STORED AS TEXTFILE\nLOCATION '/user/{{userName}}/{{examplesRoot}}/input/';"
                         "\nINSERT OVERWRITE DIRECTORY '/user/{{userName}}/{{examplesRoot}}/output/' "
                         "SELECT * FROM test_query;",
-                        "script": None,
-                        "props": PropertySet(
-                            config={},
-                            job_properties={
-                                "nameNode": "hdfs://",
-                                "oozie.wf.application.path": "hdfs:///user/TEST_USERNAME/apps/hive",
-                                "userName": "TEST_USERNAME",
-                                "examplesRoot": "TEST_EXAMPLE_ROOT",
-                            },
-                            action_node_properties={},
-                        ),
-                        "archives": [
-                            "hdfs:///user/TEST_USERNAME/apps/hive/test_dir/test2.zip#test_zip_dir",
-                            "hdfs:///user/TEST_USERNAME/apps/hive/test_dir/test3.zip#test3_zip_dir",
-                        ],
-                        "files": [],
-                        "variables": {},
+                        "mapred_queue": "default",
+                        "hive_cli_conn_id": "hive_cli_default",
                     },
                 )
             ],
