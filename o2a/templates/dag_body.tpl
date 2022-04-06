@@ -16,12 +16,16 @@
 {% for task_group in task_groups %}
 {% for task in task_group.all_tasks %}
 {{ task.rendered_template }}
+
 {% endfor %}
 {% for relation in task_group.relations %}
-{{ relation.from_task_id | to_var }}.set_downstream({{ relation.to_task_id | to_var }})
-{% endfor %}
+{{ relation.from_task_id | to_var }} >> {{ relation.to_task_id | to_var }}
+
 {% endfor %}
 
+{% endfor %}
+
+
 {% for relation in relations %}
-{{ relation.from_task_id | to_var }}.set_downstream({{ relation.to_task_id | to_var }})
+{{ relation.from_task_id | to_var }} >> {{ relation.to_task_id | to_var }}
 {% endfor %}

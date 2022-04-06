@@ -15,7 +15,7 @@
  #}
 
 {% import "macros/props.tpl" as props_macro %}
-{{ task_id | to_var }} = hive_operator.HiveOperator(
+{{ task_id | to_var }} = hive.HiveOperator(
     task_id={{ task_id | to_python }},
     trigger_rule={{ trigger_rule | to_python }},
     hql={{ hql | to_python }},

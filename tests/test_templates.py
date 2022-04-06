@@ -285,25 +285,27 @@ class GitTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
 
 
 class HiveTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
-    TEMPLATE_NAME = "hive.tpl"
+    TEMPLATE_NAME = "hive/hive.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = {
         "task_id": "AA",
         "trigger_rule": "dummy",
-        "script": "id.q",
-        "query": "SELECT 1",
-        "variables": {
-            "INPUT": "/user/${wf:user()}/${examplesRoot}/input-data/text",
-            "OUTPUT": "/user/${wf:user()}/${examplesRoot}/output-data/demo/hive-node",
-        },
-        "action_node_properties": {"key": "value"},
+        "hql": "id.q",
+        "mapred_queue":"default",
+        "hive_cli_conn_id": "hive_cli_default",
+       
     }
 
     def test_green_path(self):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
         self.assertValidPython(res)
 
-    @parameterized.expand([({"variables": {"OUTPUT": None}},), ({"variables": {"INPUT": None}},)])
+    @parameterized.expand(
+        [
+            ({"hive_cli_conn_id": "hive_local"},),
+            ({"hql": "SELECT * FROM sales"},)
+        ]
+    )
     def test_optional_parameters(self, mutation):
         template_params = mutate(self.DEFAULT_TEMPLATE_PARAMS, mutation)
         res = render_template(self.TEMPLATE_NAME, **template_params)
@@ -313,12 +315,9 @@ class HiveTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
         [
             ({"task_id": 'A"'},),
             ({"trigger_rule": 'A"'},),
-            ({"script": 'A"'},),
-            ({"query": 'A"'},),
-            ({"variables": {'AA"': "DAG_NAME_A"}},),
-            ({"variables": {"AA": 'A"AA'}},),
-            ({"action_node_properties": {'AA"': "DAG_NAME_A"}},),
-            ({"action_node_properties": {"AA": 'A"AA'}},),
+            ({"hql": 'A"'},),
+            ({"mapred_queue": 'A"'},),
+            ({"hive_cli_conn_id": 'A"'},),
         ]
     )
     def test_escape_character(self, mutation):
@@ -431,7 +430,7 @@ class PigTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
 
 
 class PrepareTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
-    TEMPLATE_NAME = "prepare.tpl"
+    TEMPLATE_NAME = "prepare/prepare.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = {
         "task_id": "DAG_NAME_A",

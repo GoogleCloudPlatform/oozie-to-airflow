@@ -15,7 +15,7 @@
 """Base class for all action nappers"""
 from abc import ABC
 from copy import deepcopy
-from typing import Any, List, Tuple
+from typing import Any, List, Tuple, Set
 from xml.etree.ElementTree import Element
 
 from o2a.converter.relation import Relation
@@ -93,3 +93,6 @@ class ActionMapper(BaseMapper, ABC):
         new_tasks.insert(0, task_to_prepend)
         new_relations.insert(0, Relation(from_task_id=task_to_prepend.task_id, to_task_id=tasks[0].task_id))
         return new_tasks, new_relations
+
+    def required_imports(self) -> Set[str]:
+        pass

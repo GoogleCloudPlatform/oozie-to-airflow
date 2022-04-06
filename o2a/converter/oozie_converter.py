@@ -16,7 +16,7 @@
 Converts Oozie application workflow into Airflow's DAG
 """
 import shutil
-from typing import Dict, Type, List
+from typing import Dict, Type, List, Union
 
 import os
 
@@ -126,8 +126,10 @@ class OozieConverter:
         logging.info("Converting nodes to tasks and inner relations")
         for name, oozie_node in self.workflow.nodes.copy().items():
             tasks, relations = oozie_node.mapper.to_tasks_and_relations()
-            dependencies = oozie_node.mapper.required_imports()
             oozie_node.tasks = tasks
+
+            dependencies = oozie_node.mapper.required_imports()
+
             oozie_node.relations = relations
             self.workflow.task_groups[name] = self._get_task_group_type(oozie_node)(
                 name=name,

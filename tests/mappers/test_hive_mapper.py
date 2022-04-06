@@ -21,6 +21,7 @@ from xml.etree import ElementTree as ET
 
 from o2a.converter.exceptions import ParseException
 from o2a.converter.task import Task
+from o2a.tasks.hive.hive_local_task import HiveLocalTask
 from o2a.converter.relation import Relation
 from o2a.mappers import hive_mapper
 from o2a.o2a_libs.property_utils import PropertySet
@@ -93,7 +94,9 @@ class TestHiveMapper(unittest.TestCase):
         "examplesRoot": "TEST_EXAMPLE_ROOT",
     }
 
-    config: Dict[str, str] = {}
+    config: Dict[str, str] = {
+        "context_type": "local",
+    }
 
     def setUp(self):
         self.hive_node = ET.fromstring(TEST_BASE_HIVE)
@@ -108,7 +111,7 @@ class TestHiveMapper(unittest.TestCase):
 
         self.assertEqual(
             [
-                Task(
+                HiveLocalTask(
                     task_id="test_id",
                     template_name="hive/hive.tpl",
                     trigger_rule="one_success",
@@ -124,7 +127,7 @@ class TestHiveMapper(unittest.TestCase):
             ],
             tasks,
         )
-    
+
         self.assertEqual([], relations)
 
     def test_to_tasks_and_relations_should_parse_script_element(self):
@@ -138,7 +141,7 @@ class TestHiveMapper(unittest.TestCase):
 
         self.assertEqual(
             [
-                Task(
+                HiveLocalTask(
                     task_id="test_id",
                     template_name="hive/hive.tpl",
                     trigger_rule="one_success",
@@ -167,7 +170,7 @@ class TestHiveMapper(unittest.TestCase):
         self.assertEqual(
             Task(
                 task_id="test_id_prepare",
-                template_name="prepare.tpl",
+                template_name="prepare/prepare.tpl",
                 trigger_rule="one_success",
                 template_params={
                     "delete": "/user/{{userName}}/{{examplesRoot}}/apps/pig/output",
@@ -192,7 +195,7 @@ class TestHiveMapper(unittest.TestCase):
         self.assertEqual(1, len(tasks))
         self.assertEqual(
             [
-                Task(
+                HiveLocalTask(
                     task_id="test_id",
                     template_name="hive/hive.tpl",
                     trigger_rule="one_success",
@@ -224,7 +227,7 @@ class TestHiveMapper(unittest.TestCase):
         self.assertEqual(1, len(tasks))
         self.assertEqual(
             [
-                Task(
+                HiveLocalTask(
                     task_id="test_id",
                     template_name="hive/hive.tpl",
                     trigger_rule="one_success",

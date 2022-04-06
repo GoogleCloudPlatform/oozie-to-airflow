@@ -57,3 +57,7 @@ class Task:  # pylint: disable=too-few-public-methods
         if isinstance(other, self.__class__):
             return self.__dict__ == other.__dict__
         return False
+
+    @staticmethod
+    def required_imports() -> set[str]:
+        return None

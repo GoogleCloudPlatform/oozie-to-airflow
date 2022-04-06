@@ -17,3 +17,6 @@ output-artifacts/
 *.egg-info/
 /.eggs/
 /pip-wheel-metadata
+
+
+.vagrant/

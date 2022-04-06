@@ -53,9 +53,17 @@
         <error to="fail"/>
     </action>
     <action name="hive-query">
+
         <hive xmlns="uri:oozie:hive-action:1.0">
+
             <resource-manager>${resourceManager}</resource-manager>
             <name-node>${nameNode}</name-node>
+            <prepare >
+                <delete  path="hdfs://user/${wf:user()}/${examplesRoot}/apps/hive/input-data/"/>
+                <mkdir  path="hdfs://userss/${wf:user()}/${examplesRoot}/apps/hive/output-data/"/>
+                <mkdir  path="hdfs://userss/${wf:user()}/${examplesRoot}/apps/hive/output2-data/"/>
+
+            </prepare>
             <configuration>
                 <property>
                     <name>mapred.job.queue.name</name>
