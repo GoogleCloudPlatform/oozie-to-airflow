@@ -99,7 +99,7 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
             [
                 Task(
                     task_id="test_id_prepare",
-                    template_name="prepare.tpl",
+                    template_name="prepare/prepare.tpl",
                     template_params={"delete": "/tmp/d_path", "mkdir": "/tmp/mk_path"},
                 ),
                 Task(

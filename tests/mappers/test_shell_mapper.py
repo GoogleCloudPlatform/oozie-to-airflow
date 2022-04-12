@@ -22,35 +22,39 @@ from o2a.converter.task import Task
 from o2a.converter.relation import Relation
 from o2a.mappers import shell_mapper
 from o2a.o2a_libs.property_utils import PropertySet
+from o2a.tasks.shell.shell_local_task import ShellLocalTask
 
 
 class TestShellMapper(unittest.TestCase):
     def setUp(self):
         # language=XML
         shell_node_str = """
-<shell>
-    <resource-manager>localhost:8032</resource-manager>
-    <name-node>hdfs://localhost:8020</name-node>
-    <prepare>
-        <delete path="${nameNode}/examples/output-data/demo/pig-node" />
-        <delete path="${nameNode}/examples/output-data/demo/pig-node2" />
-        <mkdir path="${nameNode}/examples/input-data/demo/pig-node" />
-        <mkdir path="${nameNode}/examples/input-data/demo/pig-node2" />
-     </prepare>
-     <configuration>
-        <property>
-            <name>mapred.job.queue.name</name>
-            <value>${queueName}</value>
-        </property><property>
-            <name>mapred.map.output.compress</name>
-            <value>false</value>
-        </property>
-    </configuration>
-    <exec>echo</exec>
-    <argument>arg1</argument>
-    <argument>arg2</argument>
-</shell>
-"""
+        <shell>
+            <resource-manager>localhost:8032</resource-manager>
+            <name-node>hdfs://localhost:8020</name-node>
+            <prepare>
+                <delete path="${nameNode}/examples/output-data/demo/pig-node" />
+                <delete path="${nameNode}/examples/output-data/demo/pig-node2" />
+                <mkdir path="${nameNode}/examples/input-data/demo/pig-node" />
+                <mkdir path="${nameNode}/examples/input-data/demo/pig-node2" />
+             </prepare>
+             <configuration>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>${queueName}</value>
+                </property><property>
+                    <name>mapred.map.output.compress</name>
+                    <value>false</value>
+                </property>
+            </configuration>
+            <exec>echo</exec>
+            <argument>arg1</argument>
+            <argument>$VAR2</argument>
+            <env-var>VAR1=value1</env-var>
+            <env-var>VAR2=value2</env-var>
+        
+        </shell>
+        """
         self.shell_node = ET.fromstring(shell_node_str)
 
     def test_create_mapper_no_jinja(self):
@@ -62,7 +66,7 @@ class TestShellMapper(unittest.TestCase):
         self.assertEqual("localhost:8032", mapper.resource_manager)
         self.assertEqual("hdfs://localhost:8020", mapper.name_node)
         self.assertEqual("{{queueName}}", mapper.props.action_node_properties["mapred.job.queue.name"])
-        self.assertEqual("echo arg1 arg2", mapper.bash_command)
+        self.assertEqual("echo arg1 $VAR2", mapper.bash_command)
 
     def test_create_mapper_jinja(self):
         # test jinja templating
@@ -85,11 +89,11 @@ class TestShellMapper(unittest.TestCase):
         self.assertEqual("{{resourceManager}}", mapper.resource_manager)
         self.assertEqual("{{nameNode}}", mapper.name_node)
         self.assertEqual("{{queueName}}", mapper.props.action_node_properties["mapred.job.queue.name"])
-        self.assertEqual("echo arg1 arg2", mapper.bash_command)
+        self.assertEqual("echo arg1 $VAR2", mapper.bash_command)
 
     def test_to_tasks_and_relations(self):
         job_properties = {"nameNode": "hdfs://localhost:9020/", "queueName": "default"}
-        config = {"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"}
+        config = {}
         mapper = self._get_shell_mapper(job_properties=job_properties, config=config)
         mapper.on_parse_node()
         tasks, relations = mapper.to_tasks_and_relations()
@@ -98,23 +102,27 @@ class TestShellMapper(unittest.TestCase):
             [
                 Task(
                     task_id="test_id_prepare",
-                    template_name="prepare.tpl",
+                    template_name="prepare/prepare.tpl",
                     trigger_rule="one_success",
                     template_params={
                         "delete": "/examples/output-data/demo/pig-node /examples/output-data/demo/pig-node2",
                         "mkdir": "/examples/input-data/demo/pig-node /examples/input-data/demo/pig-node2",
                     },
                 ),
-                Task(
+                ShellLocalTask(
                     task_id="test_id",
-                    template_name="shell.tpl",
+                    template_name="shell/shell.tpl",
                     trigger_rule="one_success",
                     template_params={
-                        "pig_command": "sh echo arg1 arg2",
+                        "bash_command": "echo arg1 $VAR2",
                         "action_node_properties": {
                             "mapred.job.queue.name": "{{queueName}}",
                             "mapred.map.output.compress": "false",
                         },
+                        "env": {
+                            "VAR1": "value1",
+                            "VAR2": "value2",
+                        }
                     },
                 ),
             ],
@@ -137,3 +145,14 @@ class TestShellMapper(unittest.TestCase):
             props=PropertySet(job_properties=job_properties, config=config),
             input_directory_path="/tmp/input-directory-path/",
         )
+
+    def test_get_env_vars(self):
+        mapper = self._get_shell_mapper(job_properties={}, config={})
+        env_vars = mapper.get_env_vars()
+
+        expected_env_vars = {
+            "VAR1": "value1",
+            "VAR2": "value2",
+        }
+
+        self.assertEqual(expected_env_vars, env_vars)

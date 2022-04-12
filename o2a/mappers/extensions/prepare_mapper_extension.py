@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Prepare node mixin"""
-from typing import List, Tuple, Optional
+from typing import List, Tuple, Optional, Set
 
 from o2a.converter.task import Task
 from o2a.mappers.base_mapper import BaseMapper
@@ -42,9 +42,10 @@ class PrepareMapperExtension:
             return None
         delete = " ".join(delete_paths) if delete_paths else None
         mkdir = " ".join(mkdir_paths) if mkdir_paths else None
+
         return Task(
             task_id=self.mapper.name + "_prepare",
-            template_name="prepare.tpl",
+            template_name="prepare/prepare.tpl",
             template_params=dict(delete=delete, mkdir=mkdir),
         )
 
@@ -72,3 +73,10 @@ class PrepareMapperExtension:
                 else:
                     raise Exception(f"Unknown XML node in prepare: {node.tag}")
         return delete_paths, mkdir_paths
+
+    @staticmethod
+    def required_imports() -> Set[str]:
+        """
+        Returns set of dependencies for prepare task
+        """
+        return {"from  airflow.operators import bash"}

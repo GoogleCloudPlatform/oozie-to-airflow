@@ -14,7 +14,7 @@
   limitations under the License.
 #}
 {% import "macros/props.tpl" as props_macro %}
-{{ task_id | to_var }} = dataproc_operator.DataProcSparkOperator(
+{{ task_id | to_var }} = spark_submit.SparkSubmitOperator(
     task_id={{ task_id | to_python }},
     trigger_rule={{ trigger_rule | to_python }},
     {% if main_jar %}main_jar={{ main_jar | to_python }},{% endif %}

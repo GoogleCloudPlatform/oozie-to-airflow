@@ -320,6 +320,7 @@ class HiveTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
             ({"hive_cli_conn_id": 'A"'},),
         ]
     )
+
     def test_escape_character(self, mutation):
         template_params = mutate(self.DEFAULT_TEMPLATE_PARAMS, mutation)
         res = render_template(self.TEMPLATE_NAME, **template_params)

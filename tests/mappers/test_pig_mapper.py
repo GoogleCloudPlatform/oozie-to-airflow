@@ -121,7 +121,7 @@ class TestPigMapper(unittest.TestCase):
             [
                 Task(
                     task_id="test_id_prepare",
-                    template_name="prepare.tpl",
+                    template_name="prepare/prepare.tpl",
                     trigger_rule="one_success",
                     template_params={
                         "delete": "/examples/output-data/demo/pig-node /examples/output-data/demo/pig-node2",

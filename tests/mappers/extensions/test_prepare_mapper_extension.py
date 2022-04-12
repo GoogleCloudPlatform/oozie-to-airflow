@@ -62,7 +62,7 @@ class TestPrepareMapperExtension(unittest.TestCase):
         self.assertEqual(
             Task(
                 task_id="mapper_prepare",
-                template_name="prepare.tpl",
+                template_name="prepare/prepare.tpl",
                 template_params={
                     "delete": "/examples/output-data/demo/pig-node /examples/output-data/demo/pig-node2",
                     "mkdir": "/examples/input-data/demo/pig-node /examples/input-data/demo/pig-node2",

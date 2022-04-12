@@ -32,8 +32,8 @@
   limitations under the License.
 -->
 <workflow-app xmlns="uri:oozie:workflow:1.0" name="shell-wf">
-    <start to="shell-node"/>
-    <action name="shell-node">
+    <start to="shell1-node"/>
+    <action name="shell1-node">
         <shell xmlns="uri:oozie:shell-action:1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                xsi:schemaLocation="uri:oozie:shell-action:1.0 ">
             <resource-manager>${resourceManager}</resource-manager>
@@ -50,6 +50,25 @@
             </configuration>
             <exec>java</exec>
             <argument>-version</argument>
+            <capture-output/> <!-- This can be ignored by the converter -->
+        </shell>
+        <ok to="shell2-node"/>
+        <error to="fail"/>
+    </action>
+    <action name="shell2-node">
+        <shell xmlns="uri:oozie:shell-action:1.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+               xsi:schemaLocation="uri:oozie:shell-action:1.0 ">
+            <resource-manager>${resourceManager}</resource-manager>
+            <name-node>${nameNode}</name-node>
+            <configuration>
+                <property>
+                    <name>mapred.job.queue.name</name>
+                    <value>${queueName}</value>
+                </property>
+            </configuration>
+            <exec>echo</exec>
+            <argument> ${queueName} $IP_ADDR</argument>
+            <env-var>IP_ADDR=127.0.0.1</env-var>
             <capture-output/> <!-- This can be ignored by the converter -->
         </shell>
         <ok to="end"/>

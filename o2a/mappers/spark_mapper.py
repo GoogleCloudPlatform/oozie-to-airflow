@@ -13,7 +13,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Maps Spark action to Airflow Dag"""
-from typing import Dict, List, Optional, Set
+from typing import Dict, List, Optional, Set, Type
 
 import xml.etree.ElementTree as ET
 
@@ -24,6 +24,7 @@ from o2a.converter.relation import Relation
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.mappers.extensions.prepare_mapper_extension import PrepareMapperExtension
 from o2a.o2a_libs.property_utils import PropertySet
+from o2a.tasks.spark_local_task import SparkLocalTask
 from o2a.utils import xml_utils
 from o2a.utils.file_archive_extractors import FileExtractor, ArchiveExtractor
 
@@ -43,6 +44,13 @@ SPARK_TAG_JAR = "jar"
 class SparkMapper(ActionMapper):
     """Maps Spark Action"""
 
+    TASK_MAPPER = {
+        "local": SparkLocalTask,
+        "ssh": Task,
+        "gcp": Task,
+
+    }
+
     def __init__(self, oozie_node: ET.Element, name: str, props: PropertySet, **kwargs):
         ActionMapper.__init__(self, oozie_node=oozie_node, name=name, props=props, **kwargs)
         self.java_class: Optional[str] = None
@@ -54,7 +62,6 @@ class SparkMapper(ActionMapper):
         self.archive_extractor = ArchiveExtractor(oozie_node=oozie_node, props=self.props)
         self.hdfs_files: List[str] = []
         self.hdfs_archives: List[str] = []
-        self.dataproc_jars: List[str] = []
         self.spark_opts: Dict[str, str] = {}
         self.prepare_extension: PrepareMapperExtension = PrepareMapperExtension(self)
 
@@ -65,9 +72,7 @@ class SparkMapper(ActionMapper):
 
         self.java_jar = get_tag_el_text(self.oozie_node, tag=SPARK_TAG_JAR)
         self.java_class = get_tag_el_text(self.oozie_node, tag=SPARK_TAG_CLASS)
-        if self.java_class and self.java_jar:
-            self.dataproc_jars = [self.java_jar]
-            self.java_jar = None
+
         self.job_name = get_tag_el_text(self.oozie_node, tag=SPARK_TAG_JOB_NAME)
 
         spark_opts = xml_utils.find_nodes_by_tag(self.oozie_node, SPARK_TAG_OPTS)
@@ -110,11 +115,26 @@ class SparkMapper(ActionMapper):
         return conf
 
     def to_tasks_and_relations(self):
-        action_task = Task(
+
+        """
+        application='',
+        conf=None, conn_id='spark_default', files=None, py_files=None, archives=None, driver_class_path=None, jars=None, java_class=None, packages=None, exclude_packages=None, repositories=None, total_executor_cores=None, executor_cores=None, executor_memory=None, driver_memory=None, keytab=None, principal=None, proxy_user=None, name='arrow-spark', num_executors=None, status_poll_interval=1, application_args=None, env_vars=None, verbose=False, spark_binary=None
+        """
+        task_class: Type[Task] = self.get_task_class(self.TASK_MAPPER)
+
+        action_task = task_class(
             task_id=self.name,
-            template_name="spark.tpl",
+            template_name="spark/spark.tpl",
             template_params=dict(
-                main_jar=self.java_jar,
+                application=self.java_jar,
+                conf=self.spark_opts,
+                spark_conn_id=self.props.config["spark_cli_conn_id"],
+                files=self.hdfs_files,
+                jars=self.jars,
+                driver_class_path=self.hdfs_archives,
+                java_class=self.java_class,
+                packages
+
                 main_class=self.java_class,
                 arguments=self.application_args,
                 hdfs_archives=self.hdfs_archives,
@@ -133,8 +153,8 @@ class SparkMapper(ActionMapper):
 
     def required_imports(self) -> Set[str]:
         # Bash are for the potential prepare statement
-        return {
-            "from airflow.contrib.operators import dataproc_operator",
-            "from airflow.operators import bash_operator",
-            "from airflow.operators import dummy_operator",
-        }
+        dependencies = self.get_task_class(self.TASK_MAPPER).required_imports()
+        prepare_dependencies = self.prepare_extension.required_imports()
+
+        return dependencies.union(prepare_dependencies)
+

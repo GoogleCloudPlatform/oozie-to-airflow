@@ -14,10 +14,16 @@
   limitations under the License.
 #}
 
-{% import "macros/props.tpl" as props_macro %}
-{{ task_id | to_var }} = BashOperator(
-    task_id={{ task_id | to_python }},
-    trigger_rule={{ trigger_rule | to_python }},
-    bash_command={% include "prepare_command.tpl" %},
-    params={{ props_macro.props(action_node_properties=action_node_properties) }},
-)
+
+{% if mkdir is not none %}
+"hadoop fs  -mkdir  %s ;" % (shlex.quote({{ mkdir | to_python }}))
+
+{% if delete is not none %}
++
+{% endif %}
+{% endif %}
+
+
+{% if delete is not none %}
+"hadoop fs  -rm -r -f  %s ;" % (shlex.quote({{ delete | to_python }}))
+{% endif %}

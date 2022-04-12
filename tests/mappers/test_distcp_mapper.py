@@ -81,7 +81,7 @@ class TestDistCpMapper(unittest.TestCase):
             [
                 Task(
                     task_id="distcp_prepare",
-                    template_name="prepare.tpl",
+                    template_name="prepare/prepare.tpl",
                     trigger_rule="one_success",
                     template_params={"delete": "/tmp/d_path", "mkdir": None},
                 ),
