@@ -16,7 +16,7 @@
 import logging
 import os
 import shutil
-from typing import Any, Dict, Set, Optional, List, Type
+from typing import Dict, Set, Optional, List, Type
 
 from xml.etree.ElementTree import Element
 
