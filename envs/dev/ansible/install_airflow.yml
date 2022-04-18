@@ -1,0 +1,18 @@
+---
+
+- hosts: all
+  gather_facts: yes
+  roles:
+    - required_dependencies_installation
+    - postgresql_installation
+    - rabbitmq_installation
+    - airflow_installation
+
+
+
+
+
+
+
+
+

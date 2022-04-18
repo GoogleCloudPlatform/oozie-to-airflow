@@ -1,0 +1,328 @@
+<!--******************************************-->
+<!--workflow.xml                              -->
+<!--******************************************-->
+
+<workflow-app xmlns = "uri:oozie:workflow:0.5"  xmlns:sla="uri:oozie:sla:0.2" name = "workflow-${workflowName}">
+	<global>
+		<job-tracker>${jobTracker}</job-tracker>
+		<name-node>${nameNode}</name-node>
+		<configuration>
+			<property>
+				<name>mapred.job.queue.name</name>
+				<value>${queueName}</value>
+			</property>
+		</configuration>
+	</global>
+	<credentials>
+		<credential name="hive-creds" type="hcat">
+			<property>
+				<name>hcat.metastore.principal</name>
+				<value>${jdbcPrincipal}</value>
+			</property>
+			<property>
+				<name>hcat.metastore.uri</name>
+				<value>${metastore}</value>
+			</property>
+		</credential>
+		<credential name="hs2-creds" type="hive2">
+			<property>
+				<name>hive2.server.principal</name>
+				<value>${jdbcPrincipal}</value>
+			</property>
+			<property>
+				<name>hive2.jdbc.url</name>
+				<value>${jdbcURL}</value>
+			</property>
+		</credential>
+	</credentials>
+
+	<!-- START HERE -->
+	<start to="copyData"/>
+
+
+	<decision name="control_file_size">
+		<switch>
+			<case to="small">
+				${ fs:dirSize(dataPath) lt 5 * MB }
+			</case>
+			<case to="large">
+				${ fs:dirSize(dataPath) gt 7 * MB }
+			</case>
+			<default to="sub-wf-checkInputFile"/>
+		</switch>
+	</decision>
+	<action name="small">
+		<email xmlns="uri:oozie:email-action:0.2">
+			<to>y.gahi@attijariwafa.com,a.berkaoui@attijariwafa.com,r.zyane@attijariwafa.com</to>
+			<subject>Alert: low file size in ${workflowName}</subject>
+			<body>Received data file is less than 5 MB total.</body>
+		</email>
+		<ok to="sub-wf-checkInputFile"/>
+		<error to="sub-wf-checkInputFile"/>
+	</action>
+	<action name="large">
+		<email xmlns="uri:oozie:email-action:0.2">
+			<to>y.gahi@attijariwafa.com,a.berkaoui@attijariwafa.com,r.zyane@attijariwafa.com</to>
+			<subject>Alert: large file size in ${workflowName}</subject>
+			<body>Received data file is larger than 7 MB total.</body>
+		</email>
+		<ok to="sub-wf-checkInputFile"/>
+		<error to="sub-wf-checkInputFile"/>
+	</action>
+	
+	<!--
+		Spark Check sub-workflow
+    -->
+	
+	<action name="sub-wf-checkInputFile" cred="hive-creds,hs2-creds">
+		<sub-workflow>
+			<app-path>${sworkflowAppUri}/${sworkflow}
+			</app-path>
+			<propagate-configuration />
+		</sub-workflow>
+		<ok to="dateAndNumberOfLines"/>
+		<error to="fail"/>
+	</action>
+	
+	<!--
+        When: Check done
+        What: Get data and number of lines
+    -->
+	<action name="dateAndNumberOfLines" cred="hs2-creds">
+		<shell
+				xmlns="uri:oozie:shell-action:0.2">
+			<job-tracker>${jobTracker}</job-tracker>
+			<name-node>${nameNode}</name-node>
+			<configuration>
+				<property>
+					<name>mapred.job.queue.name</name>
+					<value>${queueName}</value>
+				</property>
+			</configuration>
+			<exec>${dateAndNumberOfLinesScriptName}</exec>
+			<!-- Header line (-1 if file doesn't contain date) -->
+			<argument>${header_contains_date}</argument>
+			<!-- Position of date -->
+			<argument>${date_position}</argument>
+			<!-- Number of header lines to skip -->
+			<argument>${num_header}</argument>
+			<!-- Number of footer lines to skip -->
+			<argument>${num_footer}</argument>
+			<!-- File path/pattern -->
+			<argument>${workflowsDataUri}/${workflowName}/${workflowName}_20*.txt</argument>
+			<!-- Separator -->
+			<argument>${sep}</argument>
+			<env-var>HADOOP_USER_NAME=${wf:user()}</env-var>
+			<file>${dateAndNumberOfLinesScriptPath}#${dateAndNumberOfLinesScriptName}</file>
+			<capture-output/>
+		</shell>
+		<ok to="copyData"/>
+		<error to="fail"/>
+	</action>
+	
+	<!--
+        When: Technical date & number of lines extracted
+        What: Insert data from External to ORC
+    -->
+	
+<action name = "copyData" cred="hs2-creds">
+		<hive2 xmlns = "uri:oozie:hive2-action:0.1">
+			<prepare>
+				<delete path="${inputDir}"/>
+			</prepare>
+			<configuration>
+				<property>
+					<name>mapred.job.queue.name</name>
+					<value>${queueName}</value>
+				</property>
+			</configuration>
+			<jdbc-url>${jdbcURL}</jdbc-url>
+			<script>${workflowAppUri}/scripts/copydata.hql</script>
+			<param>env=${env}</param>
+			<param>queueName=${queueName}</param>
+		</hive2>
+		<ok to = "createJudgeFile" />
+		<error to = "fail" />
+	</action>
+	
+	<!--
+        When: Live data updated
+        What: Creates a judge file
+    -->
+
+	<action name="createJudgeFile">
+		<fs>
+			<touchz path='${outputDir}/${workflowName}_SUCCEEDED.txt'/>
+		</fs>
+		<ok to="success"/>
+		<error to="fail"/>
+	</action>
+	<!--
+        When: The judge file was created
+        What: Inserts a Success trace
+    -->
+	<action name="success" cred="hs2-creds">
+		<hive2 xmlns = "uri:oozie:hive2-action:0.1">
+			<configuration>
+				<property>
+					<name>mapred.job.queue.name</name>
+					<value>${queueName}</value>
+				</property>
+			</configuration>
+			<jdbc-url>${jdbcURL}</jdbc-url>
+			<script>${workflowAppUri}/scripts/insert_trace.hql</script>
+			<param>env=${env}</param>
+			<param>queueName=${queueName}</param>
+			<param>workflowName=${workflowName}</param>
+			<param>id=${wf:id()}</param>
+			<param>result=true</param>
+			<param>dateTech=${wf:actionData('dateAndNumberOfLines')['date']}</param>
+			<param>numberOfLines=${wf:actionData('dateAndNumberOfLines')['numberOfLines']}</param>
+			<param>failedNode=</param>
+			<param>modifiedDate=${wf:actionData('dateAndNumberOfLines')['modifiedDate']}</param>
+		</hive2>
+		<ok to="insertSucessTraceHDFS"/>
+		<error to="notifyFail"/>
+	</action>
+	<!--
+        When: Hive success trace created
+        What: Insert HDFS success trace
+    -->
+	<action name="insertSucessTraceHDFS" cred="hs2-creds">
+		<shell xmlns="uri:oozie:shell-action:0.2">
+			<job-tracker>${jobTracker}</job-tracker>
+			<name-node>${nameNode}</name-node>
+			<configuration>
+				<property>
+					<name>mapred.job.queue.name</name>
+					<value>${queueName}</value>
+				</property>
+			</configuration>
+			<exec>${insertTraceHDFSScriptName}</exec>
+			<!-- Workflow Name -->
+			<argument>${workflowName}</argument>
+			<!-- Workflow Id -->
+			<argument>${wf:id()}</argument>
+			<!-- Result -->
+			<argument>true</argument>
+			<!-- Tech Date -->
+			<argument>${wf:actionData('dateAndNumberOfLines')['date']}</argument>
+			<!-- Number of lines -->
+			<argument>${wf:actionData('dateAndNumberOfLines')['numberOfLines']}</argument>
+			<!-- Failed node -->
+			<argument>-</argument>
+			<!-- Modified Date -->
+			<argument>${wf:actionData('dateAndNumberOfLines')['modifiedDate']}</argument>
+			<env-var>HADOOP_USER_NAME=${wf:user()}</env-var>
+			<file>${insertTraceHDFSScriptPath}#${insertTraceHDFSScriptName}</file>
+			<capture-output/>
+		</shell>
+		<ok to="notifySuccess"/>
+		<error to="end"/>
+	</action>
+	<!--
+        When: Any previous action fails
+        What: Inserts a Fail trace
+    -->
+	<action name="notifySuccess">
+		<email
+				xmlns="uri:oozie:email-action:0.2">
+			<to>y.gahi@attijariwafa.com,a.berkaoui@attijariwafa.com,r.zyane@attijariwafa.com</to>
+			<subject>WORKFLOW ${workflowName} SUCCEEDED</subject>
+			<body>The workflow with Id=${wf:id()} and : ${wf:actionData('dateAndNumberOfLines')['numberOfLines']} number of lines succeeded</body>
+		</email>
+		<ok to="end"/>
+		<error to="notifyFail"/>
+	</action>
+
+	<!--
+        When: Any previous action fails
+        What: Inserts a Fail trace
+    -->
+	<action name="fail" cred="hs2-creds">
+		<hive2 xmlns = "uri:oozie:hive2-action:0.1">
+			<configuration>
+				<property>
+					<name>mapred.job.queue.name</name>
+					<value>${queueName}</value>
+				</property>
+			</configuration>
+			<jdbc-url>${jdbcURL}</jdbc-url>
+			<script>${workflowAppUri}/scripts/insert_trace.hql</script>
+			<param>env=${env}</param>
+			<param>queueName=${queueName}</param>
+			<param>workflowName=${workflowName}</param>
+			<param>id=${wf:id()}</param>
+			<param>result=false</param>
+			<param>dateTech=NULL</param>
+			<param>numberOfLines=-1</param>
+			<param>failedNode=${wf:lastErrorNode()}</param>
+			<param>modifiedDate=${wf:actionData('dateAndNumberOfLines')['modifiedDate']}</param>
+		</hive2>
+		<ok to="insertFailTraceHDFS"/>
+		<error to="notifyFail"/>
+	</action>
+	<!--
+        When: Hive fail trace created
+        What: Insert HDFS fail trace
+    -->
+	<action name="insertFailTraceHDFS" cred="hs2-creds">
+		<shell xmlns="uri:oozie:shell-action:0.2">
+			<job-tracker>${jobTracker}</job-tracker>
+			<name-node>${nameNode}</name-node>
+			<configuration>
+				<property>
+					<name>mapred.job.queue.name</name>
+					<value>${queueName}</value>
+				</property>
+			</configuration>
+			<exec>${insertTraceHDFSScriptName}</exec>
+			<!-- Workflow Name -->
+			<argument>${workflowName}</argument>
+			<!-- Workflow Id -->
+			<argument>${wf:id()}</argument>
+			<!-- Result -->
+			<argument>false</argument>
+			<!-- Tech Date -->
+			<argument>-</argument>
+			<!-- Number of lines -->
+			<argument>${wf:actionData('dateAndNumberOfLines')['numberOfLines']}</argument>
+			<!-- Failed node -->
+			<argument>${wf:lastErrorNode()}</argument>
+			<!-- Modified Date -->
+			<argument>${wf:actionData('dateAndNumberOfLines')['modifiedDate']}</argument>
+			<env-var>HADOOP_USER_NAME=${wf:user()}</env-var>
+			<file>${insertTraceHDFSScriptPath}#${insertTraceHDFSScriptName}</file>
+			<capture-output/>
+		</shell>
+		<ok to="end"/>
+		<error to="notifyFail"/>
+	</action>
+	<!--
+        When: After a fail trace has been inserted
+        What: Sends an email to notify someone about the failure
+    -->
+	<action name="notifyFail">
+		<email
+				xmlns="uri:oozie:email-action:0.2">
+			<to>y.gahi@attijariwafa.com,a.berkaoui@attijariwafa.com,r.zyane@attijariwafa.com</to>
+			<subject>WORKFLOW ${workflowName} FAILED</subject>
+			<body>The workflow with Id=${wf:id()} failed. Latest error message: ${wf:errorMessage(wf:lastErrorNode())}
+			</body>
+		</email>
+		<ok to="killJob"/>
+		<error to="killJob"/>
+	</action>
+	<!--
+        When: notifyFail fails or succeeds
+        What: Kills the job with the latest error message
+    -->
+	<kill name="killJob">
+		<message>Copy action failed, error message: [${wf:errorMessage(wf:lastErrorNode())}]</message>
+	</kill>
+	<!--
+        When: After a success trace has been inserted
+        What: Ends the job
+    -->
+	<end name="end"/>
+</workflow-app>

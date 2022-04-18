@@ -1,0 +1,14 @@
+[Unit]
+Description=Airflow webserver daemon
+[Service]
+EnvironmentFile=/etc/sysconfig/airflow.env
+User=root
+Group=root
+Type=simple
+ExecStart=/bin/bash -c 'airflow webserver -p {{ airflow.webserver.port }}'
+Restart=on-failure
+RestartSec=5s
+PrivateTmp=true
+
+[Install]
+WantedBy=multi-user.target

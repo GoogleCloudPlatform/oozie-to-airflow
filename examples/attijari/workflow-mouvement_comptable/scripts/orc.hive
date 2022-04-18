@@ -1,0 +1,39 @@
+use awb_${hivevar:env};
+
+DROP TABLE orc_mouvement_comptable;
+CREATE TABLE orc_mouvement_comptable (
+  numero_compte STRING,
+  letr_cle STRING,
+  bilan STRING,
+  libelle STRING,
+  lib_etendu STRING,
+  service STRING,
+  dt_val DATE,
+  dt_ope DATE,
+  montant_signe DECIMAL(13,2),
+  signe STRING,
+  extourne STRING,
+  seq STRING,
+  cpt_anal STRING,
+  dt_tresor DATE,
+  dt_compta DATE,
+  type_compta STRING,
+  libelle2 STRING,
+  libelle3 STRING,
+  dmd_avis STRING,
+  filiere STRING,
+  num_oper STRING,
+  ref_lettrage STRING,
+  cd_oper STRING,
+  nosrefr STRING,
+  vosrefr STRING,
+  cd_user STRING,
+  cd_visa STRING,
+  nom_appl STRING,
+  num_lot STRING,
+  filler STRING,
+  `time` TIMESTAMP
+
+)
+STORED AS ORC
+TBLPROPERTIES ("transactional"="false");

@@ -1,0 +1,54 @@
+---
+# tasks file for required_dependencies_installation
+- name: Install development tools
+  yum:
+    state: present
+    name:
+      - zlib-devel
+      - bzip2-devel
+      - openssl-devel
+      - ncurses-devel
+      - sqlite-devel
+      - postgresql-devel
+      - python-devel
+      - python3-devel
+      - wget
+      - cyrus-sasl-devel.x86_64
+      - unzip
+      - gcc
+
+- name: Check if python3 is installed
+  shell: "python3 --version"
+  register: python3_check
+  ignore_errors: yes
+
+- name: if python3 is not installed, install it
+  yum:
+    state: present
+    name: python3
+  when: python3_check.rc == 1
+
+- name: Install pip3
+  yum:
+    state: present
+    name: python3-pip
+
+- name: Upgrade pip3
+  shell: "python3 -m pip install --upgrade pip"
+
+- name: Install setuptools and wheel
+  shell: "pip install setuptools wheel"
+
+- name: Install psycopg2
+  vars:
+    ansible_python_interpreter: "/usr/bin/python3"
+  pip:
+    name: psycopg2
+    state: latest
+
+
+
+
+
+
+

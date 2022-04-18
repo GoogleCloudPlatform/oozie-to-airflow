@@ -1,0 +1,85 @@
+<!--******************************************-->
+<!--workflow.xml                              -->
+<!--******************************************-->
+
+<workflow-app xmlns = "uri:oozie:workflow:0.4" name = "workflow-${workflowName}">
+	<global>
+		<job-tracker>${jobTracker}</job-tracker>
+		<name-node>${nameNode}</name-node>
+		<configuration>
+			<property>
+				<name>mapred.job.queue.name</name>
+				<value>${queueName}</value>
+			</property>
+		</configuration>
+	</global>
+	<credentials>
+		<credential name="hive-creds" type="hcat">
+			<property>
+				<name>hcat.metastore.principal</name>
+				<value>${jdbcPrincipal}</value>
+			</property>
+			<property>
+				<name>hcat.metastore.uri</name>
+				<value>${metastore}</value>
+			</property>
+		</credential>
+		<credential name="hs2-creds" type="hive2">
+			<property>
+				<name>hive2.server.principal</name>
+				<value>${jdbcPrincipal}</value>
+			</property>
+			<property>
+				<name>hive2.jdbc.url</name>
+				<value>${jdbcURL}</value>
+			</property>
+		</credential>
+	</credentials>
+	
+	<start to="purgeDaily"/>
+	
+	<action name="purgeDaily" cred="hs2-creds">
+		<shell xmlns="uri:oozie:shell-action:0.2">
+			<job-tracker>${jobTracker}</job-tracker>
+			<name-node>${nameNode}</name-node>
+			<configuration>
+				<property>
+					<name>mapred.job.queue.name</name>
+					<value>${queueName}</value>
+				</property>
+			</configuration>
+			<exec>${purgeDailyScriptName}</exec>
+			<argument>${TABLE}</argument>
+			<argument>${TABLE1}</argument>
+			<argument>${retention}</argument>
+			<env-var>HADOOP_USER_NAME=${wf:user()}</env-var>
+			<file>${purgeDailyScriptPath}#${purgeDailyScriptName}</file>
+			<capture-output/>
+		</shell>
+		<ok to="notifysuccess"/>
+		<error to="notifyFail"/>
+	</action>
+    <action name="notifysuccess">
+        <email xmlns="uri:oozie:email-action:0.1">
+            <to>r.zyane@attijariwafa.com,y.gahi@attijariwafa.com,a.berkaoui@attijariwafa.com</to>
+            <subject>WORKFLOW ${workflowName} SUCCEEDED </subject>
+            <body>The workflow with Id=${wf:id()} succeeded</body>
+        </email>
+        <ok to="end"/>
+        <error to="notifyFail"/>
+    </action>
+	<action name="notifyFail">
+		<email xmlns="uri:oozie:email-action:0.1">
+			<to>r.zyane@attijariwafa.com,y.gahi@attijariwafa.com,a.berkaoui@attijariwafa.com</to>
+			<subject>WORKFLOW ${workflowName} FAILED</subject>
+			<body>The workflow with Id=${wf:id()} failed. Latest error message: ${wf:errorMessage(wf:lastErrorNode())}</body>
+		</email>
+		<ok to="killJob"/>
+		<error to="killJob"/>
+	</action>
+
+	<kill name="killJob">
+		<message>Action failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
+	</kill>
+	<end name="end"/>
+</workflow-app>

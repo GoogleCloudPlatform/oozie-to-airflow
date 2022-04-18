@@ -1,0 +1,207 @@
+---
+# tasks file for airflow
+
+- name: Build Airflow configuration query
+  template:
+    src: create-airflow-db-psql.sql.j2
+    dest: /tmp/create-airflow-db-psql.sql
+    owner: root
+    group: root
+    mode: 0777
+
+- name: Config airflow database
+  shell: sudo -u postgres psql   -f /tmp/create-airflow-db-psql.sql
+
+- name: Create airflow user in rabbitmq
+  shell: rabbitmqctl add_user {{ rabbitmq.airflow_user }} {{ rabbitmq.airflow_password }}
+  register: add_user_rabbitmq
+  failed_when:
+    - (add_user_rabbitmq.rc != 0)
+    - ("user_already_exists" not in add_user_rabbitmq.stderr)
+
+- name: Grant all privileges to airflow user in rabbitmq
+  shell: rabbitmqctl set_permissions -p / {{ rabbitmq.airflow_user }} ".*" ".*" ".*"
+
+- name: Give admin rights to airflow user in rabbitmq
+  shell: rabbitmqctl set_user_tags {{ rabbitmq.airflow_user }} administrator
+
+- name: Create airflow queue  in rabbitmq
+  shell: |
+    wget http://127.0.0.1:15672/cli/rabbitmqadmin
+    chmod +x rabbitmqadmin
+    ./rabbitmqadmin declare queue name={{ airflow.airflow_queue }} durable=true
+  register: rabbitmqadmin_output
+- debug: var=rabbitmqadmin_output.stdout_lines
+- debug: var=airflow.airflow_queue
+
+- name: Install airflow
+  shell: |
+    AIRFLOW_VERSION="{{ airflow.airflow_version }}"
+    PYTHON_VERSION="$(python3 --version | cut -d " " -f 2 | cut -d "." -f 1-2)"
+
+    CONSTRAINT_URL="https://raw.githubusercontent.com/apache/airflow/constraints-${AIRFLOW_VERSION}/constraints-${PYTHON_VERSION}.txt"
+    python3 -m pip install "apache-airflow[async,postgres]==${AIRFLOW_VERSION}" --constraint "${CONSTRAINT_URL}"
+
+- name: Install airflow celery
+  shell: python3 -m pip install apache-airflow-providers-celery==2.1.0
+
+- name: Install airflow flower
+  shell: python3 -m pip install flower
+
+- name: Create airflow system user
+  shell: useradd -m -r -s /bin/bash airflow
+  register: create_user_airflow
+  failed_when:
+    - (create_user_airflow.rc != 0)
+    - ("already exists" not in create_user_airflow.stderr)
+
+
+- name: Set airflow user password
+  shell: echo "airflow:{{ airflow.airflow_sys_password }}" | chpasswd
+
+- name: Set configurable parameters
+  template:
+    src: airflow-config.sh.j2
+    dest: /etc/profile.d/airflow-config.sh
+    owner: airflow
+    group: airflow
+    mode: 0777
+
+- name: Source airflow config
+  shell: source /etc/profile.d/airflow-config.sh
+
+- name: Init airflow db
+  shell: airflow db init
+
+- name: Create airflow dags directory
+  ansible.builtin.file:
+    path: "{{ airflow.airflow_home }}/dags"
+    state: directory
+    owner: airflow
+    group: airflow
+
+- name: Create airflow plugins directory
+  ansible.builtin.file:
+    path: "{{ airflow.airflow_home }}/plugins"
+    state: directory
+    owner: airflow
+    group: airflow
+
+- name: Create airflow  logs directory
+  ansible.builtin.file:
+    path: "{{ airflow.airflow_home }}/logs"
+    state: directory
+    owner: airflow
+    group: airflow
+
+- name: Check airflow info
+  shell: airflow info
+  register: airflow_info
+- debug: var=airflow_info.stdout_lines
+
+- name: Give airflow user permissions to airflow home
+  shell: chown -R airflow:airflow {{ airflow.airflow_home }}
+
+- name: Create admin user
+  shell: |
+    airflow users  create \
+    --username {{ airflow.webserver.admin_username }} \
+    --password {{ airflow.webserver.admin_password }} \
+    --email {{ airflow.webserver.admin_email }}  \
+    --firstname {{ airflow.webserver.admin_firstname }} \
+    --lastname {{ airflow.webserver.admin_lastname }} \
+    --role Admin
+
+- name: Copy airflow configuration environment file
+  template:
+    src: airflow-config.env.j2
+    dest: /etc/sysconfig/airflow.env
+    owner: root
+    group: root
+    mode: 0777
+
+- name: Copy airflow webserver daemon to systemd
+  template:
+    src: airflow-webserver.service.j2
+    dest: /etc/systemd/system/airflow-webserver.service
+    owner: airflow
+    group: airflow
+
+- name: Copy airflow scheduler daemon to systemd
+  template:
+    src: airflow-scheduler.service.j2
+    dest: /etc/systemd/system/airflow-scheduler.service
+    owner: airflow
+    group: airflow
+
+- name: Copy airflow celery worker daemon to systemd
+  template:
+    src: airflow-celery-worker.service.j2
+    dest: /etc/systemd/system/airflow-celery-worker.service
+    owner: airflow
+    group: airflow
+
+
+- name: Copy airflow celery flower daemon to systemd
+  template:
+    src: airflow-celery-flower.service.j2
+    dest: /etc/systemd/system/airflow-celery-flower.service
+    owner: airflow
+    group: airflow
+
+- name: Reload systemd
+  shell: systemctl daemon-reload
+
+
+- name: Enable airflow webserver daemon
+  shell: systemctl enable airflow-webserver.service
+
+- name: Enable airflow scheduler daemon
+  shell: systemctl enable airflow-scheduler.service
+
+- name: Enable airflow celery worker daemon
+  shell: systemctl enable airflow-celery-worker.service
+
+- name: Enable airflow celery flower daemon
+  shell: systemctl enable airflow-celery-flower.service
+
+
+
+- name: Start airflow webserver daemon
+  shell: systemctl start airflow-webserver.service
+
+- name: Start airflow scheduler daemon
+  shell: systemctl start airflow-scheduler.service
+
+- name: Start airflow celery worker daemon
+  shell: systemctl start airflow-celery-worker.service
+
+- name: Start airflow flower daemon
+  shell: systemctl start airflow-celery-flower.service
+
+
+
+
+
+
+- name: Check airflow webserver daemon
+  shell: systemctl status airflow-webserver.service
+  register: webserver_status
+- debug: var=webserver_status.stdout_lines
+
+- name: Check airflow scheduler daemon
+  shell: systemctl status airflow-scheduler.service
+  register: scheduler_status
+- debug: var=scheduler_status.stdout_lines
+
+- name: Check airflow celery worker daemon
+  shell: systemctl status airflow-celery-worker.service
+  register: celery_worker_status
+- debug: var=celery_worker_status.stdout_lines
+
+- name: Check airflow celery flower daemon
+  shell: systemctl status airflow-celery-flower.service
+  register: celery_flower_status
+- debug: var=celery_flower_status.stdout_lines
+
+

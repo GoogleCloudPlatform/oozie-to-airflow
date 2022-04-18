@@ -1,0 +1,112 @@
+<workflow-app name="spark-vision360-wf" xmlns="uri:oozie:workflow:0.5">
+	<global>
+		<job-tracker>${jobTracker}</job-tracker>
+		<name-node>${nameNode}</name-node>
+		<configuration>
+			<property>
+				<name>oozie.launcher.mapred.job.queue.name</name>
+				<value>${queueName}</value>
+			</property>
+		</configuration>
+	</global>
+	<credentials>
+		<credential name="hive-creds" type="hcat">
+			<property>
+				<name>hcat.metastore.principal</name>
+				<value>${jdbcPrincipal}</value>
+			</property>
+			<property>
+				<name>hcat.metastore.uri</name>
+				<value>${metastore}</value>
+			</property>
+		</credential>
+  <credential name="hbase-cred" type="hbase">
+			<property>
+				<name>hbase.master.kerberos.principal</name>
+				<value>hbase/_HOST@DATALAKE.RCT</value>
+			</property>
+			<property>
+				<name>hbase.regionserver.kerberos.principal</name>
+				<value>hbase/_HOST@DATALAKE.RCT</value>
+			</property>
+			<property>
+				<name>hbase.security.authentication</name>
+				<value>kerberos</value>
+			</property>
+			<property>
+				<name>hbase.zookeeper.quorum</name>
+				<value>cdp-namenode-03-rct.attijariwafa.net,cdp-namenode-02-rct.attijariwafa.net,cdp-namenode-01-rct.attijariwafa.net</value>
+			</property>
+			<property>
+				<name>zookeeper.znode.parent</name>
+				<value>/hbase</value>
+			</property>
+		</credential>
+		<credential name="hs2-creds" type="hive2">
+			<property>
+				<name>hive2.server.principal</name>
+				<value>${jdbcPrincipal}</value>
+			</property>
+			<property>
+				<name>hive2.jdbc.url</name>
+				<value>${jdbcURL}</value>
+			</property>
+		</credential>
+	</credentials>
+	<start to="vision360-processing"/>
+	<action name="vision360-processing" cred="hive-creds,hbase-cred,hs2-creds">
+		<spark xmlns="uri:oozie:spark-action:0.1">
+			<job-tracker>${jobTracker}</job-tracker>
+			<name-node>${nameNode}</name-node>
+			<master>yarn</master>
+			<mode>client</mode>
+			<name>Spark Job For Vision360</name>
+			<class>${sparkJobClass}</class>
+			<jar>${sparkJobJarPath}</jar>
+			<spark-opts>${sparkOpts}</spark-opts>
+			<arg>${env}</arg>
+		</spark>
+		<ok to="take-snap"/>
+		<error to="killJob"/>
+	</action>
+	<action name="take-snap" cred="hive-creds,hbase-cred,hs2-creds">
+		<shell xmlns="uri:oozie:shell-action:0.2">
+			<job-tracker>${jobTracker}</job-tracker>
+			<name-node>${nameNode}</name-node>
+			<configuration>
+				<property>
+					<name>mapred.job.queue.name</name>
+					<value>${queueName}</value>
+				</property>
+			</configuration>
+			<exec>snap_hbase.sh</exec>
+			<argument>${hbaseSourceTable}</argument>
+			<argument>${hbaseDestinationTable}</argument>
+			<file>lib/scripts/snap_hbase.sh</file>
+			<capture-output/>
+		</shell>
+		<ok to="end"/>
+		<error to="killJob"/>
+	</action>
+
+	<action name="crm-processing" cred="hive-creds,hbase-cred,hs2-creds">
+		<spark xmlns="uri:oozie:spark-action:0.1">
+			<job-tracker>${jobTracker}</job-tracker>
+			<name-node>${nameNode}</name-node>
+			<master>yarn</master>
+			<mode>client</mode>
+			<name>Spark Job For Vision360</name>
+			<class>${sparkJobCRMClass}</class>
+			<jar>${sparkJobJarPath}</jar>
+			<spark-opts>${sparkOpts}</spark-opts>
+			<arg>${env}</arg>
+		</spark>
+		<ok to="end"/>
+		<error to="killJob"/>
+	</action>
+
+	<kill name="killJob">
+		<message>Action failed, error message[${wf:errorMessage(wf:lastErrorNode())}]</message>
+	</kill>
+	<end name="end"/>
+</workflow-app>

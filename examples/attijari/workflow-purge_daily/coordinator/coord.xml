@@ -1,0 +1,10 @@
+<coordinator-app name="coord_${env}_purge_daily"
+				 frequency="${frequency}"
+				 start="${start}" end="${end}" timezone="${timezone}"
+				 xmlns="uri:oozie:coordinator:0.2">
+	<action>
+		<workflow>
+			<app-path>${workflowAppUri}</app-path>
+		</workflow>
+	</action>
+</coordinator-app>

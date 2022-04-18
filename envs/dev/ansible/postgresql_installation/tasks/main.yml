@@ -1,0 +1,55 @@
+---
+# tasks file for postgres
+- name: Install postgresql packages
+  yum:
+    validate_certs: False
+    name:
+      - https://yum.postgresql.org/9.6/redhat/rhel-7.3-x86_64/postgresql96-libs-9.6.11-1PGDG.rhel7.x86_64.rpm
+      - https://yum.postgresql.org/9.6/redhat/rhel-7.3-x86_64/postgresql96-9.6.11-1PGDG.rhel7.x86_64.rpm
+      - https://yum.postgresql.org/9.6/redhat/rhel-7.3-x86_64/postgresql96-server-9.6.11-1PGDG.rhel7.x86_64.rpm
+      - https://yum.postgresql.org/9.6/redhat/rhel-7.3-x86_64/postgresql96-contrib-9.6.11-1PGDG.rhel7.x86_64.rpm
+      - https://yum.postgresql.org/9.6/redhat/rhel-7.3-x86_64/postgresql96-devel-9.6.11-1PGDG.rhel7.x86_64.rpm
+
+    state: present
+
+- name: Init postgres db
+  shell: |
+    rm -rf /var/lib/pgsql/9.6/data/pg_hba.conf
+    /usr/pgsql-9.6/bin/postgresql96-setup initdb
+
+- name: Trust local connections in pg_hba.conf
+  vars:
+    ansible_python_interpreter: /usr/bin/python3
+
+  community.postgresql.postgresql_pg_hba:
+    dest: /var/lib/pgsql/9.6/data/pg_hba.conf
+    state: present
+    contype: host
+    databases: all
+    users: all
+    address: 127.0.0.1/32
+    method: trust
+
+- name: Enable postgresql service
+  service:
+    enabled: yes
+    name: postgresql-9.6
+    state: started
+
+- name: Check if postgresql service is running
+  shell: |
+    systemctl status postgresql-9.6
+    if [ $? -eq 0 ]; then
+      echo "Postgresql service is running"
+    else
+      echo "Postgresql service is not running"
+    fi
+  register: service_status
+
+- debug: msg="{{ service_status.stdout_lines }}"
+
+
+
+
+
+

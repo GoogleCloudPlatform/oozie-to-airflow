@@ -1,0 +1,11 @@
+export AIRFLOW_HOME={{ airflow.airflow_home }}
+
+export AIRFLOW__CORE__SQL_ALCHEMY_CONN="postgresql+psycopg2://{{ postgresql.airflow_user }}:{{ postgresql.airflow_password }}@127.0.0.1/airflow"
+export AIRFLOW__CELERY__BROKER_URL="amqp://{{ rabbitmq.airflow_user }}:{{ rabbitmq.airflow_password }}@127.0.0.1:5672/"
+export AIRFLOW__CORE__EXECUTOR="CeleryExecutor"
+export AIRFLOW__CELERY__RESULT_BACKEND="db+postgresql://airflow_scheduler:{{ postgresql.airflow_password }}@127.0.0.1/airflow_celery_db"
+export AIRFLOW__OPERATORS__DEFAULT_QUEUE={{ airflow.airflow_queue }}
+export AIRFLOW__CORE__FERNET_KEY="{{ airflow.airflow_fernet_key }}"
+export AIRFLOW__CORE__LOAD_EXAMPLES={{ airflow.airflow_load_examples }}
+
+export PATH=\$PATH:/usr/local/bin:/bin:/usr/bin:/usr/local/sbin:/usr/sbin

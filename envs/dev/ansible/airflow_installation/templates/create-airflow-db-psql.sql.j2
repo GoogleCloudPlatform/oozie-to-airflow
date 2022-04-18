@@ -1,0 +1,8 @@
+DROP DATABASE IF EXISTS airflow;
+CREATE DATABASE airflow;
+DROP USER IF EXISTS {{ postgresql.airflow_user }};
+CREATE USER {{ postgresql.airflow_user }} WITH ENCRYPTED PASSWORD '{{ postgresql.airflow_password }}';
+GRANT ALL PRIVILEGES ON DATABASE airflow TO {{ postgresql.airflow_user }};
+CREATE DATABASE airflow_celery_db;
+CREATE USER airflow_scheduler WITH ENCRYPTED PASSWORD '{{ postgresql.airflow_password }}';
+GRANT ALL PRIVILEGES ON DATABASE airflow_celery_db TO airflow_scheduler;

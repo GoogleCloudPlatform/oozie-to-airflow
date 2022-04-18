@@ -1,0 +1,30 @@
+airflow:
+
+  airflow_version: 2.2.5
+  airflow_home: /home/airflow
+  airflow_sys_password: airflow
+  airflow_queue: airflow.queue
+  airflow_load_examples: True
+
+  airflow_fernet_key: "q9CkpS4WcYin3YATacDnzZ05bYB1OOdCGV5wnVLqVQM="
+
+  webserver:
+    admin_username: airflow
+    admin_firstname: airflow
+    admin_lastname: airflow
+    admin_email: admin
+    admin_password: airflow
+
+    port: 8080
+
+
+
+postgresql:
+  airflow_user: airflow_test
+  airflow_celery_user: airflow_scheduler
+  airflow_password: airflow
+
+
+rabbitmq:
+  airflow_user: airflow
+  airflow_password: airflow

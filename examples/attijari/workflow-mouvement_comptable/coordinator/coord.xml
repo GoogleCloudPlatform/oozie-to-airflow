@@ -1,0 +1,53 @@
+<coordinator-app name="coord_${env}_${workflowName}"
+				 frequency="${frequency}"
+				 start="${start}" end="${end}" timezone="${timezone}"
+				 xmlns="uri:oozie:coordinator:0.5" xmlns:sla="uri:oozie:sla:0.2">
+	<controls>
+		<timeout>${coord:hours(6)}</timeout>
+	</controls>
+	<datasets>
+		<dataset name="inputdataset" frequency="${coord:days(1)}"
+			 initial-instance="${start}" timezone="WET">
+			<uri-template>${dataPath}/${workflowName}.txt</uri-template>
+			<done-flag></done-flag>
+		</dataset>
+		<dataset name="outputdataset" frequency="${coord:days(1)}"
+				 initial-instance="${start}" timezone="${timezone}">
+			<uri-template>${dataPath}</uri-template>
+			<done-flag></done-flag>
+		</dataset>
+	</datasets>
+	<input-events>
+		<data-in name="inputevent" dataset="inputdataset">
+			<instance>${coord:current(0)}</instance>
+		</data-in>
+	</input-events>
+	<output-events>
+		<data-out name="outputevent" dataset="outputdataset">
+			<instance>${coord:current(0)}</instance>
+		</data-out>
+	</output-events>
+	<action>
+		<workflow>
+			<app-path>${workflowAppUri}</app-path>
+			<configuration>
+				<property>
+					<name>inputDir</name>
+					<value>${coord:dataIn('inputevent')}</value>
+				</property>
+				<property>
+					<name>outputDir</name>
+					<value>${coord:dataOut('outputevent')}</value>
+				</property>
+			</configuration>
+		</workflow>
+		<sla:info>
+			<sla:nominal-time>${coord:nominalTime()}</sla:nominal-time>
+			<sla:should-start>${360 * MINUTES}</sla:should-start>
+			<sla:should-end>${365 * MINUTES}</sla:should-end>
+			<sla:max-duration>${5 * MINUTES}</sla:max-duration>
+			<sla:alert-events>start_miss,end_miss,duration_miss</sla:alert-events>
+			<sla:alert-contact>r.zyane@attijariwafa.com</sla:alert-contact>
+		</sla:info>
+	</action>
+</coordinator-app>

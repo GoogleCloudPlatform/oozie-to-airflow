@@ -1,0 +1,43 @@
+---
+# tasks file for rabbitmq
+- name: Install epel-release
+  yum: name=epel-release state=present
+
+- name: Install rabbitmq-server
+  yum: name=rabbitmq-server state=present
+
+- name: Create rabbitmq environment file
+  copy:
+    src: rabbitmq-env.conf
+    dest: /etc/rabbitmq/rabbitmq-env.conf
+
+- name: Update rabbitmq environment variables
+  shell: export RABBITMQ_CONF_ENV_FILE=/etc/rabbitmq/rabbitmq-env.conf
+
+- name: Start rabbitmq
+  shell: chkconfig rabbitmq-server on
+
+- name: Enable rabbitmq web management plugin
+  shell: rabbitmq-plugins enable rabbitmq_management
+
+- name: Start rabbitmq service
+  service:
+    name: rabbitmq-server
+    state: started
+
+- name: Check rabbitmq status
+  shell: rabbitmqctl status
+  register: rabbitmq_status
+- debug: var=rabbitmq_status.stdout_lines
+
+- name: Check rabbitmq service status
+  shell: |
+      systemctl status rabbitmq-server
+      if [ $? -eq 0 ]; then
+        echo "Rabbitmq  service is running"
+      else
+        echo "Rabbitmq service is not running"
+      fi
+  register: rabbitmq_service_status
+- debug: var=rabbitmq_service_status.stdout_lines
+
