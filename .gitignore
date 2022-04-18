@@ -20,3 +20,6 @@ output-artifacts/
 
 
 .vagrant/
+
+*.box
+examples/attijari/
