@@ -1,0 +1,3 @@
+collections:
+ - community.postgresql.postgresql_pg_hba
+
