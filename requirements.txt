@@ -7,17 +7,20 @@ isort==5.7.0
 j2cli==0.3.10
 Jinja2==2.11.2 # pyup: ignore
 lark-parser==0.11.1
+markupsafe==2.0.1
 mypy==0.790
 parameterized==0.7.5
 paramiko==2.7.2
 pre-commit==2.10.1
 pydeps==1.9.13
+pyjwt>=2.4.0
 pylint==2.6.0
 pytest==6.2.1
 pytest-cov==2.11.1
+requests<2.24.0
 safety==1.10.3
 sshtunnel==0.4.0
 twine==3.3.0
-tzlocal==2.1 # pyup: ignore
-Werkzeug==1.0.1 # pyup: ignore
+tzlocal<2.0 # pyup: ignore
+Werkzeug<1.0 # pyup: ignore
 yamllint==1.25.0

@@ -77,6 +77,10 @@ class BaseRenderer(ABC):
         :return: None
         """
 
+    @staticmethod
+    def _friendly_dag_name(dag_name: str) -> str:
+        return dag_name.replace(".", "_").replace("-", "_")
+
 
 class PythonRenderer(BaseRenderer):
     """
@@ -85,7 +89,8 @@ class PythonRenderer(BaseRenderer):
 
     def create_workflow_file(self, workflow: Workflow, props: PropertySet):
         self._create_file(
-            output_file_name=os.path.join(self.output_directory_path, workflow.dag_name) + ".py",
+            output_file_name=os.path.join(self.output_directory_path, self._friendly_dag_name(workflow.dag_name))
+            + ".py",
             template_name="workflow.tpl",
             workflow=workflow,
             props=props,
@@ -93,7 +98,7 @@ class PythonRenderer(BaseRenderer):
 
     def create_subworkflow_file(self, workflow: Workflow, props: PropertySet):
         self._create_file(
-            output_file_name=os.path.join(self.output_directory_path, f"subdag_{workflow.dag_name}.py"),
+            output_file_name=os.path.join(self.output_directory_path, f"subdag_{self._friendly_dag_name(workflow.dag_name)}.py"),
             template_name="subworkflow.tpl",
             workflow=workflow,
             props=props,
@@ -117,8 +122,7 @@ class PythonRenderer(BaseRenderer):
             key: comma_separated_string_to_list(value) for key, value in props.job_properties.items()
         }
         task_map = {
-            task_group.name: [task.task_id for task in task_group.tasks]
-            for task_group in workflow.task_groups.values()
+            task_group.name: [task.task_id for task in task_group.tasks] for task_group in workflow.task_groups.values()
         }
 
         content = render_template(
@@ -173,15 +177,11 @@ class DotRenderer(BaseRenderer):
 
     def create_workflow_file(self, workflow: Workflow, props: PropertySet):
         output_file_name = os.path.join(self.output_directory_path, workflow.dag_name) + ".dot"
-        self._create_file(
-            output_file_name=output_file_name, template_name="workflow_dot.tpl", workflow=workflow
-        )
+        self._create_file(output_file_name=output_file_name, template_name="workflow_dot.tpl", workflow=workflow)
 
     def create_subworkflow_file(self, workflow: Workflow, props: PropertySet):
         output_file_name = os.path.join(self.output_directory_path, f"subdag_{workflow.dag_name}.dot")
-        self._create_file(
-            output_file_name=output_file_name, template_name="workflow_dot.tpl", workflow=workflow
-        )
+        self._create_file(output_file_name=output_file_name, template_name="workflow_dot.tpl", workflow=workflow)
 
     def _create_file(self, output_file_name, template_name: str, workflow: Workflow):
         with open(output_file_name, "w") as file:

@@ -65,7 +65,7 @@ def main():
     dag_name = args.dag_name
 
     if not dag_name:
-        dag_name = os.path.basename(input_directory_path)
+        dag_name = os.path.basename(input_directory_path).replace("-", "_").replace(".", "_")
 
     conf_path = os.path.join(input_directory_path, CONFIG)
     if not os.path.isfile(conf_path):

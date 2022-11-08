@@ -74,6 +74,7 @@ class SubworkflowMapper(ActionMapper):
     def _parse_oozie_node(self):
         app_path = xml_utils.get_tag_el_text(self.oozie_node, TAG_APP)
         _, _, self.app_name = app_path.rpartition("/")
+        self.import_app_name = self.app_name.replace("-", "_").replace(".", "_")
         # TODO: hacky: we should calculate it deriving from input_directory_path and comparing app-path
         # TODO: but for now we assume app is in "examples"
         app_path = os.path.join(EXAMPLES_PATH, self.app_name)
@@ -110,5 +111,5 @@ class SubworkflowMapper(ActionMapper):
             "from airflow.utils import dates",
             "from airflow.contrib.operators import dataproc_operator",
             "from airflow.operators.subdag_operator import SubDagOperator",
-            f"import subdag_{self.app_name}",
+            f"import subdag_{self.import_app_name}",
         }
