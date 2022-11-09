@@ -58,6 +58,8 @@ class SparkMapper(ActionMapper):
         self.spark_opts: Dict[str, str] = {}
         self.prepare_extension: PrepareMapperExtension = PrepareMapperExtension(self)
 
+        self._added_spark_opts: Set[str] = set()
+
     def on_parse_node(self):
         super().on_parse_node()
         _, self.hdfs_files = self.file_extractor.parse_node()
@@ -76,10 +78,10 @@ class SparkMapper(ActionMapper):
 
         self.application_args = xml_utils.get_tags_el_array_from_text(self.oozie_node, tag=SPARK_TAG_ARG)
 
-    @staticmethod
-    def _parse_spark_opts(spark_opts_node: ET.Element):
+    def _parse_spark_opts(self, spark_opts_node: ET.Element):
         """
         Some examples of the spark-opts element:
+        --driver-memory 5g
         --conf key1=value
         --conf key2="value1 value2"
         """
@@ -104,26 +106,17 @@ class SparkMapper(ActionMapper):
                 if len(value) > 2 and value[0] in ["'", '"'] and value:
                     value = value[1:-1]
                 conf[key] = value
-            # TODO: parse also other options (like --executor-memory 20G --num-executors 50 and many more)
-            #  see: https://oozie.apache.org/docs/5.1.0/DG_SparkActionExtension.html#PySpark_with_Spark_Action
+            else:
+                #  see: https://oozie.apache.org/docs/5.1.0/DG_SparkActionExtension.html#PySpark_with_Spark_Action
+                key = spark_opt[0].replace("-", "_")
+                value = spark_opt[1] if not str(spark_opt[1]).isdigit() else int(spark_opt[1])
+                self.__setattr__(key, value)
+                self._added_spark_opts.add(key)
 
         return conf
 
     def to_tasks_and_relations(self):
-        action_task = Task(
-            task_id=self.name,
-            template_name="spark.tpl",
-            template_params=dict(
-                main_jar=self.java_jar,
-                main_class=self.java_class,
-                arguments=self.application_args,
-                hdfs_archives=self.hdfs_archives,
-                hdfs_files=self.hdfs_files,
-                job_name=self.job_name,
-                dataproc_spark_jars=self.dataproc_jars,
-                spark_opts=self.spark_opts,
-            ),
-        )
+        action_task = Task(task_id=self.name, template_name="spark.tpl", template_params=self._get_template_params())
         tasks = [action_task]
         relations: List[Relation] = []
         prepare_task = self.prepare_extension.get_prepare_task()
@@ -131,10 +124,25 @@ class SparkMapper(ActionMapper):
             tasks, relations = self.prepend_task(prepare_task, tasks, relations)
         return tasks, relations
 
+    def _get_template_params(self):
+        template_dict = dict(
+            main_jar=self.java_jar,
+            main_class=self.java_class,
+            arguments=self.application_args,
+            archives=self.hdfs_archives,
+            files=self.hdfs_files,
+            name=self.job_name,
+            jars=self.dataproc_jars,
+            conf=self.spark_opts,
+        )
+        for attr in self._added_spark_opts:
+            template_dict.update({attr: getattr(self, attr, None)})
+        return template_dict
+
     def required_imports(self) -> Set[str]:
         # Bash are for the potential prepare statement
         return {
-            "from airflow.contrib.operators import dataproc_operator",
+            "from airflow.contrib.operators import spark_submit_operator",
             "from airflow.operators import bash_operator",
             "from airflow.operators import dummy_operator",
         }

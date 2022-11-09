@@ -47,7 +47,7 @@ EXAMPLE_XML_WITH_PREPARE = """
     <mode>client</mode>
     <class>org.apache.spark.examples.mllib.JavaALS</class>
     <jar>/lib/spark-examples_2.10-1.1.0.jar</jar>
-    <spark-opts>--executor-memory 20G --num-executors 50
+    <spark-opts>--driver-memory 10g --executor-memory 20G --executor-cores 4 --num-executors 50
  --conf spark.executor.extraJavaOptions="-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"</spark-opts>
     <arg>inputpath=hdfs:///input/file.txt</arg>
     <arg>value=2</arg>
@@ -70,7 +70,7 @@ EXAMPLE_XML_WITHOUT_PREPARE = """
     <class>org.apache.spark.examples.mllib.JavaALS</class>
     <jar>/user/${userName}/${examplesRoot}/apps/spark/lib/oozie-examples-4.3.0.jar</jar>
     <spark-opts>
-    --executor-memory 20G --num-executors 50
+    --driver-memory 10g --executor-memory 20G --executor-cores 4 --num-executors 50
     --conf spark.executor.extraJavaOptions="-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp"
     </spark-opts>
     <arg>inputpath=hdfs:///input/file.txt</arg>
@@ -109,14 +109,18 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
                         "main_jar": None,
                         "main_class": "org.apache.spark.examples.mllib.JavaALS",
                         "arguments": ["inputpath=hdfs:///input/file.txt", "value=2"],
-                        "hdfs_archives": [],
-                        "hdfs_files": [],
-                        "job_name": "Spark Examples",
-                        "spark_opts": {
+                        "archives": [],
+                        "files": [],
+                        "name": "Spark Examples",
+                        "executor_cores": 4,
+                        "executor_memory": "20G",
+                        "driver_memory": "10g",
+                        "num_executors": 50,
+                        "conf": {
                             "spark.executor.extraJavaOptions": "-XX:+HeapDumpOnOutOfMemoryError "
                             "-XX:HeapDumpPath=/tmp"
                         },
-                        "dataproc_spark_jars": ["/lib/spark-examples_2.10-1.1.0.jar"],
+                        "jars": ["/lib/spark-examples_2.10-1.1.0.jar"],
                     },
                 ),
             ],
@@ -146,13 +150,15 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
                             "value=2",
                             "/user/{{userName}}/{{examplesRoot}}/apps/spark/lib/oozie-examples-4.3.0.jar",
                         ],
-                        "hdfs_archives": [],
-                        "hdfs_files": [],
-                        "job_name": "Spark Examples",
-                        "dataproc_spark_jars": [
-                            "/user/{{userName}}/{{examplesRoot}}/apps/spark/lib/oozie-examples-4.3.0.jar"
-                        ],
-                        "spark_opts": {
+                        "archives": [],
+                        "files": [],
+                        "name": "Spark Examples",
+                        "jars": ["/user/{{userName}}/{{examplesRoot}}/apps/spark/lib/oozie-examples-4.3.0.jar"],
+                        "executor_cores": 4,
+                        "executor_memory": "20G",
+                        "driver_memory": "10g",
+                        "num_executors": 50,
+                        "conf": {
                             "spark.executor.extraJavaOptions": "-XX:+HeapDumpOnOutOfMemoryError "
                             "-XX:HeapDumpPath=/tmp"
                         },
