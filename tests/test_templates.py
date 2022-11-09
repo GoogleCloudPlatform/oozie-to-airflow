@@ -483,7 +483,7 @@ class ShellTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
 
 
 class GCPSparkTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
-    TEMPLATE_NAME = "gcp-spark.tpl"
+    TEMPLATE_NAME = "gcp_spark.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = {
         "task_id": "AA",
