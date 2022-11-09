@@ -482,8 +482,8 @@ class ShellTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
         self.assertValidPython(res)
 
 
-class SparkTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
-    TEMPLATE_NAME = "spark.tpl"
+class GCPSparkTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
+    TEMPLATE_NAME = "gcp-spark.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = {
         "task_id": "AA",
@@ -505,6 +505,65 @@ class SparkTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
     def test_green_path(self):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
         self.assertValidPython(res)
+
+    @parameterized.expand(
+        [
+            ({"archives": None},),
+            ({"dataproc_spark_jars": None},),
+            ({"dataproc_spark_properties": None},),
+            ({"files": None},),
+            ({"main_class": None},),
+            ({"main_jar": None},),
+        ]
+    )
+    def test_optional_parameters(self, mutation):
+        template_params = mutate(self.DEFAULT_TEMPLATE_PARAMS, mutation)
+        res = render_template(self.TEMPLATE_NAME, **template_params)
+        self.assertValidPython(res)
+
+    @parameterized.expand(
+        [
+            ({"task_id": 'AA"AA"\''},),
+            ({"trigger_rule": 'AA"AA"\''},),
+            ({"name": 'A"'},),
+            ({"command": 'A"'},),
+            ({"user": 'A"'},),
+            ({"host": 'A"'},),
+        ]
+    )
+    def test_escape_character(self, mutation):
+        template_params = mutate(self.DEFAULT_TEMPLATE_PARAMS, mutation)
+        res = render_template(self.TEMPLATE_NAME, **template_params)
+        self.assertValidPython(res)
+
+class SparkTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
+    TEMPLATE_NAME = "spark.tpl"
+
+    DEFAULT_TEMPLATE_PARAMS = {
+        "task_id": "AA",
+        "archives": [],
+        "arguments": ["inputpath=hdfs:///input/file.txt", "value=2"],
+        "jars": ["/lib/spark-examples_2.10-1.1.0.jar"],
+        "conf": {
+            "mapred.compress.map.output": "true",
+            "spark.executor.extraJavaOptions": "-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp",
+        },
+        "files": [],
+        "name": "Spark Examples",
+        "main_class": "org.apache.spark.examples.mllib.JavaALS",
+        "main_jar": None,
+        "trigger_rule": "dummy",
+        "action_node_properties": {"key": "value"},
+        "executor_cores": None,
+        "num_executors": None,
+        "executor_memory": None,
+        "driver_memory": None,
+    }
+
+    def test_green_path(self):
+        res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
+        self.assertValidPython(res)
+        self.test_all_template_parameters_must_be_correlated_with_output()
 
     @parameterized.expand(
         [
