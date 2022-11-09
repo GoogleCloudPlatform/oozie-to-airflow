@@ -454,8 +454,8 @@ class PrepareTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
         self.assertValidPython(res)
 
 
-class ShellTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
-    TEMPLATE_NAME = "shell.tpl"
+class GCPShellTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
+    TEMPLATE_NAME = "gcp_shell.tpl"
 
     DEFAULT_TEMPLATE_PARAMS = {
         "task_id": "DAG_NAME_A",
@@ -474,6 +474,34 @@ class ShellTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
             ({"trigger_rule": 'AA"AA"\''},),
             ({"pig_command": 'A"'},),
             ({"pig_command": 'PIG_CMD"'},),
+        ]
+    )
+    def test_escape_character(self, mutation):
+        template_params = mutate(self.DEFAULT_TEMPLATE_PARAMS, mutation)
+        res = render_template(self.TEMPLATE_NAME, **template_params)
+        self.assertValidPython(res)
+
+
+class ShellTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
+    TEMPLATE_NAME = "shell.tpl"
+
+    DEFAULT_TEMPLATE_PARAMS = {
+        "task_id": "DAG_NAME_A",
+        "bash_command": "PIG_CMD",
+        "trigger_rule": "dummy",
+        "action_node_properties": {"key": "value"},
+    }
+
+    def test_green_path(self):
+        res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
+        self.assertValidPython(res)
+
+    @parameterized.expand(
+        [
+            ({"task_id": 'AA"AA"\''},),
+            ({"trigger_rule": 'AA"AA"\''},),
+            ({"bash_command": 'A"'},),
+            ({"bash_command": 'PIG_CMD"'},),
         ]
     )
     def test_escape_character(self, mutation):

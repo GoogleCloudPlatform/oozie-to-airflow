@@ -110,7 +110,7 @@ class TestShellMapper(unittest.TestCase):
                     template_name="shell.tpl",
                     trigger_rule="one_success",
                     template_params={
-                        "pig_command": "sh echo arg1 arg2",
+                        "bash_command": "echo arg1 arg2",
                         "action_node_properties": {
                             "mapred.job.queue.name": "{{queueName}}",
                             "mapred.map.output.compress": "false",

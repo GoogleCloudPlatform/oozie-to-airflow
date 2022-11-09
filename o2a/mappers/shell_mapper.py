@@ -51,14 +51,13 @@ class ShellMapper(ActionMapper):
         cmd = " ".join([cmd_txt] + [x for x in args])
 
         self.bash_command = el_parser.translate(cmd, quote=False)
-        self.pig_command = f"sh {self.bash_command}"
 
     def to_tasks_and_relations(self):
         action_task = Task(
             task_id=self.name,
             template_name="shell.tpl",
             template_params=dict(
-                pig_command=self.pig_command, action_node_properties=self.props.action_node_properties
+                bash_command=self.bash_command, action_node_properties=self.props.action_node_properties
             ),
         )
         tasks = [action_task]
@@ -69,4 +68,4 @@ class ShellMapper(ActionMapper):
         return tasks, relations
 
     def required_imports(self) -> Set[str]:
-        return {"from airflow.utils import dates", "from airflow.contrib.operators import dataproc_operator"}
+        return {"from airflow.utils import dates", "from airflow.contrib.operators import spark_submit_operator"}
