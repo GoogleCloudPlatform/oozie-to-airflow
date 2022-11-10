@@ -27,101 +27,101 @@ GIT_SH_FILE = path.abspath(
 )
 
 
-# class GitTestCase(ShellScriptTestCase):
-#     def test_success_execution(self):
-#         with mock_app("gcloud"):
-#             print(f"{GIT_SH_FILE=}")
-#             return_code = self.run_bash_command(
-#                 f"{GIT_SH_FILE} --git-uri GIT_URI --destination-path DEST_URI --region REGION "
-#                 "--cluster CLUSTER"
-#             )
+class GitTestCase(ShellScriptTestCase):
+    def test_success_execution(self):
+        with mock_app("gcloud"):
+            print(f"{GIT_SH_FILE=}")
+            return_code = self.run_bash_command(
+                f"{GIT_SH_FILE} --git-uri GIT_URI --destination-path DEST_URI --region REGION "
+                "--cluster CLUSTER"
+            )
 
-#         self.assertEqual(0, return_code)
+        self.assertEqual(0, return_code)
 
-#         list_of_command = self.get_command_calls()
+        list_of_command = self.get_command_calls()
 
-#         self.assertTrue(
-#             all(
-#                 command.startswith(
-#                     "gcloud dataproc jobs submit pig --cluster=CLUSTER --region=REGION --execute"
-#                 )
-#                 for command in list_of_command
-#             )
-#         )
+        self.assertTrue(
+            all(
+                command.startswith(
+                    "gcloud dataproc jobs submit pig --cluster=CLUSTER --region=REGION --execute"
+                )
+                for command in list_of_command
+            )
+        )
 
-#         self.assertIn("sh", list_of_command[0])
-#         self.assertIn("git", list_of_command[0])
-#         self.assertIn("clone", list_of_command[0])
-#         self.assertIn("GIT_URI", list_of_command[0])
-#         self.assertIn("master", list_of_command[0])
+        self.assertIn("sh", list_of_command[0])
+        self.assertIn("git", list_of_command[0])
+        self.assertIn("clone", list_of_command[0])
+        self.assertIn("GIT_URI", list_of_command[0])
+        self.assertIn("master", list_of_command[0])
 
-#         self.assertIn("fs\\ -copyFromLocal", list_of_command[1])
-#         self.assertIn("DEST_URI", list_of_command[1])
+        self.assertIn("fs\\ -copyFromLocal", list_of_command[1])
+        self.assertIn("DEST_URI", list_of_command[1])
 
-#         self.assertIn("rm", list_of_command[2])
+        self.assertIn("rm", list_of_command[2])
 
-#     def test_success_execution_with_ssh_key(self):
-#         with mock_app("gcloud"):
-#             return_code = self.run_bash_command(
-#                 f"{GIT_SH_FILE} --git-uri GIT_URI --destination-path DEST_URI --region REGION "
-#                 "--cluster CLUSTER --key-path KEY_PATH"
-#             )
+    def test_success_execution_with_ssh_key(self):
+        with mock_app("gcloud"):
+            return_code = self.run_bash_command(
+                f"{GIT_SH_FILE} --git-uri GIT_URI --destination-path DEST_URI --region REGION "
+                "--cluster CLUSTER --key-path KEY_PATH"
+            )
 
-#         self.assertEqual(0, return_code)
+        self.assertEqual(0, return_code)
 
-#         list_of_command = self.get_command_calls()
+        list_of_command = self.get_command_calls()
 
-#         self.assertTrue(
-#             all(
-#                 command.startswith(
-#                     "gcloud dataproc jobs submit pig --cluster=CLUSTER --region=REGION --execute"
-#                 )
-#                 for command in list_of_command
-#             )
-#         )
+        self.assertTrue(
+            all(
+                command.startswith(
+                    "gcloud dataproc jobs submit pig --cluster=CLUSTER --region=REGION --execute"
+                )
+                for command in list_of_command
+            )
+        )
 
-#         self.assertEqual(5, len(list_of_command))
+        self.assertEqual(5, len(list_of_command))
 
-#         self.assertIn("fs\\ -copyToLocal", list_of_command[0])
+        self.assertIn("fs\\ -copyToLocal", list_of_command[0])
 
-#         self.assertIn("sh", list_of_command[1])
-#         self.assertIn("git", list_of_command[1])
-#         self.assertIn("clone", list_of_command[1])
-#         self.assertIn("GIT_URI", list_of_command[1])
-#         self.assertIn("master", list_of_command[1])
+        self.assertIn("sh", list_of_command[1])
+        self.assertIn("git", list_of_command[1])
+        self.assertIn("clone", list_of_command[1])
+        self.assertIn("GIT_URI", list_of_command[1])
+        self.assertIn("master", list_of_command[1])
 
-#         self.assertIn("sh", list_of_command[2])
-#         self.assertIn("rm", list_of_command[2])
+        self.assertIn("sh", list_of_command[2])
+        self.assertIn("rm", list_of_command[2])
 
-#         self.assertIn("fs\\ -copyFromLocal", list_of_command[3])
+        self.assertIn("fs\\ -copyFromLocal", list_of_command[3])
 
-#         self.assertIn("rm", list_of_command[4])
+        self.assertIn("rm", list_of_command[4])
 
-#     def test_success_execution_with_custom_branch(self):
-#         with mock_app("gcloud"):
-#             return_code = self.run_bash_command(
-#                 f"bash {GIT_SH_FILE} --git-uri GIT_URI --destination-path DEST_URI --region REGION "
-#                 "--cluster CLUSTER --branch development"
-#             )
+    def test_success_execution_with_custom_branch(self):
+        with mock_app("gcloud"):
+            return_code = self.run_bash_command(
+                f"bash {GIT_SH_FILE} --git-uri GIT_URI --destination-path DEST_URI --region REGION "
+                "--cluster CLUSTER --branch development"
+            )
 
-#         self.assertEqual(0, return_code)
+        self.assertEqual(0, return_code)
 
-#         list_of_command = self.get_command_calls()
+        list_of_command = self.get_command_calls()
 
-#         self.assertEqual(3, len(list_of_command))
+        self.assertEqual(3, len(list_of_command))
 
-#         self.assertIn("development", list_of_command[0])
+        self.assertIn("development", list_of_command[0])
 
-#     @parameterized.expand(
-#         [
-#             f"bash {GIT_SH_FILE} --destination-path DEST_URI --region REGION --cluster CLUSTER",
-#             f"bash {GIT_SH_FILE} --git-uri GIT_URI --region REGION --cluster CLUSTER",
-#             f"bash {GIT_SH_FILE} --git-uri GIT_URI --destination-path DEST_URI --cluster CLUSTER",
-#             f"bash {GIT_SH_FILE} --git-uri GIT_URI --destination-path DEST_URI --region REGION ",
-#         ]
-#     )
-#     def test_required_parameters(self, command):
-#         with mock_app("gcloud"):
-#             return_code = self.run_bash_command(command)
+    @parameterized.expand(
+        [
+            f"bash {GIT_SH_FILE} --destination-path DEST_URI --region REGION --cluster CLUSTER",
+            f"bash {GIT_SH_FILE} --git-uri GIT_URI --region REGION --cluster CLUSTER",
+            f"bash {GIT_SH_FILE} --git-uri GIT_URI --destination-path DEST_URI --cluster CLUSTER",
+            f"bash {GIT_SH_FILE} --git-uri GIT_URI --destination-path DEST_URI --region REGION ",
+        ]
+    )
+    def test_required_parameters(self, command):
+        with mock_app("gcloud"):
+            return_code = self.run_bash_command(command)
 
-#         self.assertEqual(1, return_code)
+        self.assertEqual(1, return_code)

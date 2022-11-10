@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-set -uo pipefail
+set -o pipefail
 
 #######################################
 # Show usage help
@@ -186,12 +186,13 @@ function main() {
         --name "$CMDNAME" -- "$@")
 
     # shellcheck disable=SC2181
-    if [[ $? -ne 0 ]]
+    if [[ $# -eq 0 ]]
     then
         usage
+        exit 0
     fi
 
-    eval set -- "${PARAMS}"
+    # eval set -- "${PARAMS}"
     unset PARAMS
 
     while true
@@ -222,11 +223,13 @@ function main() {
           shift ;
           break ;;
         *)
-          echo
-          echo "ERROR: Unknown argument ${1}"
-          echo
-          exit 1
-          ;;
+          shift ;
+          break ;;
+          # echo
+          # echo "ERROR: Unknown argument ${1}"
+          # echo
+          # exit 1
+          # ;;
       esac
     done
 
