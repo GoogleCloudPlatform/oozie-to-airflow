@@ -33,7 +33,7 @@
     {% if driver_memory %}driver_memory={{ driver_memory | to_python }},{% endif %}
     {% if num_executors %}num_executors={{ num_executors }},{% endif %}
     keytab=None,
-    principal=None,
+    principal={{ principal | to_python }},
     application_args={{ arguments | to_python }},
     name={{ name | to_python }},
     trigger_rule={{ trigger_rule | to_python }},

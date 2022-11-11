@@ -25,6 +25,7 @@ from o2a.mappers.action_mapper import ActionMapper
 from o2a.mappers.extensions.prepare_mapper_extension import PrepareMapperExtension
 from o2a.o2a_libs.property_utils import PropertySet
 from o2a.utils import xml_utils
+from o2a.utils.credential_extractor import CredentialExtractor
 from o2a.utils.file_archive_extractors import FileExtractor, ArchiveExtractor
 
 
@@ -57,7 +58,8 @@ class SparkMapper(ActionMapper):
         self.dataproc_jars: List[str] = []
         self.spark_opts: Dict[str, str] = {}
         self.prepare_extension: PrepareMapperExtension = PrepareMapperExtension(self)
-
+        self.credentials_extractor = CredentialExtractor(credentials_properties=self.props.credentials_node_properties)
+        self.principal: Optional[str] = self.credentials_extractor.hive_server_principal
         self._added_spark_opts: Set[str] = set()
 
     def on_parse_node(self):
@@ -134,6 +136,8 @@ class SparkMapper(ActionMapper):
             name=self.job_name,
             jars=self.dataproc_jars,
             conf=self.spark_opts,
+            # keytab='test-keytab',
+            principal=self.principal,
         )
         for attr in self._added_spark_opts:
             template_dict.update({attr: getattr(self, attr, None)})

@@ -31,6 +31,7 @@ from o2a.converter.renderers import BaseRenderer
 from o2a.converter.workflow import Workflow
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.mappers.base_mapper import BaseMapper
+from o2a.mappers.credentials_mapper import CredentialsMapper
 from o2a.mappers.decision_mapper import DecisionMapper
 from o2a.mappers.dummy_mapper import DummyMapper
 from o2a.mappers.end_mapper import EndMapper
@@ -271,6 +272,24 @@ class WorkflowXmlParser:
         logging.info(f"Parsed {mapper.name} as Start Node.")
         self.workflow.nodes[start_name] = oozie_control_node
 
+    def parse_credentials_node(self, credentials_node: ET.Element):
+        """
+        The credentials node is the credential config for a workflow job.
+
+        It stores the credential name and the credential value.
+        """
+        if credentials_node.tag == "credentials":
+            mapper = CredentialsMapper(
+                oozie_node=credentials_node,
+                name="credentials",
+                dag_name=self.workflow.dag_name,
+                props=self.props,
+            )
+            mapper.on_parse_node()
+
+            logging.info(f"Parsed {mapper.name} as Credentials Node.")
+            self.props.credentials_node_properties = mapper.credentials_extractor.credentials_properties
+
     def parse_node(self, root, node):
         """
         Given a node, determines its tag, and then passes it to the correct
@@ -293,6 +312,8 @@ class WorkflowXmlParser:
             self.parse_join_node(node)
         elif "decision" in node.tag:
             self.parse_decision_node(node)
+        elif "credentials" in node.tag:
+            self.parse_credentials_node(node)
 
     def parse_workflow(self):
         """Parses workflow replacing invalid characters in the names of the nodes"""

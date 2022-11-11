@@ -36,10 +36,12 @@ class PropertySet:
         job_properties: Dict[str, str] = None,
         config: Dict[str, str] = None,
         action_node_properties: Dict[str, str] = None,
+        credentials_node_properties: Dict[str, str] = None,
     ):
         self.job_properties: Dict[str, str] = job_properties or {}
         self.config: Dict[str, str] = config or {}
         self.action_node_properties: Dict[str, str] = action_node_properties or {}
+        self.credentials_node_properties: Dict[str, str] = credentials_node_properties or {}
 
     @property
     def xml_escaped(self):
@@ -47,6 +49,9 @@ class PropertySet:
         escaped_ps.job_properties = {k: escape(v) for k, v in escaped_ps.job_properties.items()}
         escaped_ps.action_node_properties = {
             k: escape(v) for k, v in escaped_ps.action_node_properties.items()
+        }
+        escaped_ps.credentials_node_properties = {
+            k: escape(v) for k, v in escaped_ps.credentials_node_properties.items()
         }
         return escaped_ps
 
@@ -60,6 +65,7 @@ class PropertySet:
         merged_props: Dict[str, str] = {}
         merged_props.update(self.job_properties)
         merged_props.update(self.action_node_properties)
+        merged_props.update(self.credentials_node_properties)
         return merged_props
 
     def __repr__(self) -> str:
@@ -67,6 +73,7 @@ class PropertySet:
             f"PropertySet(config={json.dumps(self.config, indent=2)}, "
             f"job_properties={json.dumps(self.job_properties, indent=2)}, "
             f"action_node_properties={json.dumps(self.action_node_properties, indent=2)})"
+            f"credentials_node_properties={json.dumps(self.credentials_node_properties, indent=2)})"
         )
 
     def __eq__(self, other):
@@ -75,4 +82,5 @@ class PropertySet:
             and self.config == other.config
             and self.job_properties == other.job_properties
             and self.action_node_properties == other.action_node_properties
+            and self.credentials_node_properties == other.credentials_node_properties
         )
