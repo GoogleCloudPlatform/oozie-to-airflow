@@ -36,4 +36,4 @@ class CredentialsMapper(BaseMapper):
 
     def _parse_config(self):
         credentials_extractor = CredentialExtractor(self.oozie_node)
-        self.props.credentials_node_properties == credentials_extractor.credentials_properties
+        self.props.credentials_node_properties = credentials_extractor.credentials_properties

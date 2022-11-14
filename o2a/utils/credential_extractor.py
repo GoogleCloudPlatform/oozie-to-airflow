@@ -23,9 +23,6 @@ class CredentialExtractor:
         self._oozie_node = oozie_node or None
         self._credentials_properties = credentials_properties or None
 
-        logging.warning(f"self._oozie_node: {self._oozie_node}")
-        logging.warning(f"self._credentials_properties: {self._credentials_properties}")
-
         if not self._oozie_node and not self._credentials_properties:
             raise ParseException("Either oozie_node or credentials_properties must be provided")
 
@@ -34,7 +31,7 @@ class CredentialExtractor:
         return self._get_cred_value(TAG_HCAT_METASTORE_URI, TAG_HCAT)
 
     @property
-    def hcat_principal_name(self) -> str:
+    def hcat_metastore_principal(self) -> str:
         return self._get_cred_value(TAG_HCAT_PRINCIPAL_NAME, TAG_HCAT)
 
     @property

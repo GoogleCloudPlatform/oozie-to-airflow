@@ -586,6 +586,7 @@ class SparkTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
         "num_executors": None,
         "executor_memory": None,
         "driver_memory": None,
+        "principal": None,
     }
 
     def test_green_path(self):

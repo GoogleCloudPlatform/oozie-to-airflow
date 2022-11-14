@@ -27,7 +27,6 @@ EXAMPLE_JOB_PROPS = {"nameNode": "hdfs://", "userName": "test_user", "examplesRo
 
 EXAMPLE_CONFIG = {"dataproc_cluster": "my-cluster", "gcp_region": "europe-west3"}
 
-# language=XML
 EXAMPLE_XML_WITH_PREPARE = """
 <spark name="decision">
     <job-tracker>foo:8021</job-tracker>
@@ -88,6 +87,50 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
         self.assertEqual("test_id", mapper.name)
         self.assertEqual(spark_node, mapper.oozie_node)
 
+    def test_using_credentials(self):
+        workflow_xml = EXAMPLE_XML_WITHOUT_PREPARE
+        oozie_node = ET.fromstring(workflow_xml)
+        mapper = self._get_spark_mapper(
+            oozie_node, cred_props={"credentials": {"hive2": [{"hive2.server.principal": "test-principal"}]}}
+        )
+        mapper.on_parse_node()
+
+        tasks, _ = mapper.to_tasks_and_relations()
+        self.maxDiff = None
+        self.assertEqual(
+            [
+                Task(
+                    task_id="test_id",
+                    template_name="spark.tpl",
+                    trigger_rule="one_success",
+                    template_params={
+                        "main_jar": None,
+                        "main_class": "org.apache.spark.examples.mllib.JavaALS",
+                        "arguments": [
+                            "inputpath=hdfs:///input/file.txt",
+                            "value=2",
+                            "/user/{{userName}}/{{examplesRoot}}/apps/spark/lib/oozie-examples-4.3.0.jar",
+                        ],
+                        "archives": [],
+                        "files": [],
+                        "name": "Spark Examples",
+                        "jars": ["/user/{{userName}}/{{examplesRoot}}/apps/spark/lib/oozie-examples-4.3.0.jar"],
+                        "executor_cores": 4,
+                        "executor_memory": "20G",
+                        "driver_memory": "10g",
+                        "num_executors": 50,
+                        # should mock props.credentials_node_properties but was having trouble...
+                        "principal": "test-principal",
+                        "conf": {
+                            "spark.executor.extraJavaOptions": "-XX:+HeapDumpOnOutOfMemoryError "
+                            "-XX:HeapDumpPath=/tmp"
+                        },
+                    },
+                )
+            ],
+            tasks,
+        )
+
     def test_to_tasks_and_relations_with_prepare_node(self):
         spark_node = ET.fromstring(EXAMPLE_XML_WITH_PREPARE)
         mapper = self._get_spark_mapper(spark_node)
@@ -95,6 +138,7 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
 
         tasks, relations = mapper.to_tasks_and_relations()
 
+        self.assertEqual(mapper.credentials_extractor, None)
         self.assertEqual(
             [
                 Task(
@@ -116,6 +160,7 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
                         "executor_memory": "20G",
                         "driver_memory": "10g",
                         "num_executors": 50,
+                        "principal": None,
                         "conf": {
                             "spark.executor.extraJavaOptions": "-XX:+HeapDumpOnOutOfMemoryError "
                             "-XX:HeapDumpPath=/tmp"
@@ -158,6 +203,7 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
                         "executor_memory": "20G",
                         "driver_memory": "10g",
                         "num_executors": 50,
+                        "principal": None,
                         "conf": {
                             "spark.executor.extraJavaOptions": "-XX:+HeapDumpOnOutOfMemoryError "
                             "-XX:HeapDumpPath=/tmp"
@@ -177,12 +223,15 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
         ast.parse(imp_str)
 
     @staticmethod
-    def _get_spark_mapper(spark_node):
+    def _get_spark_mapper(spark_node, cred_props=None):
+        props = PropertySet(job_properties=EXAMPLE_JOB_PROPS, config=EXAMPLE_CONFIG)
+        if cred_props:
+            props.credentials_node_properties = cred_props
         mapper = spark_mapper.SparkMapper(
             oozie_node=spark_node,
             name="test_id",
             dag_name="DAG_NAME_B",
-            props=PropertySet(job_properties=EXAMPLE_JOB_PROPS, config=EXAMPLE_CONFIG),
+            props=props,
             input_directory_path="/tmp/input-directory-path/",
         )
         return mapper

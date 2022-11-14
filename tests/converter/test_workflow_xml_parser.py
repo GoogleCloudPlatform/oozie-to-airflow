@@ -36,9 +36,7 @@ from o2a.o2a_libs.property_utils import PropertySet
 class TestWorkflowXmlParser(unittest.TestCase):
     def setUp(self):
         props = PropertySet(job_properties={}, config={})
-        workflow = Workflow(
-            input_directory_path=EXAMPLE_DEMO_PATH, output_directory_path="/tmp", dag_name="DAG_NAME_B"
-        )
+        workflow = Workflow(input_directory_path=EXAMPLE_DEMO_PATH, output_directory_path="/tmp", dag_name="DAG_NAME_B")
         self.parser = workflow_xml_parser.WorkflowXmlParser(
             workflow=workflow, props=props, action_mapper=ACTION_MAP, renderer=mock.MagicMock()
         )
@@ -153,6 +151,27 @@ class TestWorkflowXmlParser(unittest.TestCase):
         self.assertEqual([end_name], p_op.downstream_names)
 
         on_parse_node_mock.assert_called_once_with()
+
+    @mock.patch("o2a.mappers.credentials_mapper.CredentialsMapper.on_parse_node", wraps=None)
+    def test_parse_credentials_node(self, cred_node_mock):
+        node_name = "test"
+        # language=XML
+        cred_str = f"""
+<credentials>
+    <credential name="{node_name}">
+        <property>
+            <name>test-name</name>
+            <value>test-value</value>
+        </property>
+    </credential>
+</credentials>
+"""
+        credentials = ET.fromstring(cred_str)
+        self.parser.parse_credentials_node(credentials)
+
+        self.assertEqual(
+            self.parser.props.credentials_node_properties, {"credentials": {node_name: [{"test-name": "test-value"}]}}
+        )
 
     @mock.patch("o2a.mappers.ssh_mapper.SSHMapper.on_parse_node", wraps=None)
     def test_parse_action_node_ssh(self, on_parse_node_mock):
@@ -349,9 +368,7 @@ class TestOozieExamples(unittest.TestCase):
                             downstream_names=["pig-node", "subworkflow-node", "shell-node"]
                         ),
                         "pig-node": NodeExpectedResult(downstream_names=["join-node"], error_xml="fail"),
-                        "subworkflow-node": NodeExpectedResult(
-                            downstream_names=["join-node"], error_xml="fail"
-                        ),
+                        "subworkflow-node": NodeExpectedResult(downstream_names=["join-node"], error_xml="fail"),
                         "shell-node": NodeExpectedResult(downstream_names=["join-node"], error_xml="fail"),
                         "join-node": NodeExpectedResult(downstream_names=["decision-node"]),
                         "decision-node": NodeExpectedResult(downstream_names=["hdfs-node", "end"]),

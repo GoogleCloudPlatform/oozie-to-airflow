@@ -25,6 +25,7 @@ class TestPropertySet(TestCase):
         pset = PropertySet(
             job_properties={"url": "http://example.com:8080/workflow?job-id=$jobId&status=$status"},
             action_node_properties={"my.injection.attempt": "<value>1</value>"},
+            credentials_node_properties={"my.second.attempt": "<value>2</value>"},
         )
         # When
         pset_escaped = pset.xml_escaped.merged
@@ -34,3 +35,4 @@ class TestPropertySet(TestCase):
             "http://example.com:8080/workflow?job-id=$jobId&amp;status=$status", pset_escaped["url"]
         )
         self.assertEqual("&lt;value&gt;1&lt;/value&gt;", pset_escaped["my.injection.attempt"])
+        self.assertEqual("&lt;value&gt;2&lt;/value&gt;", pset_escaped["my.second.attempt"])

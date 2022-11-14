@@ -58,8 +58,12 @@ class SparkMapper(ActionMapper):
         self.dataproc_jars: List[str] = []
         self.spark_opts: Dict[str, str] = {}
         self.prepare_extension: PrepareMapperExtension = PrepareMapperExtension(self)
-        self.credentials_extractor = CredentialExtractor(credentials_properties=self.props.credentials_node_properties)
-        self.principal: Optional[str] = self.credentials_extractor.hive_server_principal
+        self.credentials_extractor = (
+            CredentialExtractor(credentials_properties=self.props.credentials_node_properties)
+            if self.props.credentials_node_properties
+            else None
+        )
+        self.principal: Optional[str] = self.credentials_extractor.hive_server_principal if self.credentials_extractor else None
         self._added_spark_opts: Set[str] = set()
 
     def on_parse_node(self):
