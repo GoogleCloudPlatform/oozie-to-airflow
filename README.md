@@ -22,6 +22,8 @@
 [![Dependabot Status](https://api.dependabot.com/badges/status?host=github&repo=GoogleCloudPlatform/oozie-to-airflow)](https://dependabot.com)
 [![Python 3](https://pyup.io/repos/github/GoogleCloudPlatform/oozie-to-airflow/python-3-shield.svg)](https://pyup.io/repos/github/GoogleCloudPlatform/oozie-to-airflow/)
 
+*Note: This project is no longer actively maintained and has been archived.* 
+
 A tool to easily convert between [Apache Oozie](http://oozie.apache.org/) workflows
 and [Apache Airflow](https://airflow.apache.org) workflows.
 
