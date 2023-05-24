@@ -311,12 +311,12 @@ class TestOozieConvertByExamples(TestCase):
         self.assertEqual(
             {
                 "from airflow import models",
-                "from airflow.contrib.operators import dataproc_operator",
-                "from airflow.operators import bash_operator",
-                "from airflow.operators import dummy_operator",
-                "from airflow.operators import python_operator",
-                "from airflow.operators.subdag_operator import SubDagOperator",
-                "from airflow.operators import bash_operator, dummy_operator",
+                "from airflow.providers.google.cloud.operators import dataproc",
+                "from airflow.operators import bash",
+                "from airflow.operators import empty",
+                "from airflow.operators import python",
+                "from airflow.operators.subdag import SubDagOperator",
+                "from airflow.operators import bash, empty",
                 "from airflow.utils import dates",
                 "from airflow.utils.trigger_rule import TriggerRule",
                 "from o2a.o2a_libs import functions",

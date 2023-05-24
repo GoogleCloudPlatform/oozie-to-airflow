@@ -13,7 +13,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 #}
-{{ task_id | to_var }} = dummy_operator.DummyOperator(
+{{ task_id | to_var }} = empty.EmptyOperator(
     task_id={{ task_id | to_python }},
     trigger_rule={{ trigger_rule | to_python }}
 )

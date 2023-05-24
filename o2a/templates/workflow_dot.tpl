@@ -48,7 +48,7 @@
         green
     {% elif task.trigger_rule == 'one_failed' %}
         red
-    {% elif task.trigger_rule == 'dummy' %}
+    {% elif task.trigger_rule == 'always' %}
         orange
     {% else  %}
         black

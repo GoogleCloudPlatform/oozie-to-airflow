@@ -89,4 +89,4 @@ class DecisionMapper(BaseMapper):
         return tasks, relations
 
     def required_imports(self) -> Set[str]:
-        return {"from airflow.operators import python_operator", "from airflow.utils import dates"}
+        return {"from airflow.operators import python", "from airflow.utils import dates"}

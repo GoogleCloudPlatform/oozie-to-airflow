@@ -13,7 +13,7 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 #}
-{{ task_id | to_var }} = bash_operator.BashOperator(
+{{ task_id | to_var }} = bash.BashOperator(
     task_id={{ task_id | to_python }},
     trigger_rule={{ trigger_rule | to_python }},
     bash_command='exit 1',
