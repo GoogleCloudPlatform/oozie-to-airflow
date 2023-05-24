@@ -46,4 +46,4 @@ class DummyMapper(BaseMapper):
         return tasks, relations
 
     def required_imports(self) -> Set[str]:
-        return {"from airflow.operators import dummy_operator"}
+        return {"from airflow.operators import empty"}

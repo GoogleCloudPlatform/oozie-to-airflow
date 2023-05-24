@@ -16,7 +16,7 @@
 
 from typing import Optional, Set
 
-from jinja2 import contextfunction
+from jinja2 import pass_context
 
 from airflow.models import TaskInstance, DagRun, DAG
 from airflow.utils.db import provide_session
@@ -36,7 +36,7 @@ def _reverse_task_map(task_map: dict) -> dict:
     return new_map
 
 
-@contextfunction
+@pass_context
 def conf(context=None, key: str = None):
     """
     It returns the value of the workflow job configuration property for the
@@ -50,7 +50,7 @@ def conf(context=None, key: str = None):
         raise AirflowException(f"Property {key} not found in workflow configuration.")
 
 
-@contextfunction
+@pass_context
 def user(context=None):
     """
     Returns gloabl user name, DAG owner or raises error
@@ -75,7 +75,7 @@ def user(context=None):
     return owner
 
 
-@contextfunction
+@pass_context
 @provide_session
 def last_error_node(context=None, session=None) -> str:
     """

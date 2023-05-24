@@ -27,9 +27,8 @@ return {{default_case | to_python}}
 {% endfilter %}
 
 
-{{ task_id | to_var }} = python_operator.BranchPythonOperator(
+{{ task_id | to_var }} = python.BranchPythonOperator(
     task_id={{ task_id | to_python }},
     trigger_rule={{ trigger_rule | to_python }},
     python_callable={{ task_id | to_var }}_decision,
-    provide_context=True
 )

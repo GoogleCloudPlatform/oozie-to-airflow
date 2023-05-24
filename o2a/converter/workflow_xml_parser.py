@@ -260,7 +260,7 @@ class WorkflowXmlParser:
             name=start_name,
             dag_name=self.workflow.dag_name,
             props=self.props,
-            trigger_rule=TriggerRule.DUMMY,
+            trigger_rule=TriggerRule.ALWAYS,
         )
 
         oozie_control_node = OozieControlNode(mapper)
