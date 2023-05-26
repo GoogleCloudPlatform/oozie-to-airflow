@@ -19,5 +19,5 @@ safety==1.10.3
 sshtunnel==0.4.0
 twine==3.3.0
 tzlocal==2.1 # pyup: ignore
-Werkzeug==1.0.1 # pyup: ignore
+Werkzeug==2.2.3 # pyup: ignore
 yamllint==1.25.0
