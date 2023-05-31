@@ -100,4 +100,4 @@ class GitMapper(ActionMapper):
         return tasks, relations
 
     def required_imports(self) -> Set[str]:
-        return {"from airflow.operators import bash_operator"}
+        return {"from airflow.operators import bash"}

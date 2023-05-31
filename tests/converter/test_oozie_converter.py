@@ -312,6 +312,7 @@ class TestOozieConvertByExamples(TestCase):
             {
                 "from airflow import models",
                 "from airflow.providers.google.cloud.operators import dataproc",
+                "from airflow.providers.google.cloud.operators.dataproc import DataprocSubmitJobOperator",
                 "from airflow.operators import bash",
                 "from airflow.operators import empty",
                 "from airflow.operators import python",

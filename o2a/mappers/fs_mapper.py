@@ -145,7 +145,7 @@ class FsMapper(ActionMapper):
         return self.tasks, chain(self.tasks)
 
     def required_imports(self) -> Set[str]:
-        return {"from airflow.operators import dummy_operator", "from airflow.operators import bash_operator"}
+        return {"from airflow.operators import empty", "from airflow.operators import bash"}
 
     def parse_fs_operation(self, index: int, node: Element, operation_nodes_count: int) -> Task:
         tag_name = node.tag

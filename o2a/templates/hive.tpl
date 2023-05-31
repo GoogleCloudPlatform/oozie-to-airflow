@@ -15,14 +15,20 @@
  #}
 
 {% import "macros/props.tpl" as props_macro %}
-{{ task_id | to_var }} = dataproc_operator.DataProcHiveOperator(
+{{ task_id | to_var }} = DataprocSubmitJobOperator(
     task_id={{ task_id | to_python }},
     trigger_rule={{ trigger_rule | to_python }},
-    {% if script %}query_uri='{}/{}'.format(CONFIG['gcp_uri_prefix'], {{ script | to_python }}),{% endif %}
-    {% if query %}query={{ query | to_python }},{% endif %}
-    {% if variables %}variables={{ variables | to_python }},{% endif %}
-    dataproc_hive_properties={{ props_macro.props(action_node_properties=action_node_properties, xml_escaped=True) }},
-    cluster_name=CONFIG['dataproc_cluster'],
+    job=dict(
+      placement=dict(
+        cluster_name=CONFIG['dataproc_cluster'],
+      ),
+      hive_job=dict(
+        {% if variables %}script_variables={{ variables | to_python }},{% endif %}
+        properties={{ props_macro.props(action_node_properties=action_node_properties, xml_escaped=True) }},
+        {% if script %}query_file_uri='{}/{}'.format(CONFIG['gcp_uri_prefix'], {{ script | to_python }}),{% endif %}
+        {% if query_obj %}query_list={{ query_obj | to_python }},{% endif %}
+      ),
+    ),
     gcp_conn_id=CONFIG['gcp_conn_id'],
     region=CONFIG['gcp_region'],
     job_name={{ task_id | to_python }},

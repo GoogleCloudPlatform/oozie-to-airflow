@@ -112,10 +112,12 @@ class TestHiveMapper(unittest.TestCase):
                     template_name="hive.tpl",
                     trigger_rule="one_success",
                     template_params={
-                        "query": "DROP TABLE IF EXISTS test_query;\nCREATE EXTERNAL TABLE test_query (a INT) "
-                        "STORED AS TEXTFILE\nLOCATION '/user/{{userName}}/{{examplesRoot}}/input/';"
-                        "\nINSERT OVERWRITE DIRECTORY '/user/{{userName}}/{{examplesRoot}}/output/' "
-                        "SELECT * FROM test_query;",
+                        "query_obj": {
+                            "queries": ["DROP TABLE IF EXISTS test_query;\nCREATE EXTERNAL TABLE test_query (a INT) "
+                            "STORED AS TEXTFILE\nLOCATION '/user/{{userName}}/{{examplesRoot}}/input/';"
+                            "\nINSERT OVERWRITE DIRECTORY '/user/{{userName}}/{{examplesRoot}}/output/' "
+                            "SELECT * FROM test_query;"]
+                        },
                         "script": None,
                         "props": PropertySet(
                             config={},
@@ -154,7 +156,7 @@ class TestHiveMapper(unittest.TestCase):
                     template_name="hive.tpl",
                     trigger_rule="one_success",
                     template_params={
-                        "query": None,
+                        "query_obj": None,
                         "script": "script.q",
                         "props": PropertySet(
                             config={},
@@ -223,11 +225,13 @@ class TestHiveMapper(unittest.TestCase):
                     template_name="hive.tpl",
                     trigger_rule="one_success",
                     template_params={
-                        "query": "DROP TABLE IF EXISTS test_query;"
-                        "\nCREATE EXTERNAL TABLE test_query (a INT) STORED "
-                        "AS TEXTFILE\nLOCATION '/user/{{userName}}/{{examplesRoot}}/input/';\nINSERT "
-                        "OVERWRITE DIRECTORY '/user/{{userName}}/{{examplesRoot}}/output/' "
-                        "SELECT * FROM test_query;",
+                        "query_obj": {
+                            "queries": ["DROP TABLE IF EXISTS test_query;"
+                            "\nCREATE EXTERNAL TABLE test_query (a INT) STORED "
+                            "AS TEXTFILE\nLOCATION '/user/{{userName}}/{{examplesRoot}}/input/';\nINSERT "
+                            "OVERWRITE DIRECTORY '/user/{{userName}}/{{examplesRoot}}/output/' "
+                            "SELECT * FROM test_query;"]
+                        },
                         "script": None,
                         "props": PropertySet(
                             config={},
@@ -272,10 +276,12 @@ class TestHiveMapper(unittest.TestCase):
                     template_name="hive.tpl",
                     trigger_rule="one_success",
                     template_params={
-                        "query": "DROP TABLE IF EXISTS test_query;\nCREATE EXTERNAL TABLE test_query (a INT) "
-                        "STORED AS TEXTFILE\nLOCATION '/user/{{userName}}/{{examplesRoot}}/input/';"
-                        "\nINSERT OVERWRITE DIRECTORY '/user/{{userName}}/{{examplesRoot}}/output/' "
-                        "SELECT * FROM test_query;",
+                        "query_obj": {
+                            "queries": [ "DROP TABLE IF EXISTS test_query;\nCREATE EXTERNAL TABLE test_query (a INT) "
+                            "STORED AS TEXTFILE\nLOCATION '/user/{{userName}}/{{examplesRoot}}/input/';"
+                            "\nINSERT OVERWRITE DIRECTORY '/user/{{userName}}/{{examplesRoot}}/output/' "
+                            "SELECT * FROM test_query;"]
+                        },
                         "script": None,
                         "props": PropertySet(
                             config={},

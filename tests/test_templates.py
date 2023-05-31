@@ -291,7 +291,9 @@ class HiveTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
         "task_id": "AA",
         "trigger_rule": "always",
         "script": "id.q",
-        "query": "SELECT 1",
+        "query_obj": {
+            "queries": ["SELECT 1"]
+        },
         "variables": {
             "INPUT": "/user/${wf:user()}/${examplesRoot}/input-data/text",
             "OUTPUT": "/user/${wf:user()}/${examplesRoot}/output-data/demo/hive-node",
@@ -487,17 +489,18 @@ class SparkTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
 
     DEFAULT_TEMPLATE_PARAMS = {
         "task_id": "AA",
-        "hdfs_archives": [],
-        "arguments": ["inputpath=hdfs:///input/file.txt", "value=2"],
-        "dataproc_spark_jars": ["/lib/spark-examples_2.10-1.1.0.jar"],
-        "spark_opts": {
-            "mapred.compress.map.output": "true",
-            "spark.executor.extraJavaOptions": "-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp",
+        "spark_job": {
+            "args": ["inputpath=hdfs:///input/file.txt", "value=2"],
+            "jar_file_uris": ["/lib/spark-examples_2.10-1.1.0.jar"],
+            "file_uris": [],
+            "archive_uris": [],
+            "properties": {
+                "mapred.compress.map.output": "true",
+                "spark.executor.extraJavaOptions": "-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp",
+            },
+            "main_jar_file_uri": None,
+            "main_class": "org.apache.spark.examples.mllib.JavaALS"
         },
-        "hdfs_files": [],
-        "job_name": "Spark Examples",
-        "main_class": "org.apache.spark.examples.mllib.JavaALS",
-        "main_jar": None,
         "trigger_rule": "always",
         "action_node_properties": {"key": "value"},
     }
