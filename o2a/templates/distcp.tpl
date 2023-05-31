@@ -15,7 +15,7 @@
  #}
 
 {% import "macros/props.tpl" as props_macro %}
-{{ task_id | to_var }} = bash_operator.BashOperator(
+{{ task_id | to_var }} = bash.BashOperator(
     task_id={{ task_id | tojson }},
     trigger_rule={{ trigger_rule | tojson }},
     bash_command={% include "hadoop_command.tpl" %} % (CONFIG['dataproc_cluster'], CONFIG['gcp_region'],

@@ -14,7 +14,7 @@
   limitations under the License.
 #}
 {% import "macros/props.tpl" as props_macro %}
-{{ task_id | to_var }} = email_operator.EmailOperator(
+{{ task_id | to_var }} = email.EmailOperator(
     task_id={{ task_id | to_python }},
     trigger_rule={{ trigger_rule | to_python }},
     to={{ to_addr | to_python }},

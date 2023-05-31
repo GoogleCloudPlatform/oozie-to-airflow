@@ -105,4 +105,7 @@ class PigMapper(ActionMapper):
             raise Exception(f"The output_directory_path should be set and is {output_directory_path}")
 
     def required_imports(self) -> Set[str]:
-        return {"from airflow.utils import dates", "from airflow.contrib.operators import dataproc_operator"}
+        return {
+            "from airflow.utils import dates",
+            "from airflow.providers.google.cloud.operators.dataproc import DataprocSubmitJobOperator"
+        }

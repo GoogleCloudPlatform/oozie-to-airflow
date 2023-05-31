@@ -96,6 +96,6 @@ class SSHMapper(ActionMapper):
     def required_imports(self) -> Set[str]:
         return {
             "from airflow.utils import dates",
-            "from airflow.contrib.operators import ssh_operator",
-            "from airflow.contrib.hooks import ssh_hook",
+            "from airflow.providers.ssh.operators.ssh import SSHOperator",
+            "from airflow.providers.ssh.hooks.ssh import SSHHook",
         }

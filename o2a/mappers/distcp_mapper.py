@@ -80,4 +80,4 @@ class DistCpMapper(ActionMapper):
         return tasks, relations
 
     def required_imports(self) -> Set[str]:
-        return {"import shlex", "from airflow.operators import bash_operator"}
+        return {"import shlex", "from airflow.operators import bash"}

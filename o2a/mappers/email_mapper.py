@@ -62,7 +62,7 @@ class EmailMapper(ActionMapper):
         return tasks, relations
 
     def required_imports(self) -> Set[str]:
-        return {"from airflow.operators import email_operator"}
+        return {"from airflow.operators import email"}
 
     def __extract_email_data(self):
         root = self.oozie_node

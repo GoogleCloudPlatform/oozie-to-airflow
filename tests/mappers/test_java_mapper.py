@@ -248,11 +248,13 @@ class TestJavaMapper(unittest.TestCase):
                             },
                             action_node_properties={"mapred.job.queue.name": "{{queueName}}"},
                         ),
-                        "hdfs_files": [],
-                        "hdfs_archives": [],
-                        "main_class": "org.apache.oozie.example.DemoJavaMain",
-                        "jar_files_in_hdfs": [],
-                        "args": ["Hello", "Oozie!"],
+                        "hadoop_job": dict(
+                            args=["Hello", "Oozie!"],
+                            jar_file_uris=[],
+                            file_uris=[],
+                            archive_uris=[],
+                            main_class="org.apache.oozie.example.DemoJavaMain",
+                        ),
                     },
                 )
             ],
