@@ -30,17 +30,26 @@ function retry_command() {
 function install_maven() {
   retry_command "apt-get update"
   retry_command "apt-get install -y maven"
+  retry_command "apt-get install -y xmlstarlet"
 }
 
 function get_oozie(){
-  wget https://www.apache.org/dist/oozie/5.1.0/oozie-5.1.0.tar.gz -P /tmp
-  tar -xzvf /tmp/oozie-5.1.0.tar.gz --directory /tmp/
+  wget https://www.apache.org/dist/oozie/5.2.1/oozie-5.2.1.tar.gz -P /tmp
+  tar -xzvf /tmp/oozie-5.2.1.tar.gz --directory /tmp/
 }
 
 function build_oozie(){
-  /tmp/oozie-5.1.0/bin/mkdistro.sh -DskipTests -Puber
-  tar -zxvf /tmp/oozie-5.1.0/distro/target/oozie-5.1.0-distro.tar.gz -C /usr/local/lib
-  mv /usr/local/lib/oozie-5.1.0/ /usr/local/lib/oozie
+  xmlstarlet ed -L -N x="http://maven.apache.org/POM/4.0.0" --subnode "/x:project/x:repositories" -t elem -n 'repository' \
+                --var newnd '$prev' \
+                --subnode  '$prev'  -t elem -n "id" -v "conjars" \
+                --subnode  '$newnd'  -t elem -n "url" -v "https://conjars.org/repo/" \
+                --subnode  '$newnd'  -t elem -n "releases" -v "" \
+                --subnode  '$prev'  -t elem -n "enabled" -v "false" \
+                --subnode  '$newnd'  -t elem -n "snapshots" -v "" \
+                --subnode  '$prev'  -t elem -n "enabled" -v "false" /tmp/oozie-5.2.1/pom.xml
+  /tmp/oozie-5.2.1/bin/mkdistro.sh -DskipTests -Puber
+  tar -zxvf /tmp/oozie-5.2.1/distro/target/oozie-5.2.1-distro.tar.gz -C /usr/local/lib
+  mv /usr/local/lib/oozie-5.2.1/ /usr/local/lib/oozie
 }
 
 function configure_oozie() {
@@ -53,7 +62,7 @@ function configure_oozie() {
 
   rm /usr/local/lib/oozie/conf/hadoop-conf/*
   ln -s /etc/hadoop/conf/*-site.xml /usr/local/lib/oozie/conf/hadoop-conf/
-  tar -zxvf /usr/local/lib/oozie/oozie-sharelib-5.1.0.tar.gz -C /usr/local/lib/oozie/
+  tar -zxvf /usr/local/lib/oozie/oozie-sharelib-5.2.1.tar.gz -C /usr/local/lib/oozie/
 
   chown oozie:oozie -R /usr/local/lib/oozie
 }
