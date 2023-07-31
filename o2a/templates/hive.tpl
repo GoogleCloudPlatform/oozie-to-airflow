@@ -31,5 +31,4 @@
     ),
     gcp_conn_id=CONFIG['gcp_conn_id'],
     region=CONFIG['gcp_region'],
-    job_name={{ task_id | to_python }},
 )

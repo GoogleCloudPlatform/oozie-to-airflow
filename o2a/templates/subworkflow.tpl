@@ -21,11 +21,12 @@ CONFIG={{ config | to_python }}
 
 JOB_PROPS={{ job_properties | to_python }}
 
-def sub_dag(parent_dag_name, child_dag_name, start_date, schedule_interval):
+def sub_dag(parent_dag_name, child_dag_name, start_date, schedule_interval, user_defined_macros):
     with models.DAG(
         '{0}.{1}'.format(parent_dag_name, child_dag_name),
         schedule_interval=schedule_interval,  # Change to suit your needs
-        start_date=start_date  # Change to suit your needs
+        start_date=start_date,  # Change to suit your needs
+        user_defined_macros=user_defined_macros  # Change to suit your needs
     ) as dag:
 
     {% filter indent(8, True) %}
