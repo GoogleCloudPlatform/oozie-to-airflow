@@ -19,7 +19,7 @@ task = kwargs.get('task')
 decisions = {{ case_dict | to_python }}
 for (predicate, decision) in decisions.items():
 {% filter indent(4, True) %}
-value = task.render_template(content=predicate, context=TEMPLATE_ENV, attr=None)
+value = task.render_template(content=predicate, context=TEMPLATE_ENV)
 if value in ("true", "True", 1):
     return decision
 {% endfilter %}
