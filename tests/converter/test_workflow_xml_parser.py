@@ -30,7 +30,7 @@ from o2a.definitions import EXAMPLE_DEMO_PATH, EXAMPLES_PATH
 
 from o2a.mappers import dummy_mapper, pig_mapper
 from o2a.mappers import ssh_mapper
-from o2a.o2a_libs.property_utils import PropertySet
+from o2a.o2a_libs.src.o2a_lib.property_utils import PropertySet
 
 
 class TestWorkflowXmlParser(unittest.TestCase):

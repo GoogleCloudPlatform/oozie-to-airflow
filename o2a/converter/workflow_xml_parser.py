@@ -38,7 +38,7 @@ from o2a.mappers.fork_mapper import ForkMapper
 from o2a.mappers.join_mapper import JoinMapper
 from o2a.mappers.kill_mapper import KillMapper
 from o2a.mappers.start_mapper import StartMapper
-from o2a.o2a_libs.property_utils import PropertySet
+from o2a.o2a_libs.src.o2a_lib.property_utils import PropertySet
 from o2a.transformers.base_transformer import BaseWorkflowTransformer
 from o2a.utils import xml_utils
 

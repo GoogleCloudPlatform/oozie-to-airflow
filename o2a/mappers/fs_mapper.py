@@ -21,7 +21,7 @@ from xml.etree.ElementTree import Element
 
 from o2a.converter.task import Task
 from o2a.mappers.action_mapper import ActionMapper
-from o2a.o2a_libs.property_utils import PropertySet
+from o2a.o2a_libs.src.o2a_lib.property_utils import PropertySet
 from o2a.utils.relation_utils import chain
 from o2a.utils.el_utils import normalize_path
 

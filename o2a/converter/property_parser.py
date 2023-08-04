@@ -16,7 +16,7 @@
 import os
 
 from o2a.converter.workflow import Workflow
-from o2a.o2a_libs.property_utils import PropertySet
+from o2a.o2a_libs.src.o2a_lib.property_utils import PropertySet
 from o2a.utils import el_utils
 from o2a.utils.constants import CONFIG, JOB_PROPS
 

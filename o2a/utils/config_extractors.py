@@ -20,7 +20,7 @@ import xml.etree.ElementTree as ET
 
 from o2a.converter.constants import HDFS_FOLDER
 from o2a.converter.exceptions import ParseException
-from o2a.o2a_libs import el_parser
+from o2a.o2a_libs.src.o2a_lib import el_parser
 
 TAG_CONFIGURATION = "configuration"
 TAG_PROPERTY = "property"

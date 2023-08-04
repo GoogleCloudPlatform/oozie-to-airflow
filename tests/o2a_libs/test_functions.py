@@ -18,8 +18,8 @@ import unittest
 
 from parameterized import parameterized
 
-import o2a.o2a_libs.functions as functions
-from o2a.o2a_libs.el_wf_functions import _reverse_task_map
+import o2a.o2a_libs.src.o2a_lib.functions as functions
+from o2a.o2a_libs.src.o2a_lib.el_wf_functions import _reverse_task_map
 
 
 class TestFunctions(unittest.TestCase):

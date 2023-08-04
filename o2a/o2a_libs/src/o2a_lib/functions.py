@@ -18,8 +18,8 @@ EL functions map module.
 import re
 import json
 
-import o2a.o2a_libs.el_wf_functions as wf_functions
-import o2a.o2a_libs.el_fs_functions as fs_functions
+from . import el_wf_functions as wf_functions
+from . import el_fs_functions as fs_functions
 
 
 # Used for functions.wf.f_name pattern in templates

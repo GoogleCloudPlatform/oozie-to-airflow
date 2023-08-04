@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+#!/usr/bin/env bash
 # Copyright 2019 Google LLC
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -12,21 +12,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Base transformer classes"""
+set -euo pipefail
+MY_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
+O2A_DIR="$( cd "${MY_DIR}/.." && pwd )"
 
-from o2a.converter.workflow import Workflow
-
-
-from o2a.o2a_libs.src.o2a_lib.property_utils import PropertySet
-
-
-class BaseWorkflowTransformer:
-    """
-    Base class for all transformers
-    """
-
-    def process_workflow_after_parse_workflow_xml(self, workflow: Workflow):
-        pass
-
-    def process_workflow_after_convert_nodes(self, workflow: Workflow, props: PropertySet):
-        pass
+pushd "${O2A_DIR}"
+echo
+"${MY_DIR}/o2a-confirm" "Preparing test package"
+echo
+rm -rvf o2a/o2a_libs/dist/*
+rm -rvf o2a/o2a_libs/src/o2a_lib.egg-info
+rm -rvf .eggs
+python3 -m pip install --upgrade build
+python3 -m build o2a/o2a_libs
+echo
+"${MY_DIR}/o2a-confirm" "Uploading to test PyPi"
+echo
+python3 -m twine upload --repository-url https://test.pypi.org/legacy/ o2a/o2a_libs/dist/*
+popd

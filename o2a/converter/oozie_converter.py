@@ -34,7 +34,7 @@ from o2a.converter.workflow import Workflow
 from o2a.utils.file_utils import get_lib_files
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.transformers.base_transformer import BaseWorkflowTransformer
-from o2a.o2a_libs.property_utils import PropertySet
+from o2a.o2a_libs.src.o2a_lib.property_utils import PropertySet
 
 
 # pylint: disable=too-many-instance-attributes

@@ -37,7 +37,7 @@ import black
 from autoflake import fix_file
 
 from o2a.converter.workflow import Workflow
-from o2a.o2a_libs.property_utils import PropertySet
+from o2a.o2a_libs.src.o2a_lib.property_utils import PropertySet
 from o2a.utils.el_utils import comma_separated_string_to_list
 from o2a.utils.template_utils import render_template
 

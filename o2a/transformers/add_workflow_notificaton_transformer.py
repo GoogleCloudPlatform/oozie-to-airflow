@@ -18,7 +18,7 @@ Remove Start Transformer
 from o2a.converter.task import Task
 from o2a.converter.task_group import TaskGroup
 from o2a.converter.workflow import Workflow
-from o2a.o2a_libs.property_utils import PropertySet
+from o2a.o2a_libs.src.o2a_lib.property_utils import PropertySet
 from o2a.transformers.base_transformer import BaseWorkflowTransformer
 
 PROP_WORKFLOW_NOTIFICATION_URL = "oozie.wf.workflow.notification.url"
