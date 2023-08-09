@@ -28,6 +28,15 @@ if [[ ! -z "${KOKORO_BUILD_ID}" ]]; then # export vars only for Kokoro job
   export COMPOSER_TESTS_PROJECT_ID=PROJECT_ID
 fi
 
+# prepare python environment
+pyenv install --skip-existing 3.6.15
+pyenv install --skip-existing 3.7.10
+pyenv install --skip-existing 3.8.10
+pyenv install --skip-existing 3.9.5
+pyenv install --skip-existing 3.10.9
+pyenv global 3.6.15 3.7.10 3.8.10 3.9.5 3.10.9
+python -m pip install -r ${O2A_DIR}/requirements.txt
+
 echo -e "******************** Running unit tests... ********************\n"
 "${O2A_DIR}/bin/o2a-run-all-unit-tests"
 echo -e "******************** Unit tests complete.  ********************\n"
