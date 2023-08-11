@@ -21,7 +21,7 @@ from xml.etree import ElementTree as ET
 from o2a.converter.task import Task
 from o2a.converter.relation import Relation
 from o2a.mappers import spark_mapper
-from o2a.o2a_libs.property_utils import PropertySet
+from o2a.o2a_libs.src.o2a_lib.property_utils import PropertySet
 
 EXAMPLE_JOB_PROPS = {"nameNode": "hdfs://", "userName": "test_user", "examplesRoot": "examples"}
 

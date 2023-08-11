@@ -22,8 +22,8 @@ from xml.etree.ElementTree import Element
 from o2a.converter.task import Task
 from o2a.converter.relation import Relation
 from o2a.mappers.base_mapper import BaseMapper
-from o2a.o2a_libs.property_utils import PropertySet
-from o2a.o2a_libs import el_parser
+from o2a.o2a_libs.src.o2a_lib.property_utils import PropertySet
+from o2a.o2a_libs.src.o2a_lib import el_parser
 
 
 # noinspection PyAbstractClass

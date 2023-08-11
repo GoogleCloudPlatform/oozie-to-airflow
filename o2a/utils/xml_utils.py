@@ -15,7 +15,7 @@
 """XML parsing utilities"""
 from typing import List, Optional, cast
 from xml.etree import ElementTree as ET
-from o2a.o2a_libs import el_parser
+from o2a.o2a_libs.src.o2a_lib import el_parser
 
 
 class NoNodeFoundException(Exception):

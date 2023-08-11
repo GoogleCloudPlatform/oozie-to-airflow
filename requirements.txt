@@ -1,4 +1,4 @@
-apache-airflow==2.6.0 # pyup: ignore
+apache-airflow>=2.0.0 # pyup: ignore
 autoflake==1.4
 black==23.1a1
 flake8==3.8.4

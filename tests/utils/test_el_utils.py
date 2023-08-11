@@ -24,7 +24,7 @@ from o2a.utils import el_utils
 from o2a.utils.el_utils import normalize_path, escape_string_with_python_escapes, replace_url_el
 
 # pylint: disable=too-many-public-methods
-from o2a.o2a_libs.property_utils import PropertySet
+from o2a.o2a_libs.src.o2a_lib.property_utils import PropertySet
 
 
 class TestELUtils(unittest.TestCase):

@@ -24,7 +24,7 @@ from parameterized import parameterized
 from o2a.converter.task import Task
 from o2a.converter.relation import Relation
 from o2a.mappers import fs_mapper
-from o2a.o2a_libs.property_utils import PropertySet
+from o2a.o2a_libs.src.o2a_lib.property_utils import PropertySet
 
 TEST_JOB_PROPS: Dict[str, str] = {"user.name": "pig", "nameNode": "hdfs://localhost:8020"}
 TEST_CONFIG: Dict[str, str] = {}
