@@ -22,7 +22,7 @@ from o2a.converter.relation import Relation
 from o2a.converter.task import Task
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.mappers.extensions.prepare_mapper_extension import PrepareMapperExtension
-from o2a.o2a_libs.property_utils import PropertySet
+from o2a.o2a_libs.src.o2a_lib.property_utils import PropertySet
 from o2a.utils import xml_utils
 from o2a.utils.file_archive_extractors import FileExtractor, ArchiveExtractor
 from o2a.utils.xml_utils import get_tags_el_array_from_text
@@ -74,11 +74,13 @@ class JavaMapper(ActionMapper):
             template_name="java.tpl",
             template_params=dict(
                 props=self.props,
-                hdfs_files=self.hdfs_files,
-                hdfs_archives=self.hdfs_archives,
-                main_class=self.main_class,
-                jar_files_in_hdfs=self.jar_files_in_hdfs,
-                args=self.args,
+                hadoop_job=dict(
+                    args=self.args,
+                    jar_file_uris=self.jar_files_in_hdfs,
+                    file_uris=self.hdfs_files,
+                    archive_uris=self.hdfs_archives,
+                    main_class=self.main_class,
+                ),
             ),
         )
         tasks = [action_task]
@@ -89,7 +91,10 @@ class JavaMapper(ActionMapper):
         return tasks, relations
 
     def required_imports(self) -> Set[str]:
-        return {"from airflow.utils import dates", "from airflow.contrib.operators import dataproc_operator"}
+        return {
+            "from airflow.utils import dates",
+            "from airflow.providers.google.cloud.operators.dataproc import DataprocSubmitJobOperator"
+        }
 
     def _get_jar_files_in_hdfs_full_paths(self):
         hdfs_app_prefix = self.props.job_properties["oozie.wf.application.path"]

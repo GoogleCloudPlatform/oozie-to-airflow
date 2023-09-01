@@ -85,7 +85,7 @@ using [virtualenvwrapper](https://virtualenvwrapper.readthedocs.io/en/latest/).
 An example of such local environment setup (with virtualenvwrapper):
 
 ```bash
-mkvirtualenv -p python3.6 oozie-to-airflow
+mkvirtualenv -p python3.8 oozie-to-airflow
 pip install -e .
 ```
 

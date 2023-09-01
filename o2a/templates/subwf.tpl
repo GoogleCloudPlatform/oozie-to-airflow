@@ -17,5 +17,5 @@
 {{ task_id | to_var }} = SubDagOperator(
     task_id={{ task_id | to_python }},
     trigger_rule={{ trigger_rule | to_python }},
-    subdag=subdag_{{ app_name | to_var }}.sub_dag(dag.dag_id, {{ task_id | to_python }}, dag.start_date, dag.schedule_interval),
+    subdag=subdag_{{ app_name | to_var }}.sub_dag(dag.dag_id, {{ task_id | to_python }}, dag.start_date, dag.schedule_interval, dag.user_defined_macros),
 )

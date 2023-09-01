@@ -21,7 +21,7 @@ from xml.etree.ElementTree import Element
 
 from o2a.converter.relation import Relation
 from o2a.converter.task import Task
-from o2a.o2a_libs.property_utils import PropertySet
+from o2a.o2a_libs.src.o2a_lib.property_utils import PropertySet
 
 
 class BaseMapper(ABC):
@@ -45,7 +45,7 @@ class BaseMapper(ABC):
         Returns a set of strings that are the import statement that python will
         write to use.
 
-        Ex: returns {'from airflow.operators import bash_operator']}
+        Ex: returns {'from airflow.operators import bash']}
         """
         raise NotImplementedError("Not Implemented")
 

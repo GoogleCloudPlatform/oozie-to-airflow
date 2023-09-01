@@ -20,6 +20,12 @@ O2A_DIR="$( cd "${MY_DIR}/.." && pwd )"
 export PATH="${HOME}/.local/bin:${PATH}"
 
 if [[ ! -z "${KOKORO_BUILD_ID}" ]]; then # export vars only for Kokoro job
+  # add USER env variable for the unit tests
+  export USER="kokoro"
+
+  # add TERM env variable for the conversion tests
+  export TERM="xterm-256color"
+
   # Setup service account credentials
   export GOOGLE_APPLICATION_CREDENTIALS=${KOKORO_GFILE_DIR}/kokoro/service-account-key.json
 
@@ -28,14 +34,14 @@ if [[ ! -z "${KOKORO_BUILD_ID}" ]]; then # export vars only for Kokoro job
   export COMPOSER_TESTS_PROJECT_ID=PROJECT_ID
 fi
 
+# install xmllint
+sudo apt-get install -y libxml2-utils
+
 # prepare python environment
-pyenv install --skip-existing 3.6.15
-pyenv install --skip-existing 3.7.10
 pyenv install --skip-existing 3.8.10
 pyenv install --skip-existing 3.9.5
-pyenv install --skip-existing 3.10.9
-pyenv global 3.6.15 3.7.10 3.8.10 3.9.5 3.10.9
-python -m pip install -r ${O2A_DIR}/requirements.txt
+pyenv global 3.8.10 3.9.5
+python -m pip install --user -r ${O2A_DIR}/requirements.txt
 
 echo -e "******************** Running unit tests... ********************\n"
 "${O2A_DIR}/bin/o2a-run-all-unit-tests"

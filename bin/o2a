@@ -23,7 +23,7 @@ sys.path.insert(0, path.abspath(path.join(path.dirname(__file__), path.pardir)))
 if sys.version_info.major < 3 or (sys.version_info.major == 3 and sys.version_info.minor < 6):
     print("")
     print(
-        "ERROR! You need to run this script in python version >= 3.6 (and you have {}.{})".format(
+        "ERROR! You need to run this script in python version >= 3.8 (and you have {}.{})".format(
             sys.version_info.major, sys.version_info.minor
         )
     )

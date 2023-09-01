@@ -13,14 +13,14 @@
   See the License for the specific language governing permissions and
   limitations under the License.
 #}
-{{ task_id | to_var }}_hook = ssh_hook.SSHHook(
+{{ task_id | to_var }}_hook = SSHHook(
     ssh_conn_id='ssh_default',
     username={{ user | to_python }},
     remote_host={{ host | to_python }},
 )
 
 {% import "macros/props.tpl" as props_macro %}
-{{ task_id | to_var }} = ssh_operator.SSHOperator(
+{{ task_id | to_var }} = SSHOperator(
     task_id={{ task_id | to_python }},
     trigger_rule={{ trigger_rule | to_python }},
     ssh_hook={{ task_id | to_var }}_hook,

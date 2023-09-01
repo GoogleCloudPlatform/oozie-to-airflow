@@ -18,7 +18,7 @@ import unittest
 from o2a.converter.task import Task
 from o2a.converter.task_group import ActionTaskGroup, ControlTaskGroup
 from o2a.converter.workflow import Workflow
-from o2a.o2a_libs.property_utils import PropertySet
+from o2a.o2a_libs.src.o2a_lib.property_utils import PropertySet
 from o2a.transformers.add_node_notificaton_transformer import (
     AddNodeNotificationTransformer,
     NODE_STATUS_SUFFIX,

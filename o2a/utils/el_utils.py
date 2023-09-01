@@ -25,8 +25,8 @@ from jinja2 import StrictUndefined, Environment
 from jinja2.exceptions import UndefinedError
 
 from o2a.converter.exceptions import ParseException
-from o2a.o2a_libs import el_parser
-from o2a.o2a_libs.property_utils import PropertySet
+from o2a.o2a_libs.src.o2a_lib import el_parser
+from o2a.o2a_libs.src.o2a_lib.property_utils import PropertySet
 
 
 def strip_el(el_function: str) -> str:

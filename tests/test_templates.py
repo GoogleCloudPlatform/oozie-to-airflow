@@ -181,7 +181,7 @@ class DecisionTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
 
     DEFAULT_TEMPLATE_PARAMS = dict(
         task_id="DAG_NAME_A",
-        trigger_rule=TriggerRule.DUMMY,
+        trigger_rule=TriggerRule.ALWAYS,
         case_dict={
             '{{functions.first_not_null("first","second") == "second"}}': "first",
             '{{functions.first_not_null("first","second") == "first"}}': "end",
@@ -205,7 +205,7 @@ class DecisionTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
 class DummyTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
     TEMPLATE_NAME = "dummy.tpl"
 
-    DEFAULT_TEMPLATE_PARAMS = dict(task_id="DAG_NAME_A", trigger_rule=TriggerRule.DUMMY)
+    DEFAULT_TEMPLATE_PARAMS = dict(task_id="DAG_NAME_A", trigger_rule=TriggerRule.ALWAYS)
 
     def test_minimal_green_path(self):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
@@ -224,7 +224,7 @@ class FsOpTempalteTestCase(BaseTestCases.BaseTemplateTestCase):
     DEFAULT_TEMPLATE_PARAMS = {
         "task_id": "DAG_NAME_A",
         "pig_command": "DAG_NAME_A",
-        "trigger_rule": TriggerRule.DUMMY,
+        "trigger_rule": TriggerRule.ALWAYS,
         "action_node_properties": {"key": "value"},
     }
 
@@ -251,7 +251,7 @@ class GitTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
 
     DEFAULT_TEMPLATE_PARAMS = {
         "task_id": "TASK_ID",
-        "trigger_rule": "dummy",
+        "trigger_rule": "always",
         "git_uri": "https://github.com/apache/oozie",
         "git_branch": "my-awesome-branch",
         "destination_path": "/my_git_repo_directory",
@@ -289,9 +289,11 @@ class HiveTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
 
     DEFAULT_TEMPLATE_PARAMS = {
         "task_id": "AA",
-        "trigger_rule": "dummy",
+        "trigger_rule": "always",
         "script": "id.q",
-        "query": "SELECT 1",
+        "query_obj": {
+            "queries": ["SELECT 1"]
+        },
         "variables": {
             "INPUT": "/user/${wf:user()}/${examplesRoot}/input-data/text",
             "OUTPUT": "/user/${wf:user()}/${examplesRoot}/output-data/demo/hive-node",
@@ -330,7 +332,7 @@ class HiveTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
 class KillTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
     TEMPLATE_NAME = "kill.tpl"
 
-    DEFAULT_TEMPLATE_PARAMS = dict(task_id="DAG_NAME_A", trigger_rule=TriggerRule.DUMMY)
+    DEFAULT_TEMPLATE_PARAMS = dict(task_id="DAG_NAME_A", trigger_rule=TriggerRule.ALWAYS)
 
     def test_minimal_green_path(self):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)
@@ -348,7 +350,7 @@ class MapReduceTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
 
     DEFAULT_TEMPLATE_PARAMS = {
         "task_id": "AA",
-        "trigger_rule": "dummy",
+        "trigger_rule": "always",
         "action_node_properties": {
             "mapred.mapper.new-api": "true",
             "mapred.reducer.new-api": "true",
@@ -394,7 +396,7 @@ class PigTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
 
     DEFAULT_TEMPLATE_PARAMS = {
         "task_id": "AA",
-        "trigger_rule": "dummy",
+        "trigger_rule": "always",
         "params_dict": {
             "INPUT": "/user/${wf:user()}/${examplesRoot}/input-data/text",
             "OUTPUT": "/user/${wf:user()}/${examplesRoot}/output-data/demo/pig-node",
@@ -435,7 +437,7 @@ class PrepareTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
 
     DEFAULT_TEMPLATE_PARAMS = {
         "task_id": "DAG_NAME_A",
-        "trigger_rule": "dummy",
+        "trigger_rule": "always",
         "delete": "file1 file2",
         "mkdir": "file3 file4",
         "action_node_properties": {"key": "value"},
@@ -460,7 +462,7 @@ class ShellTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
     DEFAULT_TEMPLATE_PARAMS = {
         "task_id": "DAG_NAME_A",
         "pig_command": "PIG_CMD",
-        "trigger_rule": "dummy",
+        "trigger_rule": "always",
         "action_node_properties": {"key": "value"},
     }
 
@@ -487,18 +489,19 @@ class SparkTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
 
     DEFAULT_TEMPLATE_PARAMS = {
         "task_id": "AA",
-        "hdfs_archives": [],
-        "arguments": ["inputpath=hdfs:///input/file.txt", "value=2"],
-        "dataproc_spark_jars": ["/lib/spark-examples_2.10-1.1.0.jar"],
-        "spark_opts": {
-            "mapred.compress.map.output": "true",
-            "spark.executor.extraJavaOptions": "-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp",
+        "spark_job": {
+            "args": ["inputpath=hdfs:///input/file.txt", "value=2"],
+            "jar_file_uris": ["/lib/spark-examples_2.10-1.1.0.jar"],
+            "file_uris": [],
+            "archive_uris": [],
+            "properties": {
+                "mapred.compress.map.output": "true",
+                "spark.executor.extraJavaOptions": "-XX:+HeapDumpOnOutOfMemoryError -XX:HeapDumpPath=/tmp",
+            },
+            "main_jar_file_uri": None,
+            "main_class": "org.apache.spark.examples.mllib.JavaALS"
         },
-        "hdfs_files": [],
-        "job_name": "Spark Examples",
-        "main_class": "org.apache.spark.examples.mllib.JavaALS",
-        "main_jar": None,
-        "trigger_rule": "dummy",
+        "trigger_rule": "always",
         "action_node_properties": {"key": "value"},
     }
 
@@ -543,7 +546,7 @@ class SshTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
     DEFAULT_TEMPLATE_PARAMS = {
         "task_id": "AA",
         "job_properties": {},
-        "trigger_rule": "dummy",
+        "trigger_rule": "always",
         "command": "ls -l -a",
         "user": "user",
         "host": "apache.org",
@@ -580,7 +583,7 @@ class SshTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
 class SubwfTemplateTestCase(BaseTestCases.BaseTemplateTestCase):
     TEMPLATE_NAME = "subwf.tpl"
 
-    DEFAULT_TEMPLATE_PARAMS = {"task_id": "test_id", "trigger_rule": "dummy", "app_name": "DAG_NAME_A"}
+    DEFAULT_TEMPLATE_PARAMS = {"task_id": "test_id", "trigger_rule": "always", "app_name": "DAG_NAME_A"}
 
     def test_green_path(self):
         res = render_template(self.TEMPLATE_NAME, **self.DEFAULT_TEMPLATE_PARAMS)

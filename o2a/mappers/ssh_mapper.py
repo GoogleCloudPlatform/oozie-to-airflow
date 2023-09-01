@@ -21,8 +21,8 @@ from xml.etree.ElementTree import Element
 from o2a.converter.task import Task
 from o2a.converter.relation import Relation
 from o2a.mappers.action_mapper import ActionMapper
-from o2a.o2a_libs.property_utils import PropertySet
-from o2a.o2a_libs import el_parser
+from o2a.o2a_libs.src.o2a_lib.property_utils import PropertySet
+from o2a.o2a_libs.src.o2a_lib import el_parser
 from o2a.utils import el_utils, xml_utils
 
 
@@ -96,6 +96,6 @@ class SSHMapper(ActionMapper):
     def required_imports(self) -> Set[str]:
         return {
             "from airflow.utils import dates",
-            "from airflow.contrib.operators import ssh_operator",
-            "from airflow.contrib.hooks import ssh_hook",
+            "from airflow.providers.ssh.operators.ssh import SSHOperator",
+            "from airflow.providers.ssh.hooks.ssh import SSHHook",
         }

@@ -25,7 +25,7 @@ with open("requirements.txt") as f:
 
 setup(
     name=NAME,
-    version="1.0.1",
+    version="2.0.0",
     author="Jarek Potiuk, Szymon Przedwojski, Kamil Breguła, Feng Lu, Cameron Moberg",
     author_email="jarek.potiuk@polidea.com, szymon.przedwojski@polidea.com, "
     "kamil.bregula@polidea.com, fenglu@google.com, cjmoberg@google.com",
@@ -40,9 +40,9 @@ setup(
     scripts=["bin/o2a", "bin/o2a-validate-workflows"],
     packages=["o2a"],
     classifiers=[
-        "Programming Language :: Python :: 3.6",
-        "Programming Language :: Python :: 3.7",
         "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.9",
+        "Programming Language :: Python :: 3.10",
         "License :: OSI Approved :: Apache Software License",
         "Operating System :: OS Independent",
     ],

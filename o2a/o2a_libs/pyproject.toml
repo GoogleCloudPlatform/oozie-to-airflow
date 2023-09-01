@@ -1,0 +1,28 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "o2a_lib"
+version = "2.0.0"
+authors = [
+  { name="Jarek Potiuk", email="jarek.potiuk@polidea.com" },
+  { name="Szymon Przedwojski", email="szymon.przedwojski@polidea.com" },
+  { name="Kamil Breguła", email="kamil.bregula@polidea.com" },
+  { name="Feng Lu", email="fenglu@google.com" },
+  { name="Cameron Moberg", email="cjmoberg@google.com" },
+]
+description = "Additional library for Oozie To Airflow migration tool"
+readme = "README.md"
+requires-python = ">=3.8"
+classifiers = [
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: OS Independent",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/GoogleCloudPlatform/oozie-to-airflow/tree/master/o2a/o2a_libs"
+"Bug Tracker" = "https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues"

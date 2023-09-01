@@ -21,7 +21,7 @@ from xml.etree import ElementTree as ET
 from o2a.converter.relation import Relation
 from o2a.converter.task import Task
 from o2a.mappers.action_mapper import ActionMapper
-from o2a.o2a_libs.property_utils import PropertySet
+from o2a.o2a_libs.src.o2a_lib.property_utils import PropertySet
 from o2a.utils.config_extractors import TAG_CONFIGURATION, TAG_JOB_XML
 from o2a.utils.xml_utils import find_node_by_tag, find_nodes_by_tag
 

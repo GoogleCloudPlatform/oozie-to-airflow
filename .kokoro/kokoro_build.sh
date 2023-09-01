@@ -25,9 +25,9 @@
 #  parameters, will print the full command, with credentials, in the build logs.
 # set -x
 
-# Code under repo is checked out to ${KOKORO_ARTIFACTS_DIR}/github.
+# Code under repo is checked out to ${KOKORO_ARTIFACTS_DIR}/git.
 # The final directory name in this path is determined by the scm name specified
 # in the job configuration.
 
 cd "${KOKORO_ARTIFACTS_DIR}/git/oozie-to-airflow"
-.kokoro/tests/run_tests.sh
+.kokoro/run_tests.sh

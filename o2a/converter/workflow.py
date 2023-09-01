@@ -50,12 +50,12 @@ class Workflow:
         self.dependencies = dependencies or {
             "import shlex",
             "import datetime",
-            "from o2a.o2a_libs.property_utils import PropertySet",
-            "from o2a.o2a_libs import functions",
+            "from o2a_lib.property_utils import PropertySet",
+            "from o2a_lib import functions",
             "from airflow import models",
             "from airflow.utils.trigger_rule import TriggerRule",
             "from airflow.utils import dates",
-            "from airflow.operators import bash_operator, dummy_operator",
+            "from airflow.operators import bash, empty",
         }
         self.library_folder = os.path.join(self.input_directory_path, HDFS_FOLDER, LIB_FOLDER)
         self.jar_files = get_lib_files(self.library_folder, extension=".jar")

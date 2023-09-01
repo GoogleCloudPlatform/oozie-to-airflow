@@ -24,7 +24,7 @@ from o2a.mappers import git_mapper
 from o2a.mappers.git_mapper import prepare_git_command
 
 # language=XML
-from o2a.o2a_libs.property_utils import PropertySet
+from o2a.o2a_libs.src.o2a_lib.property_utils import PropertySet
 
 EXAMPLE_XML = """
 <git name="git">

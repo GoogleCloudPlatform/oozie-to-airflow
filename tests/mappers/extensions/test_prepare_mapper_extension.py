@@ -20,7 +20,7 @@ from xml.etree import ElementTree as ET
 from o2a.converter.task import Task
 from o2a.mappers.base_mapper import BaseMapper
 from o2a.mappers.extensions.prepare_mapper_extension import PrepareMapperExtension
-from o2a.o2a_libs.property_utils import PropertySet
+from o2a.o2a_libs.src.o2a_lib.property_utils import PropertySet
 
 TEST_MAPPER_NAME = "mapper"
 

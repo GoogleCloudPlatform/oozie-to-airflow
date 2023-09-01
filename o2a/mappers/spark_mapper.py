@@ -23,7 +23,7 @@ from o2a.converter.task import Task
 from o2a.converter.relation import Relation
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.mappers.extensions.prepare_mapper_extension import PrepareMapperExtension
-from o2a.o2a_libs.property_utils import PropertySet
+from o2a.o2a_libs.src.o2a_lib.property_utils import PropertySet
 from o2a.utils import xml_utils
 from o2a.utils.file_archive_extractors import FileExtractor, ArchiveExtractor
 
@@ -114,14 +114,16 @@ class SparkMapper(ActionMapper):
             task_id=self.name,
             template_name="spark.tpl",
             template_params=dict(
-                main_jar=self.java_jar,
-                main_class=self.java_class,
-                arguments=self.application_args,
-                hdfs_archives=self.hdfs_archives,
-                hdfs_files=self.hdfs_files,
                 job_name=self.job_name,
-                dataproc_spark_jars=self.dataproc_jars,
-                spark_opts=self.spark_opts,
+                spark_job=dict(
+                    args=self.application_args,
+                    jar_file_uris=self.dataproc_jars,
+                    file_uris=self.hdfs_files,
+                    archive_uris=self.hdfs_archives,
+                    properties=self.spark_opts,
+                    main_jar_file_uri=self.java_jar,
+                    main_class=self.java_class
+                )
             ),
         )
         tasks = [action_task]
@@ -134,7 +136,7 @@ class SparkMapper(ActionMapper):
     def required_imports(self) -> Set[str]:
         # Bash are for the potential prepare statement
         return {
-            "from airflow.contrib.operators import dataproc_operator",
-            "from airflow.operators import bash_operator",
-            "from airflow.operators import dummy_operator",
+            "from airflow.providers.google.cloud.operators.dataproc import DataprocSubmitJobOperator",
+            "from airflow.operators import bash",
+            "from airflow.operators import empty",
         }

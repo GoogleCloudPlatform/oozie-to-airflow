@@ -21,7 +21,7 @@ from xml.etree import ElementTree as ET
 from o2a.converter.task import Task
 from o2a.converter.relation import Relation
 from o2a.mappers import spark_mapper
-from o2a.o2a_libs.property_utils import PropertySet
+from o2a.o2a_libs.src.o2a_lib.property_utils import PropertySet
 
 EXAMPLE_JOB_PROPS = {"nameNode": "hdfs://", "userName": "test_user", "examplesRoot": "examples"}
 
@@ -106,17 +106,19 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
                     task_id="test_id",
                     template_name="spark.tpl",
                     template_params={
-                        "main_jar": None,
-                        "main_class": "org.apache.spark.examples.mllib.JavaALS",
-                        "arguments": ["inputpath=hdfs:///input/file.txt", "value=2"],
-                        "hdfs_archives": [],
-                        "hdfs_files": [],
                         "job_name": "Spark Examples",
-                        "spark_opts": {
-                            "spark.executor.extraJavaOptions": "-XX:+HeapDumpOnOutOfMemoryError "
-                            "-XX:HeapDumpPath=/tmp"
+                        "spark_job": {
+                            "args": ["inputpath=hdfs:///input/file.txt", "value=2"],
+                            "jar_file_uris": ["/lib/spark-examples_2.10-1.1.0.jar"],
+                            "file_uris": [],
+                            "archive_uris": [],
+                            "properties": {
+                                "spark.executor.extraJavaOptions": "-XX:+HeapDumpOnOutOfMemoryError "
+                                "-XX:HeapDumpPath=/tmp"
+                            },
+                            "main_jar_file_uri": None,
+                            "main_class": "org.apache.spark.examples.mllib.JavaALS",
                         },
-                        "dataproc_spark_jars": ["/lib/spark-examples_2.10-1.1.0.jar"],
                     },
                 ),
             ],
@@ -139,22 +141,24 @@ class TestSparkMapperWithPrepare(unittest.TestCase):
                     template_name="spark.tpl",
                     trigger_rule="one_success",
                     template_params={
-                        "main_jar": None,
-                        "main_class": "org.apache.spark.examples.mllib.JavaALS",
-                        "arguments": [
-                            "inputpath=hdfs:///input/file.txt",
-                            "value=2",
-                            "/user/{{userName}}/{{examplesRoot}}/apps/spark/lib/oozie-examples-4.3.0.jar",
-                        ],
-                        "hdfs_archives": [],
-                        "hdfs_files": [],
                         "job_name": "Spark Examples",
-                        "dataproc_spark_jars": [
-                            "/user/{{userName}}/{{examplesRoot}}/apps/spark/lib/oozie-examples-4.3.0.jar"
-                        ],
-                        "spark_opts": {
-                            "spark.executor.extraJavaOptions": "-XX:+HeapDumpOnOutOfMemoryError "
-                            "-XX:HeapDumpPath=/tmp"
+                        "spark_job": {
+                            "args": [
+                                "inputpath=hdfs:///input/file.txt",
+                                "value=2",
+                                "/user/{{userName}}/{{examplesRoot}}/apps/spark/lib/oozie-examples-4.3.0.jar",
+                            ],
+                            "jar_file_uris": [
+                                "/user/{{userName}}/{{examplesRoot}}/apps/spark/lib/oozie-examples-4.3.0.jar"
+                            ],
+                            "file_uris": [],
+                            "archive_uris": [],
+                            "properties": {
+                                "spark.executor.extraJavaOptions": "-XX:+HeapDumpOnOutOfMemoryError "
+                                "-XX:HeapDumpPath=/tmp"
+                            },
+                            "main_jar_file_uri": None,
+                            "main_class": "org.apache.spark.examples.mllib.JavaALS",
                         },
                     },
                 )

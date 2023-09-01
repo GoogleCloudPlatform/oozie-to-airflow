@@ -20,7 +20,7 @@ from xml.etree import ElementTree as ET
 
 from o2a.converter.task import Task
 from o2a.mappers import java_mapper
-from o2a.o2a_libs.property_utils import PropertySet
+from o2a.o2a_libs.src.o2a_lib.property_utils import PropertySet
 
 
 class TestJavaMapper(unittest.TestCase):
@@ -248,11 +248,13 @@ class TestJavaMapper(unittest.TestCase):
                             },
                             action_node_properties={"mapred.job.queue.name": "{{queueName}}"},
                         ),
-                        "hdfs_files": [],
-                        "hdfs_archives": [],
-                        "main_class": "org.apache.oozie.example.DemoJavaMain",
-                        "jar_files_in_hdfs": [],
-                        "args": ["Hello", "Oozie!"],
+                        "hadoop_job": dict(
+                            args=["Hello", "Oozie!"],
+                            jar_file_uris=[],
+                            file_uris=[],
+                            archive_uris=[],
+                            main_class="org.apache.oozie.example.DemoJavaMain",
+                        ),
                     },
                 )
             ],

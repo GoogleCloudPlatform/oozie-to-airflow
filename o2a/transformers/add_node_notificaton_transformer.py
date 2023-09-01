@@ -26,7 +26,7 @@ from o2a.converter.task_group import (
     TransitionNotificationTaskGroup,
 )
 from o2a.converter.workflow import Workflow
-from o2a.o2a_libs.property_utils import PropertySet
+from o2a.o2a_libs.src.o2a_lib.property_utils import PropertySet
 from o2a.transformers.add_workflow_notificaton_transformer import NOTIFICATION_TASK_GROUP_NAMES
 from o2a.transformers.base_transformer import BaseWorkflowTransformer
 

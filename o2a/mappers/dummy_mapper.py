@@ -20,7 +20,7 @@ from xml.etree.ElementTree import Element
 from o2a.converter.relation import Relation
 from o2a.converter.task import Task
 from o2a.mappers.base_mapper import BaseMapper
-from o2a.o2a_libs.property_utils import PropertySet
+from o2a.o2a_libs.src.o2a_lib.property_utils import PropertySet
 
 
 class DummyMapper(BaseMapper):
@@ -46,4 +46,4 @@ class DummyMapper(BaseMapper):
         return tasks, relations
 
     def required_imports(self) -> Set[str]:
-        return {"from airflow.operators import dummy_operator"}
+        return {"from airflow.operators import empty"}

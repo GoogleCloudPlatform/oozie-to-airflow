@@ -14,13 +14,13 @@
 ---
 repos:
   - repo: https://github.com/ambv/black
-    rev: 19.3b0
+    rev: 23.1a1
     hooks:
       - id: black
         name: Formats python files using black
-        language_version: python3.6
+        language_version: python3.8
   - repo: https://github.com/Lucas-C/pre-commit-hooks
-    rev: v1.1.6
+    rev: v1.5.2
     hooks:
       - id: insert-license
         name: Add licence for all XML, md files

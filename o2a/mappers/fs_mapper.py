@@ -21,7 +21,7 @@ from xml.etree.ElementTree import Element
 
 from o2a.converter.task import Task
 from o2a.mappers.action_mapper import ActionMapper
-from o2a.o2a_libs.property_utils import PropertySet
+from o2a.o2a_libs.src.o2a_lib.property_utils import PropertySet
 from o2a.utils.relation_utils import chain
 from o2a.utils.el_utils import normalize_path
 
@@ -145,7 +145,7 @@ class FsMapper(ActionMapper):
         return self.tasks, chain(self.tasks)
 
     def required_imports(self) -> Set[str]:
-        return {"from airflow.operators import dummy_operator", "from airflow.operators import bash_operator"}
+        return {"from airflow.operators import empty", "from airflow.operators import bash"}
 
     def parse_fs_operation(self, index: int, node: Element, operation_nodes_count: int) -> Task:
         tag_name = node.tag

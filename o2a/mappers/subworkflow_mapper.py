@@ -25,7 +25,7 @@ from o2a.converter.renderers import BaseRenderer
 from o2a.converter.task import Task
 from o2a.definitions import EXAMPLES_PATH
 from o2a.mappers.action_mapper import ActionMapper
-from o2a.o2a_libs.property_utils import PropertySet
+from o2a.o2a_libs.src.o2a_lib.property_utils import PropertySet
 from o2a.transformers.base_transformer import BaseWorkflowTransformer
 from o2a.utils import xml_utils
 
@@ -108,7 +108,7 @@ class SubworkflowMapper(ActionMapper):
     def required_imports(self) -> Set[str]:
         return {
             "from airflow.utils import dates",
-            "from airflow.contrib.operators import dataproc_operator",
-            "from airflow.operators.subdag_operator import SubDagOperator",
+            "from airflow.providers.google.cloud.operators import dataproc",
+            "from airflow.operators.subdag import SubDagOperator",
             f"import subdag_{self.app_name}",
         }

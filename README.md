@@ -27,7 +27,7 @@
 A tool to easily convert between [Apache Oozie](http://oozie.apache.org/) workflows
 and [Apache Airflow](https://airflow.apache.org) workflows.
 
-The program targets Apache Airflow >= 1.10 and Apache Oozie 1.0 XML schema.
+The program targets Apache Airflow >= 2.x and Apache Oozie 1.0 XML schema.
 
 If you want to contribute to the project, please take a look at [CONTRIBUTING.md](CONTRIBUTING.md)
 
@@ -105,7 +105,7 @@ There are a few differences noted below:
 
 # Running the Program
 
-Note that you need Python >= 3.6 to run the converter.
+Note that you need Python >= 3.8 to run the converter.
 
 ## Installing from PyPi
 
@@ -211,10 +211,10 @@ executed in composer environment where the libs are copied to Composer's DAG fol
 ## Control nodes
 ### Fork and Join
 
-A [fork node](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a3.1.5_Fork_and_Join_Control_Nodes)
+A [fork node](https://oozie.apache.org/docs/5.2.0/WorkflowFunctionalSpec.html#a3.1.5_Fork_and_Join_Control_Nodes)
 splits the path of execution into multiple concurrent paths of execution.
 
-A [join node](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a3.1.5_Fork_and_Join_Control_Nodes)
+A [join node](https://oozie.apache.org/docs/5.2.0/WorkflowFunctionalSpec.html#a3.1.5_Fork_and_Join_Control_Nodes)
 waits until every concurrent execution of the previous fork node arrives to it. The fork and join nodes must be used in pairs. The join node
 assumes concurrent execution paths are children of the same fork node.
 ~~~~
@@ -233,7 +233,7 @@ assumes concurrent execution paths are children of the same fork node.
 
 ### Decision
 
-A [decision node](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a3.1.4_Decision_Control_Node)
+A [decision node](https://oozie.apache.org/docs/5.2.0/WorkflowFunctionalSpec.html#a3.1.4_Decision_Control_Node)
 enables a workflow to make a selection on the execution path to follow.
 
 The behavior of a decision node can be seen as a switch-case statement.
@@ -259,7 +259,7 @@ Predicates are JSP Expression Language (EL) expressions (refer to section 4.2 of
 ~~~~
 ### Start
 
-The [start node](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a3.1.1_Start_Control_Node)
+The [start node](https://oozie.apache.org/docs/5.2.0/WorkflowFunctionalSpec.html#a3.1.1_Start_Control_Node)
 is the entry point for a workflow job, it indicates the first workflow node the workflow job must transition to.
 
 When a workflow is started, it automatically transitions to the node specified in the start .
@@ -275,7 +275,7 @@ A workflow definition must have one start node.
 ~~~~
 ### End
 
-The [end node](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a3.1.2_End_Control_Node)
+The [end node](https://oozie.apache.org/docs/5.2.0/WorkflowFunctionalSpec.html#a3.1.2_End_Control_Node)
 is the end for a workflow job, it indicates that the workflow job has completed successfully.
 
 When a workflow job reaches the end it finishes successfully (SUCCEEDED).
@@ -294,7 +294,7 @@ A workflow definition must have one end node.
 
 ### Kill
 
-The [kill node](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a3.1.3_Kill_Control_Node)
+The [kill node](https://oozie.apache.org/docs/5.2.0/WorkflowFunctionalSpec.html#a3.1.3_Kill_Control_Node)
 allows a workflow job to exit with an error.
 
 When a workflow job reaches the kill it finishes in error (KILLED).
@@ -315,7 +315,7 @@ A workflow definition may have zero or more kill nodes.
 
 ## EL Functions
 
-As of now, a very minimal set of [Oozie EL](https://oozie.apache.org/docs/4.0.1/WorkflowFunctionalSpec.html#a4.2_Expression_Language_Functions)
+As of now, a very minimal set of [Oozie EL](https://oozie.apache.org/docs/5.2.0/WorkflowFunctionalSpec.html#a4.2_Expression_Language_Functions)
 functions are supported. The way they work is that an EL expression is being translated to
 a jinja template. The translation is performed using [Lark](https://lark-parser.readthedocs.io/en/latest/).
 All required variables should be passed in `job.properties`. Equivalents of EL functions can be found in
@@ -336,7 +336,7 @@ parsed by the Airflow workers and then available to all DAGs.
 ## Workflow and node notifications
 
 Workflow jobs can be configured to make an HTTP GET notification upon start and end of a workflow action node
-and upon the start and completion of a workflow job. More information in [Oozie docs](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a5_Workflow_Notifications).
+and upon the start and completion of a workflow job. More information in [Oozie docs](https://oozie.apache.org/docs/5.2.0/WorkflowFunctionalSpec.html#a5_Workflow_Notifications).
 
 Oozie-to-Airflow supports this feature.
 The `job.properties` file has contain URLs for workflow and action node notifications - example below:
@@ -412,7 +412,7 @@ treats file/archive somewhat erraticaly. This is not a blocker to run most of th
 some particular complex workflows might be problematic. Further testing with real, production Oozie
 workflows is needed to verify our implementation.
 
-[Example Oozie docs](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a3.2.2.1_Adding_Files_and_Archives_for_the_Job)
+[Example Oozie docs](https://oozie.apache.org/docs/5.2.0/WorkflowFunctionalSpec.html#a3.2.2.1_Adding_Files_and_Archives_for_the_Job)
 
 * [File/Archive in Pig doesn't work](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/243)
 
@@ -427,7 +427,7 @@ configuration options the following ones are not supported (but can be easily ad
 
 ## Support for uber.jar feature
 
-The uber.jar feature is not supported. [Oozie docs](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#AppDeployment)
+The uber.jar feature is not supported. [Oozie docs](https://oozie.apache.org/docs/5.2.0/WorkflowFunctionalSpec.html#AppDeployment)
 
 * [Support uber.jar feature](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/140)
 
@@ -442,14 +442,14 @@ LD_LIBRARY_PATH/CLASSPATH. Currently only Java Mapper supports it.
 ## Custom messages missing for Kill Node
 
 The Kill Node might have custom log message specified. This is not implemented.
-[Oozie docs](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a3.1.3_Kill_Control_Node)
+[Oozie docs](https://oozie.apache.org/docs/5.2.0/WorkflowFunctionalSpec.html#a3.1.3_Kill_Control_Node)
 
 * [Add handling of custom Kill Node message](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/97)
 
 ## Capturing output is not supported
 
 In several actions you can capture output from tasks. This is not yet implemented.
-[Example Oozie docs](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a3.2.6_Java_Action)
+[Example Oozie docs](https://oozie.apache.org/docs/5.2.0/WorkflowFunctionalSpec.html#a3.2.6_Java_Action)
 
 * [Add support for capture-ouput](https://github.com/GoogleCloudPlatform/oozie-to-airflow/issues/155)
 
@@ -505,8 +505,8 @@ on-premise setup. Here are some details about the environment that is supported:
 
 ### Cloud Composer
 
-* composer-1.5.0-airflow-1.10.1
-* python version 3 (3.6.6)
+* composer-2.2.0-airflow-2.5.1
+* python version 3 (3.8.10)
 * machine n1-standard-1
 * node count: 3
 * Additional PyPi packages:
@@ -518,24 +518,22 @@ on-premise setup. Here are some details about the environment that is supported:
 * primary disk size, 50 GB
 * Image 1.3.29-debian9
 * Hadoop version
-* Init action: [oozie-5.1.sh](dataproc/oozie-5.1.sh)
+* Init action: [oozie-5.2.sh](dataproc/oozie-5.2.sh)
 
 Those are the steps you should follow to set it up:
 
 1. Create a Dataproc cluster see [Creating Dataproc Cluster](#creating-dataproc-cluster) below
 1. Create a [Cloud Composer Environment](https://cloud.google.com/composer/docs/how-to/managing/creating#creating_a_new_environment)
-   with at least Airflow version 1.10 to test the Apache Airflow workflows.
-   Since Airflow 1.10 is in  Beta for Cloud Composer, you must
-   [enable beta features in Cloud Console](https://cloud.google.com/composer/docs/concepts/beta-support#enable-beta))
+   with at least Airflow version 2.0 to test the Apache Airflow workflows.
 1. Set up all required [Airflow Connections](https://airflow.apache.org/howto/connection/index.html)
    in Composer. This is required for things like `SSHOperator`.
 
 ### Creating Dataproc cluster
 
 We prepared Dataproc [initialization action](https://cloud.google.com/dataproc/docs/concepts/configuring-clusters/init-actions)
-that allows to run Oozie 5.1.0 on Dataproc.
+that allows to run Oozie 5.2.0 on Dataproc.
 
-Please upload [oozie-5.1.sh](dataproc/oozie-5.1.sh) to your GCS bucket and create cluster using following command:
+Please upload [oozie-5.2.sh](dataproc/oozie-5.2.sh) to your GCS bucket and create cluster using following command:
 
 Note that you need at least 20GB RAM to run Oozie jobs on the cluster. The custom machine type below has enough RAM
 to handle oozie.
@@ -767,7 +765,7 @@ The converted DAG uses the `DataProcHadoopOperator` in Airflow.
 
 **1. Exit status not available**
 
-From the [Oozie documentation](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a3.2.2_Map-Reduce_Action):
+From the [Oozie documentation](https://oozie.apache.org/docs/5.2.0/WorkflowFunctionalSpec.html#a3.2.2_Map-Reduce_Action):
 > The counters of the Hadoop job and job exit status (FAILED, KILLED or SUCCEEDED) must be available to the
 workflow job after the Hadoop jobs ends. This information can be used from within decision nodes and other
 actions configurations.
@@ -778,7 +776,7 @@ Issue in Github: [Implement exit status and counters in MapReduce Action](https:
 
 **2. Configuration options**
 
-From the [Oozie documentation](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a3.2.2_Map-Reduce_Action)
+From the [Oozie documentation](https://oozie.apache.org/docs/5.2.0/WorkflowFunctionalSpec.html#a3.2.2_Map-Reduce_Action)
 (the strikethrough is from us):
 > Hadoop JobConf properties can be specified as part of
 > - ~~the config-default.xml or~~
@@ -876,7 +874,7 @@ The converted DAG uses the `DataProcPigOperator` in Airflow.
 ### Known limitations
 **1. Configuration options**
 
-From the [Oozie documentation](https://oozie.apache.org/docs/5.1.0/WorkflowFunctionalSpec.html#a3.2.3_Pig_Action)
+From the [Oozie documentation](https://oozie.apache.org/docs/5.2.0/WorkflowFunctionalSpec.html#a3.2.3_Pig_Action)
 (the strikethrough is from us):
 > Hadoop JobConf properties can be specified as part of
 > - ~~the config-default.xml or~~
@@ -917,7 +915,7 @@ action with Pig by invoking `gcloud dataproc jobs submit pig --cluster=<cluster>
 
 **1. Exit status not available**
 
-From the [Oozie documentation](https://oozie.apache.org/docs/5.1.0/DG_ShellActionExtension.html):
+From the [Oozie documentation](https://oozie.apache.org/docs/5.2.0/DG_ShellActionExtension.html):
 > The output (STDOUT) of the Shell job can be made available to the workflow job after the Shell job ends.
 This information could be used from within decision nodes.
 
@@ -929,7 +927,7 @@ Issue in Github: [Finalize shell mapper](https://github.com/GoogleCloudPlatform/
 
 **2. No Shell launcher configuration**
 
-From the [Oozie documentation](https://oozie.apache.org/docs/5.1.0/DG_ShellActionExtension.html):
+From the [Oozie documentation](https://oozie.apache.org/docs/5.2.0/DG_ShellActionExtension.html):
 > Shell launcher configuration can be specified with a file, using the job-xml element, and inline,
 using the configuration elements.
 
@@ -959,14 +957,14 @@ The converted DAG uses the `DataProcSparkOperator` in Airflow.
 
 **1. Only tasks written in Java are supported**
 
-From the [Oozie documentation](https://oozie.apache.org/docs/5.1.0/DG_ShellActionExtension.html):
+From the [Oozie documentation](https://oozie.apache.org/docs/5.2.0/DG_ShellActionExtension.html):
 > The jar element indicates a comma separated list of jars or python files.
 
 The solution was tested with only a single Jar file.
 
 **2. No Spark launcher configuration**
 
-From the [Oozie documentation](https://oozie.apache.org/docs/5.1.0/DG_SparkActionExtension.html):
+From the [Oozie documentation](https://oozie.apache.org/docs/5.2.0/DG_SparkActionExtension.html):
 > Shell launcher configuration can be specified with a file, using the job-xml element, and inline,
 using the configuration elements.
 

@@ -24,7 +24,7 @@ from o2a.converter.exceptions import ParseException
 from o2a.converter.task import Task
 from o2a.mappers.action_mapper import ActionMapper
 from o2a.mappers.extensions.prepare_mapper_extension import PrepareMapperExtension
-from o2a.o2a_libs.property_utils import PropertySet
+from o2a.o2a_libs.src.o2a_lib.property_utils import PropertySet
 from o2a.utils.file_archive_extractors import ArchiveExtractor, FileExtractor
 
 
@@ -76,7 +76,7 @@ class HiveMapper(ActionMapper):
             task_id=self.name,
             template_name="hive.tpl",
             template_params=dict(
-                query=self.query,
+                query_obj=dict(queries=[self.query]) if self.query else None,
                 script=self.script,
                 props=self.props,
                 archives=self.hdfs_archives,
@@ -101,4 +101,7 @@ class HiveMapper(ActionMapper):
         shutil.copy(source_script_file_path, destination_script_file_path)
 
     def required_imports(self) -> Set[str]:
-        return {"from airflow.utils import dates", "from airflow.contrib.operators import dataproc_operator"}
+        return {
+            "from airflow.utils import dates",
+            "from airflow.providers.google.cloud.operators.dataproc import DataprocSubmitJobOperator"
+        }

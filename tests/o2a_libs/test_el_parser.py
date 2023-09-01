@@ -22,8 +22,8 @@ from jinja2 import Template
 
 from airflow import AirflowException
 
-import o2a.o2a_libs.functions as functions
-from o2a.o2a_libs.el_parser import translate
+import o2a.o2a_libs.src.o2a_lib.functions as functions
+from o2a.o2a_libs.src.o2a_lib.el_parser import translate
 
 
 class TestElParser(unittest.TestCase):
