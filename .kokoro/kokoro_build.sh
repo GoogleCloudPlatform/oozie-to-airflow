@@ -29,5 +29,5 @@
 # The final directory name in this path is determined by the scm name specified
 # in the job configuration.
 
-cd "${KOKORO_ARTIFACTS_DIR}/github/oozie-to-airflow"
+cd "${KOKORO_ARTIFACTS_DIR}/git/oozie-to-airflow"
 .kokoro/tests/run_tests.sh
