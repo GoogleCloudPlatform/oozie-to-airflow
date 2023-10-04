@@ -28,5 +28,5 @@ python3 -m build o2a/o2a_libs
 echo
 "${MY_DIR}/o2a-confirm" "Uploading to production PyPi"
 echo
-python3 -m twine upload --repository-url https://upload.pypi.org/legacy/ o2a/o2a_libs/dist/*
+python3 -m twine upload --repository pypi o2a/o2a_libs/dist/*
 popd

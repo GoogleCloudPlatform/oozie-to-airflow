@@ -27,5 +27,5 @@ python3 setup.py sdist bdist_wheel
 echo
 "${MY_DIR}/o2a-confirm" "Uploading to production PyPi"
 echo
-python3 -m twine upload --repository-url https://upload.pypi.org/legacy/ dist/*
+python3 -m twine upload --repository pypi dist/*
 popd
