@@ -35,6 +35,7 @@ if [[ ! -z "${KOKORO_BUILD_ID}" ]]; then # export vars only for Kokoro job
 fi
 
 # install xmllint
+sudo apt-get update
 sudo apt-get install -y libxml2-utils
 
 # prepare python environment
