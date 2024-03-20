@@ -1,6 +1,6 @@
 apache-airflow>=2.0.0 # pyup: ignore
 autoflake==1.4
-black==23.1a1
+black==24.3.0
 flake8==3.8.4
 google-api-python-client==1.12.11
 isort==5.7.0
