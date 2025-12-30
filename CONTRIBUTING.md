@@ -194,22 +194,22 @@ gcloud iam service-accounts keys create --iam-account "${ACCOUNT_EMAIL}" o2a-bui
 
 4. Create the bucket
 ```bash
-gsutil mb "gs://${BUCKET_NAME}"
+gcloud storage buckets create "gs://${BUCKET_NAME}"
 ```
 
 5. Enables the Bucket Policy Only feature on Cloud Storage bucket
 ```bash
-gsutil bucketpolicyonly set on "gs://${BUCKET_NAME}"
+gcloud storage buckets update --uniform-bucket-level-access "gs://${BUCKET_NAME}"
 ```
 
 6. Grant permission to make a bucket's objects publicly readable:
 ```bash
-gsutil iam ch allUsers:objectViewer "gs://${BUCKET_NAME}"
+gcloud storage buckets add-iam-policy-binding "gs://${BUCKET_NAME}" --member=allUsers --role=roles/storage.objectViewer
 ```
 
 7. Grant permission to create and overwrite a bucket's objects by service account:
 ```bash
-gsutil iam ch "serviceAccount:${ACCOUNT_EMAIL}:objectAdmin" "gs://${BUCKET_NAME}"
+gcloud storage buckets add-iam-policy-binding "gs://${BUCKET_NAME}" --member="serviceAccount:${ACCOUNT_EMAIL}" --role=roles/storage.objectAdmin
 ```
 
 8. Set environement variable on Travis CI

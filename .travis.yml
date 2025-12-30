@@ -34,16 +34,16 @@ script:
   - ./bin/o2a-generate-dependency-graph
   - ./bin/o2a-generate-index images
   - '[[ ! -z "${GCP_SERVICE_ACCOUNT}" ]] && [[ ! -z "${GCP_BUCKET_NAME}" ]] &&
-    gsutil -m cp -R  images gs://${GCP_BUCKET_NAME}/commit-${TRAVIS_COMMIT}/images || true'
+    gcloud storage cp --recursive  images gs://${GCP_BUCKET_NAME}/commit-${TRAVIS_COMMIT}/images || true'
   - ./bin/o2a-run-all-conversions py
   - ./bin/o2a-generate-index output
   - '[[ ! -z "${GCP_SERVICE_ACCOUNT}" ]] && [[ ! -z "${GCP_BUCKET_NAME}" ]] &&
-    gsutil -m cp -R output gs://${GCP_BUCKET_NAME}/commit-${TRAVIS_COMMIT}/output-py || true'
+    gcloud storage cp --recursive output gs://${GCP_BUCKET_NAME}/commit-${TRAVIS_COMMIT}/output-py || true'
   - rm -rf output
   - ./bin/o2a-run-all-conversions dot
   - ./bin/o2a-generate-index output
   - '[[ ! -z "${GCP_SERVICE_ACCOUNT}" ]] && [[ ! -z "${GCP_BUCKET_NAME}" ]] &&
-    gsutil -m cp -R output gs://${GCP_BUCKET_NAME}/commit-${TRAVIS_COMMIT}/output-dot || true'
+    gcloud storage cp --recursive output gs://${GCP_BUCKET_NAME}/commit-${TRAVIS_COMMIT}/output-dot || true'
   - '[[ ! -z "${GCP_SERVICE_ACCOUNT}" ]] && [[ ! -z "${GCP_BUCKET_NAME}" ]] &&
     export BUCKET_URL="https://${GCP_BUCKET_NAME}.storage.googleapis.com/commit-${TRAVIS_COMMIT}" &&
     echo ================================================================================ &&

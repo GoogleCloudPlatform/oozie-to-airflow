@@ -152,9 +152,9 @@ for example application: ${LOCAL_APP_NAME}"
 
 function prepare_composer {
     header "Prepares Composer by copying reusable library files"
-    gsutil -m cp -r "${LOCAL_SCRIPTS_DIR}/*" "gs://${COMPOSER_DAG_BUCKET}/data/"
-    gsutil cp -r "${LOCAL_O2A_PROJECT_DIR}/o2a/__init__.py" "gs://${COMPOSER_DAG_BUCKET}/dags/o2a/__init__.py"
-    gsutil -m cp -r "${LOCAL_O2A_LIBS_DIR}/*.py" "gs://${COMPOSER_DAG_BUCKET}/dags/o2a/o2a_libs/"
+    gcloud storage cp --recursive "${LOCAL_SCRIPTS_DIR}/*" "gs://${COMPOSER_DAG_BUCKET}/data/"
+    gcloud storage cp --recursive "${LOCAL_O2A_PROJECT_DIR}/o2a/__init__.py" "gs://${COMPOSER_DAG_BUCKET}/dags/o2a/__init__.py"
+    gcloud storage cp --recursive "${LOCAL_O2A_LIBS_DIR}/*.py" "gs://${COMPOSER_DAG_BUCKET}/dags/o2a/o2a_libs/"
     footer
 }
 
@@ -610,7 +610,7 @@ function random_date_in_past {
 
 function test_composer {
     header "Triggers example application on Composer: ${LOCAL_APP_NAME}"
-    gsutil cp -r "${LOCAL_OUTPUT_DIR}/*" "gs://${COMPOSER_DAG_BUCKET}/dags/"
+    gcloud storage cp --recursive "${LOCAL_OUTPUT_DIR}/*" "gs://${COMPOSER_DAG_BUCKET}/dags/"
     echo "Waiting until the scheduler finds a new dag file."
     sleep 30
     TEST_EXECUTION_DATE="$(random_date_in_past)"
